@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mudracer",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-e", "const h=require('http'),f=require('fs');h.createServer((q,r)=>{r.setHeader('Content-Type','text/html; charset=utf-8');r.end(f.readFileSync('index.html'))}).listen(5177)"],
+      "port": 5177
+    }
+  ]
+}
