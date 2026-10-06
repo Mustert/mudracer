@@ -19,6 +19,8 @@ Nach jeder Umsetzung (neues Feature, größere Änderung) fragt Claude den Nutze
   Gab es schon ein Artifact für dieses Projekt, mit dessen `url` aktualisieren statt ein neues anzulegen, damit der Link gleich bleibt.
 - **Nein:** nichts publishen, weiterarbeiten.
 
+Nach jedem Publish die Artifact-Ansicht sofort mit `mcp__ccd_view__close_pane` (`pane: "artifact"`) schließen, denn sie öffnet sich automatisch und spielt die Musik des Spiels ab.
+
 Nicht eigenmächtig publishen. Erst fragen, dann veröffentlichen.
 
 Artifact-URL: https://claude.ai/artifact/9z1yL29e31W4sdnV6rQJSB (bei Updates als `url` angeben, damit der Link gleich bleibt)
