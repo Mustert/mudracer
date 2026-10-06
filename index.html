@@ -357,6 +357,9 @@ const THEMES = {
     decor: 'space', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#000000'], trees: 0, space: true, rainbow: true },
   bahn:   { ...MUDDY, grass: ['#8fbf4a', '#7fae3f', '#9fcc5a'], grassEdge: '#6f9a33', tuft: '#5f8a2a', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#4f7a22', decor: 'farm', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 18 },
 };
+THEMES.garten = { ...MUDDY, water: ['#2d6f6a', '#3a8a82', '#4fa59a', '#8fd6c4'], shore: ['#8b8f8c', '#767a77'], fence: 'bamboo', ambient: 'petal',
+  grass: ['#5f9a52', '#548a47', '#6eaa5f'], grassEdge: '#477a3c', tuft: '#3d6e34', track: ['#d8cdb0', '#cbbf9f', '#e4dac0'], trackEdge: '#a39877', trail: '#6b5f45',
+  decor: 'garten', tree: 'round', treeCol: ['#e8789a', '#f2a3bb', '#ffd1de', '#7a2a4a'], trees: 20 };
 const S2 = a => a.map(p => [p[0] * 2, p[1] * 2]);
 const B2 = a => a.map(m => [m[0], m[1] * 2, m[2] * 2, m[3] * 2]);
 const TRACK_DEFS = [
@@ -370,6 +373,9 @@ const TRACK_DEFS = [
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 },
   { name: 'ZUG', theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 406, y: 190, ang: 0, dirs: [-1] }, { x: 454, y: 190, ang: 0, dirs: [1] }], gate: { y: 190 }, pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
     mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[280, 225, 40, 22]], rail: { x: 430 }, wash: .94 },
+  // draft: serpentine garden loop with two bridges and a koi pond in the infield
+  { name: 'GARTEN', theme: 'garten', song: 'garden', wall: [], pts: [[380, 112], [530, 66], [680, 104], [745, 195], [700, 300], [630, 385], [510, 340], [385, 395], [260, 340], [130, 388], [58, 305], [55, 215], [100, 130], [230, 72]],
+    mud: [[.22, 0, 28, 34], [.62, 0, 28, 34], [.9, 4, 24, 28]], water: [[.29, -10, 18, 14], [.78, 10, 16, 12]], bridges: [.12, .52], ponds: [[390, 235, 170, 55]], wash: .79 },
 ];
 
 function buildTrack(def, ti) {
@@ -436,6 +442,13 @@ function buildTrack(def, ti) {
   def.water.forEach(m => onPath(m[0], m[1], m[2], m[3], 3));
   def.ponds.forEach(p => stamp(p[0], p[1], { x: 1, y: 0 }, { x: 0, y: 1 }, p[2], p[3], 3));
   (def.boost || []).forEach(t => band(Math.floor(t * N) % N, 16, (x, y, a, c) => { if (Math.abs(c) < 18) ter[y * WW + x] = 4; }));
+  // bridges: plank deck over the track, water on both sides
+  const bridgeMask = new Uint8Array(A);
+  (def.bridges || []).forEach(t => band(Math.floor(t * N) % N, 22, (x, y, a, c) => {
+    const j = y * WW + x, ac = Math.abs(c);
+    if (ac < HALF && dist[j] < HALF) { ter[j] = 1; if (Math.abs(a) < 20) bridgeMask[j] = 1; }
+    else if (ac < HALF + 14 && Math.abs(a) < 20 && ter[j] === 0) ter[j] = 3;
+  }));
   // railway: a straight vertical line through the whole world
   let rail = null;
   if (def.rail) {
@@ -472,6 +485,7 @@ function buildTrack(def, ti) {
   const PEB = [hex('#e2cda6'), hex('#86653f')];
   const RB = ['#ff4d6d', '#ff9f43', '#ffd93d', '#6bcb77', '#4d96ff', '#9b5de5'].map(hex), RBL = ['#ff7a90', '#ffb86b', '#ffe46b', '#8fdc98', '#78b0ff', '#b585ee'].map(hex);
   const PLANK = [hex('#8d8373'), hex('#7a7163')], BAL = ['#8a8580', '#77726c', '#9c968f'].map(hex), SLEEPER = [hex('#6b4a2e'), hex('#56391f')], RAIL = [hex('#d5dae2'), hex('#6f757d')];
+  const BRG = [hex('#b5774a'), hex('#a46840'), hex('#8a5330')];
   const mudPix = [], watPix = [], starPix = [];
   for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) {
     const j = y * WW + x, t = ter[j], nv = vnoise(x / 9, y / 9, sd), h = hash(x, y, sd);
@@ -487,10 +501,12 @@ function buildTrack(def, ti) {
         watPix.push(j); const e = ed(x, y, 3, 4); col = e === 1 ? WAT[0] : e <= 3 ? WAT[1] : nv > .55 ? WAT[3] : WAT[2];
         if (th.leafWater && e > 2 && hash(x, y, sd + 5) < .012) col = [[224, 138, 44], [217, 180, 58], [181, 86, 42]][(h * 3) | 0];
       }
-    } else if (shore[j]) col = SHORE[h < .5 ? 0 : 1];
+    } else if (shore[j] && !bridgeMask[j]) col = SHORE[h < .5 ? 0 : 1];
     else if (t === 2) {
       const e = ed(x, y, 2, 1);
       if (e === 1) col = MUDE; else { mudPix.push(j); const v = nv * .6 + h * .4; col = v < .38 ? MUD[1] : v > .66 ? MUD[2] : MUD[0]; if (h < .025) col = MUDH; }
+    } else if (bridgeMask[j]) {
+      col = (near[j] >> 1) & 1 ? BRG[0] : BRG[1]; if (h < .05) col = BRG[2];
     } else if (t === 1 || t === 4) {
       if (th.rainbow) {
         const i = near[j], p = path[i], c = (x + .5 - p.x) * nrm[i].x + (y + .5 - p.y) * nrm[i].y;
@@ -541,6 +557,19 @@ function buildTrack(def, ti) {
     if (aa < 5 && ac <= HALF + 5) setT(x, y, aa > 3.5 ? BEAM[2] : (Math.floor(c + 100) / 5 | 0) & 1 ? BEAM[0] : BEAM[1]);
     if (ac > HALF + 4 && ac <= HALF + 11 && aa < 7) setT(x, y, (ac < HALF + 7 || aa < 2) ? POST[1] : POST[0]);
   });
+  // bridge rails (red lacquer) and a torii gate just behind the start line
+  (def.bridges || []).forEach(t => band(Math.floor(t * N) % N, 22, (x, y, a, c) => {
+    const ac = Math.abs(c); if (Math.abs(a) > 19 || ac < HALF - 1.5 || ac > HALF + 1.5) return;
+    setT(x, y, Math.abs(Math.round(a)) % 10 < 2 ? [122, 28, 24] : [226, 69, 44]);
+  }));
+  if (th.decor === 'garten') {
+    const ti0 = Math.floor(.025 * N);
+    band(ti0, 6, (x, y, a, c) => {
+      const ac = Math.abs(c), aa = Math.abs(a);
+      if (ac < HALF + 10 && aa < 5) setT(x, y, aa > 3.2 || (aa < 1.6 && ac > HALF + 6) ? [42, 29, 26] : [226, 69, 44]);
+      else if (ac > HALF + 1.5 && ac < HALF + 8 && aa < 6) setT(x, y, [160, 40, 28]);
+    });
+  }
   // central wall across the infield: nobody can cut across the middle. Its ends stop at the track edge, solid circles every 8px.
   const walls = [], wallTrees = [], wallMask = new Uint8Array(A), wsegs = [];
   const maskAt = (x, y) => { for (let dy = -20; dy <= 20; dy++) for (let dx = -20; dx <= 20; dx++) { const xx = Math.round(x + dx), yy = Math.round(y + dy); if (dx * dx + dy * dy <= 400 && xx >= 0 && yy >= 0 && xx < WW && yy < WH) wallMask[yy * WW + xx] = 1; } };
@@ -558,6 +587,7 @@ function buildTrack(def, ti) {
     const dirs = w.dirs || [-1, 1], a = dirs.includes(-1) ? end(-1) : [w.x, w.y], b = dirs.includes(1) ? end(1) : [w.x, w.y];
     wsegs.push({ a, b, ca, sa, len: Math.hypot(b[0] - a[0], b[1] - a[1]) });
   }
+  if (th.decor === 'garten') { const gi = Math.floor(.025 * N); for (const sg of [-1, 1]) { const q = path[gi], m = nrm[gi], gx = q.x + m.x * sg * (HALF + 4), gy = q.y + m.y * sg * (HALF + 4); walls.push({ x: gx, y: gy, r: 3 }); maskAt(gx, gy); } }
   for (const sg of wsegs) for (let t = 0; t <= sg.len; t += 2) { const x = sg.a[0] + sg.ca * t, y = sg.a[1] + sg.sa * t; if (t % 8 === 0) walls.push({ x, y, r: 4 }); maskAt(x, y); }
   if (def.gate && rail) for (let x = rail.x - 24; x <= rail.x + 24; x += 8) { walls.push({ x, y: def.gate.y, r: 4 }); maskAt(x, def.gate.y); }
   // decor
@@ -648,7 +678,7 @@ function buildTrack(def, ti) {
     for (const sx of [rail.x - 28, rail.x + 28]) { for (let dy = -4; dy <= 4; dy++) for (let dx = -3; dx <= 3; dx++) px(sx + dx, gy + dy, PO); px(sx, gy - 3, hex('#ff3b3b')); }
   }
   // fence along both sides of the track: rope (beach), white pickets (meadow), logs (forest)
-  const FENCE = { rope: ['#f0dcaa', '#7a4f2a', '#a8743f', '#5a3a1c', 9], picket: ['#e6e1d2', '#ffffff', '#f4f1e6', '#8a8472', 6], log: ['#8a6440', '#5a3a1c', '#7a5230', '#3b2512', 12] }[th.fence];
+  const FENCE = { rope: ['#f0dcaa', '#7a4f2a', '#a8743f', '#5a3a1c', 9], picket: ['#e6e1d2', '#ffffff', '#f4f1e6', '#8a8472', 6], log: ['#8a6440', '#5a3a1c', '#7a5230', '#3b2512', 12], bamboo: ['#b7cf78', '#6a8a30', '#93b052', '#415a22', 9] }[th.fence];
   if (FENCE) {
     const RL = hex(FENCE[0]), P0 = hex(FENCE[1]), P1 = hex(FENCE[2]), P2 = hex(FENCE[3]), RL2 = hex('#6b4a2e');
     for (let i = 0; i < N; i++) for (const s of [-1, 1]) {
@@ -800,6 +830,36 @@ function buildTrack(def, ti) {
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
     scatter(14, 7, (x, y) => { for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const dd = Math.hypot(dx, dy); if (dd > 6) continue; px(x + dx, y + dy, dd > 5.2 ? hex('#a8863a') : (Math.round(dd) % 2 ? hex('#e3c16f') : hex('#cfa84f'))); } });
     scatter(20, 3, rock);
+  } else if (th.decor === 'garten') {
+    // raked gravel beds with a single stone, stone lanterns, bonsai, pagodas, koi in the pond
+    scatter(6, 18, (x, y) => {
+      for (let dy = -11; dy <= 11; dy++) for (let dx = -17; dx <= 17; dx++) {
+        const e = (dx / 17) ** 2 + (dy / 11) ** 2; if (e > 1) continue;
+        px(x + dx, y + dy, e > .86 ? hex('#8a8672') : Math.floor(Math.sqrt(e) * 7) % 2 ? hex('#cfc7ae') : hex('#ebe4d0'));
+      }
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -3; dx <= 3; dx++) if (dx * dx + dy * dy * 2 <= 9) px(x + dx, y + dy, dx + dy < 0 ? hex('#b9b9b0') : hex('#7d7d78'));
+    });
+    scatter(14, 4, (x, y) => {
+      darken(x, y, 3, 2, 2);
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (Math.abs(dx) + Math.abs(dy) <= 4) px(x + dx, y + dy, dy < 0 ? hex('#aeb0aa') : hex('#80827c'));
+      for (let dy = -1; dy <= 0; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, hex('#ffd96b'));
+    });
+    scatter(12, 4, (x, y) => {
+      for (let dx = -3; dx <= 3; dx++) for (let dy = 2; dy <= 4; dy++) px(x + dx, y + dy, dy === 2 ? hex('#a0512d') : hex('#7a3b1f'));
+      for (let dy = -3; dy <= 2; dy++) for (let dx = -4; dx <= 4; dx++) { const dd = Math.hypot(dx, dy * 1.3); if (dd < 4) px(x + dx, y + dy, dx + dy < 0 ? hex('#4f9a47') : hex('#2f6e2c')); }
+    });
+    scatter(26, 3, rock);
+    const TILE = [hex('#3f6c80'), hex('#6a9bb0'), hex('#27465a')], WALL = hex('#e8dcc0');
+    scatter(2, 24, (x, y) => {
+      trees.push({ x, y, r: 11 }); darken(x, y, 13, 6, 8);
+      for (const [h, k] of [[13, 0], [9, 1], [5, 2]]) for (let dy = -h; dy <= h; dy++) for (let dx = -h; dx <= h; dx++) {
+        const ed = Math.max(Math.abs(dx), Math.abs(dy));
+        setT(x + dx, y + dy - k * 2, ed >= h - 1 ? TILE[2] : (Math.abs(dx) < 1 || Math.abs(dy) < 1) ? TILE[2] : dx + dy < 0 ? TILE[1] : TILE[0]);
+        if (ed === h - 3 && k < 2) setT(x + dx, y + dy - k * 2, WALL);
+      }
+      setT(x, y - 9, [255, 210, 80]); setT(x, y - 10, [255, 210, 80]);
+    });
+    critters.push({ type: 'koi', x: 390, y: 235, rx: 125, ry: 38, ph: r() * TAU });
   } else if (th.decor === 'space') {
     const planet = (x, y, rad, cols, ring) => {
       for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) {
@@ -1243,6 +1303,25 @@ const SONGS = {
       if (s === 4 || s === 12) M.clap(t);
       if ((s & 3) === 2) M.hat(t, true); else if (s % 2) M.hat(t, false, .6);
     } },
+  // japanese garden in D major pentatonic: koto and shakuhachi-like flute, soft taiko, water drops
+  garden: { bpm: 92, swing: 0,
+    chords: { D: { r: 38, n: [62, 66, 69] }, Bm: { r: 35, n: [59, 62, 66] }, G: { r: 43, n: [59, 62, 67] }, A: { r: 45, n: [61, 64, 69] }, Em: { r: 40, n: [59, 64, 67] } },
+    A: { ch: ['D', 'Bm', 'G', 'A', 'D', 'Bm', 'Em', 'A'], mel: mel([
+      'F#5:0:4 A5:4:4 B5:8:4 A5:12:4', 'B5:0:6 A5:6:2 F#5:8:4 D5:12:4', 'D5:0:4 E5:4:2 G5:6:2 B5:8:6 A5:14:2', 'A5:0:8 E5:8:4 F#5:12:4',
+      'F#5:0:2 A5:2:2 D6:4:6 B5:10:2 A5:12:4', 'B5:0:4 D6:4:4 B5:8:4 F#5:12:4', 'E5:0:4 G5:4:4 B5:8:4 A5:12:2 G5:14:2', 'A5:0:12 E5:12:4']) },
+    B: { ch: ['G', 'D', 'Em', 'A', 'G', 'D', 'Bm', 'A'], mel: mel([
+      'B5:0:4 D6:4:4 G6:8:4 D6:12:4', 'A5:0:4 F#5:4:4 A5:8:4 D6:12:4', 'G5:0:4 B5:4:4 E6:8:6 D6:14:2', 'C#6:0:4 E6:4:4 A6:8:8',
+      'D6:0:2 B5:2:2 G5:4:4 B5:8:4 D6:12:4', 'F#6:0:4 E6:4:2 D6:6:2 A5:8:8', 'D6:0:4 B5:4:4 F#5:8:4 D5:12:4', 'E5:0:2 F#5:2:2 A5:4:4 E5:8:8']) },
+    lead(M, m, t, d, name) { if (name === 'A') M.koto(hz(m), t); else { M.flute(hz(m), t, d); M.koto(hz(m - 12), t); } },
+    band(M, s, t, bi, ch) {
+      if (s === 0) M.pad(ch.n, t, 16 * M.sd, .018);
+      if (s % 4 === 0) M.koto(hz(ch.n[[0, 1, 2, 1][s >> 2]] + 12), t);
+      for (const [st, off, l] of [[0, 0, 3], [8, 7, 3]]) if (st === s) M.bassWarm(hz(ch.r + off), t, l * M.sd);
+      if (s === 0) M.kick(t, .55);
+      if (s === 8 && bi % 2) M.tom(120, t);
+      if ((s === 6 || s === 14) && bi % 2 === 0) M.glock(hz(ch.n[2] + 24), t);
+      if (s % 4 === 2) M.shaker(t, .3);
+    } },
   // country train shuffle: harmonica, banjo rolls, boom-chick bass, brushed "chugga" snare
   train: { bpm: 172, swing: .15,
     chords: { G: { r: 43, n: [55, 59, 62] }, C: { r: 48, n: [55, 60, 64] }, D: { r: 50, n: [57, 62, 66] }, A7: { r: 45, n: [57, 61, 64, 67] } },
@@ -1315,6 +1394,7 @@ const Music = {
     synth({ at: t, f, parts: [['sine', 1, 1], ['sine', 2, .35], ['sine', 2.98, .12]], a: .004, d: .75, vol: .14 * v, dest: this.leadBus });
     synth({ at: t, f, parts: [['sine', 3, .5], ['triangle', 4.02, .25]], a: .002, d: .14, vol: .06 * v, dest: this.leadBus });
   },
+  koto(f, t) { synth({ at: t, f, parts: [['triangle', 1, 1], ['sine', 2, .3], ['sine', 3.01, .08]], a: .002, d: .55, vol: .13, lp: 4200, lpTo: 900, lpT: .3, dest: this.leadBus }); },
   vibe(f, t) { synth({ at: t, f, parts: [['sine', 1, 1], ['sine', 4, .08]], a: .004, d: 1.1, vol: .05, vib: [5.5, .004], dest: this.leadBus }); },
   clave(t) { voice({ at: t, f: 2500, to: 2300, a: .001, d: .05, vol: .07, dest: this.out }); voice({ at: t, f: 1250, a: .001, d: .04, vol: .03, dest: this.out }); },
   chuck(t) { noise({ at: t, type: 'bandpass', f: 2200, q: 1.2, a: .002, d: .04, vol: .06, dest: this.out }); },
@@ -1384,7 +1464,7 @@ try { CTRL = localStorage.getItem('mudracer-ctrl') === 'alt' ? 'alt' : 'std'; } 
 let T = TRACKS[0], cars = [], player = null, parts = [], finCount = 0, lastCount = -1;
 let gp = null, ceremony = null, run = null, tt = null, ttRand = null, selGhost = true;
 const cam = { x: 0, y: 0 };
-const MODES = [{ id: 'gp', name: 'GRAND PRIX', sub: '5 RENNEN' }, { id: 'single', name: 'EINZELSTRECKE', sub: 'FREIE WAHL' }, { id: 'tt', name: 'ZEITFAHREN', sub: 'BESTZEITEN' }, { id: 'run', name: 'MATSCHFAHRT', sub: 'GELAENDE' }];
+const MODES = [{ id: 'gp', name: 'GRAND PRIX', sub: '6 RENNEN' }, { id: 'single', name: 'EINZELSTRECKE', sub: 'FREIE WAHL' }, { id: 'tt', name: 'ZEITFAHREN', sub: 'BESTZEITEN' }, { id: 'run', name: 'MATSCHFAHRT', sub: 'GELAENDE' }];
 try { selGhost = localStorage.getItem('mudracer-ghost') !== '0'; } catch (e) {}
 
 // ---------- Zeitfahren: lap times, best time per track and car, ghost of the best run ----------
@@ -1441,7 +1521,7 @@ function ttLap() { // the player crossed the line: lap time, and the gap to the 
   const ref = tt.rec0 && tt.rec0.laps[i];
   tt.delta = ref !== undefined ? lapT - ref : null; tt.deltaT = 3;
 }
-const GP_ORDER = [0, 1, 2, 4, 3]; // Wiese, Wald, Strand, Zug, Regenbogen (Weltraum)
+const GP_ORDER = [0, 1, 2, 4, 5, 3]; // Wiese, Wald, Strand, Zug, Garten, Regenbogen (Weltraum)
 const POINTS = [10, 8, 6, 5, 4, 3, 2, 1];
 try { selCar = clamp(parseInt(localStorage.getItem('mudracer-car') || '0', 10) || 0, 0, CAR_DEFS.length - 1); } catch (e) {}
 if (isLocked(CAR_DEFS[selCar])) selCar = 0;
@@ -2033,6 +2113,7 @@ function spawnAmbient(dt) {
   const rx = () => cam.x + Math.random() * VW, ry = () => cam.y + Math.random() * VH;
   if (a === 'gull' && Math.random() < dt * .3) { addP({ t: 'gull', x: cam.x - 20, y: cam.y + 20 + Math.random() * (VH - 70), vx: 55 + Math.random() * 30, vy: (Math.random() - .5) * 14, life: 12, ml: 12, ph: Math.random() * 10 }); if (Math.random() < .6) SFX.gull(); }
   if (a === 'butterfly' && n < 10 && Math.random() < dt * 2) addP({ t: 'bfly', x: rx(), y: ry(), vx: 0, vy: 0, life: 9, ml: 9, ph: Math.random() * 10, col: pick(['#ff5a7a', '#ffd93d', '#5ab4ff', '#ffffff', '#b36bff', '#ff9f43']) });
+  if (a === 'petal' && Math.random() < dt * 3) addP({ t: 'leaf', x: cam.x - 10 + Math.random() * VW, y: cam.y - 5, vx: 20, vy: 14 + Math.random() * 10, life: 12, ml: 12, ph: Math.random() * 10, col: pick(['#ffb7cc', '#ffd1de', '#f78fb0']) });
   if (a === 'firefly') {
     if (n < 22 && Math.random() < dt * 4) addP({ t: 'ffly', x: rx(), y: ry(), vx: 0, vy: 0, life: 7, ml: 7, ph: Math.random() * 10 });
     if (Math.random() < dt * 1.5) addP({ t: 'leaf', x: cam.x - 10 + Math.random() * VW, y: cam.y - 5, vx: 20, vy: 18 + Math.random() * 10, life: 12, ml: 12, ph: Math.random() * 10, col: pick(['#e08a2c', '#d9b43a', '#b5562a']) });
@@ -2180,6 +2261,14 @@ function drawCritters() {
         R1(x - dir * 6, y + 2, 3, 1, 'rgba(255,255,255,.6)');
         if (!k) { R1(x - 4, y - 1, 8, 5, '#1b120c'); R1(x - 3, y, 6, 3, '#f4f4f0'); R1(x + dir * 3 - 1, y - 3, 3, 3, '#1b120c'); R1(x + dir * 3 - (dir > 0 ? 1 : 0), y - 2, 2, 2, '#f4f4f0'); R1(x + dir * 5 - (dir > 0 ? 0 : 1), y - 2, 1, 1, '#ff9f1c'); R1(x + dir * 3, y - 2, 1, 1, '#1b120c'); }
         else { R1(x - 2, y, 4, 3, '#1b120c'); R1(x - 1, y + 1, 2, 1, '#ffd93d'); R1(x + dir * 2 - (dir > 0 ? 1 : 0), y, 2, 1, '#ffd93d'); R1(x + dir * 3 - (dir > 0 ? 0 : 1), y, 1, 1, '#ff9f1c'); }
+      }
+    } else if (c.type === 'koi') {
+      for (let k = 0; k < 4; k++) {
+        const a = time * (k % 2 ? -.3 : .3) + c.ph + k * 1.7, rr = 1 - k * .12, x = Math.round(c.x + Math.cos(a) * c.rx * rr), y = Math.round(c.y + Math.sin(a) * c.ry * rr), dir = (k % 2 ? 1 : -1) * -Math.sin(a) >= 0 ? 1 : -1, sw = Math.round(Math.sin(time * 6 + k)), col = ['#ff7a2a', '#f4f1ea', '#e84a5f', '#ffb43a'][k];
+        ctx.globalAlpha = .85;
+        R1(x - 4, y - 2, 8, 4, '#1b120c'); R1(x - dir * 5, y - 1 + sw, 3, 2, '#1b120c');
+        R1(x - 3, y - 1, 6, 2, col); R1(x - dir * 4, y - 1 + sw, 2, 1, col); R1(x + dir * 1, y - 1, 2, 1, k % 2 ? '#e84a5f' : '#f4f1ea');
+        ctx.globalAlpha = 1;
       }
     } else if (c.type === 'squirrel') {
       const p = time * .8 + c.ph, run = Math.sin(p), x = Math.round(c.x + Math.sign(run) * Math.pow(Math.abs(run), .4) * c.range), dir = Math.cos(p) >= 0 ? 1 : -1, y = Math.round(c.y);
