@@ -62,6 +62,10 @@ Das Spiel ist standardmäßig für Kinder gedacht. Eine Checkbox „ADVANCED" im
 - Neue Speicherschlüssel: `mudracer-adv` (Checkbox), `mudracer-diff` (Schwierigkeit), `mudracer-opt-<STRECKE>` (Optionen pro Strecke).
 - Ein Prototyp dieser Umsetzung wurde getestet (Hauptmenü, Optionsbildschirm, Streckenvarianten, Zug aus, gesperrte Autos). Er wurde bewusst nicht übernommen, die Idee ist hier nur dokumentiert.
 
+## Quick Wins
+
+- **Logo im Hauptmenü angleichen:** Über dem Hauptmenü steht ein anderes Logo als auf dem Titelbild. Titelbild: gelbe Schrift (40 px) mit dunkler Kontur und Matsch auf der unteren Buchstabenhälfte, vorgebaut in `buildTitleArt()` (`TS.art`). Hauptmenü: orange Schrift (32 px) mit Matschtropfen, gezeichnet von `drawTitle()`. Beide sollen gleich aussehen, am einfachsten mit dem Logo des Titelbilds (`TS.art`, evtl. verkleinert) auch im Hauptmenü, dann entfällt `drawTitle()`.
+
 ## 1. Spielgefühl und Tiefe
 
 - **Items / Power-ups:** Matschbombe, Schlammschild, Nitro. Bisher kein aktives Eingreifen in den Wettbewerb.
