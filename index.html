@@ -333,15 +333,15 @@ const THEMES = {
 const S2 = a => a.map(p => [p[0] * 2, p[1] * 2]);
 const B2 = a => a.map(m => [m[0], m[1] * 2, m[2] * 2, m[3] * 2]);
 const TRACK_DEFS = [
-  { name: 'WIESE', theme: 'wiese', song: 'kart', pts: S2([[70, 125], [82, 60], [150, 40], [215, 72], [285, 40], [352, 60], [365, 140], [322, 193], [238, 188], [182, 152], [118, 193], [62, 182]]),
+  { name: 'WIESE', theme: 'wiese', song: 'kart', wallStyle: 'fence', wall: [{ x: 420, y: 190, ang: 0 }], pts: S2([[70, 125], [82, 60], [150, 40], [215, 72], [285, 40], [352, 60], [365, 140], [322, 193], [238, 188], [182, 152], [118, 193], [62, 182]]),
     mud: B2([[.14, 0, 16, 18], [.47, 5, 20, 18], [.72, -4, 14, 17]]), water: B2([[.3, -7, 11, 9], [.58, 0, 13, 18], [.84, 6, 9, 9]]), ponds: [[400, 226, 46, 26]], wash: .93 },
-  { name: 'WALD', theme: 'wald', song: 'forest', pts: S2([[60, 72], [150, 42], [205, 98], [262, 42], [345, 58], [360, 150], [292, 192], [205, 150], [125, 193], [48, 166]]),
+  { name: 'WALD', theme: 'wald', song: 'forest', wallStyle: 'logs', wall: [{ x: 410, y: 248, ang: 0 }], pts: S2([[60, 72], [150, 42], [205, 98], [262, 42], [345, 58], [360, 150], [292, 192], [205, 150], [125, 193], [48, 166]]),
     mud: B2([[.1, 0, 18, 18], [.35, 0, 15, 18], [.55, 5, 12, 12], [.76, 0, 20, 18]]), water: B2([[.22, -5, 10, 9], [.64, 0, 14, 18], [.86, 4, 10, 8]]), ponds: [], wash: .94 },
-  { name: 'STRAND', theme: 'strand', song: 'beach', pts: S2([[60, 105], [112, 48], [200, 62], [282, 40], [352, 78], [335, 152], [262, 135], [205, 178], [120, 184], [52, 160]]),
+  { name: 'STRAND', theme: 'strand', song: 'beach', wallStyle: 'bar', wall: [{ x: 330, y: 190, ang: 0 }], pts: S2([[60, 105], [112, 48], [200, 62], [282, 40], [352, 78], [335, 152], [262, 135], [205, 178], [120, 184], [52, 160]]),
     mud: B2([[.18, 0, 14, 18], [.5, 0, 18, 18]]), water: B2([[.3, 0, 16, 18], [.42, -6, 9, 8], [.66, 0, 12, 18], [.8, 5, 10, 9]]), ponds: [[300, 240, 44, 26]], wash: .93 },
-  { name: 'REGENBOGEN', theme: 'regenbogen', song: 'rainbow', pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
+  { name: 'REGENBOGEN', theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 },
-  { name: 'ZUG', theme: 'bahn', song: 'train', pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
+  { name: 'ZUG', theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 406, y: 190, ang: 0, dirs: [-1] }, { x: 454, y: 190, ang: 0, dirs: [1] }], gate: { y: 190 }, pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
     mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[280, 225, 40, 22]], rail: { x: 430 }, wash: .94 },
 ];
 
@@ -514,10 +514,29 @@ function buildTrack(def, ti) {
     if (aa < 5 && ac <= HALF + 5) setT(x, y, aa > 3.5 ? BEAM[2] : (Math.floor(c + 100) / 5 | 0) & 1 ? BEAM[0] : BEAM[1]);
     if (ac > HALF + 4 && ac <= HALF + 11 && aa < 7) setT(x, y, (ac < HALF + 7 || aa < 2) ? POST[1] : POST[0]);
   });
+  // central wall across the infield: nobody can cut across the middle. Its ends stop at the track edge, solid circles every 8px.
+  const walls = [], wallTrees = [], wallMask = new Uint8Array(A), wsegs = [];
+  const maskAt = (x, y) => { for (let dy = -20; dy <= 20; dy++) for (let dx = -20; dx <= 20; dx++) { const xx = Math.round(x + dx), yy = Math.round(y + dy); if (dx * dx + dy * dy <= 400 && xx >= 0 && yy >= 0 && xx < WW && yy < WH) wallMask[yy * WW + xx] = 1; } };
+  for (const w of def.wall || []) {
+    const ca = Math.cos(w.ang), sa = Math.sin(w.ang);
+    const end = dir => {
+      let x = w.x, y = w.y;
+      for (let k = 0; k < 500; k++) {
+        const nx = x + ca * dir * 2, ny = y + sa * dir * 2;
+        if (nx < 10 || ny < 10 || nx > WW - 10 || ny > WH - 10 || dist[(ny | 0) * WW + (nx | 0)] < HALF + 7) break;
+        x = nx; y = ny;
+      }
+      return [x, y];
+    };
+    const dirs = w.dirs || [-1, 1], a = dirs.includes(-1) ? end(-1) : [w.x, w.y], b = dirs.includes(1) ? end(1) : [w.x, w.y];
+    wsegs.push({ a, b, ca, sa, len: Math.hypot(b[0] - a[0], b[1] - a[1]) });
+  }
+  for (const sg of wsegs) for (let t = 0; t <= sg.len; t += 2) { const x = sg.a[0] + sg.ca * t, y = sg.a[1] + sg.sa * t; if (t % 8 === 0) walls.push({ x, y, r: 4 }); maskAt(x, y); }
+  if (def.gate && rail) for (let x = rail.x - 24; x <= rail.x + 24; x += 8) { walls.push({ x, y: def.gate.y, r: 4 }); maskAt(x, def.gate.y); }
   // decor
   const ok = (x, y) => {
     x |= 0; y |= 0; if (x < 3 || y < 3 || x >= WW - 3 || y >= WH - 3) return false;
-    const j = y * WW + x; return ter[j] === 0 && dist[j] > HALF + 4 && !shore[j] && !washMask[j] && (!rail || Math.abs(x - rail.x) > 20);
+    const j = y * WW + x; return ter[j] === 0 && dist[j] > HALF + 4 && !shore[j] && !washMask[j] && !wallMask[j] && (!rail || Math.abs(x - rail.x) > 20);
   };
   const px = (x, y, c) => { if (x >= 0 && y >= 0 && x < WW && y < WH) set(y * WW + x, c); };
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (WW - 10) | 0), y = 5 + (r() * (WH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
@@ -526,6 +545,81 @@ function buildTrack(def, ti) {
   let windmill = null;
   const darken = (x, y, rad, ox, oy) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + ox, yy = y + dy + oy; if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue; const i = (yy * WW + xx) * 4; d[i] *= .78; d[i + 1] *= .76; d[i + 2] *= .76; } };
   const flowers = (n, PET) => scatter(n, 2, (x, y) => { const pc = PET[(r() * PET.length) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, pc === PET[1] ? hex('#ff8c1a') : hex('#ffe14d')); });
+  // wall look: fence + hay (meadow), log pile + pines (forest), beach bar + surfboards + palms (beach), asteroid belt (space), railway barrier (train)
+  const kind = def.wallStyle, along = (sg, step, fn) => { for (let t = 0; t <= sg.len; t += step) fn(sg.a[0] + sg.ca * t, sg.a[1] + sg.sa * t, t); };
+  const frac = (sg, fs) => { if (th.tree !== 'none') for (const f of fs) wallTrees.push({ x: Math.round(sg.a[0] + sg.ca * sg.len * f), y: Math.round(sg.a[1] + sg.sa * sg.len * f) }); };
+  const at = (sg, x, y, a, b) => [Math.round(x + sg.ca * a - sg.sa * b), Math.round(y + sg.sa * a + sg.ca * b)];
+  for (const sg of wsegs) {
+    const shadow = rad => along(sg, 3, (x, y) => darken(Math.round(x), Math.round(y), rad, 2, 3));
+    if (kind === 'fence') {
+      const LT = hex('#d9b27c'), DK = hex('#7a5230'), PO = hex('#5a3a1c'), PH = hex('#c99e69');
+      shadow(2);
+      along(sg, 1, (x, y) => { for (const [k, c] of [[-2, LT], [2, DK]]) { const [qx, qy] = at(sg, x, y, 0, k); px(qx, qy, c); } });
+      along(sg, 10, (x, y) => { for (let a = -1; a <= 1; a++) for (let b = -3; b <= 3; b++) { const [qx, qy] = at(sg, x, y, a, b); px(qx, qy, a < 0 && b < 3 ? PH : PO); } });
+      along(sg, 1, (x, y, t) => {
+        if (Math.round(t) % 70 !== 35) return;
+        const X = Math.round(x), Y = Math.round(y); darken(X, Y, 6, 2, 3);
+        for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const dd = Math.hypot(dx, dy); if (dd > 6) continue; px(X + dx, Y + dy, dd > 5.2 ? hex('#a8863a') : (Math.round(dd) % 2 ? hex('#e3c16f') : hex('#cfa84f'))); }
+      });
+      frac(sg, [.3, .7]);
+    } else if (kind === 'logs') {
+      const DK = hex('#4e3420'), R1c = hex('#d8b27a'), R2c = hex('#c49a5e'), RC = hex('#a07a45');
+      shadow(4);
+      along(sg, 1, (x, y) => { for (let b = -5; b <= 5; b++) { const [qx, qy] = at(sg, x, y, 0, b); px(qx, qy, DK); } });
+      along(sg, 6, (x, y) => {
+        for (const row of [-2.5, 2.5]) {
+          const [cx, cy] = at(sg, x, y, row > 0 ? 3 : 0, row);
+          for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const dd = Math.hypot(dx, dy); if (dd > 3) continue; px(cx + dx, cy + dy, dd > 2.2 ? DK : dd < 1 ? RC : Math.floor(dd * 1.3) % 2 ? R1c : R2c); }
+        }
+      });
+      frac(sg, [.12, .3, .5, .7, .88]);
+    } else if (kind === 'bar') {
+      const SB = [['#ff7a45', '#ffd8b0'], ['#2fb5c8', '#e6fbff'], ['#ff5a9e', '#ffe0f0'], ['#ffd93d', '#fff6c8']].map(p => p.map(hex)), OU = hex('#6b4a2b');
+      shadow(3);
+      let n = 0;
+      along(sg, 11, (x, y, t) => {
+        if (Math.abs(t - sg.len / 2) < 36) return;
+        const [c0, c1] = SB[n++ % 4];
+        for (let a = -2; a <= 2; a++) for (let b = -6; b <= 6; b++) { const e = (a / 2.6) ** 2 + (b / 6.4) ** 2; if (e > 1) continue; const [qx, qy] = at(sg, x, y, a, b); px(qx, qy, e > .7 ? OU : Math.abs(a) < 1 ? c1 : c0); }
+      });
+      // the bar: plank floor, counter and stools on the ground, thatched roof with bunting on the top layer
+      const mx = sg.a[0] + sg.ca * sg.len / 2, my = sg.a[1] + sg.sa * sg.len / 2;
+      for (let a = -27; a <= 27; a++) for (let b = -15; b <= 15; b++) { const [qx, qy] = at(sg, mx, my, a, b); px(qx, qy, ((a + 40) >> 2) & 1 ? hex('#b8864c') : hex('#a8763c')); }
+      for (let a = -24; a <= 24; a++) for (let b = 6; b <= 10; b++) { const [qx, qy] = at(sg, mx, my, a, b); px(qx, qy, b === 6 ? hex('#e8c88c') : hex('#5a3a1c')); }
+      for (let a = -20; a <= 20; a += 10) for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (dx * dx + dy * dy <= 5) { const [qx, qy] = at(sg, mx, my, a + dx, dy); px(qx, qy, a % 20 ? hex('#ffffff') : hex('#e84a5f')); }
+      const TH = [[224, 184, 90], [201, 160, 64], [236, 206, 120]], BUN = ['#ff5a7a', '#ffd93d', '#4d96ff', '#6bcb77', '#ffffff'].map(hex);
+      for (let a = -29; a <= 29; a++) for (let b = -17; b <= 14; b++) {
+        const ed = Math.max(Math.abs(a) / 29, Math.abs(b + 1.5) / 15.5); if (ed > 1) continue;
+        const [qx, qy] = at(sg, mx, my, a, b), v = hash(qx, qy, 3);
+        setT(qx, qy, ed > .92 ? [150, 110, 40] : (Math.abs(b) + (a >> 1)) % 4 === 0 ? TH[1] : v < .15 ? TH[2] : TH[0]);
+      }
+      for (let a = -26; a <= 26; a += 4) { const bc = BUN[(a / 4 + 7) % 5 | 0]; for (const bb of [15, 16]) { const [qx, qy] = at(sg, mx, my, a, bb); setT(qx, qy, bc); } }
+      frac(sg, [.18, .3, .7, .82]);
+    } else if (kind === 'rocks') {
+      const rr0 = rng(sd + 77);
+      along(sg, 15, (x, y) => {
+        const rr = 6 + (rr0() * 5 | 0), X = Math.round(x), Y = Math.round(y), cr = [[rr0() * 4 - 2, rr0() * 4 - 2, 2], [rr0() * 5 - 2, rr0() * 5 - 2, 1.4]];
+        walls.push({ x, y, r: rr - 1 });
+        for (let dy = -rr - 2; dy <= rr + 2; dy++) for (let dx = -rr - 2; dx <= rr + 2; dx++) {
+          const dd = Math.hypot(dx, dy) + (vnoise((X + dx) * .4, (Y + dy) * .4, sd) - .5) * 4; if (dd > rr) continue;
+          const sh = (dx + dy) / rr; let col = sh < -.4 ? [185, 185, 204] : sh > .4 ? [94, 94, 114] : [138, 138, 158];
+          for (const c of cr) if (Math.hypot(dx - c[0], dy - c[1]) < c[2]) col = [94, 94, 114];
+          setT(X + dx, Y + dy, col);
+        }
+      });
+    } else if (kind === 'barrier') {
+      const RD = hex('#e84a5f'), WH2 = hex('#ffffff'), PO = hex('#444444');
+      shadow(2);
+      along(sg, 1, (x, y, t) => { for (let b = -2; b <= 2; b++) { const [qx, qy] = at(sg, x, y, 0, b); px(qx, qy, ((Math.floor(t) >> 3) & 1) ? RD : WH2); } });
+      along(sg, 24, (x, y) => { for (let a = -1; a <= 1; a++) for (let b = -4; b <= 4; b++) { const [qx, qy] = at(sg, x, y, a, b); px(qx, qy, PO); } });
+    }
+  }
+  if (def.gate && rail) {
+    // closed boom gate across the rail corridor
+    const gy = def.gate.y, RD = hex('#e84a5f'), WH2 = hex('#ffffff'), PO = hex('#444444');
+    for (let x = rail.x - 26; x <= rail.x + 26; x++) for (let b = -2; b <= 2; b++) px(x, gy + b, ((x >> 3) & 1) ? RD : WH2);
+    for (const sx of [rail.x - 28, rail.x + 28]) { for (let dy = -4; dy <= 4; dy++) for (let dx = -3; dx <= 3; dx++) px(sx + dx, gy + dy, PO); px(sx, gy - 3, hex('#ff3b3b')); }
+  }
   // fence along both sides of the track: rope (beach), white pickets (meadow), logs (forest)
   const FENCE = { rope: ['#f0dcaa', '#7a4f2a', '#a8743f', '#5a3a1c', 9], picket: ['#e6e1d2', '#ffffff', '#f4f1e6', '#8a8472', 6], log: ['#8a6440', '#5a3a1c', '#7a5230', '#3b2512', 12] }[th.fence];
   if (FENCE) {
@@ -697,13 +791,17 @@ function buildTrack(def, ti) {
     scatter(40, 3, (x, y) => { const c = r() < .5 ? hex('#ffffff') : hex('#ffe9a8'); px(x, y, c); px(x - 1, y, c); px(x + 1, y, c); px(x, y - 1, c); px(x, y + 1, c); starPix.push(y * WW + x); });
   }
   // trees: shadow on the ground, canopy on the top layer
-  for (let tries = 0; trees.length < th.trees && tries < 6000; tries++) {
-    const x = 14 + (r() * (WW - 28) | 0), y = 14 + (r() * (WH - 28) | 0), j = y * WW + x;
-    if (ter[j] !== 0 || dist[j] < HALF + 18 || shore[j]) continue;
-    if (rail && Math.abs(x - rail.x) < 36) continue;
-    if (trees.some(o => Math.hypot(o.x - x, o.y - y) < 26)) continue;
-    let wet = false; for (let dy = -14; dy <= 14 && !wet; dy += 7) for (let dx = -14; dx <= 14; dx += 7) { const xx = clamp(x + dx, 0, WW - 1), yy = clamp(y + dy, 0, WH - 1); if (ter[yy * WW + xx] === 3) wet = true; }
-    if (wet) continue;
+  const forced = wallTrees.slice(), want = th.trees + forced.length;
+  for (let tries = 0; (forced.length || trees.length < want) && tries < 6000; tries++) {
+    const f = forced.shift();
+    const x = f ? f.x : 14 + (r() * (WW - 28) | 0), y = f ? f.y : 14 + (r() * (WH - 28) | 0), j = y * WW + x;
+    if (!f) {
+      if (ter[j] !== 0 || dist[j] < HALF + 18 || shore[j] || wallMask[j]) continue;
+      if (rail && Math.abs(x - rail.x) < 36) continue;
+      if (trees.some(o => Math.hypot(o.x - x, o.y - y) < 26)) continue;
+      let wet = false; for (let dy = -14; dy <= 14 && !wet; dy += 7) for (let dx = -14; dx <= 14; dx += 7) { const xx = clamp(x + dx, 0, WW - 1), yy = clamp(y + dy, 0, WH - 1); if (ter[yy * WW + xx] === 3) wet = true; }
+      if (wet) continue;
+    }
     trees.push({ x, y, r: th.tree === 'palm' ? 5 : 9 });
     for (let dy = -11; dy <= 11; dy++) for (let dx = -11; dx <= 11; dx++) {
       if (dx * dx + dy * dy > 110) continue;
@@ -745,11 +843,10 @@ function buildTrack(def, ti) {
   const mini = mk(120, 68), mg = mini.getContext('2d');
   mg.imageSmoothingEnabled = true; mg.drawImage(base, 0, 0, 120, 68); mg.drawImage(top, 0, 0, 120, 68);
   const wp = path[wi];
-  return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees, critters, windmill, shoreY, boat: { x: 60 }, base, top, mini, mudPix, watPix, starPix, rail,
+  return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: trees.concat(walls), critters, windmill, shoreY, boat: { x: 60 }, base, top, mini, mudPix, watPix, starPix, rail,
     washC: { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } };
 }
-const TRACKS = TRACK_DEFS.map(buildTrack);
-const trail = mk(WW, WH), tctx = trail.getContext('2d');
+const TRACKS = TRACK_DEFS.map(buildTrack);const trail = mk(WW, WH), tctx = trail.getContext('2d');
 
 // ---------- audio: everything is synthesised live, no sound files ----------
 const AU = { a: null, muted: false, music: true, rev: 0, wave: 2 };
