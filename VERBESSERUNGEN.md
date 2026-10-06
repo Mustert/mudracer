@@ -59,7 +59,7 @@ Eigenes Menü, in dem das gewählte Auto angepasst wird. Zwei Varianten, die sic
 - **Datei aufteilen:** Module für Autos, Strecken, Audio, Physik. Grundlage für alles andere.
 - **Automatisierte Tests:** Rundenzählung, Checkpoint-Logik, Platzierung (`score()`), Zug-/Kollisionsfälle.
 - **PWA / Offline:** Schrift „Press Start 2P" lokal einbinden statt Google Fonts, dann installierbar und offlinefähig.
-- **Einstellungen:** getrennte Regler für Musik/Effekte, Tastenbelegung, echtes Pausenmenü (aktuell bricht `Esc` ins Hauptmenü ab).
+- **Einstellungen:** ✅ Zahnrad-Menü (Musik an/aus, Steuerung Standard/Alternativ) und Pausenmenü (`Esc`, Menü-Button oben links) umgesetzt. Offen: getrennte Regler für Musik/Effekte, freie Tastenbelegung.
 - **Barrierefreiheit:** Modus mit weniger Flackern (Sirenen, Regenbogen), farbschwächefreundliche Unterscheidung.
 
 ## Empfohlene Reihenfolge
