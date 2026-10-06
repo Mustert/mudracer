@@ -5,6 +5,11 @@
 Nach jeder Änderung in diesem Repo immer committen und nach `origin/main` pushen.
 Nur wenn der Nutzer im Prompt ausdrücklich sagt, dass es ohne Commit/Push erfolgen soll, entfällt das.
 
+## Preview
+
+- Die Preview immer stumm öffnen: direkt nach dem Start per JavaScript `localStorage.setItem('mudracer-music', '0')` setzen und neu laden. Die Musik des Spiels darf nie hörbar sein.
+- Die Preview nach jedem Test wieder schließen: Server mit `preview_stop` beenden und den Tab mit `tabs_close` schließen.
+
 ## Feature-Abschluss und Publish
 
 Nach jeder Umsetzung (neues Feature, größere Änderung) fragt Claude den Nutzer:
