@@ -23,4 +23,4 @@ Nach jedem Publish die Artifact-Ansicht sofort mit `mcp__ccd_view__close_pane` (
 
 Nicht eigenmächtig publishen. Erst fragen, dann veröffentlichen.
 
-Artifact-URL: https://claude.ai/artifact/9z1yL29e31W4sdnV6rQJSB (bei Updates als `url` angeben, damit der Link gleich bleibt)
+Artifact-URL: https://claude.ai/artifact/VZUv6XokmZMQgqNuhG2NHE (bei jedem Publish als `url` angeben, damit der Link gleich bleibt; nie ein neues Artifact anlegen). Vor dem ersten Publish in einer neuen Session die Live-Version mit `action: "read"` lesen, sonst wird der Publish abgelehnt.
