@@ -21,4 +21,4 @@ Nach jeder Umsetzung (neues Feature, größere Änderung) fragt Claude den Nutze
 
 Nicht eigenmächtig publishen. Erst fragen, dann veröffentlichen.
 
-Artifact-URL (nach dem ersten Publish hier eintragen): _noch keine_
+Artifact-URL: https://claude.ai/artifact/9z1yL29e31W4sdnV6rQJSB (bei Updates als `url` angeben, damit der Link gleich bleibt)
