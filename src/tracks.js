@@ -9,7 +9,7 @@ const MUDDY = { mud: ['#5a3a1f', '#4b301a', '#664327'], mudEdge: '#3b2512', mudH
 export const THEMES = {
   wiese:  { ...MUDDY, grass: ['#63c24a', '#55b03e', '#74d05a'], grassEdge: '#4a9a36', tuft: '#3e8e2e', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#2f6d24', decor: 'wiese', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 26, fence: 'picket', ambient: 'butterfly' },
   gelaende: { ...MUDDY, grass: ['#6cbf4a', '#5eae3f', '#7ccc58'], grassEdge: '#4f9a36', tuft: '#468a30', track: ['#b98b58', '#aa7e4d', '#c79a66'], trackEdge: '#8a6440', trail: '#2f6d24', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], ambient: 'butterfly' },
-  wald:   { ...MUDDY, water: ['#1f4a5e', '#2a6078', '#35708a', '#4f8ea6'], leafWater: true, beams: true, fence: 'log', ambient: 'firefly', grass: ['#3f8d3c', '#367c33', '#4a9c47'], grassEdge: '#2f6e2c', tuft: '#27612a', track: ['#a9815a', '#9b744f', '#b68e65'], trackEdge: '#7b583a', trail: '#1f4a1f', decor: 'wald', tree: 'pine', treeCol: ['#1b573a', '#277048', '#3d9160', '#0d2e1e'], trees: 62 },
+  wald:   { ...MUDDY, water: ['#1f4a5e', '#2a6078', '#35708a', '#4f8ea6'], leafWater: true, dark: true, fence: 'log', ambient: 'firefly', grass: ['#3f8d3c', '#367c33', '#4a9c47'], grassEdge: '#2f6e2c', tuft: '#27612a', track: ['#a9815a', '#9b744f', '#b68e65'], trackEdge: '#7b583a', trail: '#1f4a1f', decor: 'wald', tree: 'pine', treeCol: ['#1b573a', '#277048', '#3d9160', '#0d2e1e'], trees: 62 },
   strand: { ...MUDDY, water: ['#1d8fb3', '#2bb3cc', '#48cfd9', '#8aeee6'], shore: ['#c9a060', '#bf9655'],
     grass: ['#f3d995', '#ebcc81', '#f8e6b0'], grassEdge: '#dcb96c', tuft: '#e2c275', track: ['#bb8c5a', '#ae8050', '#c69864'], trackEdge: '#8f6a42', trail: '#b89656',
     decor: 'strand', tree: 'palm', treeCol: ['#2a8a3c', '#3cac4e', '#74d66c', '#18521f'], trees: 18, sea: true, fence: 'rope', ambient: 'gull' },
@@ -28,12 +28,14 @@ const B2 = a => a.map(m => [m[0], m[1] * 2, m[2] * 2, m[3] * 2]);
 
 
 const TRACK_DEFS = [
-  { name: 'WIESE', theme: 'wiese', song: 'kart', wallStyle: 'fence', wall: [{ x: 420, y: 190, ang: 0 }], pts: S2([[70, 125], [82, 60], [150, 40], [215, 72], [285, 40], [352, 60], [365, 140], [322, 193], [238, 188], [182, 152], [118, 193], [62, 182]]),
+  { name: 'WIESE', rev: 1, events: ['kuehe'], theme: 'wiese', song: 'kart', wallStyle: 'fence', wall: [{ x: 420, y: 190, ang: 0 }], pts: S2([[70, 125], [82, 60], [150, 40], [215, 72], [285, 40], [352, 60], [365, 140], [322, 193], [238, 188], [182, 152], [118, 193], [62, 182]]),
     mud: B2([[.14, 0, 16, 18], [.47, 5, 20, 18], [.72, -4, 14, 17]]), water: B2([[.3, -7, 11, 9], [.58, 0, 13, 18], [.84, 6, 9, 9]]), ponds: [[400, 226, 46, 26]], wash: .93 },
-  { name: 'WALD', theme: 'wald', song: 'forest', wallStyle: 'logs', wall: [{ x: 410, y: 248, ang: 0 }], pts: S2([[60, 72], [150, 42], [205, 98], [262, 42], [345, 58], [360, 150], [292, 192], [205, 150], [125, 193], [48, 166]]),
+  { name: 'WALD', rev: 1, events: ['regen'], theme: 'wald', song: 'forest', wallStyle: 'logs', wall: [{ x: 410, y: 248, ang: 0 }], pts: S2([[60, 72], [150, 42], [205, 98], [262, 42], [345, 58], [360, 150], [292, 192], [205, 150], [125, 193], [48, 166]]),
     mud: B2([[.1, 0, 18, 18], [.35, 0, 15, 18], [.55, 5, 12, 12], [.76, 0, 20, 18]]), water: B2([[.22, -5, 10, 9], [.64, 0, 14, 18], [.86, 4, 10, 8]]), ponds: [], wash: .94 },
-  { name: 'STRAND', theme: 'strand', song: 'beach', wallStyle: 'bar', wall: [{ x: 330, y: 190, ang: 0 }], pts: S2([[60, 105], [112, 48], [200, 62], [282, 40], [352, 78], [335, 152], [262, 135], [205, 178], [120, 184], [52, 160]]),
-    mud: B2([[.18, 0, 14, 18], [.5, 0, 18, 18]]), water: B2([[.3, 0, 16, 18], [.42, -6, 9, 8], [.66, 0, 12, 18], [.8, 5, 10, 9]]), ponds: [[300, 240, 44, 26]], wash: .93 },
+  { name: 'STRAND', rev: 1, events: ['flut'], theme: 'strand', song: 'beach', wallStyle: 'bar', wall: [{ x: 330, y: 190, ang: 0 }], pts: S2([[60, 105], [112, 48], [200, 62], [282, 40], [352, 78], [335, 152], [262, 135], [205, 178], [120, 184], [52, 160]]),
+    mud: B2([[.18, 0, 14, 18], [.5, 0, 18, 18], [.29, 4, 6, 7], [.78, -4, 6, 7]]), water: [], ponds: [[300, 240, 44, 26]], wash: null,
+    // small beach showers that run all the time, each one leaves a mini puddle (t along the track, offset from the centre line)
+    showers: [[.05, -15], [.12, 15], [.25, -15], [.33, 15], [.41, -15], [.58, 15], [.66, -15], [.74, 15], [.84, -15], [.93, 15]] },
   { name: 'REGENBOGEN', theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 },
   { name: 'ZUG', theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 406, y: 190, ang: 0, dirs: [-1] }, { x: 454, y: 190, ang: 0, dirs: [1] }], gate: { y: 190 }, pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
@@ -105,6 +107,11 @@ function buildTrack(def, ti) {
   def.mud.forEach(m => onPath(m[0], m[1], m[2], m[3], 2));
   def.water.forEach(m => onPath(m[0], m[1], m[2], m[3], 3));
   def.ponds.forEach(p => stamp(p[0], p[1], { x: 1, y: 0 }, { x: 0, y: 1 }, p[2], p[3], 3));
+  const showers = (def.showers || []).map(([t, off]) => {
+    const i = Math.floor(t * N) % N, p = path[i], x = p.x + nrm[i].x * off, y = p.y + nrm[i].y * off, s = Math.sign(off) || 1;
+    stamp(x, y, tan[i], nrm[i], 8, 7, 3);
+    return { i, x, y, px: x + nrm[i].x * s * 12, py: y + nrm[i].y * s * 12 };
+  });
   (def.boost || []).forEach(t => band(Math.floor(t * N) % N, 16, (x, y, a, c) => { if (Math.abs(c) < 18) ter[y * WW + x] = 4; }));
   // railway: a straight vertical line through the whole world
   let rail = null;
@@ -201,16 +208,24 @@ function buildTrack(def, ti) {
   // start line (checkered), stop lines at the level crossings, car wash
   band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * WW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
   if (rail) for (const cr of rail.cross) band(cr.i, 34, (x, y, a, c) => { if (Math.abs(c) < HALF - 2 && Math.abs(Math.abs(a) - 30) < 1.6) set(y * WW + x, [245, 245, 240]); });
-  const wi = Math.floor(def.wash * N) % N, washMask = new Uint8Array(A);
+  const hasWash = def.wash != null, wi = hasWash ? Math.floor(def.wash * N) % N : 0, washMask = new Uint8Array(A);
   const tp = new Uint8ClampedArray(A * 4);
   const setT = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= WW || y >= WH) return; const i = (y * WW + x) * 4; tp[i] = c[0]; tp[i + 1] = c[1]; tp[i + 2] = c[2]; tp[i + 3] = 255; };
   const FLOOR = [hex('#a9bccd'), hex('#93a8bb')], BEAM = [hex('#ffffff'), hex('#e84a5f'), hex('#b8354a')], POST = [hex('#4a5a8a'), hex('#6d7fb3')];
-  band(wi, 16, (x, y, a, c) => {
+  if (hasWash) band(wi, 16, (x, y, a, c) => {
     const j = y * WW + x, ac = Math.abs(c), aa = Math.abs(a);
     if (ac < HALF && aa < 14) { washMask[j] = 1; set(j, ((Math.floor(a + 20) / 5 | 0) + (Math.floor(c + 100) / 5 | 0)) & 1 ? FLOOR[0] : FLOOR[1]); }
     if (aa < 5 && ac <= HALF + 5) setT(x, y, aa > 3.5 ? BEAM[2] : (Math.floor(c + 100) / 5 | 0) & 1 ? BEAM[0] : BEAM[1]);
     if (ac > HALF + 4 && ac <= HALF + 11 && aa < 7) setT(x, y, (ac < HALF + 7 || aa < 2) ? POST[1] : POST[0]);
   });
+  // beach showers: a pole next to the track, an arm and the shower head hanging over the puddle
+  for (const s of showers) {
+    const bx = Math.round(s.px), by = Math.round(s.py), hx = Math.round(s.x), hy = Math.round(s.y) - 13;
+    for (let k = 0; k <= 13; k++) { setT(bx, by - k, k % 4 === 3 ? hex('#8d97a3') : hex('#d4dbe3')); setT(bx + 1, by - k, hex('#9aa4b0')); }
+    for (let k = -1; k <= 2; k++) setT(bx + k, by + 1, hex('#6b6f78'));
+    const steps = Math.max(1, Math.abs(hx - bx)); for (let k = 0; k <= steps; k++) setT(bx + (hx - bx) * k / steps, by - 13 + (hy - (by - 13)) * k / steps, hex('#d4dbe3'));
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const dd = dx * dx + dy * dy; if (dd <= 9) setT(hx + dx, hy + dy, dd <= 3 ? hex('#4fb3e6') : hex('#b8c4d0')); }
+  }
   // central wall across the infield: nobody can cut across the middle. Its ends stop at the track edge, solid circles every 8px.
   const walls = [], wallTrees = [], wallMask = new Uint8Array(A), wsegs = [];
   const maskAt = (x, y) => { for (let dy = -20; dy <= 20; dy++) for (let dx = -20; dx <= 20; dx++) { const xx = Math.round(x + dx), yy = Math.round(y + dy); if (dx * dx + dy * dy <= 400 && xx >= 0 && yy >= 0 && xx < WW && yy < WH) wallMask[yy * WW + xx] = 1; } };
@@ -541,7 +556,7 @@ function buildTrack(def, ti) {
   mg.imageSmoothingEnabled = true; mg.drawImage(base, 0, 0, 120, 68); mg.drawImage(top, 0, 0, 120, 68);
   const wp = path[wi];
   return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: trees.concat(walls), critters, windmill, shoreY, boat: { x: 60 }, base, top, mini, mudPix, watPix, starPix, rail,
-    washC: { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } };
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers };
 }
 
 

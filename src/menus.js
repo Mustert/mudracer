@@ -4,6 +4,7 @@ import { CAR_DEFS, isLocked } from './cars.js';
 import { carSlotAt } from './carselect.js';
 import { CUPS, cupReady } from './cups.js';
 import { cupRowAt } from './cupselect.js';
+import { resetAllEvents } from './events.js';
 import { VW, clamp } from './core.js';
 import { is } from './input.js';
 import { beginCeremony, startGP, startRace } from './race.js';
@@ -21,7 +22,11 @@ if (isLocked(CAR_DEFS[G.selCar])) G.selCar = 0;
 
 
 
-export function setState(s) { G.state = s; G.stateTime = 0; }
+// in the menus every track looks as it was built (events change the map during a race)
+const CLEAN = ['title', 'main', 'select_cup', 'select_car', 'select_track', 'select_count'];
+
+
+export function setState(s) { G.state = s; G.stateTime = 0; if (CLEAN.includes(s)) resetAllEvents(); }
 
 
 // a car in the selection strip gets focus (arrow keys and taps alike): locked ones are silent and are not remembered

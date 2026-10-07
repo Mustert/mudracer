@@ -7,7 +7,8 @@ import { rotIndex } from './draw.js';
 export const GHOST_DT = .05;
 
 
-const ttKey = (t, def) => 'mudracer-tt-' + t.name + '-' + def.id;
+// tracks with events or other layout changes carry a revision: their records start fresh (the old ones stay in storage untouched)
+const ttKey = (t, def) => 'mudracer-tt-' + t.name + '-' + def.id + (t.def && t.def.rev ? '-r' + t.def.rev : '');
 
 // Records saved before the balance rework carry no version (v). Their times came from the old driving values, so on load they
 // are converted with the measured old-to-new lap time ratio per track and car (order of CAR_DEFS), ghost included. The stored

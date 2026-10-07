@@ -1,6 +1,7 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
 import { ACC, LAPS, MAXS, MUD_A, MUD_B, angDiff, clamp } from './core.js';
+import { steerAround } from './events.js';
 import { setState } from './menus.js';
 import { finishRace } from './race.js';
 import { ttLap } from './timetrial.js';
@@ -49,8 +50,10 @@ export function physics(c, dt, thr, tgt) {
 
 export function aiTarget(c) {
   const sp = Math.hypot(c.vx, c.vy), i = (c.idx + 18 + Math.round(sp / 8)) % G.T.N, p = G.T.path[i], n = G.T.nrm[i];
-  const lane = Math.sin(G.time * .4 + c.seed) * 14;
-  return Math.atan2(p.y + n.y * lane - c.y, p.x + n.x * lane - c.x);
+  // on the flooded pier there is no room to wander across the track
+  const lane = Math.sin(G.time * .4 + c.seed) * (G.T.ev && G.T.ev.pier ? 1.5 : 14);
+  const [tx, ty] = steerAround(c, p.x + n.x * lane, p.y + n.y * lane);
+  return Math.atan2(ty - c.y, tx - c.x);
 }
 
 // distance (in path samples) to the next level crossing ahead, or Infinity

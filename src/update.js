@@ -6,6 +6,7 @@ import { honk, setState } from './menus.js';
 import { Music } from './music.js';
 import { CONF, RAINBOW, WATC, addP, drop, mudBurst, splash } from './particles.js';
 import { aiTarget, crossingAhead, physics, score, updateProgress } from './physics.js';
+import { eventCollisions, updateEvents } from './events.js';
 import { moveCamera } from './race.js';
 import { updateJumps } from './run.js';
 import { cam } from './state.js';
@@ -18,6 +19,7 @@ import { updateTrain } from './train.js';
 function updateRace(dt) {
   const racing = G.state === 'race' || G.state === 'finish';
   updateTrain(dt);
+  updateEvents(dt);
   for (const c of G.cars) {
     let thr = 0, tgt = null;
     c.brake = false;
@@ -67,6 +69,7 @@ function updateRace(dt) {
     if (c.x < 10) { c.x = 10; c.vx = Math.abs(c.vx) * .4; } if (c.x > G.T.W - 10) { c.x = G.T.W - 10; c.vx = -Math.abs(c.vx) * .4; }
     if (c.y < 10) { c.y = 10; c.vy = Math.abs(c.vy) * .4; } if (c.y > G.T.H - 10) { c.y = G.T.H - 10; c.vy = -Math.abs(c.vy) * .4; }
   }
+  eventCollisions();
   for (let i = 0; i < G.cars.length; i++) for (let j = i + 1; j < G.cars.length; j++) {
     const a = G.cars[i], b = G.cars[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
     if (d < 18 && d > 0) {

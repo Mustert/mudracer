@@ -125,6 +125,14 @@ export const SFX = {
     noise({ t: .13, type: 'lowpass', f: 600, to: 150, d: .22, vol: .22 * v, q: 8 });
   },
   blubb: () => { const f0 = 110 + Math.random() * 110; voice({ f: f0, to: f0 * 2.6, a: .004, d: .08, vol: .22 }); },
+  // cows, rain and flood
+  moo: () => {
+    voice({ type: 'sawtooth', f: 105, to: 160, d: .38, a: .06, lp: 520, lpTo: 700, vol: .2 }); voice({ type: 'sawtooth', f: 107, detune: 18, to: 162, d: .38, a: .06, lp: 520, vol: .12 });
+    voice({ type: 'sawtooth', t: .3, f: 160, to: 90, d: .75, a: .02, lp: 600, lpTo: 260, vol: .2 }); voice({ type: 'sine', f: 55, d: 1, a: .08, vol: .16 });
+  },
+  rain: () => noise({ type: 'highpass', f: 4200, q: .5, a: 1.2, hold: 5.5, d: 2.5, vol: .09 }),
+  thunder: () => { noise({ type: 'lowpass', f: 300, to: 70, a: .05, d: 2, vol: .45, q: .7 }); voice({ f: 62, to: 34, d: 1.6, vol: .3 }); },
+  flood: () => { noise({ type: 'lowpass', f: 260, to: 1100, a: 2, hold: 4, d: 3.5, vol: .28, q: .6 }); noise({ type: 'bandpass', f: 2500, to: 700, a: 1, hold: 3, d: 3, vol: .1 }); },
   bump: () => { voice({ f: 140, to: 45, d: .2, vol: .45 }); noise({ type: 'lowpass', f: 1400, d: .09, vol: .3 }); voice({ type: 'square', f: 230, to: 180, d: .05, vol: .05, lp: 900 }); },
   boost: v => { voice({ type: 'sawtooth', f: 220, to: 1400, d: .45, vol: .08 * v, lp: 3500 }); noise({ type: 'highpass', f: 1500, to: 6000, d: .4, vol: .08 * v }); bell(2093, .12, .05 * v); bell(2637, .2, .04 * v); },
   whistle: v => {

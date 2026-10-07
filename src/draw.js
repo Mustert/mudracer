@@ -1,6 +1,7 @@
 import { G } from './g.js';
 import { carSet } from './cars.js';
 import { FONT, HALF, LAPS, ROTS, SS, TAU, VH, VW, clamp, ctx, hash } from './core.js';
+import { drawEventsAbove, drawEventsGround, drawEventsHud, drawNight, drawRain } from './events.js';
 import { crossingAhead, placeOf } from './physics.js';
 import { drawRunFinish, drawRunHud } from './run.js';
 import { cam } from './state.js';
@@ -108,6 +109,7 @@ function drawCritters() {
   for (const c of G.T.critters) {
     if (c.type === 'crab') {
       const x = Math.round(c.x + Math.sin(G.time * .7 + c.ph) * c.range), y = Math.round(c.y), st = ((G.time * 8 + c.ph) | 0) % 2;
+      if (G.T.ter[y * G.T.W + x] === 3) continue; // under water
       R1(x - 4, y + st, 1, 1, '#8a2a1a'); R1(x + 4, y + 1 - st, 1, 1, '#8a2a1a'); R1(x - 4, y + 2 - st, 1, 1, '#8a2a1a'); R1(x + 4, y + 1 + st, 1, 1, '#8a2a1a');
       R1(x - 3, y - 1, 7, 4, '#1b120c'); R1(x - 6, y - 3, 3, 3, '#1b120c'); R1(x + 4, y - 3, 3, 3, '#1b120c');
       R1(x - 2, y, 5, 2, '#e8452c'); R1(x - 5, y - 2, 1, 1, '#e8452c'); R1(x + 5, y - 2, 1, 1, '#e8452c');
@@ -190,13 +192,15 @@ G.VIGNETTE = null;
 // forest mood: slanted sunbeams and a soft dark vignette
 
 function drawMood() {
-  if (!G.T.th.beams) return;
-  ctx.save(); ctx.globalAlpha = .07; ctx.fillStyle = '#fff3b0';
-  for (let k = 0; k < 4; k++) {
-    const span = VW + 260, bx = (((k * 170 + G.time * 6 - cam.x * .3) % span) + span) % span - 100;
-    ctx.beginPath(); ctx.moveTo(bx, 0); ctx.lineTo(bx + 46, 0); ctx.lineTo(bx - 64, VH); ctx.lineTo(bx - 130, VH); ctx.closePath(); ctx.fill();
+  if (!G.T.th.beams && !G.T.th.dark) return;
+  if (G.T.th.beams) {
+    ctx.save(); ctx.globalAlpha = .07; ctx.fillStyle = '#fff3b0';
+    for (let k = 0; k < 4; k++) {
+      const span = VW + 260, bx = (((k * 170 + G.time * 6 - cam.x * .3) % span) + span) % span - 100;
+      ctx.beginPath(); ctx.moveTo(bx, 0); ctx.lineTo(bx + 46, 0); ctx.lineTo(bx - 64, VH); ctx.lineTo(bx - 130, VH); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
   }
-  ctx.restore();
   if (!G.VIGNETTE) { G.VIGNETTE = ctx.createRadialGradient(VW / 2, VH / 2, VH * .45, VW / 2, VH / 2, VW * .62); G.VIGNETTE.addColorStop(0, 'rgba(10,25,15,0)'); G.VIGNETTE.addColorStop(1, 'rgba(10,25,15,.38)'); }
   ctx.fillStyle = G.VIGNETTE; ctx.fillRect(0, 0, VW, VH);
 }
@@ -264,6 +268,7 @@ export function drawRace() {
   if (wp.length) for (let j = 0; j < 40; j++) { const p = wp[(hash(j, k, 77) * wp.length) | 0]; ctx.fillStyle = j % 2 ? '#e8f7ff' : '#9fd6ff'; ctx.fillRect(p % G.T.W, (p / G.T.W) | 0, 1, 1); }
   if (G.T.shoreY) drawBeach(cx);
   drawCritters();
+  drawEventsGround();
   const sp = G.T.starPix; if (sp.length) for (let j = 0; j < 30; j++) { const p = sp[(hash(j, Math.floor(G.time * 2), 91) * sp.length) | 0], x = p % G.T.W, y = (p / G.T.W) | 0; ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3); }
   const gh = ghostPose();
   if (gh) {
@@ -278,7 +283,8 @@ export function drawRace() {
   ctx.drawImage(G.T.top, cx, cy, VW, VH, cx, cy, VW, VH);
   if (R) drawCrossings(R);
   drawWindmill();
-  drawFlyers();
+  const dark = G.T.th.dark;
+  if (!dark) drawFlyers();
   for (const c of G.cars) {
     if (c.honk > 0 && c.def.siren) {
       const f = ((G.time * 8) | 0) % 2, n = { x: -Math.sin(c.ang), y: Math.cos(c.ang) }, s = f ? 9 : -9;
@@ -297,7 +303,10 @@ export function drawRace() {
     ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.moveTo(9, 0); ctx.lineTo(-6, -8); ctx.lineTo(-2, 0); ctx.lineTo(-6, 8); ctx.closePath(); ctx.fill();
     ctx.restore();
   }
+  drawEventsAbove();
   ctx.restore();
+  if (dark) { drawNight(cx, cy); ctx.save(); ctx.translate(-cx, -cy); drawFlyers(); ctx.restore(); }
+  drawRain();
   drawMood();
   // HUD
   if (G.T.run) drawRunHud(); else {
@@ -333,6 +342,7 @@ export function drawRace() {
     ctx.fillStyle = '#1b120c'; ctx.fillRect(dx - 2, dy - 2, 4, 4); ctx.fillStyle = c.def.M; ctx.fillRect(dx - 1, dy - 1, 2, 2);
   }
   }
+  drawEventsHud();
   // train warning: big stop sign while the lights flash and a crossing is ahead
   if (R && R.signal && G.state === 'race' && !G.player.stun) {
     const d = crossingAhead(G.player);

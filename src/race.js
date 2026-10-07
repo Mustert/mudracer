@@ -2,6 +2,7 @@ import { G } from './g.js';
 import { AU, SFX } from './audio.js';
 import { CAR_DEFS, GENERICS, carSet, isLocked } from './cars.js';
 import { cupReward, cupTrackIdx, markCupWon, saveBestPlace } from './cups.js';
+import { setupEvents } from './events.js';
 import { VH, VW, clamp, rng } from './core.js';
 import { POINTS, setState } from './menus.js';
 import { score } from './physics.js';
@@ -43,6 +44,7 @@ export function startRace() {
   else if (G.mode === 'tt') { G.T = TRACKS[G.selTrack]; entries = [{ def: CAR_DEFS[G.selCar], me: true, skill: 1 }]; }
   else { G.T = TRACKS[G.selTrack]; entries = singleField().map((def, i, all) => ({ def, me: i === 0, skill: i ? .52 + (all.length > 2 ? (i - 1) / (all.length - 2) : 0) * .14 : 1 })); }
   resetWorld();
+  setupEvents(G.T);
   // two cars per row behind the start line; you start in the front row
   G.cars = entries.map((e, k) => {
     const back = 12 + (k >> 1) * 22, side = k % 2 ? 13 : -13;
