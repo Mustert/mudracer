@@ -12,11 +12,15 @@ import { TRACKS } from './tracks.js';
 // under each portrait sits a small info box: best time (time trial) or best place in the cup (Grand Prix)
 
 const N = CAR_DEFS.length, PITCH = 46, SW = 44, X0 = Math.round((VW - (N * PITCH - (PITCH - SW))) / 2);
-const PANEL = { y: 28, h: 70 }, WIN_Y = 46, WIN_H = 34, INFO_Y = 83, INFO_H = 12, CAR_Y = 79;
+const PANEL = { y: 28 }, WIN_Y = 46, WIN_H = 34, INFO_Y = 83, INFO_H = 12, CAR_Y = 79;
+
+// the info boxes only exist where there is something to show (cup places, best times); the rack is shorter without them
+const hasInfo = () => (G.mode === 'gp' && !!G.cup) || G.mode === 'tt';
+const panelH = () => hasInfo() ? 70 : 56;
 
 // which portrait (or -1) lies under a tap
 export function carSlotAt(x, y) {
-  if (y < PANEL.y || y > PANEL.y + PANEL.h) return -1;
+  if (y < PANEL.y || y > PANEL.y + panelH()) return -1;
   const i = Math.floor((x - X0) / PITCH);
   return i >= 0 && i < N && (x - X0) - i * PITCH < SW ? i : -1;
 }
@@ -55,8 +59,8 @@ function smallLock(cx, cy) {
 }
 
 function drawRack(infos) {
-  const x = X0 - 6, w = N * PITCH - (PITCH - SW) + 12;
-  R1(x - 1, PANEL.y - 1, w + 2, PANEL.h + 2, '#1b120c'); R1(x, PANEL.y, w, PANEL.h, '#4a5443');
+  const x = X0 - 6, w = N * PITCH - (PITCH - SW) + 12, ph = panelH();
+  R1(x - 1, PANEL.y - 1, w + 2, ph + 2, '#1b120c'); R1(x, PANEL.y, w, ph, '#4a5443');
   R1(x, PANEL.y + 18, w, 1, '#3a4234'); R1(x, PANEL.y + 19, w, 1, '#5d6853');
   // checkered edge on top
   for (let cx = x; cx < x + w; cx += 3) for (let r = 0; r < 2; r++) R1(cx, PANEL.y + r * 3, Math.min(3, x + w - cx), 3, ((cx - x) / 3 + r) & 1 ? '#f2f2f2' : '#1b120c');
@@ -72,6 +76,7 @@ function drawRack(infos) {
     if (locked) { ctx.globalAlpha = .75; ctx.drawImage(F.shadow[0], 2, 7, 40, 30, sx + 2, wy + 2, 40, 30); ctx.globalAlpha = 1; smallLock(sx + SW / 2, wy + 17); }
     else ctx.drawImage(F.frames[0][0], 2, 7, 40, 30, sx + 2, wy + 2, 40, 30);
     // info box
+    if (!hasInfo()) return;
     const info = infos[i];
     R1(sx - (sel ? 2 : 0), INFO_Y - (sel ? 1 : 0), SW + (sel ? 4 : 0), INFO_H + (sel ? 2 : 0), sel ? '#ffd23f' : '#1b120c'); R1(sx + 1, INFO_Y + 1, SW - 2, INFO_H - 2, '#2c3328');
     if (info && info.trophy) miniCup(sx + SW / 2, INFO_Y + 2, info.trophy);
