@@ -1,7 +1,6 @@
 import { G } from './g.js';
 import { carSet } from './cars.js';
 import { FONT, HALF, LAPS, ROTS, SS, TAU, VH, VW, clamp, ctx, hash } from './core.js';
-import { GP_ORDER } from './menus.js';
 import { crossingAhead, placeOf } from './physics.js';
 import { drawRunFinish, drawRunHud } from './run.js';
 import { cam } from './state.js';
@@ -313,7 +312,7 @@ export function drawRace() {
   } else {
     text('PLATZ', VW - 34, 4, 8, '#fff3dc', 'right');
     disc(VW - 17, 7, 6, '#1b120c'); disc(VW - 17, 7, 5, medal(pl));
-    if (G.mode === 'gp') text('GRAND PRIX ' + (G.gp.race + 1) + '/' + GP_ORDER.length, VW / 2 - 40, 4, 8, '#ffd23f', 'center');
+    if (G.mode === 'gp') text('GRAND PRIX ' + (G.gp.race + 1) + '/' + G.gp.tracks.length, VW / 2 - 40, 4, 8, '#ffd23f', 'center');
     text(String(pl), VW - 16, 4, 8, '#1b120c', 'center', null);
   }
   // mini map

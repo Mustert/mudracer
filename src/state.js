@@ -11,6 +11,8 @@ G.selTrack = 0;
 G.selAnim = -1;
 G.selMode = 0;
 G.selCount = 3;
+G.selCup = 0;
+G.cup = null;
 G.mode = 'single';
 
 // options menu (gear) and pause menu; both remember where they were opened from
@@ -46,7 +48,7 @@ G.selGhost = true;
 export const cam = { x: 0, y: 0 };
 
 
-export const MODES = [{ id: 'gp', name: 'GRAND PRIX', sub: '5 RENNEN' }, { id: 'single', name: 'EINZELSTRECKE', sub: 'FREIE WAHL' }, { id: 'tt', name: 'ZEITFAHREN', sub: 'BESTZEITEN' }, { id: 'run', name: 'MATSCHFAHRT', sub: 'GELAENDE' }];
+export const MODES = [{ id: 'gp', name: 'GRAND PRIX', sub: 'CUPS' }, { id: 'single', name: 'EINZELSTRECKE', sub: 'FREIE WAHL' }, { id: 'tt', name: 'ZEITFAHREN', sub: 'BESTZEITEN' }, { id: 'run', name: 'MATSCHFAHRT', sub: 'GELAENDE' }];
 
 
 try { G.selGhost = localStorage.getItem('mudracer-ghost') !== '0'; } catch (e) {}

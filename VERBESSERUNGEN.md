@@ -23,7 +23,7 @@ Pixeliger Top-Down-Racer mit:
 | Items / Power-ups | ⬜ | nur Boost-Pads auf Regenbogen |
 | KI mit Charakter | ⬜ | weiterhin nur eine `skill`-Stufe (0,52–0,66) plus Gummiband |
 | Drift / Handbremse | ⬜ | |
-| Mehr Freischaltziele | ⬜ | Freischaltung nur über den Grand-Prix-Sieg |
+| Mehr Freischaltziele | 🟡 | Autos hängen am ersten Sieg des jeweiligen Cups (Cup 1 bis 5); weitere Ziele offen |
 | Schwierigkeitsgrad | ⬜ | siehe Advanced-Modus unten |
 | Werkstatt | ⬜ | |
 | Neue Strecken, Wetter, Tageszeit | ⬜ | |

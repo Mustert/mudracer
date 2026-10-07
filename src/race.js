@@ -1,8 +1,9 @@
 import { G } from './g.js';
 import { AU, SFX } from './audio.js';
 import { CAR_DEFS, GENERICS, carSet, isLocked } from './cars.js';
+import { cupReward, cupTrackIdx, markCupWon, saveBestPlace } from './cups.js';
 import { VH, VW, clamp, rng } from './core.js';
-import { GP_ORDER, POINTS, setState } from './menus.js';
+import { POINTS, setState } from './menus.js';
 import { score } from './physics.js';
 import { cam } from './state.js';
 import { loadRecord, saveRecord, ttLap, ttSample } from './timetrial.js';
@@ -13,7 +14,7 @@ import { TRACKS, tctx, trail } from './tracks.js';
 export function startGP() {
   const me = CAR_DEFS[G.selCar];
   const field = [me, ...CAR_DEFS.filter(d => d !== me && !isLocked(d)).sort(() => Math.random() - .5), ...GENERICS].slice(0, 8);
-  G.gp = { race: 0, entries: field.map((def, i) => ({ def, pts: 0, last: 0, me: i === 0, skill: i ? .52 + (i - 1) / 6 * .14 : 1 })) };
+  G.gp = { cup: G.cup, tracks: cupTrackIdx(G.cup), race: 0, entries: field.map((def, i) => ({ def, pts: 0, last: 0, me: i === 0, skill: i ? .52 + (i - 1) / 6 * .14 : 1 })) };
   startRace();
 }
 
@@ -38,7 +39,7 @@ export function makeCar(def, x, y, ang, ai, skill, entry) {
 
 export function startRace() {
   let entries;
-  if (G.mode === 'gp') { G.T = TRACKS[GP_ORDER[G.gp.race]]; entries = G.gp.entries; }
+  if (G.mode === 'gp') { G.T = TRACKS[G.gp.tracks[G.gp.race]]; entries = G.gp.entries; }
   else if (G.mode === 'tt') { G.T = TRACKS[G.selTrack]; entries = [{ def: CAR_DEFS[G.selCar], me: true, skill: 1 }]; }
   else { G.T = TRACKS[G.selTrack]; entries = singleField().map((def, i, all) => ({ def, me: i === 0, skill: i ? .52 + (all.length > 2 ? (i - 1) / (all.length - 2) : 0) * .14 : 1 })); }
   resetWorld();
@@ -80,10 +81,9 @@ export function standings() { return [...G.gp.entries].sort((a, b) => b.pts - a.
 export function beginCeremony() {
   const sorted = standings(), won = sorted[0].me;
   let newCar = null;
-  if (won && G.unlocked < 3) {
-    G.unlocked++; newCar = CAR_DEFS.find(d => d.lock === G.unlocked);
-    try { localStorage.setItem('mudracer-unlock', G.unlocked); } catch (e) {}
-  }
+  const mine = sorted.find(e => e.me);
+  saveBestPlace(G.gp.cup, mine.def, sorted.indexOf(mine) + 1);
+  if (won && markCupWon(G.gp.cup)) newCar = cupReward(G.gp.cup) || null;
   G.ceremony = { sorted, won, newCar };
   G.parts = [];
   setState('ceremony');

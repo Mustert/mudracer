@@ -77,8 +77,8 @@ export const CAR_DEFS = [
       R(HL, 40, 14, 1, 3); R(HL, 40, 27, 1, 3); R(TL, 2, 14, 1, 2); R(TL, 2, 28, 1, 2);
       cut(2, 12, 39, 20, 3);
     } },
-  // unlocked one by one by winning the Grand Prix
-  { id: 'foodtruck', name: 'FOODTRUCK', lock: 1, M: '#2ec4b6', D: '#1a8a80', L: '#8ff0e6', speed: 1.005, mud: 1.20, acc: .95, turn: .95, engine: 46, honk: 'jingle',
+  // each of these is a reward: win the cup with that number (first win) to unlock the car
+  { id: 'foodtruck', name: 'FOODTRUCK', cup: 1, M: '#2ec4b6', D: '#1a8a80', L: '#8ff0e6', speed: 1.005, mud: 1.20, acc: .95, turn: .95, engine: 46, honk: 'jingle',
     draw({ R, wheel, glass, cut }, c) {
       for (const x of [8, 28]) { wheel(x, 9, 8, 4); wheel(x, 31, 8, 4); }
       R(c.M, 3, 12, 37, 20); R(c.L, 4, 12, 35, 1); R(c.D, 4, 31, 35, 1);
@@ -93,7 +93,7 @@ export const CAR_DEFS = [
       R(HL, 39, 14, 1, 3); R(HL, 39, 27, 1, 3); R(TL, 3, 14, 1, 2); R(TL, 3, 28, 1, 2);
       cut(3, 12, 37, 20, 3);
     } },
-  { id: 'krankenwagen', name: 'KRANKENWAGEN', lock: 2, M: '#f7f7f2', D: '#c8c8c0', L: '#ffffff', speed: 1.03, mud: 1.00, acc: 1.05, turn: 1.03, engine: 56, honk: 'ambulance', siren: true,
+  { id: 'krankenwagen', name: 'KRANKENWAGEN', cup: 2, M: '#f7f7f2', D: '#c8c8c0', L: '#ffffff', speed: 1.03, mud: 1.00, acc: 1.05, turn: 1.03, engine: 56, honk: 'ambulance', siren: true,
     draw({ R, wheel, glass, cut }, c) {
       wheel(9, 9, 8, 5); wheel(28, 9, 7, 5); wheel(9, 30, 8, 5); wheel(28, 30, 7, 5);
       R(c.M, 4, 12, 35, 20); R(c.D, 5, 30, 33, 1);
@@ -106,7 +106,7 @@ export const CAR_DEFS = [
       R(HL, 38, 14, 1, 3); R(HL, 38, 27, 1, 3); R(TL, 4, 15, 1, 2); R(TL, 4, 27, 1, 2);
       cut(4, 12, 35, 20, 3);
     } },
-  { id: 'quad', name: 'QUAD', lock: 3, M: '#ff7a1a', D: '#b8520a', L: '#ffb066', speed: 1.015, mud: 1.20, acc: 1.25, turn: 1.15, engine: 72, honk: 'quad',
+  { id: 'quad', name: 'QUAD', cup: 3, M: '#ff7a1a', D: '#b8520a', L: '#ffb066', speed: 1.015, mud: 1.20, acc: 1.25, turn: 1.15, engine: 72, honk: 'quad',
     draw({ R, wheel }, c) {
       wheel(8, 5, 10, 8); wheel(27, 5, 10, 8); wheel(8, 31, 10, 8); wheel(27, 31, 10, 8);
       R('#3a3a3a', 11, 13, 3, 18); R('#3a3a3a', 30, 13, 3, 18);
@@ -121,8 +121,7 @@ export const CAR_DEFS = [
       R('#1b120c', 22, 20, 2, 5); R('#e84a5f', 15, 21, 8, 1);
       R(HL, 37, 19, 1, 6);
     } },
-  // playable from the start, no unlock needed
-  { id: 'rally', name: 'RALLY CAR', M: '#f4f6fa', D: '#b8c0cc', L: '#ffffff', speed: 1.0, mud: 1.0, acc: 1.10, turn: 1.05, engine: 70, honk: 'rally',
+  { id: 'rally', name: 'RALLY CAR', cup: 4, M: '#f4f6fa', D: '#b8c0cc', L: '#ffffff', speed: 1.0, mud: 1.0, acc: 1.10, turn: 1.05, engine: 70, honk: 'rally',
     draw({ R, wheel, glass, cut }, c) {
       wheel(8, 9, 8, 5); wheel(28, 9, 8, 5); wheel(8, 30, 8, 5); wheel(28, 30, 8, 5);
       R(c.M, 5, 12, 34, 20); R(c.L, 7, 13, 30, 1); R(c.D, 7, 30, 30, 1);
@@ -135,7 +134,7 @@ export const CAR_DEFS = [
       R(HL, 38, 14, 1, 3); R(HL, 38, 27, 1, 3); R(TL, 5, 14, 1, 3); R(TL, 5, 27, 1, 3);
       cut(5, 12, 34, 20, 4);
     } },
-  { id: 'batmobil', name: 'BATMOBIL', M: '#2b2d33', D: '#15161a', L: '#4e525c', speed: 1.1, mud: 1.4, acc: 1.4, turn: 1.2, engine: 85, honk: 'batmobil',
+  { id: 'batmobil', name: 'BATMOBIL', cup: 5, M: '#2b2d33', D: '#15161a', L: '#4e525c', speed: 1.1, mud: 1.4, acc: 1.4, turn: 1.2, engine: 85, honk: 'batmobil',
     draw({ R, wheel, glass, cut }, c) {
       wheel(5, 8, 10, 6); wheel(5, 30, 10, 6); wheel(29, 9, 9, 5); wheel(29, 30, 9, 5);
       R(c.D, 2, 11, 11, 3); R(c.M, 3, 11, 9, 2); R(c.L, 4, 11, 7, 1); R(c.D, 2, 30, 11, 3); R(c.M, 3, 31, 9, 2); R(c.L, 4, 32, 7, 1);
@@ -181,13 +180,16 @@ const stars = (v, lo, hi) => clamp(1 + Math.round((v - lo) / (hi - lo) * 4), 1, 
 GENERICS.forEach((d, i) => { d.k = 20 + i; });
 
 
-G.unlocked = 0;
+// cups won so far: a car with 'cup: n' is locked until cup n has been won. Saves from before the cups only know
+// 'mudracer-unlock' (0 to 3 Grand Prix wins): that count becomes cups 1..n, so cars unlocked back then stay unlocked.
+G.cupsWon = [];
+try {
+  const saved = JSON.parse(localStorage.getItem('mudracer-cups') || 'null');
+  if (Array.isArray(saved)) G.cupsWon = saved.filter(n => Number.isInteger(n));
+  else G.cupsWon = Array.from({ length: clamp(parseInt(localStorage.getItem('mudracer-unlock') || '0', 10) || 0, 0, 3) }, (_, i) => i + 1);
+} catch (e) {}
 
-
-try { G.unlocked = clamp(parseInt(localStorage.getItem('mudracer-unlock') || '0', 10) || 0, 0, 3); } catch (e) {}
-
-
-export const isLocked = def => !!def.lock && def.lock > G.unlocked;
+export const isLocked = def => !!def.cup && !G.cupsWon.includes(def.cup);
 
 
 const DIRT = ['#6b4a2b', '#58391f', '#7d5a36'].map(hex);

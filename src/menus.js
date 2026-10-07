@@ -1,15 +1,15 @@
 import { G } from './g.js';
 import { AU, HONK_LEN, SFX } from './audio.js';
 import { CAR_DEFS, isLocked } from './cars.js';
+import { carSlotAt } from './carselect.js';
+import { CUPS, cupReady } from './cups.js';
+import { cupRowAt } from './cupselect.js';
 import { VW, clamp } from './core.js';
 import { is } from './input.js';
 import { beginCeremony, startGP, startRace } from './race.js';
 import { startRun } from './run.js';
 import { MODES } from './state.js';
 import { TRACKS } from './tracks.js';
-
-export const GP_ORDER = [0, 1, 2, 4, 3];
- // Wiese, Wald, Strand, Zug, Regenbogen (Weltraum)
 
 export const POINTS = [10, 8, 6, 5, 4, 3, 2, 1];
 
@@ -22,6 +22,13 @@ if (isLocked(CAR_DEFS[G.selCar])) G.selCar = 0;
 
 
 export function setState(s) { G.state = s; G.stateTime = 0; }
+
+
+// a car in the selection strip gets focus (arrow keys and taps alike): locked ones are silent and are not remembered
+function pickCar(i) {
+  G.selCar = i; G.selAnim = G.time;
+  if (isLocked(CAR_DEFS[i])) SFX.click(); else { SFX.honk[CAR_DEFS[i].honk](); try { localStorage.setItem('mudracer-car', i); } catch (e) {} }
+}
 
 
 export function honk(c) {
@@ -40,7 +47,7 @@ const toggleMusic = () => { AU.music = !AU.music; try { localStorage.setItem('mu
 const toggleCtrl = () => { G.CTRL = G.CTRL === 'std' ? 'alt' : 'std'; try { localStorage.setItem('mudracer-ctrl', G.CTRL); } catch (e) {} };
 
 
-export const gearVisible = () => G.state === 'main' || G.state === 'select_car' || G.state === 'select_track' || G.state === 'select_count';
+export const gearVisible = () => G.state === 'main' || G.state === 'select_cup' || G.state === 'select_car' || G.state === 'select_track' || G.state === 'select_count';
 
 
 export const menuBtnVisible = () => G.state !== 'title' && G.state !== 'main' && G.state !== 'options' && G.state !== 'pause';
@@ -91,25 +98,28 @@ export function onPress(k) {
   if (G.state === 'pause') { pauseKey(k); return; }
   if (G.state === 'main') {
     if (lr) { G.selMode = step(G.selMode, k, MODES.length); G.selAnim = G.time; SFX.click(); }
-    else if (ok) { G.mode = MODES[G.selMode].id; G.tt = null; SFX.select(); setState('select_car'); }
+    else if (ok) { G.mode = MODES[G.selMode].id; G.tt = null; SFX.select(); setState(G.mode === 'gp' ? 'select_cup' : G.mode === 'run' ? 'select_car' : 'select_track'); }
+  } else if (G.state === 'select_cup') {
+    const ud = is(k, 'up') || is(k, 'left') ? -1 : is(k, 'down') || is(k, 'right') ? 1 : 0;
+    if (ud) { G.selCup = (G.selCup + ud + CUPS.length) % CUPS.length; G.selAnim = G.time; SFX.click(); }
+    else if (ok) { if (cupReady(CUPS[G.selCup])) { G.cup = CUPS[G.selCup]; SFX.select(); setState('select_car'); } else SFX.bump(); }
+    else if (back) setState('main');
   } else if (G.state === 'select_car') {
-    if (lr) {
-      G.selCar = step(G.selCar, k, CAR_DEFS.length); G.selAnim = G.time;
-      if (isLocked(CAR_DEFS[G.selCar])) SFX.click(); else { SFX.honk[CAR_DEFS[G.selCar].honk](); try { localStorage.setItem('mudracer-car', G.selCar); } catch (e) {} }
-    } else if (ok) {
+    if (lr) pickCar(step(G.selCar, k, CAR_DEFS.length));
+    else if (ok) {
       if (isLocked(CAR_DEFS[G.selCar])) { SFX.bump(); return; }
       SFX.select();
-      if (G.mode === 'gp') startGP(); else if (G.mode === 'run') startRun(); else setState('select_track');
-    } else if (back) setState('main');
+      if (G.mode === 'gp') startGP(); else if (G.mode === 'run') startRun(); else setState('select_count');
+    } else if (back) setState(G.mode === 'gp' ? 'select_cup' : G.mode === 'run' ? 'main' : 'select_track');
   } else if (G.state === 'select_track') {
     if (lr) { G.selTrack = step(G.selTrack, k, TRACKS.length); G.selAnim = G.time; SFX.click(); }
-    else if (ok) { SFX.select(); setState('select_count'); }
-    else if (back) setState('select_car');
+    else if (ok) { SFX.select(); setState('select_car'); }
+    else if (back) setState('main');
   } else if (G.state === 'select_count') {
     if (lr && G.mode === 'tt') { G.selGhost = !G.selGhost; G.selAnim = G.time; SFX.click(); try { localStorage.setItem('mudracer-ghost', G.selGhost ? '1' : '0'); } catch (e) {} }
     else if (lr) { G.selCount = clamp(G.selCount + (is(k, 'left') ? -1 : 1), 1, 7); G.selAnim = G.time; SFX.click(); }
     else if (ok) startRace();
-    else if (back) setState('select_track');
+    else if (back) setState('select_car');
   } else if (G.state === 'countdown' || G.state === 'race') {
     if (k === ' ') honk(G.player);
     else if (k === 'Escape' || k === 'p' || k === 'P') openPause();
@@ -123,7 +133,7 @@ export function onPress(k) {
     }
   } else if (G.state === 'standings') {
     if (k === 'Escape') { SFX.click(); setState('main'); }
-    else if (G.stateTime > 1) { SFX.select(); if (G.gp.race < GP_ORDER.length - 1) { G.gp.race++; startRace(); } else beginCeremony(); }
+    else if (G.stateTime > 1) { SFX.select(); if (G.gp.race < G.gp.tracks.length - 1) { G.gp.race++; startRace(); } else beginCeremony(); }
   } else if (G.state === 'ceremony') {
     if (G.stateTime > 3 || k === 'Escape') { SFX.click(); setState('main'); }
   }
@@ -160,8 +170,17 @@ export function onClick(x, y) {
   if (G.state === 'pause') { pauseClick(x, y); return; }
   if (menuBtnVisible() && x < 30 && y < 24) { menuBtnAct(); return; }
   if (gearVisible() && x > VW - 34 && y < 30) { openOptions(); return; }
+  if (G.state === 'select_cup') {
+    const i = cupRowAt(y);
+    if (i >= 0) { if (i === G.selCup) onPress('Enter'); else { G.selCup = i; G.selAnim = G.time; SFX.click(); } }
+    return;
+  }
+  if (G.state === 'select_car') {
+    const i = carSlotAt(x, y);
+    if (i >= 0) { if (i === G.selCar) onPress('Enter'); else pickCar(i); return; }
+  }
   const side = x < VW * .27 ? 'ArrowLeft' : x > VW * .73 ? 'ArrowRight' : 'Enter';
-  if (G.state === 'main' || G.state === 'select_car' || G.state === 'select_track' || G.state === 'select_count') onPress(side);
+  if (G.state === 'main' || G.state === 'select_cup' || G.state === 'select_car' || G.state === 'select_track' || G.state === 'select_count') onPress(side);
   else if (G.state === 'race' || G.state === 'countdown') onPress(' ');
   else if (G.state === 'finish' && G.mode === 'tt' && x < 60 && y < 40) onPress('Escape');
   else onPress('Enter');

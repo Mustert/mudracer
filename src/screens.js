@@ -2,14 +2,13 @@ import { G } from './g.js';
 import { CAR_DEFS, carSet, isLocked } from './cars.js';
 import { SS, TAU, VH, VW, WH, WW, ctx } from './core.js';
 import { R1, blink, disc, drawConfetti, ell, medal, medalL, panel, star, text, tri } from './draw.js';
-import { GP_ORDER } from './menus.js';
 import { singleField, standings } from './race.js';
 import { MODES } from './state.js';
 import { fmtTime, loadRecord } from './timetrial.js';
 import { TRACKS } from './tracks.js';
 import { TRAIN } from './trainsprite.js';
 
-function drawMenuBg(t) {
+export function drawMenuBg(t) {
   t = t || TRACKS[(G.state === 'options' ? G.optFrom : G.state) === 'select_track' ? G.selTrack : 0];
   ctx.drawImage(t.base, 0, 0, t.W, t.H, 0, 0, VW, VH); ctx.drawImage(t.top, 0, 0, t.W, t.H, 0, 0, VW, VH);
   ctx.fillStyle = 'rgba(27,16,9,.62)'; ctx.fillRect(0, 0, VW, VH);
@@ -28,7 +27,7 @@ function drawTitle(cx, y) {
 }
 
 
-function drawTrophy(cx, cy, s = 1) {
+export function drawTrophy(cx, cy, s = 1) {
   const G = '#ffd23f', GL = '#fff08a', GD = '#c79a06', O = '#1b120c', P = (x, y, w, h, c) => R1(Math.round(cx + x * s), Math.round(cy + y * s), Math.ceil(w * s), Math.ceil(h * s), c);
   P(-10, -14, 20, 2, O); for (let r = 0; r < 12; r++) { const w = 18 - r; P(-w / 2 - 1, -12 + r, w + 2, 1, O); P(-w / 2, -12 + r, w, 1, r < 3 ? GL : G); P(w / 2 - 3, -12 + r, 3, 1, GD); }
   P(-15, -11, 5, 2, O); P(-16, -9, 2, 5, O); P(-15, -4, 5, 2, O); P(10, -11, 5, 2, O); P(14, -9, 2, 5, O); P(10, -4, 5, 2, O);
@@ -39,7 +38,7 @@ function drawTrophy(cx, cy, s = 1) {
 }
 
 
-function drawLock(cx, cy) {
+export function drawLock(cx, cy) {
   R1(cx - 7, cy - 13, 14, 12, '#1b120c'); R1(cx - 5, cy - 11, 10, 10, '#c9ced6'); R1(cx - 3, cy - 9, 6, 8, '#1b120c');
   R1(cx - 10, cy - 3, 20, 16, '#1b120c'); R1(cx - 9, cy - 2, 18, 14, '#ffd23f'); R1(cx - 9, cy - 2, 18, 2, '#fff08a'); R1(cx - 9, cy + 10, 18, 2, '#c79a06');
   R1(cx - 1, cy + 2, 3, 3, '#1b120c'); R1(cx, cy + 5, 1, 4, '#1b120c');
@@ -84,41 +83,8 @@ export function drawMain() {
     if (!sel) { ctx.fillStyle = 'rgba(27,16,9,.35)'; ctx.fillRect(x, y, cw, chh); }
   }
   text('< > WAEHLEN    ENTER = LOS', VW / 2, 234, 8, '#d8c4a8', 'center');
-  text('AUTOS ' + (7 + G.unlocked) + '/' + CAR_DEFS.length, VW / 2, 252, 8, G.unlocked === 3 ? '#ffd23f' : '#9a8a78', 'center');}
-
-
-export function drawSelectCar() {
-  drawMenuBg();
-  text(MODES.find(m => m.id === G.mode).name, VW / 2, 14, 16, '#ffd23f', 'center');
-  // the car stands still, facing right, and gently idles
-  const def = CAR_DEFS[G.selCar], F = carSet(def, false), S3 = SS * 3, locked = isLocked(def);
-  const jump = Math.max(0, 1 - (G.time - G.selAnim) * 3.5), hop = Math.round(Math.sin(jump * Math.PI) * 14);
-  const idle = locked ? 0 : ((G.time * 12) | 0) % 2;
-  const x = VW / 2 - S3 / 2, y = 58 - hop - idle;
-  ell(VW / 2, 124, 76, 12, 'rgba(0,0,0,.35)');
-  if (locked) {
-    ctx.globalAlpha = .9; ctx.drawImage(F.shadow[0], x, y, S3, S3); ctx.globalAlpha = 1;
-    drawLock(VW / 2, 100);
-  } else {
-    ctx.globalAlpha = .3; ctx.drawImage(F.shadow[0], x + 9, 58 + 12, S3, S3); ctx.globalAlpha = 1;
-    ctx.drawImage(F.frames[0][0], x, y, S3, S3);
-    if (((G.time * 3) | 0) % 3 === 0) { ctx.fillStyle = 'rgba(220,220,220,.55)'; const pz = (G.time * 3 % 1) * 10; ctx.fillRect(x - pz | 0, 120 - idle - pz | 0, 4, 4); }
-  }
-  const wig = Math.round(Math.sin(G.time * 5) * 3);
-  tri(VW / 2 - 150 - wig + 1, 125, 'left', 13, '#1b120c'); tri(VW / 2 - 150 - wig, 124, 'left', 13, '#ffd23f');
-  tri(VW / 2 + 150 + wig + 1, 125, 'right', 13, '#1b120c'); tri(VW / 2 + 150 + wig, 124, 'right', 13, '#ffd23f');
-  text(locked ? '???' : def.name, VW / 2, 190, 16, locked ? '#9a8a78' : '#ffd23f', 'center');
-  if (locked) {
-    text('GESPERRT', VW / 2, 214, 8, '#ff6b6b', 'center');
-    text('GEWINNE DEN GRAND PRIX', VW / 2, 227, 8, '#d8c4a8', 'center');
-  } else {
-    text('TEMPO', VW / 2 - 8, 214, 8, '#fff3dc', 'right');
-    text('MATSCH', VW / 2 - 8, 227, 8, '#fff3dc', 'right');
-    for (let i = 0; i < 5; i++) { star(VW / 2 + i * 10, 214, i < def.tempo); star(VW / 2 + i * 10, 227, i < def.matsch); }
-  }
-  const n = CAR_DEFS.length;
-  for (let i = 0; i < n; i++) { ctx.fillStyle = i === G.selCar ? '#ffd23f' : isLocked(CAR_DEFS[i]) ? '#3a2f26' : '#6b5a48'; ctx.fillRect(VW / 2 - n * 5 + i * 10, 183, 7, 2); }
-  text('< > AUTO WAEHLEN    ENTER = WEITER', VW / 2, 252, 8, '#d8c4a8', 'center');
+  const open = CAR_DEFS.filter(d => !isLocked(d)).length;
+  text('AUTOS ' + open + '/' + CAR_DEFS.length, VW / 2, 252, 8, open === CAR_DEFS.length ? '#ffd23f' : '#9a8a78', 'center');
 }
 
 
@@ -199,7 +165,7 @@ export function drawSelectCount() {
 export function drawStandings() {
   drawMenuBg(G.T);
   text('GESAMTWERTUNG', VW / 2, 8, 16, '#ffd23f', 'center');
-  text('RENNEN ' + (G.gp.race + 1) + '/' + GP_ORDER.length + '  ' + G.T.name, VW / 2, 30, 8, '#d8c4a8', 'center');
+  text('CUP ' + G.gp.cup.n + '  RENNEN ' + (G.gp.race + 1) + '/' + G.gp.tracks.length + '  ' + G.T.name, VW / 2, 30, 8, '#d8c4a8', 'center');
   standings().forEach((e, i) => {
     const y = 46 + i * 26, slide = Math.max(0, (i * .08 + .1 - G.stateTime) * 6) * VW;
     const x = 56 + slide;
@@ -211,7 +177,7 @@ export function drawStandings() {
     if (e.last) text('+' + e.last, x + 280, y + 6, 8, '#7bd37b', 'right');
     text(e.pts + ' P', x + 360, y + 6, 8, '#ffffff', 'right');
   });
-  if (G.stateTime > 1 && blink()) text(G.gp.race < GP_ORDER.length - 1 ? 'TASTE = NAECHSTES RENNEN' : 'TASTE = SIEGEREHRUNG', VW / 2, 256, 8, '#d8c4a8', 'center');
+  if (G.stateTime > 1 && blink()) text(G.gp.race < G.gp.tracks.length - 1 ? 'TASTE = NAECHSTES RENNEN' : 'TASTE = SIEGEREHRUNG', VW / 2, 256, 8, '#d8c4a8', 'center');
 }
 
 
@@ -244,8 +210,8 @@ export function drawCeremony() {
       ctx.drawImage(carSet(G.ceremony.newCar, false).frames[0][0], VW / 2 - 66, y + 26, 132, 132);
       text(G.ceremony.newCar.name, VW / 2, y + 146, 8, '#ffffff', 'center');
     } else {
-      text('ALLE AUTOS', VW / 2, y + 50, 16, '#ffd23f', 'center');
-      text('FREIGESCHALTET!', VW / 2, y + 76, 16, '#ffd23f', 'center');
+      text('CUP', VW / 2, y + 50, 16, '#ffd23f', 'center');
+      text('GEWONNEN!', VW / 2, y + 76, 16, '#ffd23f', 'center');
     }
   }
   if (G.stateTime > 3 && blink()) text('TASTE = MENUE', VW / 2, 258, 8, '#d8c4a8', 'center');
