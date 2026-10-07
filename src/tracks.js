@@ -51,8 +51,8 @@ const TRACK_DEFS = [
     showers: [[.05, -15], [.25, 15], [.41, -15]] },
   { name: 'REGENBOGEN', theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 },
-  { name: 'ZUG', theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 406, y: 190, ang: 0, dirs: [-1] }, { x: 454, y: 190, ang: 0, dirs: [1] }], gate: { y: 190 }, pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
-    mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[280, 225, 40, 22]], rail: { x: 430 }, wash: .94 },
+  { name: 'ZUG', theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 365, y: 190, ang: 0 }], tunnels: [[430, 190], [300, 190]], pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
+    mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[560, 255, 40, 22]], rail: { x: 430, lines: [430, 300] }, wash: .94 },
   { name: 'GARTEN', theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: .06,
     pts: [[100, 290], [100, 252], [103, 224], [125, 204], [170, 198], [235, 198], [300, 198], [332, 187], [344, 159], [332, 131], [305, 120], [240, 120], [180, 120],
       [148, 108], [134, 80], [148, 52], [180, 40], [250, 40], [320, 40], [392, 42], [424, 52], [444, 80], [447, 125], [458, 168], [484, 198], [515, 211], [546, 198], [572, 168], [583, 125], [585, 90],
@@ -176,11 +176,11 @@ function buildTrack(def, ti) {
   // railway: a straight vertical line through the whole world
   let rail = null;
   if (def.rail) {
-    const RX = def.rail.x;
-    for (let y = 0; y < WH; y++) for (let x = RX - 18; x <= RX + 18; x++) { const j = y * WW + x; if (ter[j] >= 2) ter[j] = dist[j] < HALF ? 1 : 0; }
+    const lines = def.rail.lines || [def.rail.x];
+    for (const RX of lines) for (let y = 0; y < WH; y++) for (let x = RX - 18; x <= RX + 18; x++) { const j = y * WW + x; if (ter[j] >= 2) ter[j] = dist[j] < HALF ? 1 : 0; }
     const cross = [];
-    for (let i = 0; i < N; i++) { const a = path[i], b = path[(i + 1) % N]; if ((a.x - RX) * (b.x - RX) <= 0 && !cross.some(c => Math.abs(c.i - i) < 30)) cross.push({ i, x: RX, y: (a.y + b.y) / 2 }); }
-    rail = { x: RX, cross, gate: 0, signal: false, bellT: 0, chuffT: 0, chuffN: 0, smokeT: 0, train: { phase: 'wait', t: 6, dir: 1, y: -9999 } };
+    for (const RX of lines) for (let i = 0; i < N; i++) { const a = path[i], b = path[(i + 1) % N]; if ((a.x - RX) * (b.x - RX) <= 0 && !cross.some(c => c.x === RX && Math.abs(c.i - i) < 30)) cross.push({ i, x: RX, y: (a.y + b.y) / 2 }); }
+    rail = { x: def.rail.x, lines, sw: -1, cross, gate: 0, signal: false, bellT: 0, chuffT: 0, chuffN: 0, smokeT: 0, train: { phase: 'wait', t: 6, dir: 1, y: -9999 } };
   }
   const shore = new Uint8Array(A);
   for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) {
@@ -255,8 +255,8 @@ function buildTrack(def, ti) {
       if (dist[j] < HALF + 2.5) col = GE;
       else { const v = nv * .7 + h * .3; col = v < .38 ? G[1] : v > .66 ? G[2] : G[0]; if (h < .025 || hash(x, y + 1, sd) < .025 || hash(x, y + 2, sd) < .012) col = TU; }
     }
-    if (rail) {
-      const dx = x - rail.x, ax = Math.abs(dx);
+    if (rail) for (const RX of rail.lines) {
+      const dx = x - RX, ax = Math.abs(dx);
       if (ax <= 16) {
         if (dist[j] < HALF) col = (y >> 2) & 1 ? PLANK[0] : PLANK[1];
         else { col = BAL[(h * 3) | 0]; if (ax <= 12 && y % 7 < 3) col = SLEEPER[y % 7 === 0 ? 1 : 0]; }
@@ -344,7 +344,7 @@ function buildTrack(def, ti) {
   // decor
   const ok = (x, y) => {
     x |= 0; y |= 0; if (x < 3 || y < 3 || x >= WW - 3 || y >= WH - 3) return false;
-    const j = y * WW + x; return ter[j] === 0 && dist[j] > HALF + 4 && !shore[j] && !washMask[j] && !wallMask[j] && (!rail || Math.abs(x - rail.x) > 20);
+    const j = y * WW + x; return ter[j] === 0 && dist[j] > HALF + 4 && !shore[j] && !washMask[j] && !wallMask[j] && (!rail || rail.lines.every(L => Math.abs(x - L) > 20));
   };
   const px = (x, y, c) => { if (x >= 0 && y >= 0 && x < WW && y < WH) set(y * WW + x, c); };
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (WW - 10) | 0), y = 5 + (r() * (WH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
@@ -448,6 +448,33 @@ function buildTrack(def, ti) {
       }
       if (i % FENCE[4] === 0) { px(x + 2, y + 2, P2); px(x, y, P1); px(x + 1, y, P0); px(x, y + 1, P0); px(x + 1, y + 1, P2); }
       else { px(x, y, RL); if (th.fence === 'log') px(x + Math.round(nrm[i].x * s), y + Math.round(nrm[i].y * s), RL2); }
+    }
+  }
+  // tunnel hills: a rocky hill with a grassy top on the wall line, the train disappears into it (the hill lies on the top layer, so it covers the train). Solid for cars.
+  for (const [hx, hy] of def.tunnels || []) {
+    const hw = 52, hh = 33, rr = 12, inside = (x, y) => { const qx = Math.abs(x - hx) - (hw - rr), qy = Math.abs(y - hy) - (hh - rr); return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rr; };
+    darken(hx, hy, 40, 6, 8);
+    for (let y = hy - hh - 1; y <= hy + hh + 1; y++) for (let x = hx - hw - 1; x <= hx + hw + 1; x++) {
+      const d = inside(x + .5, y + .5); if (d > 0) continue;
+      const dep = -d, n = vnoise(x * .22, y * .22, sd + 11), lit = ((hx - x) + (hy - y)) / (hw + hh) * 18;
+      let c;
+      if (dep < 2) c = [52, 52, 58];
+      else if (dep < 14) { const v = dep < 6 ? 98 : dep < 10 ? 124 : 146; const k = v + (n - .5) * 40 + lit; c = [k, k, k + 8]; if (hash(x, y, sd + 12) < .05) c = [k - 30, k - 30, k - 24]; }
+      else { const g = 126 + (n - .5) * 60 + lit; c = [g * .62, g * 1.08, g * .5]; if (hash(x, y, sd + 13) < .02) c = [236, 120, 150]; }
+      setT(x, y, c);
+    }
+    for (let gy = hy - hh + 4; gy <= hy + hh - 4; gy += 8) for (let gx = hx - hw + 4; gx <= hx + hw - 4; gx += 8) if (inside(gx, gy) < -3) walls.push({ x: gx, y: gy, r: 7 });
+    for (let y = hy - hh - 8; y <= hy + hh + 8; y++) for (let x = hx - hw - 4; x <= hx + hw + 4; x++) if (y >= 0 && y < WH && x >= 0 && x < WW) wallMask[y * WW + x] = 1;
+    // the tunnel mouths on both faces: stone frame and lintel, dark opening
+    for (const sy of [-1, 1]) {
+      const ye = hy + sy * hh;
+      for (let k = -3; k <= 14; k++) for (let dx = -19; dx <= 19; dx++) {
+        const ad = Math.abs(dx), y = ye - sy * k; let c = null;
+        if (k < 0) c = k === -3 ? [112, 108, 98] : [188, 184, 170];
+        else if (ad <= 14) c = k < 3 && ad >= 12 ? [60, 56, 60] : [Math.max(8, 26 - k), Math.max(8, 24 - k), Math.max(10, 30 - k)];
+        else c = ad === 19 ? [112, 108, 98] : [176, 172, 160];
+        if (c) setT(hx + dx, y, c);
+      }
     }
   }
   if (th.decor === 'wiese') {
@@ -678,7 +705,7 @@ function buildTrack(def, ti) {
     const x = f ? f.x : 14 + (r() * (WW - 28) | 0), y = f ? f.y : 14 + (r() * (WH - 28) | 0), j = y * WW + x;
     if (!f) {
       if (ter[j] !== 0 || dist[j] < HALF + 18 || shore[j] || wallMask[j]) continue;
-      if (rail && Math.abs(x - rail.x) < 36) continue;
+      if (rail && rail.lines.some(L => Math.abs(x - L) < 36)) continue;
       if (trees.some(o => Math.hypot(o.x - x, o.y - y) < 26) || walls.some(o => Math.hypot(o.x - x, o.y - y) < 17)) continue;
       let wet = false; for (let dy = -14; dy <= 14 && !wet; dy += 7) for (let dx = -14; dx <= 14; dx += 7) { const xx = clamp(x + dx, 0, WW - 1), yy = clamp(y + dy, 0, WH - 1); if (ter[yy * WW + xx] === 3 || ter[yy * WW + xx] === 5) wet = true; }
       if (wet) continue;

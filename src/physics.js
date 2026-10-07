@@ -60,7 +60,7 @@ export function aiTarget(c) {
 
 export function crossingAhead(c) {
   const R = G.T.rail; if (!R) return Infinity;
-  let best = Infinity; for (const cr of R.cross) best = Math.min(best, (cr.i - c.idx + G.T.N) % G.T.N);
+  let best = Infinity; for (const cr of R.cross) if (cr.x === R.x) best = Math.min(best, (cr.i - c.idx + G.T.N) % G.T.N);
   return best;
 }
 

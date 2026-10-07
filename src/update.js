@@ -5,7 +5,7 @@ import { coarse, held, honkBtn, touchBox } from './input.js';
 import { honk, setState } from './menus.js';
 import { Music } from './music.js';
 import { CONF, RAINBOW, WATC, addP, drop, mudBurst, splash } from './particles.js';
-import { aiTarget, crossingAhead, physics, score, updateProgress } from './physics.js';
+import { aiTarget, physics, score, updateProgress } from './physics.js';
 import { eventCollisions, updateEvents } from './events.js';
 import { moveCamera } from './race.js';
 import { updateJumps } from './run.js';
@@ -62,8 +62,6 @@ function updateRace(dt) {
           const diff = score(c) - score(G.player);
           if (diff > G.T.N * .08) thr *= .7; else if (diff < -G.T.N * .1) thr = Math.min(c.skill * 1.25, thr * 1.15);
         }
-        // computer cars wait in front of the level crossing while the lights flash
-        if (G.T.rail && G.T.rail.signal) { const d = crossingAhead(c); if (d > 13 && d < 50) { thr = 0; c.brake = true; } }
       }
     }
     physics(c, dt, thr, tgt);

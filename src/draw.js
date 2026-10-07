@@ -241,7 +241,7 @@ function drawCrossings(R) {
     const p = G.T.path[cr.i], tg = G.T.tan[cr.i], nm = G.T.nrm[cr.i];
     for (const s of [-1, 1]) {
       const bx = p.x + tg.x * s * 30 + nm.x * s * (HALF + 7), by = p.y + tg.y * s * 30 + nm.y * s * (HALF + 7);
-      const len = 5 + (2 * HALF + 4) * R.gate;
+      const act = cr.x === R.x, sig = R.signal && act, len = 5 + (2 * HALF + 4) * (act ? R.gate : 0);
       for (const pass of [0, 1]) for (let k = 0; k < len; k++) {
         const x = Math.round(bx - nm.x * s * k), y = Math.round(by - nm.y * s * k);
         ctx.fillStyle = pass ? ((k >> 2) & 1 ? '#ffffff' : '#e53935') : '#1b120c';
@@ -250,10 +250,16 @@ function drawCrossings(R) {
       const px = Math.round(bx), py = Math.round(by);
       ctx.fillStyle = '#1b120c'; ctx.fillRect(px - 4, py - 4, 9, 9);
       ctx.fillStyle = '#555555'; ctx.fillRect(px - 3, py - 3, 7, 7);
-      ctx.fillStyle = R.signal && blink ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px - 3, py - 3, 3, 3);
-      ctx.fillStyle = R.signal && !blink ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px + 1, py + 1, 3, 3);
-      if (R.signal) { ctx.globalAlpha = .35; disc(px + (blink ? -2 : 2), py + (blink ? -2 : 2), 5, '#ff4040'); ctx.globalAlpha = 1; }
+      ctx.fillStyle = sig && blink ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px - 3, py - 3, 3, 3);
+      ctx.fillStyle = sig && !blink ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px + 1, py + 1, 3, 3);
+      if (sig) { ctx.globalAlpha = .35; disc(px + (blink ? -2 : 2), py + (blink ? -2 : 2), 5, '#ff4040'); ctx.globalAlpha = 1; }
     }
+  }  // the switch stand (Weiche) between the two lines: the lever points to the line the next train will take, the lamp over it is green
+  if (R.lines.length > 1) {
+    const sx = Math.round((R.lines[0] + R.lines[1]) / 2), sy = 36, a = Math.round(R.sw * 14);
+    ctx.fillStyle = '#1b120c'; ctx.fillRect(sx - 14, sy - 7, 29, 15); ctx.fillStyle = '#6b6f78'; ctx.fillRect(sx - 13, sy - 6, 27, 13); ctx.fillStyle = '#8d939d'; ctx.fillRect(sx - 13, sy - 6, 27, 2);
+    ctx.fillStyle = '#1b120c'; ctx.fillRect(Math.min(sx, sx + a) - 1, sy - 1, Math.abs(a) + 3, 5); ctx.fillStyle = '#ffd23f'; ctx.fillRect(Math.min(sx, sx + a), sy, Math.abs(a) + 1, 3);
+    ctx.fillStyle = R.sw < 0 ? '#5fe36a' : '#7a1c1c'; ctx.fillRect(sx - 11, sy - 4, 4, 4); ctx.fillStyle = R.sw > 0 ? '#5fe36a' : '#7a1c1c'; ctx.fillRect(sx + 8, sy - 4, 4, 4);
   }
 }
 
@@ -353,7 +359,7 @@ export function drawRace() {
   ctx.strokeStyle = 'rgba(255,243,220,.7)'; ctx.lineWidth = 1; ctx.strokeRect(mx + Math.round(cx * .15) + .5, my + Math.round(cy * .15) + .5, Math.round(VW * .15), Math.round(VH * .15));
   if (R) {
     if (R.train.phase === 'run') { const ty0 = clamp(R.train.y * .15, 0, 68), ty1 = clamp((R.train.y + TRAIN.LEN) * .15, 0, 68); ctx.fillStyle = '#c0392b'; ctx.fillRect(mx + Math.round(R.x * .15) - 2, my + ty0, 4, ty1 - ty0); }
-    if (R.signal && ((G.time * 3) | 0) % 2) for (const cr of R.cross) { ctx.fillStyle = '#ff2d2d'; ctx.fillRect(mx + Math.round(cr.x * .15) - 2, my + Math.round(cr.y * .15) - 2, 5, 5); }
+    if (R.signal && ((G.time * 3) | 0) % 2) for (const cr of R.cross) if (cr.x === R.x) { ctx.fillStyle = '#ff2d2d'; ctx.fillRect(mx + Math.round(cr.x * .15) - 2, my + Math.round(cr.y * .15) - 2, 5, 5); }
   }
   if (gh) { ctx.fillStyle = 'rgba(159,214,255,.9)'; ctx.fillRect(mx + Math.round(gh.x * .15) - 1, my + Math.round(gh.y * .15) - 1, 3, 3); }
   for (const c of G.cars) {
