@@ -21,6 +21,17 @@ export const THEMES = {
 };
 
 
+// the wooden pier along the lower part of the beach track: it is there from the start, the flood rises around it later.
+// It runs from where the track first dips below the line y (a wavy line, the same as the later shoreline, at the mud) to where it
+// comes back up shortly before the finish, and bridges the dry stretch in between. 2 x half wide.
+export const PIER = { half: 8, y: 284 };
+export const PIER_WAVE = x => Math.sin(x / 40) * 5 + Math.sin(x / 13) * 2;
+export function pierColor(d, nr, x, y) {
+  if (hash(x, y, 53) < .03) return [118, 82, 40];
+  return d > PIER.half - 1.6 ? [74, 47, 24] : ((nr >> 1) & 1) ? [184, 134, 76] : [163, 114, 56];
+}
+
+
 const S2 = a => a.map(p => [p[0] * 2, p[1] * 2]);
 
 
@@ -32,7 +43,7 @@ const TRACK_DEFS = [
     mud: B2([[.14, 0, 16, 18], [.47, 5, 20, 18], [.72, -4, 14, 17]]), water: B2([[.3, -7, 11, 9], [.58, 0, 13, 18], [.84, 6, 9, 9]]), ponds: [[400, 226, 46, 26]], wash: .93 },
   { name: 'WALD', rev: 1, events: ['regen'], theme: 'wald', song: 'forest', wallStyle: 'logs', wall: [{ x: 410, y: 248, ang: 0 }], pts: S2([[60, 72], [150, 42], [205, 98], [262, 42], [345, 58], [360, 150], [292, 192], [205, 150], [125, 193], [48, 166]]),
     mud: B2([[.1, 0, 18, 18], [.35, 0, 15, 18], [.55, 5, 12, 12], [.76, 0, 20, 18]]), water: B2([[.22, -5, 10, 9], [.64, 0, 14, 18], [.86, 4, 10, 8]]), ponds: [], wash: .94 },
-  { name: 'STRAND', rev: 1, events: ['flut'], theme: 'strand', song: 'beach', wallStyle: 'bar', wall: [{ x: 330, y: 190, ang: 0 }], pts: S2([[60, 105], [112, 48], [200, 62], [282, 40], [352, 78], [335, 152], [262, 135], [205, 178], [120, 184], [52, 160]]),
+  { name: 'STRAND', rev: 1, events: ['flut'], pier: true, theme: 'strand', song: 'beach', wallStyle: 'bar', wall: [{ x: 330, y: 190, ang: 0 }], pts: S2([[60, 105], [112, 48], [200, 62], [282, 40], [352, 78], [335, 152], [262, 135], [205, 178], [120, 184], [52, 160]]),
     mud: B2([[.18, 0, 14, 18], [.5, 0, 18, 18], [.29, 4, 6, 7], [.78, -4, 6, 7]]), water: [], ponds: [[300, 240, 44, 26]], wash: null,
     // small beach showers that run all the time, each one leaves a mini puddle (t along the track, offset from the centre line); none on the lower part that gets flooded
     showers: [[.05, -15], [.25, 15], [.41, -15]] },
@@ -199,6 +210,25 @@ function buildTrack(def, ti) {
       }
     }
     set(j, col);
+  }
+  // the pier: planks across the track and piles on both sides (still normal ground for the cars)
+  let pier = null;
+  if (def.pier) {
+    let a = -1, b = -1;
+    for (let i = Math.floor(.3 * N); i < N; i++) { const p = path[i]; if (p.y >= PIER.y + PIER_WAVE(p.x)) { if (a < 0) a = i; b = i; } }
+    pier = [a, b];
+    for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) {
+      const j = y * WW + x;
+      if (dist[j] >= PIER.half || near[j] < pier[0] || near[j] > pier[1]) continue;
+      ter[j] = 1; set(j, pierColor(dist[j], near[j], x, y));
+    }
+    for (let i = pier[0]; i <= pier[1]; i += 7) {
+      const p = path[i];
+      for (const s of [-1, 1]) {
+        const x = Math.round(p.x + nrm[i].x * s * (PIER.half + 2)), y = Math.round(p.y + nrm[i].y * s * (PIER.half + 2));
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (x + dx >= 0 && y + dy >= 0 && x + dx < WW && y + dy < WH) set((y + dy) * WW + x + dx, dy === -1 && dx === 0 ? [138, 100, 64] : [59, 37, 18]);
+      }
+    }
   }
   // boost pads: yellow chevrons pointing the way
   (def.boost || []).forEach(t => band(Math.floor(t * N) % N, 16, (x, y, a, c) => {
@@ -556,7 +586,7 @@ function buildTrack(def, ti) {
   mg.imageSmoothingEnabled = true; mg.drawImage(base, 0, 0, 120, 68); mg.drawImage(top, 0, 0, 120, 68);
   const wp = path[wi];
   return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: trees.concat(walls), critters, windmill, shoreY, boat: { x: 60 }, base, top, mini, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers };
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier };
 }
 
 

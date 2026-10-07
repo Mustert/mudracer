@@ -4,7 +4,7 @@ import { HALF, TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, mk, vnoise } from './
 import { R1, text } from './draw.js';
 import { addP, mudBurst, WATC } from './particles.js';
 import { cam } from './state.js';
-import { TRACKS, tctx } from './tracks.js';
+import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
 
 // ---------- track events: the map changes while you race ----------
 // Wiese: a herd of cows grazes on and next to the track (they are obstacles, they moo).
@@ -203,8 +203,8 @@ export function drawRain() {
 
 // The sea rises: the shoreline moves from the beach up to y1 (just below the lagoon) across the whole width. Behind it everything is water,
 // the foam line and the waves (drawBeach) move with it. Only a pier along the track stays dry.
-const FLOOD = { y0: 412, y1: 284, dur: 9, pier: 8 };
-const WAVE = x => Math.sin(x / 40) * 5 + Math.sin(x / 13) * 2; // the same wavy line as the original shore
+const FLOOD = { y0: 412, y1: PIER.y, dur: 9, pier: PIER.half };
+const WAVE = PIER_WAVE; // the same wavy line as the original shore
 
 function initFlood(T) { T.ev.flood = null; }
 
@@ -218,18 +218,17 @@ function startFlood(T) {
 }
 
 function paintFloodRows(T, f, yTop, yBot) {
-  const WAT = T.th.water.map(hex), b = bctx(T), h = yBot - yTop + 1, img = b.getImageData(0, yTop, WW, h), d = img.data, sd = 53, PIER = FLOOD.pier;
+  const WAT = T.th.water.map(hex), b = bctx(T), h = yBot - yTop + 1, img = b.getImageData(0, yTop, WW, h), d = img.data, sd = 53;
   for (let y = yTop; y <= yBot; y++) {
     for (let x = 0; x < WW; x++) {
       const fc = f.yf + WAVE(x); if (y < fc) continue;
       const j = y * WW + x, k = ((y - yTop) * WW + x) * 4, sy0 = T.shoreY0[x], land = y < sy0;
       if (y - sy0 >= 24) continue;                       // the deep sea stays as it is
       let c;
-      if (land && T.dist[j] < PIER) {
+      if (land && T.dist[j] < FLOOD.pier && T.near[j] >= T.pier[0] && T.near[j] <= T.pier[1]) {
         // the pier: planks across the track, dark rim
         T.ter[j] = 1;
-        c = T.dist[j] > PIER - 1.6 ? [74, 47, 24] : ((T.near[j] >> 1) & 1) ? [184, 134, 76] : [163, 114, 56];
-        if (hash(x, y, sd) < .03) c = [118, 82, 40];
+        c = pierColor(T.dist[j], T.near[j], x, y);
       } else {
         if (land && T.ter[j] === 3 && !T.flooded[j]) continue; // ponds and puddles keep their own look
         if (land) T.ter[j] = 3;
@@ -246,7 +245,7 @@ function paintFloodRows(T, f, yTop, yBot) {
   for (let i = 0; i < T.N; i += 7) {
     const p = T.path[i]; if (p.y < yTop || p.y > yBot || p.y < f.yf + WAVE(p.x) + 4) continue;
     for (const s of [-1, 1]) {
-      const x = Math.round(p.x + T.nrm[i].x * s * (PIER + 2)), y = Math.round(p.y + T.nrm[i].y * s * (PIER + 2));
+      const x = Math.round(p.x + T.nrm[i].x * s * (FLOOD.pier + 2)), y = Math.round(p.y + T.nrm[i].y * s * (FLOOD.pier + 2));
       b.fillStyle = '#3b2512'; b.fillRect(x - 1, y - 1, 3, 3); b.fillStyle = '#8a6440'; b.fillRect(x, y - 1, 1, 1);
     }
   }
