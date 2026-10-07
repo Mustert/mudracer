@@ -1,6 +1,6 @@
 # Mudracer – Verbesserungsideen
 
-Abgeglichen mit dem Code am 2026-10-06 (`index.html`, ca. 2800 Zeilen, eine Datei).
+Abgeglichen mit dem Code am 2026-10-07 (Vite-Projekt, Module in `src/`).
 Legende: ✅ umgesetzt · 🟡 teilweise · ⬜ offen
 
 ## Ist-Zustand
@@ -29,7 +29,7 @@ Pixeliger Top-Down-Racer mit:
 | Neue Strecken, Wetter, Tageszeit | ⬜ | |
 | Streckenereignisse | 🟡 | nur der Zug; keine einstellbaren Ereignisse |
 | Zwei-Spieler-Modus, Gamepad | ⬜ | keine Gamepad-API im Code |
-| Datei aufteilen, automatisierte Tests | ⬜ | weiterhin eine Datei, keine Tests |
+| Datei aufteilen, automatisierte Tests | 🟡 | aufgeteilt in ES-Module (Vite, Single-File-Build); noch keine Tests |
 | PWA / Offline | ⬜ | Schrift kommt noch von Google Fonts |
 | Barrierefreiheit | ⬜ | |
 
@@ -111,7 +111,7 @@ Eigenes Menü, in dem das gewählte Auto angepasst wird. Zwei Varianten, die sic
 
 ## 5. Technik und Politur
 
-- **Datei aufteilen:** Module für Autos, Strecken, Audio, Physik. Grundlage für alles andere.
+- **Datei aufteilen:** ✅ Module in `src/` (cars, tracks, audio, music, physics, race, draw, ...), veränderlicher Zustand in `G`.
 - **Automatisierte Tests:** Rundenzählung, Checkpoint-Logik, Platzierung (`score()`), Zug-/Kollisionsfälle.
 - **PWA / Offline:** Schrift „Press Start 2P" lokal einbinden statt Google Fonts, dann installierbar und offlinefähig.
 - **Einstellungen:** ✅ Zahnrad-Menü (Musik an/aus, Steuerung Standard/Alternativ) und Pausenmenü (`Esc`, Menü-Button oben links) umgesetzt. Offen: getrennte Regler für Musik/Effekte, freie Tastenbelegung.
