@@ -39,7 +39,7 @@ export function resetTrackEvents(T) {
       b.putImageData(u.img, u.x, u.y);
       for (let r = 0; r < u.h; r++) T.ter.set(u.ter.subarray(r * u.w, (r + 1) * u.w), (u.y + r) * WW + u.x);
     }
-    T.undo = []; T.flooded = null; T.mudPix = T.pix0.mud; T.watPix = T.pix0.wat; redrawMini(T);
+    T.undo = []; T.flooded = null; if (T.shoreY0) { T.shoreY.set(T.shoreY0); T.shoreY0 = null; } T.mudPix = T.pix0.mud; T.watPix = T.pix0.wat; redrawMini(T);
   }
   T.ev = null;
 }
@@ -200,41 +200,42 @@ export function drawRain() {
 
 // ======================================================= Strand: the flood
 
-const FLOOD = { y0: 412, y1: 248, dur: 9, pier: 8 };
-const floodEdge = y => 548 + Math.sin(y / 17) * 14 + Math.sin(y / 6) * 6; // the water ends in a wavy line on the right
+// The sea rises: the shoreline moves from the beach up to y1 (just below the lagoon) across the whole width. Behind it everything is water,
+// the foam line and the waves (drawBeach) move with it. Only a pier along the track stays dry.
+const FLOOD = { y0: 412, y1: 284, dur: 9, pier: 8 };
+const WAVE = x => Math.sin(x / 40) * 5 + Math.sin(x / 13) * 2; // the same wavy line as the original shore
 
 function initFlood(T) { T.ev.flood = null; }
 
 function startFlood(T) {
-  const top = FLOOD.y1 - 4;
-  snap(T, 0, top, WW, WH - top);
+  snap(T, 0, FLOOD.y1 - 12, WW, WH - (FLOOD.y1 - 12));
   T.watPix = T.pix0.wat.slice(); T.flooded = new Uint8Array(WW * WH);
-  T.ev.flood = { p: 0, y: FLOOD.y0 };
+  T.shoreY0 = Float32Array.from(T.shoreY);
+  T.ev.flood = { p: 0, yf: FLOOD.y0 };
   T.ev.pier = true;
   T.ev.banner = { text: 'FLUT!', t: 2.4, col: '#8aeee6' };
   SFX.flood();
 }
 
-function paintFloodRows(T, yTop, yBot) {
-  const th = T.th, WAT = th.water.map(hex), b = bctx(T), h = yBot - yTop + 1, img = b.getImageData(0, yTop, WW, h), d = img.data, sd = 53;
-  const PIER = FLOOD.pier;
+function paintFloodRows(T, f, yTop, yBot) {
+  const WAT = T.th.water.map(hex), b = bctx(T), h = yBot - yTop + 1, img = b.getImageData(0, yTop, WW, h), d = img.data, sd = 53, PIER = FLOOD.pier;
   for (let y = yTop; y <= yBot; y++) {
-    const xe = Math.min(WW - 1, Math.round(floodEdge(y)));
-    for (let x = 0; x <= xe; x++) {
-      const j = y * WW + x, k = ((y - yTop) * WW + x) * 4;
-      if (y >= T.shoreY[x]) continue; // the sea is there already
+    for (let x = 0; x < WW; x++) {
+      const fc = f.yf + WAVE(x); if (y < fc) continue;
+      const j = y * WW + x, k = ((y - yTop) * WW + x) * 4, sy0 = T.shoreY0[x], land = y < sy0;
+      if (y - sy0 >= 24) continue;                       // the deep sea stays as it is
       let c;
-      if (T.dist[j] < PIER) {
+      if (land && T.dist[j] < PIER) {
         // the pier: planks across the track, dark rim
         T.ter[j] = 1;
-        const h2 = hash(x, y, sd);
         c = T.dist[j] > PIER - 1.6 ? [74, 47, 24] : ((T.near[j] >> 1) & 1) ? [184, 134, 76] : [163, 114, 56];
-        if (h2 < .03) c = [118, 82, 40];
+        if (hash(x, y, sd) < .03) c = [118, 82, 40];
       } else {
-        if (T.ter[j] === 3 && !T.flooded[j]) continue; // ponds and puddles keep their own look
-        T.ter[j] = 3; T.flooded[j] = 1;
+        if (land && T.ter[j] === 3 && !T.flooded[j]) continue; // ponds and puddles keep their own look
+        if (land) T.ter[j] = 3;
+        T.flooded[j] = 1;
         const nv = vnoise(x / 9, y / 9, sd);
-        c = y < yTop + 3 ? (hash(x, y, sd + 1) < .6 ? [244, 251, 255] : [207, 238, 245]) : nv > .74 ? WAT[3] : nv > .3 ? WAT[2] : WAT[1];
+        c = y < fc + 3 ? (hash(x, y, sd + 1) < .6 ? [244, 251, 255] : [207, 238, 245]) : nv > .74 ? WAT[3] : nv > .3 ? WAT[2] : WAT[1];
         if (hash(x, y, sd + 2) < .035) T.watPix.push(j);
       }
       d[k] = c[0]; d[k + 1] = c[1]; d[k + 2] = c[2]; d[k + 3] = 255;
@@ -243,24 +244,24 @@ function paintFloodRows(T, yTop, yBot) {
   b.putImageData(img, 0, yTop);
   // piles on both sides of the pier
   for (let i = 0; i < T.N; i += 7) {
-    const p = T.path[i]; if (p.y < yTop || p.y > yBot || p.x > floodEdge(p.y) - 6) continue;
+    const p = T.path[i]; if (p.y < yTop || p.y > yBot || p.y < f.yf + WAVE(p.x) + 4) continue;
     for (const s of [-1, 1]) {
       const x = Math.round(p.x + T.nrm[i].x * s * (PIER + 2)), y = Math.round(p.y + T.nrm[i].y * s * (PIER + 2));
       b.fillStyle = '#3b2512'; b.fillRect(x - 1, y - 1, 3, 3); b.fillStyle = '#8a6440'; b.fillRect(x, y - 1, 1, 1);
     }
   }
-  tctx.clearRect(0, yTop, 600, h); // tyre tracks and mud splashes are washed away
+  tctx.clearRect(0, yTop, WW, h); // tyre tracks and mud splashes are washed away
 }
 
 function updateFlood(T, dt) {
   const ev = T.ev;
   if (!ev.flood && G.player && G.player.lap >= 2) startFlood(T);
   const f = ev.flood; if (!f || f.p >= 1) return;
+  const prev = f.yf;
   f.p = Math.min(1, f.p + dt / FLOOD.dur);
-  const yNew = Math.floor(FLOOD.y0 - (FLOOD.y0 - FLOOD.y1) * f.p);
-  if (yNew >= f.y) return;
-  paintFloodRows(T, yNew, Math.min(WH - 1, f.y + 3));
-  f.y = yNew;
+  f.yf = FLOOD.y0 - (FLOOD.y0 - FLOOD.y1) * f.p;
+  paintFloodRows(T, f, Math.max(0, Math.floor(f.yf - 8)), Math.min(WH - 1, Math.ceil(prev + 8 + 3)));
+  for (let x = 0; x < WW; x++) T.shoreY[x] = Math.min(T.shoreY0[x], f.yf + WAVE(x)); // foam lines and waves follow the rising sea
   redrawMini(T);
 }
 
