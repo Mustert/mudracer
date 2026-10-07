@@ -33,7 +33,7 @@ function slotInfos() {
   if (!cache || G.stateTime < cacheT) {
     cache = CAR_DEFS.map(def => {
       if (isLocked(def)) return null;
-      if (G.mode === 'gp' && G.cup) { const p = loadBestPlace(G.cup, def); return p ? { txt: String(p), col: medal(p), long: 'BESTER PLATZ ' + p } : { txt: '-', col: '#6b5a48', long: 'BESTER PLATZ -' }; }
+      if (G.mode === 'gp' && G.cup) { const p = loadBestPlace(G.cup, def); return p ? { txt: p <= 3 ? '' : '-', trophy: p <= 3 ? medal(p) : null, col: '#6b5a48', long: 'BESTER PLATZ ' + p } : { txt: '-', col: '#6b5a48', long: 'BESTER PLATZ -' }; }
       if (G.mode === 'tt') { const r = loadRecord(TRACKS[G.selTrack], def); return r ? { txt: fmtTime(r.t).slice(0, 4), col: '#ffd23f', long: 'BESTZEIT ' + fmtTime(r.t) } : { txt: '--', col: '#6b5a48', long: 'BESTZEIT -:--.--' }; }
       return null;
     });
@@ -41,6 +41,13 @@ function slotInfos() {
   cacheT = G.stateTime;
   return cache;
 }
+
+// a little cup in gold, silver or bronze: shown in the info box when the cup was finished on the podium
+const MINI_CUP = ['#########', '#.#####.#', '#.#####.#', '.#######.', '..#####..', '...###...', '....#....', '..#####..', '.#######.'];
+function miniCup(cx, y, col) {
+  MINI_CUP.forEach((row, ry) => { for (let rx = 0; rx < 9; rx++) if (row[rx] === '#') R1(cx - 4 + rx, y + ry, 1, 1, col); });
+}
+
 
 function smallLock(cx, cy) {
   R1(cx - 4, cy - 8, 8, 7, '#1b120c'); R1(cx - 3, cy - 7, 6, 6, '#c9ced6'); R1(cx - 2, cy - 6, 4, 5, '#1b120c');
@@ -67,7 +74,8 @@ function drawRack(infos) {
     // info box
     const info = infos[i];
     R1(sx - (sel ? 2 : 0), INFO_Y - (sel ? 1 : 0), SW + (sel ? 4 : 0), INFO_H + (sel ? 2 : 0), sel ? '#ffd23f' : '#1b120c'); R1(sx + 1, INFO_Y + 1, SW - 2, INFO_H - 2, '#2c3328');
-    if (info) text(info.txt, sx + SW / 2, INFO_Y + 2, 8, info.col, 'center', null);
+    if (info && info.trophy) miniCup(sx + SW / 2, INFO_Y + 2, info.trophy);
+    else if (info) text(info.txt, sx + SW / 2, INFO_Y + 2, 8, info.col, 'center', null);
   });
 }
 
