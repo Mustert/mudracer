@@ -173,14 +173,15 @@ function initRain(T) {
   redrawMini(T);
 }
 
-const RAIN_LEN = 9;
-const rainAlpha = r => clamp(r.t / 1.2, 0, 1) * clamp((RAIN_LEN - r.t) / 1.5, 0, 1);
+// the rain sets in slowly and then lasts for the rest of the race (its sound is renewed every few seconds)
+const rainAlpha = r => clamp(r.t / 1.2, 0, 1);
 
 function updateRain(T, dt) {
   const ev = T.ev;
-  if (!ev.rain && G.player && G.player.lap >= 2) { ev.rain = { t: 0 }; ev.banner = { text: 'REGEN!', t: 2.4, col: '#9fd4ff' }; SFX.thunder(); SFX.rain(); }
+  if (!ev.rain && G.player && G.player.lap >= 2) { ev.rain = { t: 0, snd: 7 }; SFX.thunder(); SFX.rain(); }
   const r = ev.rain; if (!r) return;
   r.t += dt;
+  if ((r.snd -= dt) <= 0) { r.snd = 7; SFX.rain(); }
   let any = false;
   ev.holes.forEach((h, k) => { if (!h.filled && r.t > 1.3 + k * .55) { h.filled = true; fillHole(T, h); any = true; } });
   if (any) redrawMini(T);
@@ -213,7 +214,6 @@ function startFlood(T) {
   T.shoreY0 = Float32Array.from(T.shoreY);
   T.ev.flood = { p: 0, yf: FLOOD.y0 };
   T.ev.pier = true;
-  T.ev.banner = { text: 'FLUT!', t: 2.4, col: '#8aeee6' };
   SFX.flood();
 }
 
@@ -283,7 +283,7 @@ const INIT = { kuehe: initCows, regen: initRain, flut: initFlood };
 
 export function setupEvents(T) {
   resetAllEvents();
-  T.ev = { t: 0, cows: [], holes: [], rain: null, flood: null, pier: false, banner: null };
+  T.ev = { t: 0, cows: [], holes: [], rain: null, flood: null, pier: false };
   for (const name of T.def.events || []) if (eventOn(name)) INIT[name](T);
 }
 
@@ -292,7 +292,6 @@ export function updateEvents(dt) {
   updateShowers(T, dt);
   const ev = T.ev; if (!ev) return;
   ev.t += dt;
-  if (ev.banner) { ev.banner.t -= dt; if (ev.banner.t <= 0) ev.banner = null; }
   if (ev.cows.length) updateCows(T, dt);
   if (ev.holes.length) updateRain(T, dt);
   if (T.def.events && T.def.events.includes('flut') && eventOn('flut')) updateFlood(T, dt);
@@ -304,12 +303,6 @@ export function drawEventsGround() { const ev = G.T.ev; if (ev) for (const w of 
 export function drawEventsAbove() {
   const ev = G.T.ev; if (!ev) return;
   for (const w of ev.cows) if (w.mooT > 0) text('MUH!', Math.round(w.x), Math.round(w.y - 16 - (1.3 - w.mooT) * 8), 8, '#ffffff', 'center');
-}
-
-// banner at the top: the event that just started
-export function drawEventsHud() {
-  const ev = G.T.ev, b = ev && ev.banner; if (!b) return;
-  text(b.text, VW / 2, 34 + Math.round(Math.max(0, b.t - 2.1) * 20), 16, b.col, 'center');
 }
 
 // ======================================================= Wald: dusk and headlights

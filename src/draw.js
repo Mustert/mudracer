@@ -1,7 +1,7 @@
 import { G } from './g.js';
 import { carSet } from './cars.js';
 import { FONT, HALF, LAPS, ROTS, SS, TAU, VH, VW, clamp, ctx, hash } from './core.js';
-import { drawEventsAbove, drawEventsGround, drawEventsHud, drawNight, drawRain } from './events.js';
+import { drawEventsAbove, drawEventsGround, drawNight, drawRain } from './events.js';
 import { crossingAhead, placeOf } from './physics.js';
 import { drawRunFinish, drawRunHud } from './run.js';
 import { cam } from './state.js';
@@ -342,7 +342,6 @@ export function drawRace() {
     ctx.fillStyle = '#1b120c'; ctx.fillRect(dx - 2, dy - 2, 4, 4); ctx.fillStyle = c.def.M; ctx.fillRect(dx - 1, dy - 1, 2, 2);
   }
   }
-  drawEventsHud();
   // train warning: big stop sign while the lights flash and a crossing is ahead
   if (R && R.signal && G.state === 'race' && !G.player.stun) {
     const d = crossingAhead(G.player);
