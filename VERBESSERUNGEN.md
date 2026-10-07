@@ -64,7 +64,7 @@ Das Spiel ist standardmäßig für Kinder gedacht. Eine Checkbox „ADVANCED" im
 
 ## Quick Wins
 
-- **Logo im Hauptmenü angleichen:** Über dem Hauptmenü steht ein anderes Logo als auf dem Titelbild. Titelbild: gelbe Schrift (40 px) mit dunkler Kontur und Matsch auf der unteren Buchstabenhälfte, vorgebaut in `buildTitleArt()` (`TS.art`). Hauptmenü: orange Schrift (32 px) mit Matschtropfen, gezeichnet von `drawTitle()`. Beide sollen gleich aussehen, am einfachsten mit dem Logo des Titelbilds (`TS.art`, evtl. verkleinert) auch im Hauptmenü, dann entfällt `drawTitle()`.
+- **Logo im Hauptmenü angleichen:** ✅ umgesetzt. Das Hauptmenü zeichnet jetzt dasselbe Logo wie das Titelbild (`makeArt()` in `src/title.js`, im Menü mit 32 px statt 40 px, samt tropfendem Matsch), `drawTitle()` ist entfernt. Ursprüngliche Beschreibung: Über dem Hauptmenü stand ein anderes Logo als auf dem Titelbild. Titelbild: gelbe Schrift (40 px) mit dunkler Kontur und Matsch auf der unteren Buchstabenhälfte, vorgebaut in `buildTitleArt()` (`TS.art`). Hauptmenü: orange Schrift (32 px) mit Matschtropfen, gezeichnet von `drawTitle()`. Beide sollen gleich aussehen, am einfachsten mit dem Logo des Titelbilds (`TS.art`, evtl. verkleinert) auch im Hauptmenü, dann entfällt `drawTitle()`.
 
 ## 1. Spielgefühl und Tiefe
 

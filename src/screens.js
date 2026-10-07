@@ -6,24 +6,13 @@ import { singleField, standings } from './race.js';
 import { MODES } from './state.js';
 import { fmtTime, loadRecord } from './timetrial.js';
 import { TRACKS } from './tracks.js';
+import { drawMenuLogo } from './title.js';
 import { TRAIN } from './trainsprite.js';
 
 export function drawMenuBg(t) {
   t = t || TRACKS[(G.state === 'options' ? G.optFrom : G.state) === 'select_track' ? G.selTrack : 0];
   ctx.drawImage(t.base, 0, 0, t.W, t.H, 0, 0, VW, VH); ctx.drawImage(t.top, 0, 0, t.W, t.H, 0, 0, VW, VH);
   ctx.fillStyle = 'rgba(27,16,9,.62)'; ctx.fillRect(0, 0, VW, VH);
-}
-
-
-function drawTitle(cx, y) {
-  text('MUDRACER', cx + 3, y + 4, 32, '#1b120c', 'center', null);
-  text('MUDRACER', cx, y + 3, 32, '#6b3d17', 'center', null);
-  text('MUDRACER', cx, y, 32, '#e8a860', 'center', null);
-  const x0 = cx - 128;
-  for (let i = 0; i < 8; i++) {
-    const len = 2 + Math.round((Math.sin(G.time * 1.7 + i * 1.9) * .5 + .5) * 8), dx = x0 + i * 32 + 8 + (i * 7) % 13;
-    ctx.fillStyle = '#6b3d17'; ctx.fillRect(dx, y + 32, 3, len); ctx.fillRect(dx - 1, y + 32 + len, 5, 3);
-  }
 }
 
 
@@ -47,7 +36,7 @@ export function drawLock(cx, cy) {
 
 export function drawMain() {
   drawMenuBg(TRACKS[0]);
-  drawTitle(VW / 2, 8);
+  drawMenuLogo(12);
   const cw = 108, chh = 150, gap = 6, nm = MODES.length, x0 = (VW - (nm * cw + (nm - 1) * gap)) / 2, y0 = 62;
   const pop = Math.round(Math.max(0, 1 - (G.time - G.selAnim) * 4) * 5);
   for (let i = 0; i < nm; i++) {

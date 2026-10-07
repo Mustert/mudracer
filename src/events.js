@@ -271,8 +271,8 @@ function updateShowers(T, dt) {
   for (const s of T.showers) {
     if (s.x < cam.x - 30 || s.x > cam.x + VW + 30 || s.y < cam.y - 10 || s.y > cam.y + VH + 40) continue;
     const n = dt * 40 + Math.random();
-    for (let q = 0; q < n && q < 3; q++) addP({ t: 'd', x: s.x + (Math.random() - .5) * 5, y: s.y + (Math.random() - .5) * 3, z: 11 + Math.random() * 2, vx: (Math.random() - .5) * 6, vy: (Math.random() - .5) * 4, vz: 0, col: WATC[(Math.random() * 4) | 0], s: Math.random() < .3 ? 2 : 1, life: 1, ml: 1 });
-    if (Math.random() < dt * 2) addP({ t: 'ring', x: s.x, y: s.y, life: .7, ml: .7 });
+    for (let q = 0; q < n && q < 3; q++) addP({ t: 'd', x: s.x + (Math.random() - .5) * 11, y: s.y + (Math.random() - .5) * 8, z: 11 + Math.random() * 2, vx: (Math.random() - .5) * 8, vy: (Math.random() - .5) * 6, vz: 0, col: WATC[(Math.random() * 4) | 0], s: Math.random() < .3 ? 2 : 1, life: 1, ml: 1 });
+    if (Math.random() < dt * 2) addP({ t: 'ring', x: s.x + (Math.random() - .5) * 14, y: s.y + (Math.random() - .5) * 8, life: .7, ml: .7 });
   }
 }
 

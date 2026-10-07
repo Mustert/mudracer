@@ -15,9 +15,9 @@ const TS = { art: null, ready: false, ink: [0, 0], dirt: 0, wheel: 0, spray: [],
 }
 
 
-function buildTitleArt(ready) {
+function makeArt(ready, px) {
   const W = VW, H = 78, c = mk(W, H), g = c.getContext('2d'), lay = mk(W, H), l = lay.getContext('2d'), r = rng(5);
-  const word = 'MUDRACER', X = W / 2, Y = 12, font = '40px ' + FONT;
+  const word = 'MUDRACER', X = W / 2, Y = 12, font = px + 'px ' + FONT;
   for (const cx of [g, l]) { cx.textBaseline = 'top'; cx.textAlign = 'center'; cx.font = font; }
   g.fillStyle = '#0d0804'; g.fillText(word, X + 4, Y + 5);
   g.fillStyle = '#1b120c'; for (const [dx, dy] of [[-3, 0], [3, 0], [0, -3], [0, 3], [-2, -2], [2, -2], [-2, 2], [2, 2]]) g.fillText(word, X + dx, Y + dy);
@@ -44,7 +44,24 @@ function buildTitleArt(ready) {
     for (let dy = -br; dy <= br; dy++) { const w = Math.floor(Math.sqrt(br * br - dy * dy + br * .6)); l.fillStyle = dy < -br / 2 ? '#7d5a36' : '#4b301a'; l.fillRect(bx - w, by + dy, w * 2 + 1, 1); }
   }
   g.drawImage(lay, 0, 0);
-  TS.art = c; TS.ready = ready; TS.ink = [y0, y1];
+  return { c, ink: [y0, y1] };
+}
+
+
+function buildTitleArt(ready) { const a = makeArt(ready, 40); TS.art = a.c; TS.ready = ready; TS.ink = a.ink; }
+
+// the same logo (yellow letters, dark outline, mud on the lower half, dripping) for the main menu, a bit smaller; y = top of the letters
+const ML = { art: null, ready: false, ink: [0, 0] };
+
+export function drawMenuLogo(y) {
+  const ready = !document.fonts || document.fonts.check('16px "Press Start 2P"');
+  if (!ML.art || (ready && !ML.ready)) { const a = makeArt(ready, 32); ML.art = a.c; ML.ready = ready; ML.ink = a.ink; }
+  ctx.drawImage(ML.art, 0, y - ML.ink[0]);
+  const bx = VW / 2 - 128, by = y + ML.ink[1] - ML.ink[0];
+  for (let i = 0; i < 8; i++) {
+    const len = 2 + Math.round((Math.sin(G.time * 1.7 + i * 1.9) * .5 + .5) * 8), dx = bx + i * 32 + 7 + (i * 7) % 11;
+    R1(dx, by, 3, len, '#4b301a'); R1(dx, by, 1, len, '#7d5a36'); R1(dx - 1, by + len, 5, 3, '#4b301a'); R1(dx, by + len, 2, 1, '#7d5a36');
+  }
 }
 
 

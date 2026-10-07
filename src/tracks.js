@@ -120,8 +120,8 @@ function buildTrack(def, ti) {
   def.ponds.forEach(p => stamp(p[0], p[1], { x: 1, y: 0 }, { x: 0, y: 1 }, p[2], p[3], 3));
   const showers = (def.showers || []).map(([t, off]) => {
     const i = Math.floor(t * N) % N, p = path[i], x = p.x + nrm[i].x * off, y = p.y + nrm[i].y * off, s = Math.sign(off) || 1;
-    stamp(x, y, tan[i], nrm[i], 8, 7, 3);
-    return { i, x, y, px: x + nrm[i].x * s * 12, py: y + nrm[i].y * s * 12 };
+    stamp(x, y, tan[i], nrm[i], 14, 12, 3);
+    return { i, x, y, px: x + nrm[i].x * s * 18, py: y + nrm[i].y * s * 18 };
   });
   (def.boost || []).forEach(t => band(Math.floor(t * N) % N, 16, (x, y, a, c) => { if (Math.abs(c) < 18) ter[y * WW + x] = 4; }));
   // railway: a straight vertical line through the whole world

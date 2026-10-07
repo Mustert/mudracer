@@ -1,6 +1,5 @@
 import { G } from './g.js';
 import { AU, noise, synth, voice } from './audio.js';
-import { TRACKS } from './tracks.js';
 
 // ---------- music: one original tune per track, sequenced live ----------
 
@@ -204,8 +203,8 @@ export const Music = {
   level() {
     if (!AU.a) return;
     const vs = G.state === 'options' ? G.optFrom : G.state;
-    const menuish = ['title', 'main', 'select_car', 'select_count', 'standings', 'ceremony'].includes(vs);
-    const w = menuish ? 'menu' : vs === 'select_track' ? TRACKS[G.selTrack].def.song : G.T.def.song;
+    const menuish = ['title', 'main', 'select_cup', 'select_track', 'select_car', 'select_count', 'standings', 'ceremony'].includes(vs);
+    const w = menuish ? 'menu' : G.T.def.song;
     this.want = SONGS[w] ? w : 'kart';
     let v = .5;
     if (G.state === 'pause') v = .22; else if (G.state === 'countdown') v = .32; else if (G.state === 'finish') v = G.stateTime < 3.5 ? .12 : .4; else if (G.state === 'ceremony') v = G.stateTime < 3.5 ? .15 : .45;
