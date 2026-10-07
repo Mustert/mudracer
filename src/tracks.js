@@ -51,7 +51,7 @@ const TRACK_DEFS = [
     showers: [[.05, -15], [.25, 15], [.41, -15]] },
   { name: 'REGENBOGEN', theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 },
-  { name: 'ZUG', theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 365, y: 190, ang: 0 }], tunnels: [[430, 190], [300, 190]], pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
+  { name: 'ZUG', theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 365, y: 190, ang: 0 }], tunnels: [{ x: 365, y: 190, hw: 117, portals: [300, 430] }], pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
     mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[560, 255, 40, 22]], rail: { x: 430, lines: [430, 300] }, wash: .94 },
   { name: 'GARTEN', theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: .06,
     pts: [[100, 290], [100, 252], [103, 224], [125, 204], [170, 198], [235, 198], [300, 198], [332, 187], [344, 159], [332, 131], [305, 120], [240, 120], [180, 120],
@@ -451,9 +451,9 @@ function buildTrack(def, ti) {
     }
   }
   // tunnel hills: a rocky hill with a grassy top on the wall line, the train disappears into it (the hill lies on the top layer, so it covers the train). Solid for cars.
-  for (const [hx, hy] of def.tunnels || []) {
-    const hw = 52, hh = 33, rr = 12, inside = (x, y) => { const qx = Math.abs(x - hx) - (hw - rr), qy = Math.abs(y - hy) - (hh - rr); return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rr; };
-    darken(hx, hy, 40, 6, 8);
+  for (const { x: hx, y: hy, hw, portals } of def.tunnels || []) {
+    const hh = 33, rr = 12, inside = (x, y) => { const qx = Math.abs(x - hx) - (hw - rr), qy = Math.abs(y - hy) - (hh - rr); return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rr; };
+    for (let q = hx - hw + 20; q <= hx + hw - 20; q += 20) darken(q, hy, 40, 6, 8);
     for (let y = hy - hh - 1; y <= hy + hh + 1; y++) for (let x = hx - hw - 1; x <= hx + hw + 1; x++) {
       const d = inside(x + .5, y + .5); if (d > 0) continue;
       const dep = -d, n = vnoise(x * .22, y * .22, sd + 11), lit = ((hx - x) + (hy - y)) / (hw + hh) * 18;
@@ -468,12 +468,12 @@ function buildTrack(def, ti) {
     // the tunnel mouths on both faces: stone frame and lintel, dark opening
     for (const sy of [-1, 1]) {
       const ye = hy + sy * hh;
-      for (let k = -3; k <= 14; k++) for (let dx = -19; dx <= 19; dx++) {
+      for (const px0 of portals) for (let k = -3; k <= 14; k++) for (let dx = -19; dx <= 19; dx++) {
         const ad = Math.abs(dx), y = ye - sy * k; let c = null;
         if (k < 0) c = k === -3 ? [112, 108, 98] : [188, 184, 170];
         else if (ad <= 14) c = k < 3 && ad >= 12 ? [60, 56, 60] : [Math.max(8, 26 - k), Math.max(8, 24 - k), Math.max(10, 30 - k)];
         else c = ad === 19 ? [112, 108, 98] : [176, 172, 160];
-        if (c) setT(hx + dx, y, c);
+        if (c) setT(px0 + dx, y, c);
       }
     }
   }
