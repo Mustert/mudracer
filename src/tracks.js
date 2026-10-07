@@ -17,6 +17,8 @@ export const THEMES = {
     shore: ['#3b2a6b', '#33245e'], mudP: ['#c04dd8', '#d971f0', '#ff9cf5', '#a33bbf'], mudTrail: ['#a33bbf', '#c04dd8'], goo: true,
     grass: ['#0c0a24', '#161040', '#24145a'], grassEdge: '#3a2a7a', tuft: '#0c0a24', track: ['#ffffff', '#ffffff', '#ffffff'], trackEdge: '#ffffff', trail: '#6b5bd6',
     decor: 'space', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#000000'], trees: 0, space: true, rainbow: true },
+  garten: { ...MUDDY, water: ['#2a7184', '#34899b', '#43a0ae', '#7ccfd2'], shore: ['#8d8f86', '#777970'], grass: ['#6fb85a', '#62a84e', '#7ec766'], grassEdge: '#54944a', tuft: '#4d8a42',
+    track: ['#c4ad86', '#b59d76', '#d0ba94'], trackEdge: '#948063', trail: '#3f7a35', decor: 'garten', tree: 'cherry', treeCol: ['#c4547f', '#e98cb0', '#f9cfdf', '#4a2438'], trees: 14, fence: 'bamboo', ambient: 'sakura' },
   bahn:   { ...MUDDY, grass: ['#8fbf4a', '#7fae3f', '#9fcc5a'], grassEdge: '#6f9a33', tuft: '#5f8a2a', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#4f7a22', decor: 'farm', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 18 },
 };
 
@@ -51,6 +53,27 @@ const TRACK_DEFS = [
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 },
   { name: 'ZUG', theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 406, y: 190, ang: 0, dirs: [-1] }, { x: 454, y: 190, ang: 0, dirs: [1] }], gate: { y: 190 }, pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
     mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[280, 225, 40, 22]], rail: { x: 430 }, wash: .94 },
+  { name: 'GARTEN', theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: .06,
+    pts: [[100, 290], [100, 252], [103, 224], [125, 204], [170, 198], [235, 198], [300, 198], [332, 187], [344, 159], [332, 131], [305, 120], [240, 120], [180, 120],
+      [148, 108], [134, 80], [148, 52], [180, 40], [250, 40], [320, 40], [392, 42], [424, 52], [444, 80], [447, 125], [458, 168], [484, 198], [515, 211], [546, 198], [572, 168], [583, 125], [585, 90],
+      [595, 62], [620, 43], [642, 38], [665, 43], [690, 62], [700, 90], [706, 140], [700, 200], [692, 255], [690, 300], [688, 335],
+      [678, 368], [654, 392], [620, 402], [560, 403], [500, 403], [440, 402], [412, 401], [386, 396], [374, 380], [370, 355], [370, 335], [360, 322], [345, 317], [300, 316], [260, 318], [232, 328],
+      [212, 350], [205, 376], [204, 392], [194, 404], [170, 408], [142, 397], [117, 372], [102, 336]],
+    mud: [[.21, 0, 30, 34], [.33, 0, 30, 34], [.56, 0, 30, 34], [.69, 0, 30, 34], [.91, 0, 30, 34]], water: [[.10, 0, 28, 34], [.43, 0, 26, 34], [.62, 0, 26, 34], [.87, 0, 26, 34]], ponds: [],
+    // deep water: rivers and ponds as chains of circles [x, y, radius]. The river from the top runs into the pool and the pond inside the first U, the second river crosses the
+    // lower road twice and feeds the lake in the middle (a channel), the lake drains to the south. You fall into deep water, roads over it are bridges.
+    rivers: [
+      [[515, -14, 10], [515, 38, 11], [515, 82, 35], [515, 116, 14], [515, 148, 25]],
+      [[812, 299, 13], [742, 301, 13], [660, 305, 13], [592, 312, 13], [543, 327, 13], [510, 350, 13], [500, 386, 13], [500, 422, 13], [502, 462, 13]],
+      [[508, 350, 11], [462, 351, 10], [420, 352, 10], [372, 352, 10], [336, 360, 12]],
+      [[264, 378, 24], [312, 378, 24]], [[288, 378, 26], [288, 378, 26]],
+      [[288, 400, 12], [288, 462, 13]]],
+    // stepping stones: the short cut across the pool (top) and across the lake (bottom)
+    stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10], [322, 372, 9], [298, 388, 9], [272, 370, 9], [250, 384, 9]],
+    // clipped hedges that keep you from cutting across the garden: [x1, y1, x2, y2]
+    hedges: [[12, 159, 333, 159], [172, 80, 396, 80], [135, 258, 396, 258], [396, 78, 396, 300], [396, 300, 520, 314], [642, 98, 642, 290], [152, 260, 152, 376]],
+    pagodas: [[765, 142, 4, 1.15], [758, 388, 4, 1.15], [452, 262, 3, .85]],
+    koi: [[515, 148, 13, 10], [288, 380, 36, 11], [515, 84, 14, 10], [655, 303, 40, 3]] },
 ];
 
 
@@ -115,6 +138,32 @@ function buildTrack(def, ti) {
       }
   };
   const onPath = (t, off, rx, ry, type) => { const i = Math.floor(t * N) % N, p = path[i]; stamp(p.x + nrm[i].x * off, p.y + nrm[i].y * off, tan[i], nrm[i], rx, ry, type); };
+  // deep water (type 5): rivers, pools and lakes next to the road. A road over it stays road = a bridge. Stepping stones are road again.
+  const deep = new Uint8Array(A), stoneMask = new Uint8Array(A), bridgeMask = new Uint8Array(A), isBridge = new Uint8Array(N), bridges = [];
+  const capsule = (c0, c1) => {
+    const st = Math.max(1, Math.ceil(Math.hypot(c1[0] - c0[0], c1[1] - c0[1]) / 2));
+    for (let s = 0; s <= st; s++) {
+      const f = s / st, cx = c0[0] + (c1[0] - c0[0]) * f, cy = c0[1] + (c1[1] - c0[1]) * f, r = c0[2] + (c1[2] - c0[2]) * f, R = Math.ceil(r + 4);
+      for (let y = Math.max(0, Math.floor(cy - R)); y <= Math.min(WH - 1, Math.ceil(cy + R)); y++)
+        for (let x = Math.max(0, Math.floor(cx - R)); x <= Math.min(WW - 1, Math.ceil(cx + R)); x++)
+          if (Math.hypot(x + .5 - cx, y + .5 - cy) < r + (vnoise(x * .12, y * .12, sd + 9) - .5) * 4) deep[y * WW + x] = 1;
+    }
+  };
+  (def.rivers || []).forEach(ch => { for (let k = 1; k < ch.length; k++) capsule(ch[k - 1], ch[k]); });
+  for (let j = 0; j < A; j++) if (deep[j] && ter[j] === 0) ter[j] = 5;
+  if (def.rivers) {
+    const inW = path.map(p => deep[Math.round(clamp(p.y, 0, WH - 1)) * WW + Math.round(clamp(p.x, 0, WW - 1))]), s0 = inW.indexOf(0);
+    for (let k = 0, a = -1; k <= N; k++) {
+      const i = (s0 + k) % N;
+      if (k < N && inW[i]) { if (a < 0) a = k; }
+      else if (a >= 0) { bridges.push([(s0 + a - 8 + N) % N, (s0 + k - 1 + 8) % N]); a = -1; }
+    }
+    for (const [a, b] of bridges) for (let i = a; ; i = (i + 1) % N) { isBridge[i] = 1; if (i === b) break; }
+    for (let j = 0; j < A; j++) if (dist[j] < HALF && isBridge[near[j]]) bridgeMask[j] = 1;
+  }
+  for (const [sx, sy, sr] of def.stones || [])
+    for (let y = Math.floor(sy - sr - 3); y <= Math.ceil(sy + sr + 3); y++) for (let x = Math.floor(sx - sr - 3); x <= Math.ceil(sx + sr + 3); x++)
+      if (Math.hypot(x + .5 - sx, y + .5 - sy) < sr + (vnoise(x * .3, y * .3, sd + 4) - .5) * 2) { ter[y * WW + x] = 1; stoneMask[y * WW + x] = 1; }
   def.mud.forEach(m => onPath(m[0], m[1], m[2], m[3], 2));
   def.water.forEach(m => onPath(m[0], m[1], m[2], m[3], 3));
   def.ponds.forEach(p => stamp(p[0], p[1], { x: 1, y: 0 }, { x: 0, y: 1 }, p[2], p[3], 3));
@@ -135,11 +184,11 @@ function buildTrack(def, ti) {
   }
   const shore = new Uint8Array(A);
   for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) {
-    const j = y * WW + x; if (ter[j] !== 3 || sea[j]) continue;
+    const j = y * WW + x; if ((ter[j] !== 3 && ter[j] !== 5) || sea[j]) continue;
     for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
       if (dx * dx + dy * dy > 10) continue;
       const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue;
-      const k = yy * WW + xx; if (ter[k] !== 3) shore[k] = 1;
+      const k = yy * WW + xx; if (ter[k] !== 3 && ter[k] !== 5 && (ter[j] === 3 || ter[k] === 0)) shore[k] = 1;
     }
   }
   const ed = (x, y, type, mr) => {
@@ -164,7 +213,12 @@ function buildTrack(def, ti) {
   for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) {
     const j = y * WW + x, t = ter[j], nv = vnoise(x / 9, y / 9, sd), h = hash(x, y, sd);
     let col;
-    if (t === 3) {
+    if (bridgeMask[j]) {
+      // wooden bridge: planks across the road, rails along both edges (they are solid, see below)
+      const i = near[j], dd = dist[j];
+      col = dd > HALF - 2.5 ? (i % 6 < 2 ? [206, 156, 92] : [124, 82, 44]) : dd > HALF - 4.5 ? (i % 6 < 2 ? [168, 118, 66] : [84, 52, 26]) : i % 3 === 0 ? [96, 64, 34] : (Math.floor(i / 3) & 1) ? [176, 128, 74] : [160, 112, 62];
+      if (h < .03 && dd < HALF - 4.5) col = [128, 88, 46];
+    } else if (t === 3 || t === 5) {
       if (sea[j]) {
         // tropical sea: foam, turquoise shallows, deeper blue further out
         const dp = y - shoreY[x] + (nv - .5) * 3;
@@ -172,7 +226,7 @@ function buildTrack(def, ti) {
         if (dp > 8) watPix.push(j);
       }
       else {
-        watPix.push(j); const e = ed(x, y, 3, 4); col = e === 1 ? WAT[0] : e <= 3 ? WAT[1] : nv > .55 ? WAT[3] : WAT[2];
+        watPix.push(j); const e = ed(x, y, t, 4); col = e === 1 ? WAT[0] : e <= 3 ? WAT[1] : nv > .55 ? WAT[3] : WAT[2];
         if (th.leafWater && e > 2 && hash(x, y, sd + 5) < .012) col = [[224, 138, 44], [217, 180, 58], [181, 86, 42]][(h * 3) | 0];
       }
     } else if (shore[j]) col = SHORE[h < .5 ? 0 : 1];
@@ -228,6 +282,18 @@ function buildTrack(def, ti) {
         const x = Math.round(p.x + nrm[i].x * s * (PIER.half + 2)), y = Math.round(p.y + nrm[i].y * s * (PIER.half + 2));
         for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (x + dx >= 0 && y + dy >= 0 && x + dx < WW && y + dy < WH) set((y + dy) * WW + x + dx, dy === -1 && dx === 0 ? [138, 100, 64] : [59, 37, 18]);
       }
+    }
+  }
+  // stepping stones: round grey stones with a dark rim, some moss, a ripple in the water around them
+  for (const [sx, sy, sr] of def.stones || []) {
+    for (let y = Math.floor(sy - sr - 4); y <= Math.ceil(sy + sr + 4); y++) for (let x = Math.floor(sx - sr - 4); x <= Math.ceil(sx + sr + 4); x++) {
+      if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
+      const j = y * WW + x, dx = x + .5 - sx, dy = y + .5 - sy, dd = Math.hypot(dx, dy);
+      if (!stoneMask[j]) { if (ter[j] === 5 && dd < sr + 3.5 && hash(x, y, sd + 6) < .5) set(j, [150, 214, 220]); continue; }
+      const sh = (dx + dy) / sr;
+      let c = dd > sr - 1.6 ? [84, 84, 80] : sh < -.35 ? [196, 194, 184] : sh > .4 ? [128, 127, 120] : [164, 162, 153];
+      if (dd <= sr - 1.6 && hash(x, y, sd + 7) < .1) c = [96, 138, 72];
+      set(j, c);
     }
   }
   // boost pads: yellow chevrons pointing the way
@@ -363,7 +429,7 @@ function buildTrack(def, ti) {
     for (const sx of [rail.x - 28, rail.x + 28]) { for (let dy = -4; dy <= 4; dy++) for (let dx = -3; dx <= 3; dx++) px(sx + dx, gy + dy, PO); px(sx, gy - 3, hex('#ff3b3b')); }
   }
   // fence along both sides of the track: rope (beach), white pickets (meadow), logs (forest)
-  const FENCE = { rope: ['#f0dcaa', '#7a4f2a', '#a8743f', '#5a3a1c', 9], picket: ['#e6e1d2', '#ffffff', '#f4f1e6', '#8a8472', 6], log: ['#8a6440', '#5a3a1c', '#7a5230', '#3b2512', 12] }[th.fence];
+  const FENCE = { rope: ['#f0dcaa', '#7a4f2a', '#a8743f', '#5a3a1c', 9], bamboo: ['#c9d49a', '#5f7d34', '#87a24b', '#364a1c', 9], picket: ['#e6e1d2', '#ffffff', '#f4f1e6', '#8a8472', 6], log: ['#8a6440', '#5a3a1c', '#7a5230', '#3b2512', 12] }[th.fence];
   if (FENCE) {
     const RL = hex(FENCE[0]), P0 = hex(FENCE[1]), P1 = hex(FENCE[2]), P2 = hex(FENCE[3]), RL2 = hex('#6b4a2e');
     for (let i = 0; i < N; i++) for (const s of [-1, 1]) {
@@ -510,6 +576,68 @@ function buildTrack(def, ti) {
       }
     });
     scatter(7, 8, (x, y) => critters.push({ type: 'crab', x, y, ph: r() * TAU, range: 8 + r() * 18 }));
+  } else if (th.decor === 'garten') {
+    const rc = (x0, y0, w, h, c) => { for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) setT(x0 + xx, y0 + yy, c); };
+    const GR = ['#2f6b3a', '#3f8a47', '#58a85a', '#e8a6c0', '#ffffff'].map(hex);
+    // the rails of the bridges are solid
+    for (let i = 0; i < N; i += 3) if (isBridge[i]) for (const s of [-1, 1]) walls.push({ x: path[i].x + nrm[i].x * s * HALF, y: path[i].y + nrm[i].y * s * HALF, r: 3 });
+    // clipped hedges between the roads: solid, a few blossoms
+    for (const [x1, y1, x2, y2] of def.hedges || []) {
+      const L = Math.hypot(x2 - x1, y2 - y1);
+      for (let t = 0; t <= L; t += 4) {
+        const x = Math.round(x1 + (x2 - x1) * t / L), y = Math.round(y1 + (y2 - y1) * t / L), j = y * WW + x;
+        if (dist[j] < HALF + 3 || ter[j] !== 0) continue;
+        if (t % 8 === 0) { walls.push({ x, y, r: 5 }); darken(x, y, 5, 2, 3); for (let dy = -7; dy <= 7; dy++) for (let dx = -7; dx <= 7; dx++) if (dx * dx + dy * dy <= 49) wallMask[clamp(y + dy, 0, WH - 1) * WW + clamp(x + dx, 0, WW - 1)] = 1; }
+        for (let dy = -5; dy <= 5; dy++) for (let dx = -5; dx <= 5; dx++) {
+          if (dx * dx + dy * dy > 28) continue;
+          const sh = (dx + dy) / 6, hh = hash(x + dx, y + dy, 3);
+          setT(x + dx, y + dy, hh < .05 ? GR[3 + (hh < .02 ? 1 : 0)] : sh < -.4 ? GR[2] : sh > .4 ? GR[0] : GR[1]);
+        }
+      }
+    }
+    // large pagodas outside of the track: stone base, tiers of white walls with red posts and dark curved roofs
+    const pagoda = (cx, cy, n, sc) => {
+      const WL = hex('#efe8d8'), WD = hex('#c9c0aa'), PO = hex('#b83a2a'), RF = ['#7a8496', '#556070', '#363d4b'].map(hex), ST = ['#b3b1a6', '#8c8a80'].map(hex), GD = hex('#e8c14a');
+      walls.push({ x: cx, y: cy - 4, r: Math.round(13 * sc) }); darken(cx, cy - 4, Math.round(15 * sc), 7, 5);
+      for (let dy = -Math.round(15 * sc); dy <= Math.round(15 * sc); dy++) for (let dx = -Math.round(15 * sc); dx <= Math.round(15 * sc); dx++) if (Math.hypot(dx, dy) < 15 * sc) wallMask[clamp(cy - 4 + dy, 0, WH - 1) * WW + clamp(cx + dx, 0, WW - 1)] = 1;
+      for (let dy = -Math.round((n * 12 + 16) * sc); dy <= 4; dy++) for (let dx = -Math.round(24 * sc); dx <= Math.round(24 * sc); dx++) wallMask[clamp(cy + dy, 0, WH - 1) * WW + clamp(cx + dx, 0, WW - 1)] = 1;
+      let y = cy; const bw = Math.round(21 * sc);
+      rc(cx - bw, y - 4, bw * 2, 4, ST[0]); rc(cx - bw, y - 1, bw * 2, 1, ST[1]); rc(cx - bw + 2, y - 5, bw * 2 - 4, 1, ST[0]); y -= 5;
+      for (let t = 0; t < n; t++) {
+        const hw = Math.round((15 - t * 2.4) * sc), wh = Math.round(7 * sc), rw = hw + Math.round(5 * sc);
+        rc(cx - hw, y - wh, hw * 2, wh, WL); rc(cx - hw, y - 1, hw * 2, 1, WD); rc(cx - hw, y - wh, 2, wh, PO); rc(cx + hw - 2, y - wh, 2, wh, PO); rc(cx - 1, y - wh, 2, wh, PO);
+        rc(cx - hw + 3, y - wh + 2, 3, wh - 3, hex('#3b2a22')); rc(cx + hw - 6, y - wh + 2, 3, wh - 3, hex('#3b2a22'));
+        y -= wh;
+        rc(cx - rw - 2, y - 1, (rw + 2) * 2, 1, RF[2]); rc(cx - rw, y - 2, rw * 2, 1, RF[1]); rc(cx - rw + 2, y - 3, (rw - 2) * 2, 1, RF[0]); rc(cx - rw + 5, y - 4, (rw - 5) * 2, 1, RF[1]);
+        rc(cx - rw - 3, y - 2, 1, 1, RF[1]); rc(cx + rw + 2, y - 2, 1, 1, RF[1]); y -= 4;
+      }
+      const sp = Math.round(9 * sc); rc(cx, y - sp, 1, sp, hex('#8a6a30')); for (let k = 0; k < 3; k++) rc(cx - 1, y - 3 - k * 2, 3, 1, GD); rc(cx - 1, y - sp - 2, 3, 2, GD);
+    };
+    for (const [x, y, n, sc] of def.pagodas || []) pagoda(x, y, n, sc);
+    flowers(240, ['#ffc2d6', '#ffffff', '#ff9fbf', '#ffe14d', '#b9a2ff'].map(hex));
+    // bonsai trees in their pots
+    scatter(9, 8, (x, y) => {
+      walls.push({ x, y, r: 5 }); darken(x, y, 5, 2, 3);
+      rc(x - 4, y + 1, 9, 4, hex('#8a5a3a')); rc(x - 5, y, 11, 1, hex('#b07a52')); rc(x - 3, y + 4, 7, 1, hex('#5a3a22'));
+      for (let k = 0; k < 9; k++) rc(x - 1 + Math.round(Math.sin(k * .55) * 2), y - k, 2, 1, hex('#6b4a2e'));
+      for (const [bx, by, rr] of [[x - 5, y - 7, 4], [x + 4, y - 10, 4], [x - 1, y - 14, 5]])
+        for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr - 1; dx <= rr + 1; dx++) if ((dx / (rr + 1)) ** 2 + (dy / rr) ** 2 <= 1) setT(bx + dx, by + dy, dx + dy < -2 ? GR[2] : dx + dy > 2 ? GR[0] : GR[1]);
+    });
+    // stone lanterns
+    scatter(8, 6, (x, y) => {
+      const S0 = hex('#b9b7ac'), S1 = hex('#8f8d82'), S2 = hex('#6d6b62');
+      walls.push({ x, y, r: 4 }); darken(x, y, 4, 2, 3);
+      rc(x - 4, y, 9, 2, S1); rc(x - 1, y - 6, 3, 6, S0); rc(x - 4, y - 11, 9, 5, S1); rc(x - 3, y - 10, 7, 3, S0); rc(x - 1, y - 10, 3, 3, hex('#ffd36a'));
+      rc(x - 5, y - 13, 11, 2, S2); rc(x - 3, y - 15, 7, 2, S1); rc(x - 1, y - 17, 3, 2, S0);
+    });
+    scatter(18, 3, rock);
+    // lotus pads on the ponds
+    for (const [lx, ly] of [[503, 152], [528, 141], [515, 164], [500, 102], [532, 100], [283, 376], [305, 381], [262, 394]]) {
+      if (ter[ly * WW + lx] !== 5) continue;
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const dd = dx * dx + dy * dy; if (dd > 10 || (dd > 1 && dx > 0 && dy === 0)) continue; px(lx + dx, ly + dy, dx + dy < -1 ? hex('#6fca57') : hex('#3f9a3f')); }
+      px(lx - 1, ly - 1, hex('#ffb3cf')); px(lx, ly - 1, hex('#ffffff')); px(lx - 1, ly, hex('#ff8fb8'));
+    }
+    for (const [kx, ky, krx, kry] of def.koi || []) for (let k = 0; k < 3; k++) critters.push({ type: 'koi', x: kx, y: ky, rx: krx, ry: kry, ph: r() * TAU + k * 2.1, col: (r() * 3) | 0 });
   } else if (th.decor === 'farm') {
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
@@ -540,8 +668,8 @@ function buildTrack(def, ti) {
     if (!f) {
       if (ter[j] !== 0 || dist[j] < HALF + 18 || shore[j] || wallMask[j]) continue;
       if (rail && Math.abs(x - rail.x) < 36) continue;
-      if (trees.some(o => Math.hypot(o.x - x, o.y - y) < 26)) continue;
-      let wet = false; for (let dy = -14; dy <= 14 && !wet; dy += 7) for (let dx = -14; dx <= 14; dx += 7) { const xx = clamp(x + dx, 0, WW - 1), yy = clamp(y + dy, 0, WH - 1); if (ter[yy * WW + xx] === 3) wet = true; }
+      if (trees.some(o => Math.hypot(o.x - x, o.y - y) < 26) || walls.some(o => Math.hypot(o.x - x, o.y - y) < 17)) continue;
+      let wet = false; for (let dy = -14; dy <= 14 && !wet; dy += 7) for (let dx = -14; dx <= 14; dx += 7) { const xx = clamp(x + dx, 0, WW - 1), yy = clamp(y + dy, 0, WH - 1); if (ter[yy * WW + xx] === 3 || ter[yy * WW + xx] === 5) wet = true; }
       if (wet) continue;
     }
     trees.push({ x, y, r: th.tree === 'palm' ? 5 : 9 });
@@ -550,13 +678,13 @@ function buildTrack(def, ti) {
       const xx = x + dx + 5, yy = y + dy + 7; if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue;
       const i = (yy * WW + xx) * 4; d[i] *= .7; d[i + 1] *= .7; d[i + 2] *= .72;
     }
-    if (th.tree === 'round') {
+    if (th.tree === 'round' || th.tree === 'cherry') {
       for (let dy = -14; dy <= 14; dy++) for (let dx = -14; dx <= 14; dx++) {
         const X = x + dx, Y = y + dy, dd = Math.hypot(dx, dy) + (vnoise(X * .45, Y * .45, 5) - .5) * 3.5; if (dd > 11.5) continue;
         const s = (dx + dy) / 11 + (vnoise(X * .5, Y * .5, 6) - .5) * .9;
         let col = s < -.55 ? C[2] : s > .45 ? C[0] : C[1];
         if (vnoise(X * .7, Y * .7, 8) > .74 && s < .3) col = C[2];
-        if (hash(X, Y, 7) < .015) col = [224, 59, 59];
+        if (hash(X, Y, 7) < .015) col = th.tree === 'cherry' ? [255, 246, 250] : [224, 59, 59];
         setT(X, Y, col);
       }
     } else if (th.tree === 'pine') {
@@ -586,7 +714,7 @@ function buildTrack(def, ti) {
   mg.imageSmoothingEnabled = true; mg.drawImage(base, 0, 0, 120, 68); mg.drawImage(top, 0, 0, 120, 68);
   const wp = path[wi];
   return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: trees.concat(walls), critters, windmill, shoreY, boat: { x: 60 }, base, top, mini, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier };
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges };
 }
 
 

@@ -16,6 +16,20 @@ import { updateTrain } from './train.js';
 
 // ---------- update ----------
 
+// a car that falls into deep water: splash, washed clean, gone for a moment, then back on the road where it left it (and see-through for a while)
+function sinkCar(c) {
+  c.fall = 1.4; c.wet = 0; c.dirt = 0; c.vx = c.vy = 0; c.boost = 0; c.stun = 0;
+  splash(c.x, c.y, 26); SFX.splash(c.ai ? .4 : 1);
+}
+
+
+function respawn(c) {
+  const N = G.T.N, i = ((c.safe || c.idx) - 5 + N) % N, p = G.T.path[i], tg = G.T.tan[i];
+  c.x = p.x; c.y = p.y; c.ang = Math.atan2(tg.y, tg.x); c.vx = c.vy = 0; c.idx = i; c.surf = 1; c.ghost = 2.4;
+  splash(c.x, c.y, 8);
+}
+
+
 function updateRace(dt) {
   const racing = G.state === 'race' || G.state === 'finish';
   updateTrain(dt);
@@ -23,6 +37,8 @@ function updateRace(dt) {
   for (const c of G.cars) {
     let thr = 0, tgt = null;
     c.brake = false;
+    c.ghost = Math.max(0, c.ghost - dt);
+    if (c.fall > 0) { c.fall -= dt; c.vx = c.vy = 0; if (c.fall <= 0) respawn(c); continue; } // sunk in the water, comes back on the track in a moment
     if (c.stun > 0) {
       c.stun -= dt; c.ang += c.spin * dt; c.spin *= Math.exp(-2 * dt); if (c.stun <= 0) c.stun = 0;
     } else if (racing && !(G.T.run && c.finished)) {
@@ -58,6 +74,7 @@ function updateRace(dt) {
   }
   // collisions: trees, world border, other cars
   for (const c of G.cars) {
+    if (c.fall > 0) continue;
     for (const o of G.T.trees) {
       const dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy), mn = o.r + 9;
       if (d < mn && d > 0) {
@@ -72,6 +89,7 @@ function updateRace(dt) {
   eventCollisions();
   for (let i = 0; i < G.cars.length; i++) for (let j = i + 1; j < G.cars.length; j++) {
     const a = G.cars[i], b = G.cars[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
+    if (a.ghost > 0 || b.ghost > 0 || a.fall > 0 || b.fall > 0) continue; // a car that just came back out of the water is see-through for a moment
     if (d < 18 && d > 0) {
       const nx = dx / d, ny = dy / d, ov = (18 - d) / 2;
       a.x -= nx * ov; a.y -= ny * ov; b.x += nx * ov; b.y += ny * ov;
@@ -82,9 +100,12 @@ function updateRace(dt) {
   // ground, dirt, effects, tyre tracks
   const th = G.T.th;
   for (const c of G.cars) {
-    if (c.z > 0) continue;
+    if (c.z > 0 || c.fall > 0) continue;
     const j = clamp(c.y | 0, 0, G.T.H - 1) * G.T.W + clamp(c.x | 0, 0, G.T.W - 1);
     const prev = c.surf; c.surf = G.T.ter[j]; c.washing = !!G.T.washMask[j];
+    // deep water: a car that is over it for a moment falls in (stepping stones and bridges are road)
+    c.wet = c.surf === 5 ? c.wet + dt : 0;
+    if (c.wet > .22) { sinkCar(c); continue; }
     const sp = Math.hypot(c.vx, c.vy), v = c.ai ? .35 : 1;
     if (c.surf === 2) {
       c.dirt = Math.min(1, c.dirt + .55 * dt * (sp > 8 ? 1 : .3)); c.mudTrail = 1.6;
@@ -114,7 +135,7 @@ function updateRace(dt) {
         const wx = c.x - fx * 11 - fy * side, wy = c.y - fy * 11 + fx * side;
         let col = null, a = 0;
         if (c.surf === 2) { col = th.mudTrail[0]; a = .5; }
-        else if (c.surf === 3) col = null;
+        else if (c.surf === 3 || c.surf === 5) col = null;
         else if (c.mudTrail > 0) { col = th.mudTrail[1]; a = .45 * c.mudTrail / 1.6; }
         else if (c.wetTrail > 0 && c.surf === 1) { col = '#7a5a3a'; a = .3 * c.wetTrail; }
         else if (c.surf === 0) { col = th.trail; a = .1; }
@@ -125,7 +146,7 @@ function updateRace(dt) {
     }
     c.mudTrail = Math.max(0, c.mudTrail - dt); c.wetTrail = Math.max(0, c.wetTrail - dt * .7);
     if (G.state !== 'countdown') {
-      if (!G.T.run) updateProgress(c);
+      if (!G.T.run) { updateProgress(c); if (c.surf !== 5 && c.off <= HALF + 1) c.safe = c.idx; }
       else if (!c.finished && c.y < G.T.finishY) { c.finished = true; c.place = 1; setState('finish'); SFX.fanfare(); }
     }
   }
@@ -136,6 +157,12 @@ function updateRace(dt) {
 
 function spawnAmbient(dt) {
   const a = G.T.th.ambient, n = G.parts.reduce((s, p) => s + (p.t === 'bfly' || p.t === 'ffly' ? 1 : 0), 0);
+  if (a === 'sakura') {
+    // blossom petals blow across the garden, now and then a paper lantern floats over the track
+    const np = G.parts.reduce((s, p) => s + (p.t === 'petal' ? 1 : 0), 0), nl = G.parts.reduce((s, p) => s + (p.t === 'lantern' ? 1 : 0), 0);
+    if (np < 70 && Math.random() < dt * 14) addP({ t: 'petal', x: cam.x - 40 + Math.random() * (VW + 80), y: cam.y - 6, vx: 20, vy: 14 + Math.random() * 12, life: 10, ml: 10, ph: Math.random() * 10, col: pick(['#ffc2d6', '#ffd9e6', '#ff9fbf', '#ffffff', '#ffb3cc']) });
+    if (nl < 3 && Math.random() < dt * .3) addP({ t: 'lantern', x: cam.x + 20 + Math.random() * (VW - 40), y: cam.y + VH + 14, vx: 8, vy: -(9 + Math.random() * 6), life: 40, ml: 40, ph: Math.random() * 10, col: pick(['#e8452c', '#ff8a2c', '#ffcf3f']) });
+  }
   const rx = () => cam.x + Math.random() * VW, ry = () => cam.y + Math.random() * VH;
   if (a === 'gull' && Math.random() < dt * .3) { addP({ t: 'gull', x: cam.x - 20, y: cam.y + 20 + Math.random() * (VH - 70), vx: 55 + Math.random() * 30, vy: (Math.random() - .5) * 14, life: 12, ml: 12, ph: Math.random() * 10 }); if (Math.random() < .6) SFX.gull(); }
   if (a === 'butterfly' && n < 10 && Math.random() < dt * 2) addP({ t: 'bfly', x: rx(), y: ry(), vx: 0, vy: 0, life: 9, ml: 9, ph: Math.random() * 10, col: pick(['#ff5a7a', '#ffd93d', '#5ab4ff', '#ffffff', '#b36bff', '#ff9f43']) });
@@ -156,6 +183,8 @@ function updateParticles(dt) {
     } else if (p.t === 'conf') p.x += Math.sin(G.time * 5 + p.ph) * 14 * dt;
     else if (p.t === 'bfly' || p.t === 'ffly') { const k = p.t === 'bfly' ? 90 : 30, m = p.t === 'bfly' ? 28 : 12; p.vx = clamp(p.vx + (Math.random() - .5) * k * dt, -m, m); p.vy = clamp(p.vy + (Math.random() - .5) * k * dt, -m, m); }
     else if (p.t === 'leaf') p.vx = 14 + Math.sin(G.time * 2 + p.ph) * 22;
+    else if (p.t === 'petal') { p.vx = 18 + Math.sin(G.time * 2.2 + p.ph) * 22; if (p.y > cam.y + VH + 20) p.life = 0; }
+    else if (p.t === 'lantern') { p.vx = 9 + Math.sin(G.time * 1.1 + p.ph) * 7; if (p.y < cam.y - 40 || p.x > cam.x + VW + 40) p.life = 0; }
     if (p.life <= 0) G.parts.splice(i, 1);
   }
 }

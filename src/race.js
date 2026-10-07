@@ -34,7 +34,7 @@ export function resetWorld() {
 
 export function makeCar(def, x, y, ang, ai, skill, entry) {
   return { def, entry, F: carSet(def, G.T.th.goo), x, y, ang, vx: 0, vy: 0, dirt: 0, lap: 0, cp: 0, idx: 0, off: 0, ai, skill, seed: Math.random() * 100,
-    surf: 1, mudTrail: 0, wetTrail: 0, finished: false, place: 0, honk: 0, bump: 0, washing: false, boost: 0, stun: 0, spin: 0, brake: false, z: 0, vz: 0 };
+    surf: 1, mudTrail: 0, wetTrail: 0, finished: false, place: 0, honk: 0, bump: 0, washing: false, boost: 0, stun: 0, spin: 0, brake: false, z: 0, vz: 0, wet: 0, fall: 0, ghost: 0, safe: 0 };
 }
 
 

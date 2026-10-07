@@ -173,6 +173,24 @@ const SONGS = {
       if (s === 4 || s === 12) M.snare(t, .45);
       M.brush(t, (s & 3) === 2 ? 1 : .5);
     } },
+  // quiet garden: pentatonic D major, a singing erhu over rippling yangqin, soft bass, wood block and a low drum
+  garden: { bpm: 84, swing: 0,
+    chords: { D: { r: 38, n: [62, 66, 69] }, Bm: { r: 35, n: [59, 62, 66] }, G: { r: 43, n: [62, 67, 71] }, A: { r: 45, n: [61, 64, 69] } },
+    A: { ch: ['D', 'D', 'Bm', 'Bm', 'G', 'D', 'A', 'D'], mel: mel([
+      'F#5:0:4 A5:4:4 B5:8:6 A5:14:2', 'F#5:0:6 E5:6:2 D5:8:8', 'D5:0:4 F#5:4:4 B5:8:4 D6:12:4', 'B5:0:6 A5:6:2 F#5:8:8',
+      'B5:0:4 A5:4:4 F#5:8:4 E5:12:4', 'D5:0:4 E5:4:4 F#5:8:8', 'A5:0:4 F#5:4:2 E5:6:2 D5:8:4 E5:12:4', 'D5:0:12']) },
+    B: { ch: ['G', 'D', 'Bm', 'A', 'G', 'D', 'A', 'D'], mel: mel([
+      'D6:0:4 B5:4:4 A5:8:8', 'F#5:0:4 A5:4:4 D6:8:8', 'B5:0:6 D6:6:2 E6:8:4 D6:12:4', 'A5:0:8 E5:8:8',
+      'B5:0:4 D6:4:4 F#6:8:8', 'E6:0:4 D6:4:4 A5:8:4 F#5:12:4', 'E5:0:4 F#5:4:4 A5:8:4 B5:12:4', 'A5:0:4 F#5:4:4 D5:8:8']) },
+    lead(M, m, t, d) { M.erhu(hz(m), t, d); },
+    band(M, s, t, bi, ch) {
+      if (s % 2 === 0) M.yangqin(hz(ch.n[[0, 1, 2, 1, 2, 1, 0, 1][s >> 1] % ch.n.length] + 12), t, s % 4 === 0 ? 1 : .55);
+      if (s === 0) M.pad(ch.n, t, 16 * M.sd, .016);
+      if (s === 0 || s === 10) M.bassWarm(hz(ch.r - 12 + (s === 10 ? 7 : 0)), t, 5 * M.sd);
+      if (s === 0 && bi % 2 === 0) M.tom(130, t);
+      if (s === 12) M.rim(t);
+      M.shaker(t, s % 4 === 0 ? .55 : .2);
+    } },
 };
 
 
@@ -233,6 +251,13 @@ export const Music = {
   clave(t) { voice({ at: t, f: 2500, to: 2300, a: .001, d: .05, vol: .07, dest: this.out }); voice({ at: t, f: 1250, a: .001, d: .04, vol: .03, dest: this.out }); },
   chuck(t) { noise({ at: t, type: 'bandpass', f: 2200, q: 1.2, a: .002, d: .04, vol: .06, dest: this.out }); },
   harmonica(f, t, d) { synth({ at: t, f, parts: [['sawtooth', 1, .6], ['square', 1, .45, 5]], a: .035, hold: Math.max(0, d * .8), d: .1, vol: .12, ft: 'bandpass', lp: Math.min(6000, f * 3), q: 1.1, vib: [6, .008], dest: this.leadBus }); },
+  // erhu: a bowed, nasal string with a slow vibrato that sets in after the start of the note
+  erhu(f, t, d) { synth({ at: t, f, parts: [['sawtooth', 1, .7], ['triangle', 1, .45], ['square', 2, .12]], a: .09, hold: Math.max(0, d * .85), d: .16, vol: .11, ft: 'bandpass', lp: Math.min(5500, f * 3.2), q: 1.3, vib: [5.3, .011], dest: this.leadBus }); },
+  // yangqin: hammered dulcimer, bright pluck with a short ring (struck twice, slightly detuned)
+  yangqin(f, t, v = 1) {
+    synth({ at: t, f, parts: [['triangle', 1, 1], ['sine', 2, .4], ['square', 3, .1]], a: .002, d: .42, vol: .06 * v, lp: 5200, lpTo: 1400, lpT: .25, dest: this.out });
+    synth({ at: t + .012, f: f * 1.004, parts: [['triangle', 1, 1]], a: .002, d: .3, vol: .03 * v, lp: 3600, dest: this.out });
+  },
   glock(f, t, v = 1) { synth({ at: t, f, parts: [['sine', 1, 1], ['sine', 2.76, .3]], a: .001, d: .5, vol: .035 * v, dest: this.leadBus }); },
   riser(t, dur) { noise({ at: t, type: 'bandpass', f: 300, to: 7000, a: dur * .95, d: .05, vol: .07, q: 3, dest: this.out }); },
   marimba(f, t) { synth({ at: t, f, parts: [['sine', 1, 1]], a: .003, d: .35, vol: .12, dest: this.out }); synth({ at: t, f, parts: [['sine', 4, 1]], a: .001, d: .04, vol: .035, dest: this.out }); },

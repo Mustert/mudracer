@@ -44,6 +44,8 @@ export function rotIndex(a) { return (((Math.round(a / TAU * ROTS) % ROTS) + ROT
 
 
 function drawCar(c) {
+  if (c.fall > 0) return; // under water
+  if (c.ghost > 0 && ((G.time * 12) | 0) % 2) return; // blinks after coming back out of the water
   const F = c.F, rot = rotIndex(c.ang), lv = Math.min(5, Math.round(c.dirt * 5));
   const x = Math.round(c.x) - SS / 2, y = Math.round(c.y) - SS / 2 - c.bump;
   if (c.z > 0) { // in the air: bigger car, shadow left on the ground
@@ -122,6 +124,14 @@ function drawCritters() {
       R1(x - 4, y - 1, 8, 5, '#1b120c'); R1(x + dir * 3 - 1, y - 3, 3, 4, '#1b120c'); R1(x + dir * 2, y - 6, 1, 4, '#1b120c'); R1(x + dir * 4, y - 6, 1, 4, '#1b120c');
       R1(x - 3, y, 6, 3, B); R1(x - 3, y + 2, 6, 1, B2); R1(x + dir * 3, y - 2, 2, 2, B); R1(x + dir * 2, y - 5, 1, 3, B); R1(x + dir * 4, y - 5, 1, 3, B);
       R1(x + dir * 2, y - 4, 1, 1, '#ffb3c6'); R1(x + dir * 4 - (dir > 0 ? 0 : 1), y - 2, 1, 1, '#1b120c'); R1(x - dir * 4, y, 2, 2, '#ffffff');
+    } else if (c.type === 'koi') {
+      // koi swim slow circles under the surface
+      const a = G.time * .32 + c.ph, x = c.x + Math.cos(a) * c.rx, y = c.y + Math.sin(a) * c.ry, h = Math.atan2(Math.cos(a) * c.ry, -Math.sin(a) * c.rx), wag = Math.sin(G.time * 6 + c.ph * 4) * .4;
+      const B = [['#ff7a1a', '#fff7e8'], ['#fff7e8', '#ff7a1a'], ['#2b2b30', '#ff7a1a']][c.col];
+      ctx.save(); ctx.globalAlpha = .85; ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(h);
+      R1(-5, -2, 9, 4, B[0]); R1(0, -2, 3, 4, B[1]); R1(3, -1, 2, 2, B[0]);
+      ctx.save(); ctx.translate(-5, 0); ctx.rotate(wag); R1(-4, -2, 4, 4, B[0]); ctx.restore();
+      ctx.restore();
     } else if (c.type === 'ducks') {
       for (let k = 0; k < 4; k++) {
         const a = G.time * .25 + c.ph - k * .22, x = Math.round(c.x + Math.cos(a) * c.rx), y = Math.round(c.y + Math.sin(a) * c.ry), dir = -Math.sin(a) >= 0 ? 1 : -1;
@@ -166,6 +176,15 @@ function drawFlyers() {
       ctx.globalAlpha = glow; R1(Math.round(p.x), Math.round(p.y), 1, 1, '#fffde0'); ctx.globalAlpha = 1;
     } else if (p.t === 'leaf') {
       const f = ((G.time * 4 + p.ph) | 0) % 2; R1(Math.round(p.x), Math.round(p.y), f ? 2 : 1, f ? 1 : 2, p.col);
+    } else if (p.t === 'petal') {
+      const f = ((G.time * 5 + p.ph) | 0) % 3; R1(Math.round(p.x), Math.round(p.y), f === 1 ? 1 : 2, f === 1 ? 2 : 1, p.col);
+    } else if (p.t === 'lantern') {
+      // a paper lantern drifting over the track: a soft glow, the flickering flame inside, a shadow far below on the ground
+      const x = Math.round(p.x + Math.sin(G.time * 1.4 + p.ph) * 2), y = Math.round(p.y), fl = .75 + .25 * Math.sin(G.time * 9 + p.ph * 3);
+      ctx.globalAlpha = .18; R1(x - 3, y + 24, 8, 3, '#000');
+      ctx.globalAlpha = .16 * fl; disc(x + 3, y + 4, 11, '#ffb347'); ctx.globalAlpha = .2 * fl; disc(x + 3, y + 4, 7, '#ffd27a'); ctx.globalAlpha = 1;
+      R1(x, y - 1, 7, 1, '#3b2512'); R1(x, y + 9, 7, 1, '#3b2512'); R1(x - 1, y, 9, 9, '#1b120c'); R1(x, y, 7, 9, p.col);
+      R1(x + 1, y + 2, 5, 5, fl > .85 ? '#fff3b0' : '#ffd96a'); R1(x + 3, y, 1, 9, 'rgba(120,40,20,.5)'); R1(x + 3, y + 10, 1, 3, '#e8c06a');
     }
   }
 }
@@ -296,7 +315,7 @@ export function drawRace() {
   if ((G.state === 'countdown' || (G.state === 'race' && G.stateTime < 2.5)) && ((G.time * 4) | 0) % 2 === 0) {
     text('DU', px, py - 40, 8, '#ffd23f', 'center'); tri(px, py - 24, 'down', 5, '#ffd23f');
   }
-  if (!G.T.run && G.state === 'race' && G.player.off > HALF + 20 && ((G.time * 3) | 0) % 2 === 0) {
+  if (!G.T.run && G.state === 'race' && G.player.off > HALF + 20 && !(G.T.stone && G.T.stone[clamp(py, 0, G.T.H - 1) * G.T.W + clamp(px, 0, G.T.W - 1)]) && !(G.player.fall > 0) && ((G.time * 3) | 0) % 2 === 0) {
     const p = G.T.path[(G.player.idx + 14) % G.T.N], a = Math.atan2(p.y - G.player.y, p.x - G.player.x);
     ctx.save(); ctx.translate(px + Math.cos(a) * 28, py + Math.sin(a) * 28); ctx.rotate(a);
     ctx.fillStyle = '#1b120c'; ctx.beginPath(); ctx.moveTo(11, 0); ctx.lineTo(-7, -10); ctx.lineTo(-3, 0); ctx.lineTo(-7, 10); ctx.closePath(); ctx.fill();

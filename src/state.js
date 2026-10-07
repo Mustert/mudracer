@@ -12,8 +12,8 @@ G.selAnim = -1;
 G.selMode = 0;
 G.selCount = 3;
 G.selCup = 0;
-// track events (cows, rain, flood). Not switchable in the game yet: all on. Later this becomes an option per track.
-G.events = { kuehe: true, regen: true, flut: true };
+// track events (cows, rain, flood, koi). Not switchable in the game yet: all on. Later this becomes an option per track.
+G.events = { kuehe: true, regen: true, flut: true, kois: true };
 G.cup = null;
 G.mode = 'single';
 

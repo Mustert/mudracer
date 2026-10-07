@@ -2,7 +2,7 @@ import { G } from './g.js';
 import { SFX } from './audio.js';
 import { HALF, TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, mk, vnoise } from './core.js';
 import { R1, text } from './draw.js';
-import { addP, mudBurst, WATC } from './particles.js';
+import { addP, mudBurst, splash, WATC } from './particles.js';
 import { cam } from './state.js';
 import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
 
@@ -10,6 +10,7 @@ import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
 // Wiese: a herd of cows grazes on and next to the track (they are obstacles, they moo).
 // Wald: dark holes in the road; after the first lap the rain fills them with mud. (The dusk and the headlights are not an event.)
 // Strand: from lap 2 the tide floods the lower part of the track, only a thin pier stays dry.
+// Garten: koi carp leap out of the water and over the bridges and the stepping stones (obstacles while they fly over the track).
 // Every event can be switched off with G.events (see state.js). A track is changed in place; setupEvents/resetTrackEvents put it back.
 
 export const eventOn = key => G.events[key] !== false;
@@ -90,9 +91,10 @@ function updateCows(T, dt) {
 
 // a car hits a cow: pushed out, and hard hits throw it aside (like the train, only softer); the cow moos
 export function eventCollisions() {
+  koiCollisions();
   const ev = G.T.ev; if (!ev) return;
   for (const w of ev.cows) for (const c of G.cars) {
-    if (c.z > 0) continue;
+    if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
     const dx = c.x - w.x, dy = c.y - w.y, d = Math.hypot(dx, dy), mn = 8 + 9;
     if (d >= mn || d === 0) continue;
     const nx = dx / d, ny = dy / d, vn = c.vx * nx + c.vy * ny;
@@ -276,13 +278,68 @@ function updateShowers(T, dt) {
   }
 }
 
+// ======================================================= Garten: leaping koi
+
+// [x, y, direction of the jump (the river's direction), half length, seconds between two jumps, offset]: bridges and stepping stones
+const KOIS = [[690, 303, 0, 54, 6.6, 1.2], [500, 403, Math.PI / 2, 54, 7.4, 3.3], [371, 352, 0, 46, 8.2, 5.1], [516, 80, Math.PI / 2, 46, 6.9, 2.4], [288, 378, Math.PI / 2, 28, 7.7, 4.6]];
+const KOI_DUR = 1.25;
+
+function initKois(T) { T.ev.kois = KOIS.map(([x, y, ang, half, per, off], k) => ({ x, y, ang, half, per, off, p: -1, px: x, py: y, z: 0, k })); }
+
+// the position depends only on the race time: in the time trial every try meets the koi at the same moment
+function updateKois(T, dt) {
+  for (const f of T.ev.kois) {
+    const tt = (T.ev.t + f.off) % f.per, p = tt / KOI_DUR, was = f.p;
+    f.p = p < 1 ? p : -1;
+    if (f.p < 0) { if (was >= 0) splashAt(f, 1); continue; }
+    const u = -f.half + 2 * f.half * f.p;
+    f.px = f.x + Math.cos(f.ang) * u; f.py = f.y + Math.sin(f.ang) * u; f.z = Math.sin(Math.PI * f.p) * 18;
+    if (was < 0) splashAt(f, -1);
+  }
+}
+
+function splashAt(f, end) {
+  const x = f.x + Math.cos(f.ang) * f.half * end, y = f.y + Math.sin(f.ang) * f.half * end;
+  if (Math.hypot(x - cam.x - VW / 2, y - cam.y - VH / 2) > 330) return;
+  splash(x, y, 7); if (end < 0) SFX.splash(.5);
+}
+
+// a koi flying over the road knocks a car off like a cow does
+function koiCollisions() {
+  const ev = G.T.ev; if (!ev || !ev.kois.length) return;
+  for (const f of ev.kois) {
+    if (f.p < .1 || f.p > .9) continue;
+    for (const c of G.cars) {
+      if (c.z > 0 || c.stun || c.ghost > 0 || c.fall > 0) continue;
+      const dx = c.x - f.px, dy = c.y - f.py, d = Math.hypot(dx, dy); if (d >= 17 || d === 0) continue;
+      const nx = dx / d, ny = dy / d;
+      c.vx = nx * 150; c.vy = ny * 150; c.spin = 12; c.stun = 1.1; c.boost = 0; mudBurst(c, 4);
+      if (!c.ai) SFX.crash(); else SFX.bump();
+      addP({ t: 'ring', x: f.px, y: f.py, life: .7, ml: .7 });
+    }
+  }
+}
+
+function drawKoi(f) {
+  if (f.p < 0) return;
+  const s = 1 + f.z / 40, x = Math.round(f.px), y = Math.round(f.py - f.z * .7), wag = Math.sin(G.time * 22 + f.k) * .35;
+  ctx.globalAlpha = .28; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(Math.round(f.px + 4), Math.round(f.py + 5), 8, 3.5, f.ang, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(f.ang + (f.p > .5 ? .25 : -.25) * .5); ctx.scale(s, s);
+  const R = (dx, dy, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(dx, dy, w, h); };
+  R(-13, -4, 24, 8, '#1b120c'); R(-12, -3, 22, 6, '#ff7a1a');
+  R(-1, -3, 6, 6, '#fff7e8'); R(-7, -2, 4, 3, '#e8452c'); R(5, -3, 5, 6, '#fff7e8'); R(8, -2, 1, 1, '#1b120c');
+  ctx.save(); ctx.translate(-12, 0); ctx.rotate(wag); R(-5, -4, 6, 8, '#1b120c'); R(-4, -3, 5, 6, '#ffb35a'); ctx.restore();
+  R(-3, 3, 4, 3, '#ffb35a'); R(-3, -6, 4, 3, '#ffb35a');
+  ctx.restore();
+}
+
 // ======================================================= setup, update, drawing
 
-const INIT = { kuehe: initCows, regen: initRain, flut: initFlood };
+const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois };
 
 export function setupEvents(T) {
   resetAllEvents();
-  T.ev = { t: 0, cows: [], holes: [], rain: null, flood: null, pier: false };
+  T.ev = { t: 0, cows: [], holes: [], rain: null, flood: null, pier: false, kois: [] };
   for (const name of T.def.events || []) if (eventOn(name)) INIT[name](T);
 }
 
@@ -293,6 +350,7 @@ export function updateEvents(dt) {
   ev.t += dt;
   if (ev.cows.length) updateCows(T, dt);
   if (ev.holes.length) updateRain(T, dt);
+  if (ev.kois.length) updateKois(T, dt);
   if (T.def.events && T.def.events.includes('flut') && eventOn('flut')) updateFlood(T, dt);
 }
 
@@ -301,6 +359,7 @@ export function drawEventsGround() { const ev = G.T.ev; if (ev) for (const w of 
 
 export function drawEventsAbove() {
   const ev = G.T.ev; if (!ev) return;
+  for (const f of ev.kois) drawKoi(f);
   for (const w of ev.cows) if (w.mooT > 0) text('MUH!', Math.round(w.x), Math.round(w.y - 16 - (1.3 - w.mooT) * 8), 8, '#ffffff', 'center');
 }
 
