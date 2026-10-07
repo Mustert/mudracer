@@ -441,6 +441,11 @@ function buildTrack(def, ti) {
         j = y * WW + x; if (ter[j] === 0 && dist[j] >= HALF + 4 && !washMask[j] && (!shore[j] || th.decor === 'garten')) break; j = -1;
       }
       if (j < 0) continue;
+      // the garden: where deep water lies right behind the fence it is a solid barrier (except at the stepping stones, that is where you go in on purpose)
+      if (th.decor === 'garten' && i % 3 === 0 && !(def.stones || []).some(q => Math.hypot(q[0] - x, q[1] - y) < 60)) {
+        let wet = false; for (let dy = -12; dy <= 12 && !wet; dy += 4) for (let dx = -12; dx <= 12; dx += 4) { const xx = clamp(x + dx, 0, WW - 1), yy = clamp(y + dy, 0, WH - 1); if (ter[yy * WW + xx] === 5 && !bridgeMask[yy * WW + xx]) { wet = true; break; } }
+        if (wet) walls.push({ x, y, r: 2.5 });
+      }
       if (i % FENCE[4] === 0) { px(x + 2, y + 2, P2); px(x, y, P1); px(x + 1, y, P0); px(x, y + 1, P0); px(x + 1, y + 1, P2); }
       else { px(x, y, RL); if (th.fence === 'log') px(x + Math.round(nrm[i].x * s), y + Math.round(nrm[i].y * s), RL2); }
     }
