@@ -127,6 +127,7 @@ function drawCritters() {
     } else if (c.type === 'koi') {
       // koi swim slow circles under the surface
       const a = G.time * .32 + c.ph, x = c.x + Math.cos(a) * c.rx, y = c.y + Math.sin(a) * c.ry, h = Math.atan2(Math.cos(a) * c.ry, -Math.sin(a) * c.rx), wag = Math.sin(G.time * 6 + c.ph * 4) * .4;
+      if (G.T.ter[(Math.round(y)) * G.T.W + Math.round(x)] !== 5) continue; // only in open water, not over stones or bridges
       const B = [['#ff7a1a', '#fff7e8'], ['#fff7e8', '#ff7a1a'], ['#2b2b30', '#ff7a1a']][c.col];
       ctx.save(); ctx.globalAlpha = .85; ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(h);
       R1(-5, -2, 9, 4, B[0]); R1(0, -2, 3, 4, B[1]); R1(3, -1, 2, 2, B[0]);

@@ -281,7 +281,7 @@ function updateShowers(T, dt) {
 // ======================================================= Garten: leaping koi
 
 // [x, y, direction of the jump (the river's direction), half length, seconds between two jumps, offset]: bridges and stepping stones
-const KOIS = [[690, 303, 0, 54, 6.6, 1.2], [500, 403, Math.PI / 2, 54, 7.4, 3.3], [371, 352, 0, 46, 8.2, 5.1], [516, 80, Math.PI / 2, 46, 6.9, 2.4], [288, 378, Math.PI / 2, 28, 7.7, 4.6]];
+const KOIS = [[690, 303, 0, 54, 6.6, 1.2], [500, 403, Math.PI / 2, 54, 7.4, 3.3], [371, 352, 0, 46, 8.2, 5.1], [516, 80, Math.PI / 2, 46, 6.9, 2.4]];
 const KOI_DUR = 1.25;
 
 function initKois(T) { T.ev.kois = KOIS.map(([x, y, ang, half, per, off], k) => ({ x, y, ang, half, per, off, p: -1, px: x, py: y, z: 0, k })); }
@@ -301,7 +301,7 @@ function updateKois(T, dt) {
 function splashAt(f, end) {
   const x = f.x + Math.cos(f.ang) * f.half * end, y = f.y + Math.sin(f.ang) * f.half * end;
   if (Math.hypot(x - cam.x - VW / 2, y - cam.y - VH / 2) > 330) return;
-  splash(x, y, 7); if (end < 0) SFX.splash(.5);
+  splash(x, y, 7); if (end < 0) SFX.splash(.2);
 }
 
 // a koi flying over the road knocks a car off like a cow does
@@ -314,7 +314,7 @@ function koiCollisions() {
       const dx = c.x - f.px, dy = c.y - f.py, d = Math.hypot(dx, dy); if (d >= 17 || d === 0) continue;
       const nx = dx / d, ny = dy / d;
       c.vx = nx * 150; c.vy = ny * 150; c.spin = 12; c.stun = 1.1; c.boost = 0; mudBurst(c, 4);
-      if (!c.ai) SFX.crash(); else SFX.bump();
+      SFX.blubb(); setTimeout(SFX.blubb, 110); if (!c.ai) setTimeout(SFX.blubb, 230);
       addP({ t: 'ring', x: f.px, y: f.py, life: .7, ml: .7 });
     }
   }

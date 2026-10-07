@@ -59,7 +59,7 @@ const TRACK_DEFS = [
       [595, 62], [620, 43], [642, 38], [665, 43], [690, 62], [700, 90], [706, 140], [700, 200], [692, 255], [690, 300], [688, 335],
       [678, 368], [654, 392], [620, 402], [560, 403], [500, 403], [440, 402], [412, 401], [386, 396], [374, 380], [370, 355], [370, 335], [360, 322], [345, 317], [300, 316], [260, 318], [232, 328],
       [212, 350], [205, 376], [204, 392], [194, 404], [170, 408], [142, 397], [117, 372], [102, 336]],
-    mud: [[.21, 0, 30, 34], [.33, 0, 30, 34], [.56, 0, 30, 34], [.69, 0, 30, 34], [.91, 0, 30, 34]], water: [[.10, 0, 28, 34], [.43, 0, 26, 34], [.62, 0, 26, 34], [.87, 0, 26, 34]], ponds: [],
+    mud: [[.21, 0, 30, 34], [.27, 0, 30, 34], [.56, 0, 30, 34], [.69, 0, 30, 34], [.94, 0, 30, 34]], water: [[.10, 0, 28, 34], [.37, 0, 26, 34], [.62, 0, 26, 34], [.955, 0, 26, 34]], ponds: [],
     // deep water: rivers and ponds as chains of circles [x, y, radius]. The river from the top runs into the pool and the pond inside the first U, the second river crosses the
     // lower road twice and feeds the lake in the middle (a channel), the lake drains to the south. You fall into deep water, roads over it are bridges.
     rivers: [
@@ -68,8 +68,8 @@ const TRACK_DEFS = [
       [[508, 350, 11], [462, 351, 10], [420, 352, 10], [372, 352, 10], [336, 360, 12]],
       [[264, 378, 24], [312, 378, 24]], [[288, 378, 26], [288, 378, 26]],
       [[288, 400, 12], [288, 462, 13]]],
-    // stepping stones: the short cut across the pool (top) and across the lake (bottom)
-    stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10], [322, 372, 9], [298, 388, 9], [272, 370, 9], [250, 384, 9]],
+    // stepping stones: the short cut across the pool at the top
+    stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10]],
     // clipped hedges that keep you from cutting across the garden: [x1, y1, x2, y2]
     hedges: [[12, 159, 333, 159], [172, 80, 396, 80], [135, 258, 396, 258], [396, 78, 396, 300], [396, 300, 520, 314], [642, 98, 642, 290], [152, 260, 152, 376]],
     pagodas: [[765, 142, 4, 1.15], [758, 388, 4, 1.15], [452, 262, 3, .85]],
@@ -435,7 +435,7 @@ function buildTrack(def, ti) {
     for (let i = 0; i < N; i++) for (const s of [-1, 1]) {
       const x = Math.round(path[i].x + nrm[i].x * s * (HALF + 5)), y = Math.round(path[i].y + nrm[i].y * s * (HALF + 5));
       if (x < 1 || y < 1 || x >= WW - 3 || y >= WH - 3) continue;
-      const j = y * WW + x; if (ter[j] !== 0 || dist[j] < HALF + 4 || shore[j] || washMask[j]) continue;
+      const j = y * WW + x; if (ter[j] !== 0 || dist[j] < HALF + 4 || (shore[j] && th.decor !== 'garten') || washMask[j]) continue;
       if (i % FENCE[4] === 0) { px(x + 2, y + 2, P2); px(x, y, P1); px(x + 1, y, P0); px(x, y + 1, P0); px(x + 1, y + 1, P2); }
       else { px(x, y, RL); if (th.fence === 'log') px(x + Math.round(nrm[i].x * s), y + Math.round(nrm[i].y * s), RL2); }
     }
@@ -597,21 +597,22 @@ function buildTrack(def, ti) {
     }
     // large pagodas outside of the track: stone base, tiers of white walls with red posts and dark curved roofs
     const pagoda = (cx, cy, n, sc) => {
-      const WL = hex('#efe8d8'), WD = hex('#c9c0aa'), PO = hex('#b83a2a'), RF = ['#7a8496', '#556070', '#363d4b'].map(hex), ST = ['#b3b1a6', '#8c8a80'].map(hex), GD = hex('#e8c14a');
-      walls.push({ x: cx, y: cy - 4, r: Math.round(13 * sc) }); darken(cx, cy - 4, Math.round(15 * sc), 7, 5);
-      for (let dy = -Math.round(15 * sc); dy <= Math.round(15 * sc); dy++) for (let dx = -Math.round(15 * sc); dx <= Math.round(15 * sc); dx++) if (Math.hypot(dx, dy) < 15 * sc) wallMask[clamp(cy - 4 + dy, 0, WH - 1) * WW + clamp(cx + dx, 0, WW - 1)] = 1;
-      for (let dy = -Math.round((n * 12 + 16) * sc); dy <= 4; dy++) for (let dx = -Math.round(24 * sc); dx <= Math.round(24 * sc); dx++) wallMask[clamp(cy + dy, 0, WH - 1) * WW + clamp(cx + dx, 0, WW - 1)] = 1;
-      let y = cy; const bw = Math.round(21 * sc);
-      rc(cx - bw, y - 4, bw * 2, 4, ST[0]); rc(cx - bw, y - 1, bw * 2, 1, ST[1]); rc(cx - bw + 2, y - 5, bw * 2 - 4, 1, ST[0]); y -= 5;
+      // seen from above: stacked square tile roofs (four facets, ridges on the diagonals), each tier a bit smaller, a gold finial on top
+      const hw0 = Math.round(21 * sc), RF = [['#8793a6', '#6c778a'], ['#566174', '#3f4859']].map(p => p.map(hex)), RD = hex('#2b303c'), EV = hex('#b83a2a'), EV2 = hex('#8a2a1e'), GD = hex('#e8c14a');
+      walls.push({ x: cx, y: cy, r: Math.round(hw0 * .85) }); darken(cx, cy, Math.round(hw0 * 1.1), 5, 6);
+      for (let dy = -hw0 - 3; dy <= hw0 + 3; dy++) for (let dx = -hw0 - 3; dx <= hw0 + 3; dx++) wallMask[clamp(cy + dy, 0, WH - 1) * WW + clamp(cx + dx, 0, WW - 1)] = 1;
       for (let t = 0; t < n; t++) {
-        const hw = Math.round((15 - t * 2.4) * sc), wh = Math.round(7 * sc), rw = hw + Math.round(5 * sc);
-        rc(cx - hw, y - wh, hw * 2, wh, WL); rc(cx - hw, y - 1, hw * 2, 1, WD); rc(cx - hw, y - wh, 2, wh, PO); rc(cx + hw - 2, y - wh, 2, wh, PO); rc(cx - 1, y - wh, 2, wh, PO);
-        rc(cx - hw + 3, y - wh + 2, 3, wh - 3, hex('#3b2a22')); rc(cx + hw - 6, y - wh + 2, 3, wh - 3, hex('#3b2a22'));
-        y -= wh;
-        rc(cx - rw - 2, y - 1, (rw + 2) * 2, 1, RF[2]); rc(cx - rw, y - 2, rw * 2, 1, RF[1]); rc(cx - rw + 2, y - 3, (rw - 2) * 2, 1, RF[0]); rc(cx - rw + 5, y - 4, (rw - 5) * 2, 1, RF[1]);
-        rc(cx - rw - 3, y - 2, 1, 1, RF[1]); rc(cx + rw + 2, y - 2, 1, 1, RF[1]); y -= 4;
+        const hw = Math.round(hw0 - t * hw0 * .8 / n);
+        for (let dy = -hw; dy <= hw; dy++) for (let dx = -hw; dx <= hw; dx++) {
+          const ax = Math.abs(dx), ay = Math.abs(dy), m = Math.max(ax, ay);
+          let c;
+          if (m >= hw - 1) c = (dx + dy) > 0 ? EV2 : EV;
+          else if (Math.abs(ax - ay) <= 0) c = RD;
+          else { const up = ay >= ax ? dy < 0 : dx < 0; c = RF[(m + t) % 4 < 1 ? 1 : 0][up ? 0 : 1]; }
+          setT(cx + dx, cy + dy, c);
+        }
       }
-      const sp = Math.round(9 * sc); rc(cx, y - sp, 1, sp, hex('#8a6a30')); for (let k = 0; k < 3; k++) rc(cx - 1, y - 3 - k * 2, 3, 1, GD); rc(cx - 1, y - sp - 2, 3, 2, GD);
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (dx * dx + dy * dy <= 5) setT(cx + dx, cy + dy, dx + dy < 0 ? hex('#fff0a8') : GD);
     };
     for (const [x, y, n, sc] of def.pagodas || []) pagoda(x, y, n, sc);
     flowers(240, ['#ffc2d6', '#ffffff', '#ff9fbf', '#ffe14d', '#b9a2ff'].map(hex));
