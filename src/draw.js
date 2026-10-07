@@ -310,10 +310,12 @@ export function drawRace() {
     text('BEST ' + (G.tt.rec0 ? fmtTime(G.tt.rec0.t) : '-:--.--'), VW - 6, 4, 8, '#ffd23f', 'right');
     if (G.tt.deltaT > 0 && G.tt.delta !== null) text(fmtDelta(G.tt.delta), VW / 2 - 20, 19, 8, G.tt.delta <= 0 ? '#7bd37b' : '#ff6b6b', 'center');
   } else {
-    text('PLATZ', VW - 34, 4, 8, '#fff3dc', 'right');
-    disc(VW - 17, 7, 6, '#1b120c'); disc(VW - 17, 7, 5, medal(pl));
-    if (G.mode === 'gp') text('GRAND PRIX ' + (G.gp.race + 1) + '/' + G.gp.tracks.length, VW / 2 - 40, 4, 8, '#ffd23f', 'center');
-    text(String(pl), VW - 16, 4, 8, '#1b120c', 'center', null);
+    // place in the middle (word and medal as one group), the cup and race number on the right
+    const px = VW / 2 - 29;
+    text('PLATZ', px, 4, 8, '#fff3dc');
+    disc(px + 52, 7, 6, '#1b120c'); disc(px + 52, 7, 5, medal(pl));
+    text(String(pl), px + 53, 4, 8, '#1b120c', 'center', null);
+    if (G.mode === 'gp') text(G.gp.cup.name + ' CUP ' + (G.gp.race + 1) + '/' + G.gp.tracks.length, VW - 6, 4, 8, '#ffd23f', 'right');
   }
   // mini map
   const mx = VW - 126, my = 20;
