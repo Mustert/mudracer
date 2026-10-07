@@ -63,7 +63,7 @@ const TRACK_DEFS = [
     // deep water: rivers and ponds as chains of circles [x, y, radius]. The river from the top runs into the pool and the pond inside the first U, the second river crosses the
     // lower road twice and feeds the lake in the middle (a channel), the lake drains to the south. You fall into deep water, roads over it are bridges.
     rivers: [
-      [[515, -14, 10], [515, 38, 11], [515, 82, 35], [515, 116, 14], [515, 148, 25]],
+      [[515, -14, 10], [515, 38, 11], [515, 82, 35], [515, 114, 14], [515, 140, 22]],
       [[812, 299, 13], [742, 301, 13], [660, 305, 13], [592, 312, 13], [543, 327, 13], [510, 350, 13], [500, 386, 13], [500, 422, 13], [502, 462, 13]],
       [[508, 350, 11], [462, 351, 10], [420, 352, 10], [372, 352, 10], [336, 360, 12]],
       [[264, 378, 24], [312, 378, 24]], [[288, 378, 26], [288, 378, 26]],
@@ -73,7 +73,7 @@ const TRACK_DEFS = [
     // clipped hedges that keep you from cutting across the garden: [x1, y1, x2, y2]
     hedges: [[12, 159, 333, 159], [172, 80, 396, 80], [135, 258, 396, 258], [396, 78, 396, 300], [396, 300, 520, 314], [642, 98, 642, 290], [152, 260, 152, 376]],
     pagodas: [[765, 142, 4, 1.15], [758, 388, 4, 1.15], [452, 262, 3, .85]],
-    koi: [[515, 148, 13, 10], [288, 380, 36, 11], [515, 84, 14, 10], [655, 303, 40, 3]] },
+    koi: [[515, 140, 11, 9], [288, 380, 36, 11], [515, 84, 14, 10], [655, 303, 40, 3]] },
 ];
 
 
@@ -433,9 +433,14 @@ function buildTrack(def, ti) {
   if (FENCE) {
     const RL = hex(FENCE[0]), P0 = hex(FENCE[1]), P1 = hex(FENCE[2]), P2 = hex(FENCE[3]), RL2 = hex('#6b4a2e');
     for (let i = 0; i < N; i++) for (const s of [-1, 1]) {
-      const x = Math.round(path[i].x + nrm[i].x * s * (HALF + 5)), y = Math.round(path[i].y + nrm[i].y * s * (HALF + 5));
-      if (x < 1 || y < 1 || x >= WW - 3 || y >= WH - 3) continue;
-      const j = y * WW + x; if (ter[j] !== 0 || dist[j] < HALF + 4 || (shore[j] && th.decor !== 'garten') || washMask[j]) continue;
+      // the garden: if the first spot is already water, the fence moves out onto the grass strip next to the pond
+      let x = 0, y = 0, j = -1;
+      for (const o of th.decor === 'garten' ? [5, 7, 9, 11] : [5]) {
+        x = Math.round(path[i].x + nrm[i].x * s * (HALF + o)); y = Math.round(path[i].y + nrm[i].y * s * (HALF + o));
+        if (x < 1 || y < 1 || x >= WW - 3 || y >= WH - 3) { j = -1; break; }
+        j = y * WW + x; if (ter[j] === 0 && dist[j] >= HALF + 4 && !washMask[j] && (!shore[j] || th.decor === 'garten')) break; j = -1;
+      }
+      if (j < 0) continue;
       if (i % FENCE[4] === 0) { px(x + 2, y + 2, P2); px(x, y, P1); px(x + 1, y, P0); px(x, y + 1, P0); px(x + 1, y + 1, P2); }
       else { px(x, y, RL); if (th.fence === 'log') px(x + Math.round(nrm[i].x * s), y + Math.round(nrm[i].y * s), RL2); }
     }
