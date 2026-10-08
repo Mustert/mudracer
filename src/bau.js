@@ -234,6 +234,20 @@ export function paintSite(S) {
     // shadow of the jib and the pipe on the ground
     shade(jx + 7, 22, 8, 150, .74, true); shade(cr.pipe0 + 8, py2 - 10 + 14, cr.pipeLen, 20, .6, true);
     const T = (px0, py0, c) => S.setT(px0, py0, c);
+    // the pipe hangs below the crane: it is painted first, jib, trolley and slings come on top of it
+    // the concrete pipe (spigot at one end, socket at the other, two yellow straps)
+    const hr = cr.pipeD / 2;
+    for (let xx = 0; xx < cr.pipeLen; xx++) for (let yy = -hr - 1; yy <= hr + 1; yy++) {
+      const sock = xx < 7, v = yy / (hr + 1), a = Math.abs(v);
+      if (!sock && Math.abs(yy) > hr) continue;
+      let k = a > .88 ? 4 : v < -.5 ? 0 : v < .15 ? 1 : v < .55 ? 2 : 3;
+      if (sock && a > .7) k = Math.min(4, k + 1);
+      let c = PIPE[k];
+      if (xx === 7 || xx === 8) c = PIPE[3];
+      if (xx === 6 || xx === cr.pipeLen - 8 || xx === cr.pipeLen - 7) c = a > .88 ? K.blk : K.yel;
+      if (hash(cr.pipe0 + xx, py2 + yy, S.sd + 20) < .05) c = PIPE[Math.min(4, k + 1)];
+      T(cr.pipe0 + xx, py2 + yy, c);
+    }
     // jib to the north, counter-jib to the south: two chords with diagonals
     const lattice = (y0, y1, hw) => { for (let yy = y0; yy <= y1; yy++) { T(x - hw, yy, K.yel); T(x + hw, yy, K.yel); const k = ((yy - y0) % 8); if (k < 4) T(x - hw + 1 + k * (2 * hw - 2) / 4 | 0, yy, K.yelD); else T(x + hw - 1 - (k - 4) * (2 * hw - 2) / 4 | 0, yy, K.yelD); } };
     lattice(14, y - 6, 3); lattice(y + 6, y + 42, 4);
@@ -253,19 +267,6 @@ export function paintSite(S) {
     for (const [ex, ey] of [[cr.pipe0 + 6, py2 - 3], [cr.pipe0 + cr.pipeLen - 6, py2 - 3]]) {
       const n = Math.max(Math.abs(ex - hookX), Math.abs(ey - hookY));
       for (let s = 0; s <= n; s++) T(Math.round(hookX + (ex - hookX) * s / n), Math.round(hookY + (ey - hookY) * s / n), K.blk);
-    }
-    // the concrete pipe (spigot at one end, socket at the other, two yellow straps)
-    const hr = cr.pipeD / 2;
-    for (let xx = 0; xx < cr.pipeLen; xx++) for (let yy = -hr - 1; yy <= hr + 1; yy++) {
-      const sock = xx < 7, v = yy / (hr + 1), a = Math.abs(v);
-      if (!sock && Math.abs(yy) > hr) continue;
-      let k = a > .88 ? 4 : v < -.5 ? 0 : v < .15 ? 1 : v < .55 ? 2 : 3;
-      if (sock && a > .7) k = Math.min(4, k + 1);
-      let c = PIPE[k];
-      if (xx === 7 || xx === 8) c = PIPE[3];
-      if (xx === 6 || xx === cr.pipeLen - 8 || xx === cr.pipeLen - 7) c = a > .88 ? K.blk : K.yel;
-      if (hash(cr.pipe0 + xx, py2 + yy, S.sd + 20) < .05) c = PIPE[Math.min(4, k + 1)];
-      T(cr.pipe0 + xx, py2 + yy, c);
     }
   }
   return { lights, mixer };

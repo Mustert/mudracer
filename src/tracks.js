@@ -507,8 +507,15 @@ function buildTrack(def, ti) {
       const dep = -d, n = vnoise(x * .22, y * .22, sd + 11), lit = ((hx - x) + (hy - y)) / (hw + hh) * 18;
       let c;
       if (dep < 2) c = [52, 52, 58];
-      else if (dep < 14) { const v = dep < 6 ? 98 : dep < 10 ? 124 : 146; const k = v + (n - .5) * 40 + lit; c = [k, k, k + 8]; if (hash(x, y, sd + 12) < .05) c = [k - 30, k - 30, k - 24]; }
-      else { const g = 126 + (n - .5) * 60 + lit; c = [g * .62, g * 1.08, g * .5]; if (hash(x, y, sd + 13) < .02) c = [236, 120, 150]; }
+      else {
+        // one natural rock formation over the whole hill, lit from the top left, with boulders, ridges and a few dark cracks; the rim is a bit darker
+        const H = (X, Y) => vnoise(X * .1, Y * .1, sd + 14) * .55 + vnoise(X * .24, Y * .24, sd + 15) * .3 + vnoise(X * .6, Y * .6, sd + 16) * .15;
+        const sl = (H(x - 1, y - 1) - H(x + 1, y + 1)) * 170, crack = Math.abs(vnoise(x * .07, y * .09, sd + 17) - .5) < .012;
+        let g = 130 + (H(x, y) - .5) * 60 + sl + lit * .6; if (hash(x, y, sd + 13) < .05) g -= 12;
+        if (crack) g -= 30;
+        g *= .72 + .28 * Math.min(1, (dep - 2) / 12);
+        c = [g, g - 3, g - 8];
+      }
       setT(x, y, c);
     }
     for (let gy = hy - hh + 4; gy <= hy + hh - 4; gy += 8) for (let gx = hx - hw + 4; gx <= hx + hw - 4; gx += 8) if (inside(gx, gy) < -3) walls.push({ x: gx, y: gy, r: 7 });
@@ -519,7 +526,7 @@ function buildTrack(def, ti) {
       for (const px0 of portals) for (let k = -3; k <= 14; k++) for (let dx = -19; dx <= 19; dx++) {
         const ad = Math.abs(dx), y = ye - sy * k; let c = null;
         if (k < 0) c = k === -3 ? [112, 108, 98] : [188, 184, 170];
-        else if (ad <= 14) c = k < 3 && ad >= 12 ? [60, 56, 60] : [Math.max(8, 26 - k), Math.max(8, 24 - k), Math.max(10, 30 - k)];
+        else if (ad <= 14) c = k < 3 && ad >= 12 ? [96, 94, 100] : [Math.max(62, 118 - k * 4), Math.max(62, 118 - k * 4), Math.max(66, 124 - k * 4)];
         else c = ad === 19 ? [112, 108, 98] : [176, 172, 160];
         if (c) setT(px0 + dx, y, c);
       }
