@@ -106,7 +106,7 @@ export const CAR_DEFS = [
       R(HL, 38, 14, 1, 3); R(HL, 38, 27, 1, 3); R(TL, 4, 15, 1, 2); R(TL, 4, 27, 1, 2);
       cut(4, 12, 35, 20, 3);
     } },
-  { id: 'quad', name: 'QUAD', cup: 3, M: '#ff7a1a', D: '#b8520a', L: '#ffb066', acc: { s: '#e84a5f', p: '#3d7bff', pl: '#6fa0ff', b: '#ffd93d', bl: '#fff08a' }, speed: 1.015, mud: 1.20, acc: 1.25, turn: 1.15, engine: 72, honk: 'quad',
+  { id: 'quad', name: 'QUAD', cup: 3, M: '#ff7a1a', D: '#b8520a', L: '#ffb066', accent: { s: '#e84a5f', p: '#3d7bff', pl: '#6fa0ff', b: '#ffd93d', bl: '#fff08a' }, speed: 1.015, mud: 1.20, acc: 1.25, turn: 1.15, engine: 72, honk: 'quad',
     draw({ R, wheel }, c) {
       wheel(8, 5, 10, 8); wheel(27, 5, 10, 8); wheel(8, 31, 10, 8); wheel(27, 31, 10, 8);
       R('#3a3a3a', 11, 13, 3, 18); R('#3a3a3a', 30, 13, 3, 18);
@@ -116,18 +116,18 @@ export const CAR_DEFS = [
       R(c.M, 13, 15, 21, 14); R(c.L, 14, 15, 19, 2); R(c.D, 14, 27, 19, 2);
       R('#222222', 13, 18, 8, 8);
       // the driver: suit (p) and helmet (b) follow the paint
-      R(c.acc.p, 16, 16, 6, 12); R(c.acc.p, 22, 16, 6, 2); R(c.acc.p, 22, 26, 6, 2);
+      R(c.accent.p, 16, 16, 6, 12); R(c.accent.p, 22, 16, 6, 2); R(c.accent.p, 22, 26, 6, 2);
       R('#222222', 29, 14, 2, 16); R('#555555', 29, 13, 2, 1); R('#555555', 29, 30, 2, 1);
-      for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (dx * dx + dy * dy <= 18) R(dx + dy < -2 ? c.acc.bl : c.acc.b, 19 + dx, 22 + dy, 1, 1);
-      R('#1b120c', 22, 20, 2, 5); R(c.acc.s, 15, 21, 8, 1);
+      for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (dx * dx + dy * dy <= 18) R(dx + dy < -2 ? c.accent.bl : c.accent.b, 19 + dx, 22 + dy, 1, 1);
+      R('#1b120c', 22, 20, 2, 5); R(c.accent.s, 15, 21, 8, 1);
       R(HL, 37, 19, 1, 6);
     } },
-  { id: 'rally', name: 'RALLY CAR', cup: 4, M: '#f4f6fa', D: '#b8c0cc', L: '#ffffff', acc: { s: '#e8453c', p: '#2a4fd6', pl: '#4a73ff', b: '#f2e12e', bl: '#fff08a' }, speed: 1.0, mud: 1.0, acc: 1.10, turn: 1.05, engine: 70, honk: 'rally',
+  { id: 'rally', name: 'RALLY CAR', cup: 4, M: '#f4f6fa', D: '#b8c0cc', L: '#ffffff', accent: { s: '#e8453c', p: '#2a4fd6', pl: '#4a73ff', b: '#f2e12e', bl: '#fff08a' }, speed: 1.0, mud: 1.0, acc: 1.10, turn: 1.05, engine: 70, honk: 'rally',
     draw({ R, wheel, glass, cut }, c) {
       wheel(8, 9, 8, 5); wheel(28, 9, 8, 5); wheel(8, 30, 8, 5); wheel(28, 30, 8, 5);
       R(c.M, 5, 12, 34, 20); R(c.L, 7, 13, 30, 1); R(c.D, 7, 30, 30, 1);
       // livery: stripes (s), bonnet and roof panels (p, pl), band (b) all follow the paint
-      const A = c.acc;
+      const A = c.accent;
       R(A.s, 8, 12, 22, 2); R(A.s, 8, 30, 22, 2); R(A.p, 8, 14, 22, 1); R(A.p, 8, 29, 22, 1);
       R(A.p, 30, 13, 7, 18); R(A.pl, 30, 13, 7, 1); R('#1a1a1a', 32, 19, 5, 6); R('#555555', 33, 20, 3, 1);
       R(A.b, 36, 13, 3, 18); R('#1a1a1a', 37, 18, 2, 8);
@@ -261,28 +261,28 @@ export function carSet(def, goo, cem) { const key = cem ? '_cem' : goo ? '_goo' 
 
 
 // ---------- paint (Werkstatt): every car can get another colour; 0 is the car's own. Main, dark and light shade ----------
-// acc: the matching accents for cars with a livery or a driver (rally: stripes s, panels p/pl, band b/bl; quad: suit p, helmet b/bl)
+// accent: the matching accents for cars with a livery or a driver (rally: stripes s, panels p/pl, band b/bl; quad: suit p, helmet b/bl)
 
 export const PAINTS = [
   { name: 'ORIGINAL' },
-  { name: 'ROT', M: '#e03131', D: '#961c1c', L: '#ff7b7b', acc: { s: '#ffffff', p: '#1b1b22', pl: '#3a3a48', b: '#ffd23f', bl: '#fff08a' } },
-  { name: 'ORANGE', M: '#f07a1a', D: '#b44d0c', L: '#ffb45e', acc: { s: '#1f5fd1', p: '#2b2d33', pl: '#4e525c', b: '#ffffff', bl: '#ffffff' } },
-  { name: 'GELB', M: '#ffd23f', D: '#c79a06', L: '#fff08a', acc: { s: '#e03131', p: '#1b1b22', pl: '#3a3a48', b: '#3aa845', bl: '#8be08f' } },
-  { name: 'GRUEN', M: '#3aa845', D: '#23702b', L: '#8be08f', acc: { s: '#ffd23f', p: '#1b4796', pl: '#2f6fd8', b: '#ffffff', bl: '#ffffff' } },
-  { name: 'TUERKIS', M: '#2ec4b6', D: '#1a8a80', L: '#8ff0e6', acc: { s: '#ff5fa2', p: '#1a5a80', pl: '#2f8ab8', b: '#ffd23f', bl: '#fff08a' } },
-  { name: 'BLAU', M: '#2f6fd8', D: '#1b4796', L: '#7fb0ff', acc: { s: '#ffd23f', p: '#e03131', pl: '#ff7b7b', b: '#ffffff', bl: '#ffffff' } },
-  { name: 'LILA', M: '#8e44ad', D: '#5e2a75', L: '#c79be0', acc: { s: '#3aa845', p: '#ffd23f', pl: '#fff08a', b: '#2ec4b6', bl: '#8ff0e6' } },
-  { name: 'PINK', M: '#ff5fa2', D: '#c2306f', L: '#ffa6cc', acc: { s: '#ffffff', p: '#8e44ad', pl: '#c79be0', b: '#2ec4b6', bl: '#8ff0e6' } },
-  { name: 'WEISS', M: '#eef3f8', D: '#aab8c6', L: '#ffffff', acc: { s: '#3aa845', p: '#e03131', pl: '#ff7b7b', b: '#2f6fd8', bl: '#7fb0ff' } },
-  { name: 'SCHWARZ', M: '#2b2d33', D: '#15161a', L: '#4e525c', acc: { s: '#ff7a1a', p: '#e03131', pl: '#ff7b7b', b: '#ffd23f', bl: '#fff08a' } },
+  { name: 'ROT', M: '#e03131', D: '#961c1c', L: '#ff7b7b', accent: { s: '#ffffff', p: '#1b1b22', pl: '#3a3a48', b: '#ffd23f', bl: '#fff08a' } },
+  { name: 'ORANGE', M: '#f07a1a', D: '#b44d0c', L: '#ffb45e', accent: { s: '#1f5fd1', p: '#2b2d33', pl: '#4e525c', b: '#ffffff', bl: '#ffffff' } },
+  { name: 'GELB', M: '#ffd23f', D: '#c79a06', L: '#fff08a', accent: { s: '#e03131', p: '#1b1b22', pl: '#3a3a48', b: '#3aa845', bl: '#8be08f' } },
+  { name: 'GRUEN', M: '#3aa845', D: '#23702b', L: '#8be08f', accent: { s: '#ffd23f', p: '#1b4796', pl: '#2f6fd8', b: '#ffffff', bl: '#ffffff' } },
+  { name: 'TUERKIS', M: '#2ec4b6', D: '#1a8a80', L: '#8ff0e6', accent: { s: '#ff5fa2', p: '#1a5a80', pl: '#2f8ab8', b: '#ffd23f', bl: '#fff08a' } },
+  { name: 'BLAU', M: '#2f6fd8', D: '#1b4796', L: '#7fb0ff', accent: { s: '#ffd23f', p: '#e03131', pl: '#ff7b7b', b: '#ffffff', bl: '#ffffff' } },
+  { name: 'LILA', M: '#8e44ad', D: '#5e2a75', L: '#c79be0', accent: { s: '#3aa845', p: '#ffd23f', pl: '#fff08a', b: '#2ec4b6', bl: '#8ff0e6' } },
+  { name: 'PINK', M: '#ff5fa2', D: '#c2306f', L: '#ffa6cc', accent: { s: '#ffffff', p: '#8e44ad', pl: '#c79be0', b: '#2ec4b6', bl: '#8ff0e6' } },
+  { name: 'WEISS', M: '#eef3f8', D: '#aab8c6', L: '#ffffff', accent: { s: '#3aa845', p: '#e03131', pl: '#ff7b7b', b: '#2f6fd8', bl: '#7fb0ff' } },
+  { name: 'SCHWARZ', M: '#2b2d33', D: '#15161a', L: '#4e525c', accent: { s: '#ff7a1a', p: '#e03131', pl: '#ff7b7b', b: '#ffd23f', bl: '#fff08a' } },
 ];
 
 const paintKey = def => 'mudracer-paint-' + def.id;
 
 export function setPaint(def, i) {
-  if (!def.own) def.own = { M: def.M, D: def.D, L: def.L, acc: def.acc };
+  if (!def.own) def.own = { M: def.M, D: def.D, L: def.L, accent: def.accent }; // (not 'acc': that is the acceleration)
   const p = i > 0 && PAINTS[i] ? PAINTS[i] : def.own;
-  def.M = p.M; def.D = p.D; def.L = p.L; def.acc = p.acc || def.own.acc; def.paint = PAINTS[i] && i > 0 ? i : 0;
+  def.M = p.M; def.D = p.D; def.L = p.L; def.accent = p.accent || def.own.accent; def.paint = PAINTS[i] && i > 0 ? i : 0;
   delete def._mud; delete def._goo; delete def._cem; // the sprites are built again with the new colour
 }
 

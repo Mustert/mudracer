@@ -131,7 +131,7 @@ export function drawShop() {
     R1(sx - 2, SW.y - 2 - lift, SW.w + 4, SW.h + 4, sel ? (focus ? '#ffd23f' : '#d8c4a8') : '#1b120c');
     R1(sx, SW.y - lift, SW.w, SW.h, col); R1(sx, SW.y - lift, SW.w, 2, j ? pp.L : def.own.L); R1(sx, SW.y + SW.h - 3 - lift, SW.w, 3, j ? pp.D : def.own.D);
     // cars with a livery or a driver (rally, quad) show the matching accents on the pot too
-    const acc = def.own.acc && (j ? pp.acc : def.own.acc);
+    const acc = def.own.accent && (j ? pp.accent : def.own.accent);
     if (acc) { R1(sx + 3, SW.y + 5 - lift, SW.w - 6, 4, acc.p); R1(sx + 3, SW.y + 9 - lift, SW.w - 6, 1, acc.b); R1(sx + 3, SW.y + 4 - lift, SW.w - 6, 1, acc.s); }
     if (!j) star(sx + 6, SW.y + 4 - lift, true, '#1b120c');
     if (locked) { ctx.fillStyle = 'rgba(27,16,9,.6)'; ctx.fillRect(sx, SW.y - lift, SW.w, SW.h); }
