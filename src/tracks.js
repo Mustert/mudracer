@@ -10,7 +10,7 @@ const MUDDY = { mud: ['#5a3a1f', '#4b301a', '#664327'], mudEdge: '#3b2512', mudH
 export const THEMES = {
   wiese:  { ...MUDDY, grass: ['#63c24a', '#55b03e', '#74d05a'], grassEdge: '#4a9a36', tuft: '#3e8e2e', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#2f6d24', decor: 'wiese', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 26, fence: 'picket', ambient: 'butterfly' },
   gelaende: { ...MUDDY, grass: ['#6cbf4a', '#5eae3f', '#7ccc58'], grassEdge: '#4f9a36', tuft: '#468a30', track: ['#b98b58', '#aa7e4d', '#c79a66'], trackEdge: '#8a6440', trail: '#2f6d24', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], ambient: 'butterfly' },
-  wald:   { ...MUDDY, water: ['#1f4a5e', '#2a6078', '#35708a', '#4f8ea6'], leafWater: true, dark: true, fence: 'log', ambient: 'firefly', grass: ['#3f8d3c', '#367c33', '#4a9c47'], grassEdge: '#2f6e2c', tuft: '#27612a', track: ['#a9815a', '#9b744f', '#b68e65'], trackEdge: '#7b583a', trail: '#1f4a1f', decor: 'wald', tree: 'pine', treeCol: ['#1b573a', '#277048', '#3d9160', '#0d2e1e'], trees: 62 },
+  wald:   { ...MUDDY, water: ['#1f4a5e', '#2a6078', '#35708a', '#4f8ea6'], leafWater: true, dark: true, fence: 'log', ambient: 'firefly', grass: ['#3f8d3c', '#367c33', '#4a9c47'], grassEdge: '#2f6e2c', tuft: '#27612a', track: ['#a9815a', '#9b744f', '#b68e65'], trackEdge: '#7b583a', trail: '#1f4a1f', decor: 'wald', tree: 'pine', treeCol: ['#1b573a', '#277048', '#3d9160', '#0d2e1e'], trees: 170, treeGap: 17, treeEdge: true },
   strand: { ...MUDDY, water: ['#1d8fb3', '#2bb3cc', '#48cfd9', '#8aeee6'], shore: ['#c9a060', '#bf9655'],
     grass: ['#f3d995', '#ebcc81', '#f8e6b0'], grassEdge: '#dcb96c', tuft: '#e2c275', track: ['#bb8c5a', '#ae8050', '#c69864'], trackEdge: '#8f6a42', trail: '#b89656',
     decor: 'strand', tree: 'palm', treeCol: ['#2a8a3c', '#3cac4e', '#74d66c', '#18521f'], trees: 18, sea: true, fence: 'rope', ambient: 'gull' },
@@ -483,6 +483,7 @@ function buildTrack(def, ti) {
   const FENCE = { rope: ['#f0dcaa', '#7a4f2a', '#a8743f', '#5a3a1c', 9], bamboo: ['#c9d49a', '#5f7d34', '#87a24b', '#364a1c', 9], picket: ['#e6e1d2', '#ffffff', '#f4f1e6', '#8a8472', 6], log: ['#8a6440', '#5a3a1c', '#7a5230', '#3b2512', 12], mesh: ['#e8872a', '#5a6068', '#7b838c', '#2c3036', 9] }[th.fence];
   if (FENCE) {
     const RL = hex(FENCE[0]), P0 = hex(FENCE[1]), P1 = hex(FENCE[2]), P2 = hex(FENCE[3]), RL2 = hex('#6b4a2e');
+    const SL = hex('#b8a14a'), SM = hex('#8f7a30'), SD = hex('#2a1e0c'), SP = hex('#5a4318'), SH = hex('#203a2a'); // solid palisade (garden)
     for (let i = 0; i < N; i++) for (const s of [-1, 1]) {
       // the garden: if the first spot is already water, the fence moves out onto the grass strip next to the pond
       let x = 0, y = 0, j = -1;
@@ -494,9 +495,16 @@ function buildTrack(def, ti) {
       if (j < 0) continue;
       if ((def.kipper || []).some(k => Math.hypot(k[0] - x, k[1] - y) < 52)) continue; // the dump trucks drive through a gap in the fence
       // the garden: where deep water lies right behind the fence it is a solid barrier (except at the stepping stones, that is where you go in on purpose)
-      if (th.decor === 'garten' && i % 3 === 0 && !(def.stones || []).some(q => Math.hypot(q[0] - x, q[1] - y) < 60)) {
+      // it looks different from the low decoration fence: a thick dark bamboo palisade with posts
+      if (th.decor === 'garten' && !(def.stones || []).some(q => Math.hypot(q[0] - x, q[1] - y) < 60)) {
         let wet = false; for (let dy = -12; dy <= 12 && !wet; dy += 4) for (let dx = -12; dx <= 12; dx += 4) { const xx = clamp(x + dx, 0, WW - 1), yy = clamp(y + dy, 0, WH - 1); if (ter[yy * WW + xx] === 5 && !bridgeMask[yy * WW + xx]) { wet = true; break; } }
-        if (wet) walls.push({ x, y, r: 2.5 });
+        if (wet) {
+          if (i % 3 === 0) walls.push({ x, y, r: 2.5 });
+          const ox = nrm[i].x * s, oy = nrm[i].y * s, P = (k, c) => px(Math.round(x + ox * k), Math.round(y + oy * k), c);
+          P(-1, SD); P(0, SL); P(1, SL); P(2, SM); P(3, SD); P(4, SH);
+          if (i % 4 === 0) for (let k = -1; k <= 3; k++) for (const q of [-1, 0, 1]) px(Math.round(x + ox * k - oy * q), Math.round(y + oy * k + ox * q), k === -1 || k === 3 || q ? SD : SP);
+          continue;
+        }
       }
       if (i % FENCE[4] === 0) { px(x + 2, y + 2, P2); px(x, y, P1); px(x + 1, y, P0); px(x, y + 1, P0); px(x + 1, y + 1, P2); }
       else { px(x, y, RL); if (th.fence === 'log') px(x + Math.round(nrm[i].x * s), y + Math.round(nrm[i].y * s), RL2); }
@@ -675,8 +683,16 @@ function buildTrack(def, ti) {
   } else if (th.decor === 'garten') {
     const rc = (x0, y0, w, h, c) => { for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) setT(x0 + xx, y0 + yy, c); };
     const GR = ['#2f6b3a', '#3f8a47', '#58a85a', '#e8a6c0', '#ffffff'].map(hex);
-    // the rails of the bridges are solid
+    // the rails of the bridges are solid: red lacquered railings with dark posts and golden caps, a shadow on the water
     for (let i = 0; i < N; i += 3) if (isBridge[i]) for (const s of [-1, 1]) walls.push({ x: path[i].x + nrm[i].x * s * HALF, y: path[i].y + nrm[i].y * s * HALF, r: 3 });
+    const BR = [hex('#2a120c'), hex('#b8321f'), hex('#e0543a'), hex('#ff8a6a')], BP = hex('#3a1a10'), BG = hex('#e8c14a');
+    for (let j = 0; j < A; j++) {
+      if (!isBridge[near[j]] || dist[j] < HALF - 3 || dist[j] > HALF + 3) continue;
+      const dd = dist[j], i = near[j], x = j % WW, y = (j / WW) | 0;
+      if (dd > HALF + 1.5) { if (ter[j] === 5 || ter[j] === 3) { const q = j * 4; d[q] *= .6; d[q + 1] *= .6; d[q + 2] *= .65; } continue; }
+      const post = i % 9 < 2;
+      setT(x, y, post ? (dd > HALF - 2.4 && dd < HALF + .4 && i % 9 === 0 ? BG : BP) : dd < HALF - 2.2 || dd > HALF + .8 ? BR[0] : dd < HALF - 1.2 ? BR[3] : dd < HALF - .2 ? BR[2] : BR[1]);
+    }
     // clipped hedges between the roads: solid, a few blossoms
     for (const [x1, y1, x2, y2] of def.hedges || []) {
       const L = Math.hypot(x2 - x1, y2 - y1);
@@ -763,13 +779,14 @@ function buildTrack(def, ti) {
   }
   // trees: shadow on the ground, canopy on the top layer
   const forced = wallTrees.slice(), want = th.trees + forced.length;
-  for (let tries = 0; (forced.length || trees.length < want) && tries < 6000; tries++) {
+  for (let tries = 0; (forced.length || trees.length < want) && tries < 12000; tries++) {
     const f = forced.shift();
-    const x = f ? f.x : 14 + (r() * (WW - 28) | 0), y = f ? f.y : 14 + (r() * (WH - 28) | 0), j = y * WW + x;
+    // a forest (treeEdge) also grows right up to the edge of the map, the trees are cut off there
+    const m = th.treeEdge ? 2 : 14, x = f ? f.x : m + (r() * (WW - 2 * m) | 0), y = f ? f.y : m + (r() * (WH - 2 * m) | 0), j = y * WW + x;
     if (!f) {
       if (ter[j] !== 0 || dist[j] < HALF + 18 || shore[j] || wallMask[j]) continue;
       if (rail && rail.lines.some(L => Math.abs(x - L) < 36)) continue;
-      if (trees.some(o => Math.hypot(o.x - x, o.y - y) < 26) || walls.some(o => Math.hypot(o.x - x, o.y - y) < 17)) continue;
+      if (trees.some(o => Math.hypot(o.x - x, o.y - y) < (th.treeGap || 26)) || walls.some(o => Math.hypot(o.x - x, o.y - y) < 17)) continue;
       let wet = false; for (let dy = -14; dy <= 14 && !wet; dy += 7) for (let dx = -14; dx <= 14; dx += 7) { const xx = clamp(x + dx, 0, WW - 1), yy = clamp(y + dy, 0, WH - 1); if (ter[yy * WW + xx] === 3 || ter[yy * WW + xx] === 5) wet = true; }
       if (wet) continue;
     }

@@ -307,15 +307,27 @@ function splashAt(f, end) {
   splash(x, y, 7); if (end < 0) SFX.splash(.2);
 }
 
+// is a point (relative to the fish) on one of the fish's pixels? body, tail fin and side fins, like drawKoi paints them
+function koiAt(dx, dy, c, sn, s) {
+  const lx = (dx * c + dy * sn) / s, ly = (-dx * sn + dy * c) / s;
+  return (lx >= -13 && lx <= 11 && Math.abs(ly) <= 4) || (lx >= -18 && lx < -13 && Math.abs(ly) <= 4.5) || (lx >= -3 && lx <= 1 && Math.abs(ly) <= 6);
+}
+
 // a koi flying over the road knocks a car off like a cow does
 function koiCollisions() {
   const ev = G.T.ev; if (!ev || !ev.kois.length) return;
   for (const f of ev.kois) {
     if (f.p < .1 || f.p > .9) continue;
+    // the fish as it is drawn (lifted by its height, tilted, scaled), checked against points all over the car
+    const s = 1 + f.z / 40, fx = f.px, fy = f.py - f.z * .7, fa = f.ang + (f.p > .5 ? .25 : -.25) * .5, fc = Math.cos(fa), fs = Math.sin(fa);
     for (const c of G.cars) {
       if (c.z > 0 || c.stun || c.ghost > 0 || c.fall > 0) continue;
-      const dx = c.x - f.px, dy = c.y - f.py, d = Math.hypot(dx, dy); if (d >= 17 || d === 0) continue;
-      const nx = dx / d, ny = dy / d;
+      if (Math.hypot(c.x - fx, c.y - fy) > 40) continue;
+      const cc = Math.cos(c.ang), cs = Math.sin(c.ang);
+      let hit = false;
+      for (let u = -15; u <= 15 && !hit; u += 5) for (let v = -9; v <= 9 && !hit; v += 4.5) hit = koiAt(c.x + cc * u - cs * v - fx, c.y + cs * u + cc * v - fy, fc, fs, s);
+      if (!hit) continue;
+      const dx = c.x - fx, dy = c.y - fy, d = Math.hypot(dx, dy) || 1, nx = dx / d, ny = dy / d;
       c.vx = nx * 150; c.vy = ny * 150; c.spin = 12; c.stun = 1.1; c.boost = 0; mudBurst(c, 4);
       SFX.blubb(); setTimeout(SFX.blubb, 110); if (!c.ai) setTimeout(SFX.blubb, 230);
       addP({ t: 'ring', x: f.px, y: f.py, life: .7, ml: .7 });

@@ -353,21 +353,6 @@ export function drawRace() {
     text(String(pl), px + 53, 4, 8, '#1b120c', 'center', null);
     if (G.mode === 'gp') text((G.gp.cup.label || G.gp.cup.name + ' CUP') + ' ' + (G.gp.race + 1) + '/' + G.gp.tracks.length, VW - 6, 4, 8, '#ffd23f', 'right');
   }
-  // mini map
-  const mx = VW - 126, my = 20;
-  ctx.fillStyle = '#1b120c'; ctx.fillRect(mx - 2, my - 2, 124, 72);
-  ctx.globalAlpha = .9; ctx.drawImage(G.T.mini, mx, my); ctx.globalAlpha = 1;
-  ctx.strokeStyle = 'rgba(255,243,220,.7)'; ctx.lineWidth = 1; ctx.strokeRect(mx + Math.round(cx * .15) + .5, my + Math.round(cy * .15) + .5, Math.round(VW * .15), Math.round(VH * .15));
-  if (R) {
-    if (R.train.phase === 'run') { const ty0 = clamp(R.train.y * .15, 0, 68), ty1 = clamp((R.train.y + TRAIN.LEN) * .15, 0, 68); ctx.fillStyle = '#c0392b'; ctx.fillRect(mx + Math.round(R.x * .15) - 2, my + ty0, 4, ty1 - ty0); }
-    if (R.signal && ((G.time * 3) | 0) % 2) for (const cr of R.cross) if (cr.x === R.x) { ctx.fillStyle = '#ff2d2d'; ctx.fillRect(mx + Math.round(cr.x * .15) - 2, my + Math.round(cr.y * .15) - 2, 5, 5); }
-  }
-  if (gh) { ctx.fillStyle = 'rgba(159,214,255,.9)'; ctx.fillRect(mx + Math.round(gh.x * .15) - 1, my + Math.round(gh.y * .15) - 1, 3, 3); }
-  for (const c of G.cars) {
-    const dx = mx + Math.round(c.x * .15), dy = my + Math.round(c.y * .15);
-    if (c === G.player) { ctx.fillStyle = ((G.time * 4) | 0) % 2 ? '#ffffff' : '#1b120c'; ctx.fillRect(dx - 3, dy - 3, 6, 6); }
-    ctx.fillStyle = '#1b120c'; ctx.fillRect(dx - 2, dy - 2, 4, 4); ctx.fillStyle = c.def.M; ctx.fillRect(dx - 1, dy - 1, 2, 2);
-  }
   }
   // train warning: big stop sign while the lights flash and a crossing is ahead
   if (R && R.signal && G.state === 'race' && !G.player.stun) {
