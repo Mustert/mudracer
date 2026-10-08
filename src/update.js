@@ -105,9 +105,9 @@ function updateRace(dt) {
     c.wet = c.surf === 5 ? c.wet + dt : 0;
     if (c.wet > .22) { sinkCar(c); continue; }
     const sp = Math.hypot(c.vx, c.vy), v = c.ai ? .35 : 1;
-    if (c.surf === 2) {
+    if (c.surf === 2 || c.surf === 6) {
       c.dirt = Math.min(1, c.dirt + .55 * dt * (sp > 8 ? 1 : .3)); c.mudTrail = 1.6;
-      if (prev !== 2 && sp > 25) { mudBurst(c, 14); SFX.mud(v); if (G.T.run && !c.ai) G.run.muds++; }
+      if (prev !== c.surf && sp > 25) { mudBurst(c, 14); SFX.mud(v); if (G.T.run && !c.ai) G.run.muds++; }
       if (sp > 20 && Math.random() < dt * 35) mudBurst(c, 1);
       if (!c.ai && sp > 8 && Math.random() < dt * 2.5) SFX.blubb();
     } else if (c.surf === 3) {
@@ -126,13 +126,14 @@ function updateRace(dt) {
     }
     if (c.dirt > .8 && sp > 15 && Math.random() < dt * 3) mudBurst(c, 1);
     if (c.surf === 1 && !th.space && sp > 80 && Math.random() < dt * 10) addP({ t: 'dust', x: c.x - Math.cos(c.ang) * 14, y: c.y - Math.sin(c.ang) * 14, vx: (Math.random() - .5) * 10, vy: (Math.random() - .5) * 10, life: .55, ml: .55 });
-    c.bump = (c.surf === 0 || c.surf === 2) && sp > 25 && ((G.time * 14 + c.seed) | 0) % 2 ? 1 : 0;
+    c.bump = (c.surf === 0 || c.surf === 2 || c.surf === 6) && sp > 25 && ((G.time * 14 + c.seed) | 0) % 2 ? 1 : 0;
     if (sp > 6) {
       const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
       for (const side of [-8, 8]) {
         const wx = c.x - fx * 11 - fy * side, wy = c.y - fy * 11 + fx * side;
         let col = null, a = 0;
         if (c.surf === 2) { col = th.mudTrail[0]; a = .5; }
+        else if (c.surf === 6) { col = '#7d8188'; a = .55; }
         else if (c.surf === 3 || c.surf === 5) col = null;
         else if (c.mudTrail > 0) { col = th.mudTrail[1]; a = .45 * c.mudTrail / 1.6; }
         else if (c.wetTrail > 0 && c.surf === 1) { col = '#7a5a3a'; a = .3 * c.wetTrail; }

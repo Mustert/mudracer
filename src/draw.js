@@ -292,6 +292,7 @@ export function drawRace() {
   ctx.save(); ctx.translate(-cx, -cy);
   const wp = G.T.watPix, k = Math.floor(G.time * 3);
   if (wp.length) for (let j = 0; j < 40; j++) { const p = wp[(hash(j, k, 77) * wp.length) | 0]; ctx.fillStyle = j % 2 ? '#e8f7ff' : '#9fd6ff'; ctx.fillRect(p % G.T.W, (p / G.T.W) | 0, 1, 1); }
+  const cp = G.T.cemPix; if (cp && cp.length) for (let j = 0; j < 6; j++) { const p = cp[(hash(j, k, 78) * cp.length) | 0]; ctx.fillStyle = '#d4d8dc'; ctx.fillRect(p % G.T.W, (p / G.T.W) | 0, 1, 1); }
   if (G.T.shoreY) drawBeach(cx);
   drawCritters();
   drawEventsGround();

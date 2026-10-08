@@ -130,6 +130,10 @@ export const SFX = {
     voice({ type: 'sawtooth', f: 105, to: 160, d: .38, a: .06, lp: 520, lpTo: 700, vol: .2 }); voice({ type: 'sawtooth', f: 107, detune: 18, to: 162, d: .38, a: .06, lp: 520, vol: .12 });
     voice({ type: 'sawtooth', t: .3, f: 160, to: 90, d: .75, a: .02, lp: 600, lpTo: 260, vol: .2 }); voice({ type: 'sine', f: 55, d: 1, a: .08, vol: .16 });
   },
+  // building site: reversing beeper, hydraulics and the load of earth coming down
+  beep: v => voice({ type: 'square', f: 1020, a: .004, hold: .07, d: .1, vol: .06 * v, lp: 2600 }),
+  hydr: v => voice({ type: 'sawtooth', f: 120, to: 210, a: .12, hold: .6, d: .3, vol: .045 * v, lp: 520 }),
+  dump: v => { noise({ type: 'lowpass', f: 700, to: 120, a: .05, hold: .5, d: 1.6, vol: .4 * v, q: .7 }); voice({ f: 70, to: 38, d: .9, vol: .3 * v }); noise({ t: .15, type: 'bandpass', f: 1800, to: 500, d: .5, vol: .12 * v }); },
   rain: () => noise({ type: 'highpass', f: 4200, q: .5, a: 1.2, hold: 5.5, d: 2.5, vol: .09 }),
   thunder: () => { noise({ type: 'lowpass', f: 300, to: 70, a: .05, d: 2, vol: .45, q: .7 }); voice({ f: 62, to: 34, d: 1.6, vol: .3 }); },
   flood: () => { noise({ type: 'lowpass', f: 260, to: 1100, a: 2, hold: 4, d: 3.5, vol: .28, q: .6 }); noise({ type: 'bandpass', f: 2500, to: 700, a: 1, hold: 3, d: 3, vol: .1 }); },
@@ -238,6 +242,7 @@ export function engineSound(dt) {
     if (G.player.washing) { type = 'highpass'; sf = 3500; q = .5; sg = .18; }
     else if (G.player.surf === 1 || G.player.surf === 4) { sf = 1800 + sp * 900; q = .6; sg = .07 * sp; }
     else if (G.player.surf === 0) { type = 'lowpass'; sf = 700; q = .7; sg = .06 * sp; }
+    else if (G.player.surf === 6) { type = 'lowpass'; sf = 160 + Math.random() * 200; q = 7; sg = .2 * Math.max(sp, .1); }
     else if (G.player.surf === 2) { type = 'lowpass'; sf = 250 + Math.random() * 350; q = 6; sg = .16 * Math.max(sp, .1); }
     else if (G.player.surf === 3) { type = 'highpass'; sf = 2500; q = .5; sg = .14 * sp; }
   }

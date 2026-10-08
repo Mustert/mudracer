@@ -1,8 +1,8 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { HALF, TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, mk, vnoise } from './core.js';
-import { R1, text } from './draw.js';
-import { addP, mudBurst, splash, WATC } from './particles.js';
+import { HALF, TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, mk, pick, vnoise } from './core.js';
+import { R1, disc, text } from './draw.js';
+import { addP, drop, mudBurst, splash, WATC } from './particles.js';
 import { cam } from './state.js';
 import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
 
@@ -92,6 +92,7 @@ function updateCows(T, dt) {
 // a car hits a cow: pushed out, and hard hits throw it aside (like the train, only softer); the cow moos
 export function eventCollisions() {
   koiCollisions();
+  truckCollisions();
   const ev = G.T.ev; if (!ev) return;
   for (const w of ev.cows) for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
@@ -333,33 +334,186 @@ function drawKoi(f) {
   ctx.restore();
 }
 
+// ======================================================= Baustelle: the dump trucks
+
+// A truck backs up to the road edge from outside (beeping), tips its load next to the road and drives away. The tipping raises a cloud of earth
+// that drifts onto the road and makes cars dirty. Everything depends only on the race time, so a time trial repeats it.
+const DT = { len: 38, arrive: 2.8, wait: 3.4, up: 4.4, down: 6.6, down2: 7.6, leave: 10.2, cloud0: 4.7, cloud: 6.5 };
+const SOIL = ['#4a321d', '#5a3a1f', '#6a4b2e', '#8a6440'];
+const ease = x => x * x * (3 - 2 * x);
+
+function initKipper(T) {
+  T.ev.kipper = (T.def.kipper || []).map(([x, y, side, per, t0], k) => {
+    let bi = 0, bd = 1e12; for (let i = 0; i < T.N; i++) { const dd = (T.path[i].x - x) ** 2 + (T.path[i].y - y) ** 2; if (dd < bd) { bd = dd; bi = i; } }
+    const p = T.path[bi], n = T.nrm[bi], tg = T.tan[bi], ox = n.x * side, oy = n.y * side, cx = p.x + ox * (HALF + 4 + DT.len / 2), cy = p.y + oy * (HALF + 4 + DT.len / 2);
+    // the truck starts outside of the world, so it drives in from the edge
+    let far = 40; while (far < 170) { const qx = cx + ox * far, qy = cy + oy * far; if (qx < -26 || qy < -26 || qx > WW + 26 || qy > WH + 26) break; far += 6; }
+    let ang = Math.atan2(oy, ox); const q = Math.round(ang / (Math.PI / 2)) * Math.PI / 2; if (Math.abs(ang - q) < .25) ang = q;
+    return { k, per, t0, p, tg, ox, oy, cx, cy, far, ang, last: -1, dist: far, tilt: 0, rem: 1, show: false, cloud: null, piles: 0, beepN: -1 };
+  });
+}
+
+const near = (x, y) => Math.hypot(x - cam.x - VW / 2, y - cam.y - VH / 2);
+const vol = (x, y) => clamp(1 - near(x, y) / 460, 0, 1);
+
+function paintPile(T, s, stage) {
+  const horiz = Math.abs(s.tg.x) > Math.abs(s.tg.y), cx = s.p.x + s.ox * (HALF + 9), cy = s.p.y + s.oy * (HALF + 9);
+  const along = [9, 12, 15][stage - 1] + s.piles % 2 * 2, across = [5, 7, 9][stage - 1];
+  const rx = horiz ? along : across, ry = horiz ? across : along, S4 = SOIL.map(hex);
+  snap(T, cx - 22, cy - 22, 44, 44);
+  blob(T, cx, cy, rx, ry, 61 + s.k * 7 + s.piles, (rel, x, y) => {
+    const lit = ((x - cx) + (y - cy)) / (rx + ry), n = hash(x, y, 71);
+    return rel > .84 ? S4[0] : n < .1 ? S4[0] : lit < -.12 ? (n > .85 ? S4[3] : S4[2]) : lit > .22 ? S4[1] : S4[2];
+  });
+  redrawMini(T);
+}
+
+function updateKipper(T, dt) {
+  for (const s of T.ev.kipper) {
+    const t = T.ev.t - s.t0; if (t < 0) { s.show = false; s.cloud = null; continue; }
+    const u = t % s.per, prev = s.last >= 0 && s.last <= u ? s.last : -1, cross = a => prev < a && u >= a;
+    s.last = u; s.show = u < DT.leave;
+    s.dist = u < DT.arrive ? s.far * (1 - ease(u / DT.arrive)) : u < DT.down2 ? 0 : s.far * ((u - DT.down2) / (DT.leave - DT.down2)) ** 2;
+    s.tilt = u < DT.wait ? 0 : u < DT.up ? ease((u - DT.wait) / (DT.up - DT.wait)) : u < DT.down ? 1 : u < DT.down2 ? 1 - ease((u - DT.down) / (DT.down2 - DT.down)) : 0;
+    const d0 = DT.up + .3;
+    s.rem = u < d0 ? 1 : u < DT.down ? 1 - .96 * (u - d0) / (DT.down - d0) : u < DT.down2 ? .04 : 1;
+    const v = vol(s.cx, s.cy);
+    if (u < DT.arrive) { const n = Math.floor(u / .55); if (n !== s.beepN) { s.beepN = n; if (v > .02) SFX.beep(v); } } else s.beepN = -1;
+    if (cross(DT.wait) && v > .02) SFX.hydr(v);
+    if (cross(d0) && v > .02) SFX.dump(v);
+    if (cross(DT.up + 1)) paintPile(T, s, 1);
+    if (cross(DT.up + 1.9)) paintPile(T, s, 2);
+    if (cross(DT.down)) { paintPile(T, s, 3); s.piles++; }
+    // the earth pours out at the back
+    if (u >= d0 && u < DT.down && s.dist === 0 && near(s.cx, s.cy) < 330) {
+      const bx = s.p.x + s.ox * (HALF + 4), by = s.p.y + s.oy * (HALF + 4), back = Math.atan2(-s.oy, -s.ox);
+      for (let q = 0, n = dt * 38 + Math.random(); q < n && q < 3; q++) drop(bx + s.tg.x * (Math.random() - .5) * 12, by + s.tg.y * (Math.random() - .5) * 12, back + (Math.random() - .5) * 1.5, 10 + Math.random() * 32, 25 + Math.random() * 50, pick(SOIL), 1.2, Math.random() < .5);
+    }
+    // the cloud of earth: it grows, drifts across the road edge towards the middle and thins out
+    const cu = u - DT.cloud0;
+    if (cu >= 0 && cu < DT.cloud) {
+      const r = 11 + 20 * Math.min(1, cu / 2.2), a = clamp(cu / .7, 0, 1) * (1 - clamp((cu - 4.2) / 2.3, 0, 1));
+      s.cloud = { x: s.p.x + s.ox * (HALF + 2 - cu * 4.2) + s.tg.x * cu * 2, y: s.p.y + s.oy * (HALF + 2 - cu * 4.2) + s.tg.y * cu * 2, r, a };
+      for (const c of G.cars) {
+        if (c.fall > 0 || c.z > 0 || Math.hypot(c.x - s.cloud.x, c.y - s.cloud.y) > r * .95) continue;
+        c.dirt = Math.min(1, c.dirt + 1.1 * a * dt); c.mudTrail = Math.max(c.mudTrail, .8);
+      }
+    } else s.cloud = null;
+  }
+}
+
+function truckCollisions() {
+  const ev = G.T.ev; if (!ev || !ev.kipper.length) return;
+  for (const s of ev.kipper) {
+    if (!s.show) continue;
+    const tx = s.cx + s.ox * s.dist, ty = s.cy + s.oy * s.dist;
+    for (const c of G.cars) {
+      if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
+      for (const q of [-13, 0, 13]) {
+        const px = tx + s.ox * q, py = ty + s.oy * q, dx = c.x - px, dy = c.y - py, d = Math.hypot(dx, dy), mn = 17;
+        if (d >= mn || d === 0) continue;
+        const nx = dx / d, ny = dy / d, vn = c.vx * nx + c.vy * ny;
+        c.x = px + nx * mn; c.y = py + ny * mn;
+        if (vn < 0) { c.vx -= 1.5 * vn * nx; c.vy -= 1.5 * vn * ny; if (!c.ai && -vn > 35) SFX.bump(); }
+      }
+    }
+  }
+}
+
+function drawTruck(s) {
+  if (!s.show) return;
+  const x = s.cx + s.ox * s.dist, y = s.cy + s.oy * s.dist;
+  if (x < cam.x - 50 || x > cam.x + VW + 50 || y < cam.y - 50 || y > cam.y + VH + 50) return;
+  ctx.globalAlpha = .25; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(Math.round(x) + 3, Math.round(y) + 4, 20, 10, s.ang, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+  ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(s.ang);
+  const R = (dx, dy, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(dx, dy, w, h); }, moving = s.dist > 0, tl = s.tilt;
+  for (const wx of [11, -3, -12]) { R(wx, -10, 6, 3, '#1b120c'); R(wx, 7, 6, 3, '#1b120c'); }
+  R(-19, -5, 38, 10, '#2c2c30');
+  // the bed: the front lifts when tipping, so seen from above it gets shorter; the earth slides out at the back
+  const fx = 8 - 6 * tl;
+  R(-20, -10, fx + 20, 20, '#1b120c'); R(-19, -9, fx + 18, 18, '#f2b81c'); R(-18, -7, fx + 16, 14, '#8a6a10');
+  const sl = Math.round((fx + 17) * s.rem);
+  if (sl > 1) { R(fx - sl, -7, sl, 14, '#5a3a1f'); R(fx - sl, -7, sl, 4, '#6a4b2e'); R(fx - sl + 2, -2, Math.max(0, sl - 5), 3, '#8a6440'); }
+  if (tl > .2) R(-22, -9, 2, 18, '#7a5a1a');
+  R(8, -9, 13, 18, '#1b120c'); R(9, -8, 11, 16, '#f2b81c'); R(10, -7, 4, 14, '#ffd75a'); R(16, -7, 3, 14, '#7ec3e8'); R(13, -11, 3, 2, '#1b120c'); R(13, 9, 3, 2, '#1b120c');
+  R(11, -1, 3, 3, moving && ((G.time * 5) | 0) % 2 ? '#ff9a1f' : '#8a4a10');
+  ctx.restore();
+}
+
+function drawDust(s) {
+  const c = s.cloud; if (!c || c.a <= 0 || near(c.x, c.y) > 330) return;
+  for (let i = 0; i < 16; i++) {
+    const a = hash(i, s.k, 11) * TAU + G.time * .3 * (hash(i, s.k, 14) - .5), rr = Math.sqrt(hash(i, s.k, 12)) * c.r * .8, rad = c.r * (.3 + .22 * hash(i, s.k, 13));
+    ctx.globalAlpha = .34 * c.a; disc(Math.round(c.x + Math.cos(a) * rr), Math.round(c.y + Math.sin(a) * rr * .85), Math.round(rad), i % 3 ? '#7e5c3a' : '#a07c52');
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ======================================================= Baustelle: the leaking cement mixer (always) and the warning lamps
+
+function updateMixer(T, dt) {
+  const m = T.mixer; if (!m || near(m.cx, m.cy) > 330) return;
+  if (Math.random() < dt * 9) addP({ t: 'd', x: m.cx + (Math.random() - .5) * 2, y: m.cy + 1, z: 5, vx: -3 - Math.random() * 3, vy: 1 + Math.random() * 2, vz: 0, col: Math.random() < .5 ? '#9aa0a6' : '#c0c5ca', s: Math.random() < .3 ? 2 : 1, life: .5, ml: .5 });
+}
+
+// the drum of the mixer turns (stripes run around it)
+function drawMixer(T) {
+  const m = T.mixer; if (!m || near(m.x, m.y + 31) > 300) return;
+  const cx = m.x, cy = m.y + 31;
+  for (let dy = -19; dy <= 19; dy++) {
+    const w = Math.round(8.5 * Math.sqrt(1 - (dy / 19.6) ** 2));
+    for (let dx = -w; dx <= w; dx++) {
+      const stripe = Math.floor((dy + dx * 1.3 + G.time * 12) / 5) & 1, edge = Math.abs(dx) >= w, lit = dx < -2;
+      ctx.fillStyle = edge ? '#1b120c' : stripe ? (lit ? '#ff9a4a' : '#e8742a') : (lit ? '#fffaf0' : '#e6dcc6');
+      ctx.fillRect(cx + dx, cy + dy, 1, 1);
+    }
+  }
+  ctx.fillStyle = '#1b120c'; ctx.fillRect(cx - 3, cy - 20, 7, 2); ctx.fillStyle = '#8d939d'; ctx.fillRect(cx - 2, cy - 21, 5, 2);
+}
+
+function drawLights(T) {
+  for (const L of T.lights || []) {
+    if (near(L.x, L.y) > 330) continue;
+    const on = ((G.time * 2.2 - L.k * .3) % 1 + 1) % 1 < .5, x = Math.round(L.x), y = Math.round(L.y);
+    ctx.fillStyle = '#1b120c'; ctx.fillRect(x - 2, y - 2, 5, 5); ctx.fillStyle = on ? '#ffb22e' : '#7a4a10'; ctx.fillRect(x - 1, y - 1, 3, 3);
+    if (on) { ctx.globalAlpha = .3; disc(x, y, 8, '#ffb22e'); ctx.globalAlpha = .25; disc(x, y, 4, '#fff1a8'); ctx.globalAlpha = 1; }
+  }
+}
+
 // ======================================================= setup, update, drawing
 
-const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois };
+const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper };
 
 export function setupEvents(T) {
   resetAllEvents();
-  T.ev = { t: 0, cows: [], holes: [], rain: null, flood: null, pier: false, kois: [] };
+  T.ev = { t: 0, cows: [], holes: [], rain: null, flood: null, pier: false, kois: [], kipper: [] };
   for (const name of T.def.events || []) if (eventOn(name)) INIT[name](T);
 }
 
 export function updateEvents(dt) {
   const T = G.T; if (!T || T.run) return;
   updateShowers(T, dt);
+  updateMixer(T, dt);
   const ev = T.ev; if (!ev) return;
   ev.t += dt;
   if (ev.cows.length) updateCows(T, dt);
   if (ev.holes.length) updateRain(T, dt);
   if (ev.kois.length) updateKois(T, dt);
+  if (ev.kipper.length) updateKipper(T, dt);
   if (T.def.events && T.def.events.includes('flut') && eventOn('flut')) updateFlood(T, dt);
 }
 
-// cows lie on the ground (below the cars); the moo is drawn above
-export function drawEventsGround() { const ev = G.T.ev; if (ev) for (const w of ev.cows) drawCow(w); }
+// cows, trucks and the mixer drum lie on the ground (below the cars); the moo, the dust cloud and the lamps are drawn above
+export function drawEventsGround() {
+  const T = G.T; drawMixer(T);
+  const ev = T.ev; if (ev) { for (const w of ev.cows) drawCow(w); for (const s of ev.kipper) drawTruck(s); }
+}
 
 export function drawEventsAbove() {
-  const ev = G.T.ev; if (!ev) return;
+  const T = G.T; drawLights(T);
+  const ev = T.ev; if (!ev) return;
   for (const f of ev.kois) drawKoi(f);
+  for (const s of ev.kipper) drawDust(s);
   for (const w of ev.cows) if (w.mooT > 0) text('MUH!', Math.round(w.x), Math.round(w.y - 16 - (1.3 - w.mooT) * 8), 8, '#ffffff', 'center');
 }
 

@@ -191,6 +191,29 @@ const SONGS = {
       if (s === 12) M.rim(t);
       M.shaker(t, s % 4 === 0 ? .55 : .2);
     } },
+  // building site: stomping industrial funk in E minor, a reversing-beeper lead, saw bass, anvil clangs and a jackhammer rattle
+  site: { bpm: 126, swing: .08,
+    chords: { Em: { r: 40, n: [64, 67, 71] }, C: { r: 36, n: [60, 64, 67] }, D: { r: 38, n: [62, 66, 69] }, B7: { r: 35, n: [59, 63, 66, 69] }, Am: { r: 33, n: [57, 60, 64] }, G: { r: 43, n: [59, 62, 67] } },
+    A: { ch: ['Em', 'Em', 'C', 'D', 'Em', 'Em', 'Am', 'B7'], mel: mel([
+      'E5:0:1 E5:2:1 B5:4:1 E5:6:1 G5:8:2 E5:11:1 D5:12:2', 'E5:0:1 E5:2:1 B5:4:1 E5:6:1 A5:8:2 G5:11:1 E5:12:2',
+      'C5:0:1 C5:2:1 G5:4:1 C5:6:1 E5:8:2 C5:11:1 B4:12:2', 'D5:0:1 D5:2:1 A5:4:1 D5:6:1 F#5:8:2 E5:11:1 D5:12:2',
+      'E5:0:1 E5:2:1 B5:4:1 E5:6:1 G5:8:2 E5:11:1 D5:12:2', 'E5:0:1 G5:2:1 B5:4:1 E6:6:2 D6:10:2 B5:12:4',
+      'A5:0:1 A5:2:1 E5:4:1 A5:6:1 C6:8:2 B5:11:1 A5:12:2', 'B5:0:2 A5:2:1 G5:4:2 F#5:6:2 D#5:8:4 E5:12:4']) },
+    B: { ch: ['Am', 'G', 'C', 'D', 'Am', 'G', 'B7', 'Em'], mel: mel([
+      'A5:0:2 C6:4:2 E6:8:4 C6:12:2 A5:14:2', 'G5:0:2 B5:4:2 D6:8:4 B5:12:4', 'E5:0:2 G5:4:2 C6:8:4 G5:12:4', 'F#5:0:2 A5:4:2 D6:8:4 A5:12:2 F#5:14:2',
+      'A5:0:2 C6:4:2 E6:8:2 A6:10:2 G6:12:4', 'G6:0:2 D6:4:2 B5:8:4 G5:12:4', 'F#6:0:2 D#6:4:2 B5:8:2 F#5:10:2 D#5:12:4', 'E6:0:2 B5:4:2 G5:8:2 E5:12:4']) },
+    lead(M, m, t, d) { M.beeper(hz(m), t, d); },
+    band(M, s, t, bi, ch) {
+      for (const [st, off, l] of [[0, 0, 2], [3, 0, 1], [6, 12, 2], [8, 0, 2], [11, 7, 1], [14, 12, 2]]) if (st === s) M.bassSaw(hz(ch.r + off - 12), t, l * M.sd);
+      if ((s & 7) === 2) M.stab(ch.n, t);
+      if (s === 0 || s === 8 || (s === 6 && bi % 2)) M.kick(t, .9);
+      if (s === 4 || s === 12) { M.snare(t, .8); M.clap(t); }
+      if (bi % 4 === 3 && s >= 8) M.jack(t, s > 12 ? .7 : 1);
+      else if (s % 2 === 0) M.hat(t, s === 14, s % 4 === 0 ? 1 : .6);
+      if (bi % 2 === 1 && (s === 2 || s === 10)) M.anvil(t);
+      if (s === 0 && bi === 0) M.crash(t);
+      if (s === 0) M.pad(ch.n, t, 16 * M.sd, .014);
+    } },
 };
 
 
@@ -258,6 +281,10 @@ export const Music = {
     synth({ at: t, f, parts: [['triangle', 1, 1], ['sine', 2, .4], ['square', 3, .1]], a: .002, d: .42, vol: .06 * v, lp: 5200, lpTo: 1400, lpT: .25, dest: this.out });
     synth({ at: t + .012, f: f * 1.004, parts: [['triangle', 1, 1]], a: .002, d: .3, vol: .03 * v, lp: 3600, dest: this.out });
   },
+  beeper(f, t, d) { synth({ at: t, f, parts: [['square', 1, 1]], a: .003, hold: Math.max(0, Math.min(d, this.sd * 1.4) - .05), d: .05, vol: .085, lp: 3800, dest: this.leadBus }); },
+  bassSaw(f, t, d) { synth({ at: t, f, parts: [['sawtooth', 1, .8], ['square', .5, .4]], a: .005, hold: d * .4, d: d * .6 + .03, vol: .16, lp: 1100, lpTo: 220, dest: this.out }); },
+  anvil(t) { voice({ at: t, f: 1850, to: 1700, a: .001, d: .5, vol: .06, dest: this.out }); voice({ at: t, f: 2780, a: .001, d: .3, vol: .035, dest: this.out }); noise({ at: t, type: 'bandpass', f: 4200, q: 3, d: .05, vol: .08, dest: this.out }); },
+  jack(t, v = 1) { noise({ at: t, type: 'bandpass', f: 260, q: 1.2, a: .001, d: .05, vol: .13 * v, dest: this.out }); voice({ at: t, type: 'square', f: 95, to: 60, d: .05, vol: .1 * v, lp: 600, dest: this.out }); },
   glock(f, t, v = 1) { synth({ at: t, f, parts: [['sine', 1, 1], ['sine', 2.76, .3]], a: .001, d: .5, vol: .035 * v, dest: this.leadBus }); },
   riser(t, dur) { noise({ at: t, type: 'bandpass', f: 300, to: 7000, a: dur * .95, d: .05, vol: .07, q: 3, dest: this.out }); },
   marimba(f, t) { synth({ at: t, f, parts: [['sine', 1, 1]], a: .003, d: .35, vol: .12, dest: this.out }); synth({ at: t, f, parts: [['sine', 4, 1]], a: .001, d: .04, vol: .035, dest: this.out }); },

@@ -14,6 +14,8 @@ function surfOf(c) {
     // off the road is as slow as mud, but the car stays clean (only the Matschfahrt is made of rough ground)
     case 0: return G.T.run ? [.6, 7, .9] : [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
     case 2: return [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
+    // cement: sticky and 150% as slow as mud
+    case 6: return [(MUD_A + MUD_B * m) / 1.5, 3.2 * m, Math.min(.8, .55 * m) * .8];
     case 3: return [.72, 1.6, .65];
     default: return [1, 10, 1];
   }
