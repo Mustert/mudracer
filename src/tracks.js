@@ -52,7 +52,7 @@ const TRACK_DEFS = [
     mud: B2([[.18, 0, 14, 18], [.5, 0, 18, 18], [.29, 4, 6, 7], [.78, -4, 6, 7]]), water: [], ponds: [[300, 240, 44, 26]], wash: null,
     // small beach showers that run all the time, each one leaves a mini puddle (t along the track, offset from the centre line); none on the lower part that gets flooded
     showers: [[.05, -15], [.25, 15], [.41, -15]] },
-  { name: 'ZUG', seed: 4, theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 365, y: 190, ang: 0 }], tunnels: [{ x: 365, y: 190, hw: 117, portals: [300, 430] }], pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
+  { name: 'ZUG', seed: 4, events: ['zug'], theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 365, y: 190, ang: 0 }], tunnels: [{ x: 365, y: 190, hw: 117, portals: [300, 430] }], pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
     mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[560, 255, 40, 22]], rail: { x: 430, lines: [430, 300] }, wash: .94 },
   // The building site: the road is packed earth. Everything inside the ring road is yard (solid, see bau.js), the road narrows at barriers, a crane
   // holds a concrete pipe over the road, a cement mixer leaks a grey puddle onto it, and dump trucks tip earth beside it (event kipper).

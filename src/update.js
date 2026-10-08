@@ -1,6 +1,7 @@
 import { G } from './g.js';
 import { SFX, ambience, engineSound } from './audio.js';
 import { HALF, VH, VW, WW, clamp, pick } from './core.js';
+import { DIFFS } from './diff.js';
 import { coarse, held, honkBtn, touchBox } from './input.js';
 import { honk, setState } from './menus.js';
 import { Music } from './music.js';
@@ -58,9 +59,16 @@ function updateRace(dt) {
       } else {
         tgt = aiTarget(c);
         thr = c.finished ? .45 : c.skill;
+        // opponents far ahead lift off a little, ones far behind push harder; never above full throttle (on SCHWER less of both)
         if (c.ai && !c.finished && !G.player.finished) {
-          const diff = score(c) - score(G.player);
-          if (diff > G.T.N * .08) thr *= .7; else if (diff < -G.T.N * .1) thr = Math.min(c.skill * 1.25, thr * 1.15);
+          const D = DIFFS[G.raceDiff || 0], diff = score(c) - score(G.player);
+          if (diff > G.T.N * D.ahead) thr *= D.slow; else if (diff < -G.T.N * D.behind) thr = Math.min(1, c.skill * D.catchUp, thr * 1.15);
+        }
+        // stuck (against a tree or the edge, e.g. after a cow threw it there): back up for a moment, turning towards the track
+        if (G.state === 'race' && !c.finished) {
+          if (c.rev > 0) { c.rev -= dt; thr = -1; }
+          else if (Math.hypot(c.vx, c.vy) < 12) { c.stuckT = (c.stuckT || 0) + dt; if (c.stuckT > 1.2) { c.rev = .9; c.stuckT = 0; } }
+          else c.stuckT = 0;
         }
       }
     }

@@ -1,6 +1,7 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
 import { ACC, LAPS, MAXS, MUD_A, MUD_B, angDiff, clamp } from './core.js';
+import { DIFFS } from './diff.js';
 import { steerAround } from './events.js';
 import { setState } from './menus.js';
 import { finishRace } from './race.js';
@@ -53,7 +54,15 @@ export function physics(c, dt, thr, tgt) {
 export function aiTarget(c) {
   const sp = Math.hypot(c.vx, c.vy), i = (c.idx + 18 + Math.round(sp / 8)) % G.T.N, p = G.T.path[i], n = G.T.nrm[i];
   // on the flooded pier there is no room to wander across the track
-  const lane = Math.sin(G.time * .4 + c.seed) * (G.T.ev && G.T.ev.pier ? 1.5 : 14);
+  // the higher the difficulty, the closer the opponents keep to the ideal line
+  const D = DIFFS[G.raceDiff || 0];
+  let lane = Math.sin(G.time * .4 + c.seed) * (G.T.ev && G.T.ev.pier ? 1.5 : D.wander);
+  // every car drives its own way: cars that are bad in mud (mud < 1.15) steer around mud and cement puddles if there is room,
+  // the off-roaders (monster, tractor, ...) plough straight through. How often they think of it depends on the difficulty.
+  if (c.def.mud < 1.15 && D.avoid && !(G.T.ev && G.T.ev.pier) && (c.seed * 7.31) % 1 < D.avoid) {
+    const sticky = l => { const x = (p.x + n.x * l) | 0, y = (p.y + n.y * l) | 0; if (x < 0 || y < 0 || x >= G.T.W || y >= G.T.H) return true; const t = G.T.ter[y * G.T.W + x]; return t === 2 || t === 6 || t === 0 || t === 5; };
+    if (sticky(lane)) for (const l of [lane + 12, lane - 12, lane + 22, lane - 22, 0]) if (Math.abs(l) < 26 && !sticky(l)) { lane = l; break; }
+  }
   const [tx, ty] = steerAround(c, p.x + n.x * lane, p.y + n.y * lane);
   return Math.atan2(ty - c.y, tx - c.x);
 }
@@ -84,7 +93,7 @@ export function updateProgress(c) {
     c.cp = (c.cp + 1) % 4;
     if (q === 0) {
       c.lap++;
-      if (c.lap > LAPS) {
+      if (c.lap > LAPS && !c.finished) { // a car that already finished and crosses the line again keeps its place
         c.finished = true; c.place = ++G.finCount;
         if (c === G.player) { finishRace(); setState('finish'); SFX.fanfare(); }
       } else if (c === G.player && c.lap > 1) { SFX.lap(); if (G.tt) ttLap(); }

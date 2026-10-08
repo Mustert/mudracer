@@ -189,7 +189,8 @@ try {
   else G.cupsWon = Array.from({ length: clamp(parseInt(localStorage.getItem('mudracer-unlock') || '0', 10) || 0, 0, 3) }, (_, i) => i + 1);
 } catch (e) {}
 
-export const isLocked = def => !!def.cup && !G.cupsWon.includes(def.cup);
+// the kids mode opens every car
+export const isLocked = def => !G.kids && !!def.cup && !G.cupsWon.includes(def.cup);
 
 
 const DIRT = ['#6b4a2b', '#58391f', '#7d5a36'].map(hex);
@@ -254,3 +255,33 @@ function buildCar(def, k, pal) {
 
 // cem: the grey set for cars that drove through cement
 export function carSet(def, goo, cem) { const key = cem ? '_cem' : goo ? '_goo' : '_mud'; return def[key] || (def[key] = buildCar(def, def.k, cem ? CEM : goo ? GOO : DIRT)); }
+
+
+// ---------- paint (Werkstatt): every car can get another colour; 0 is the car's own. Main, dark and light shade ----------
+
+export const PAINTS = [
+  { name: 'ORIGINAL' },
+  { name: 'ROT', M: '#e03131', D: '#961c1c', L: '#ff7b7b' },
+  { name: 'ORANGE', M: '#f07a1a', D: '#b44d0c', L: '#ffb45e' },
+  { name: 'GELB', M: '#ffd23f', D: '#c79a06', L: '#fff08a' },
+  { name: 'GRUEN', M: '#3aa845', D: '#23702b', L: '#8be08f' },
+  { name: 'TUERKIS', M: '#2ec4b6', D: '#1a8a80', L: '#8ff0e6' },
+  { name: 'BLAU', M: '#2f6fd8', D: '#1b4796', L: '#7fb0ff' },
+  { name: 'LILA', M: '#8e44ad', D: '#5e2a75', L: '#c79be0' },
+  { name: 'PINK', M: '#ff5fa2', D: '#c2306f', L: '#ffa6cc' },
+  { name: 'WEISS', M: '#eef3f8', D: '#aab8c6', L: '#ffffff' },
+  { name: 'SCHWARZ', M: '#2b2d33', D: '#15161a', L: '#4e525c' },
+];
+
+const paintKey = def => 'mudracer-paint-' + def.id;
+
+export function setPaint(def, i) {
+  if (!def.own) def.own = { M: def.M, D: def.D, L: def.L };
+  const p = i > 0 && PAINTS[i] ? PAINTS[i] : def.own;
+  def.M = p.M; def.D = p.D; def.L = p.L; def.paint = PAINTS[i] && i > 0 ? i : 0;
+  delete def._mud; delete def._goo; delete def._cem; // the sprites are built again with the new colour
+}
+
+export function savePaint(def, i) { setPaint(def, i); try { localStorage.setItem(paintKey(def), String(def.paint)); } catch (e) {} }
+
+CAR_DEFS.forEach(def => { let i = 0; try { i = parseInt(localStorage.getItem(paintKey(def)) || '0', 10) || 0; } catch (e) {} setPaint(def, i); });

@@ -278,7 +278,7 @@ const MEDAL = ['#ffd23f', '#d9dde3', '#d98a4a', '#6fb3ff'], MEDAL_L = ['#fff08a'
 // the ghost of the best run (only when switched on); it waits on the grid during the countdown and parks at the line once it is done
 
 function ghostPose() {
-  if (!G.tt || !G.selGhost || !G.tt.rec0) return null;
+  if (!G.tt || !G.selGhost || G.kids || !G.tt.rec0) return null; // no ghosts in the kids mode
   const g = G.tt.rec0.g, len = (g.length / 4 - 1) * GHOST_DT, t = G.state === 'countdown' ? 0 : G.tt.t;
   return t > len + 2 ? null : ghostAt(g, t);
 }
@@ -351,7 +351,7 @@ export function drawRace() {
     text('PLATZ', px, 4, 8, '#fff3dc');
     disc(px + 52, 7, 6, '#1b120c'); disc(px + 52, 7, 5, medal(pl));
     text(String(pl), px + 53, 4, 8, '#1b120c', 'center', null);
-    if (G.mode === 'gp') text(G.gp.cup.name + ' CUP ' + (G.gp.race + 1) + '/' + G.gp.tracks.length, VW - 6, 4, 8, '#ffd23f', 'right');
+    if (G.mode === 'gp') text((G.gp.cup.label || G.gp.cup.name + ' CUP') + ' ' + (G.gp.race + 1) + '/' + G.gp.tracks.length, VW - 6, 4, 8, '#ffd23f', 'right');
   }
   // mini map
   const mx = VW - 126, my = 20;

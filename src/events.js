@@ -11,9 +11,11 @@ import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
 // Wald: dark holes in the road; after the first lap the rain fills them with mud. (The dusk and the headlights are not an event.)
 // Strand: from lap 2 the tide floods the lower part of the track, only a thin pier stays dry.
 // Garten: koi carp leap out of the water and over the bridges and the stepping stones (obstacles while they fly over the track).
-// Every event can be switched off with G.events (see state.js). A track is changed in place; setupEvents/resetTrackEvents put it back.
+// Zug: the train (it can be switched off like the others, then it never comes).
+// Every event can be switched off with G.events (see state.js); G.fx switches all of them for the current race (difficulty,
+// options, kids mode, see diff.js). A track is changed in place; setupEvents/resetTrackEvents put it back.
 
-export const eventOn = key => G.events[key] !== false;
+export const eventOn = key => !!G.fx && G.events[key] !== false;
 
 // ----- undo: the base picture and the terrain of every changed area are saved first -----
 
@@ -482,7 +484,7 @@ function drawLights(T) {
 
 // ======================================================= setup, update, drawing
 
-const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper };
+const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, zug: () => {} };
 
 export function setupEvents(T) {
   resetAllEvents();

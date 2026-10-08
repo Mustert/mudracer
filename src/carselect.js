@@ -1,21 +1,24 @@
 import { G } from './g.js';
 import { CAR_DEFS, carSet, isLocked } from './cars.js';
 import { SS, VW, ctx } from './core.js';
-import { CUPS, cupTrackIdx, loadBestPlace } from './cups.js';
-import { R1, ell, medal, star, text, tri } from './draw.js';
+import { CUPS, cupLabel, cupTrackIdx, loadBestPlace, trophies } from './cups.js';
+import { DIFFS, curDiff } from './diff.js';
+import { R1, ell, star, text, tri } from './draw.js';
 import { drawLock, drawMenuBg } from './screens.js';
 import { MODES } from './state.js';
 import { fmtTime, loadRecord } from './timetrial.js';
 import { TRACKS } from './tracks.js';
+import { drawPokal, miniPokal } from './trophy.js';
 
 // ---------- car selection: a rack with every car on top, the focused car big below ----------
-// under each portrait sits a small info box: best time (time trial) or best place in the cup (Grand Prix)
+// under each portrait sits a small info box: best time (time trial) or the trophies won in the cup (Grand Prix)
 
 const N = CAR_DEFS.length, PITCH = 46, SW = 44, X0 = Math.round((VW - (N * PITCH - (PITCH - SW))) / 2);
 const PANEL = { y: 28 }, WIN_Y = 46, WIN_H = 34, INFO_Y = 83, INFO_H = 12, CAR_Y = 79;
 
 // the info boxes only exist where there is something to show (cup places, best times); the rack is shorter without them
-const hasInfo = () => (G.mode === 'gp' && !!G.cup) || G.mode === 'tt';
+const hasInfo = () => G.state !== 'shop' && ((G.mode === 'gp' && !!G.cup && !G.cup.custom) || G.mode === 'tt');
+const gpInfo = () => G.mode === 'gp' && G.cup && !G.cup.custom;
 const panelH = () => hasInfo() ? 70 : 56;
 
 // which portrait (or -1) lies under a tap
@@ -37,7 +40,7 @@ function slotInfos() {
   if (!cache || G.stateTime < cacheT) {
     cache = CAR_DEFS.map(def => {
       if (isLocked(def)) return null;
-      if (G.mode === 'gp' && G.cup) { const p = loadBestPlace(G.cup, def); return p ? { txt: p <= 3 ? '' : '-', trophy: p <= 3 ? medal(p) : null, col: '#6b5a48', long: 'BESTER PLATZ ' + p } : { txt: '-', col: '#6b5a48', long: 'BESTER PLATZ -' }; }
+      if (gpInfo()) { const d = curDiff(), p = loadBestPlace(G.cup, def, d); return { trophies: trophies(G.cup, def), long: 'BESTER PLATZ ' + (p || '-') + ' (' + DIFFS[d].name + ')' }; }
       if (G.mode === 'tt') { const r = loadRecord(TRACKS[G.selTrack], def); return r ? { txt: fmtTime(r.t).slice(0, 4), col: '#ffd23f', long: 'BESTZEIT ' + fmtTime(r.t) } : { txt: '--', col: '#6b5a48', long: 'BESTZEIT -:--.--' }; }
       return null;
     });
@@ -46,11 +49,6 @@ function slotInfos() {
   return cache;
 }
 
-// a little cup in gold, silver or bronze: shown in the info box when the cup was finished on the podium
-const MINI_CUP = ['#########', '#.#####.#', '#.#####.#', '.#######.', '..#####..', '...###...', '....#....', '..#####..', '.#######.'];
-function miniCup(cx, y, col) {
-  MINI_CUP.forEach((row, ry) => { for (let rx = 0; rx < 9; rx++) if (row[rx] === '#') R1(cx - 4 + rx, y + ry, 1, 1, col); });
-}
 
 
 function smallLock(cx, cy) {
@@ -58,7 +56,7 @@ function smallLock(cx, cy) {
   R1(cx - 6, cy - 3, 12, 10, '#1b120c'); R1(cx - 5, cy - 2, 10, 8, '#ffd23f'); R1(cx - 1, cy + 1, 2, 2, '#1b120c');
 }
 
-function drawRack(infos) {
+export function drawRack(infos) {
   const x = X0 - 6, w = N * PITCH - (PITCH - SW) + 12, ph = panelH();
   R1(x - 1, PANEL.y - 1, w + 2, ph + 2, '#1b120c'); R1(x, PANEL.y, w, ph, '#4a5443');
   R1(x, PANEL.y + 18, w, 1, '#3a4234'); R1(x, PANEL.y + 19, w, 1, '#5d6853');
@@ -79,7 +77,7 @@ function drawRack(infos) {
     if (!hasInfo()) return;
     const info = infos[i];
     R1(sx - (sel ? 2 : 0), INFO_Y - (sel ? 1 : 0), SW + (sel ? 4 : 0), INFO_H + (sel ? 2 : 0), sel ? '#ffd23f' : '#1b120c'); R1(sx + 1, INFO_Y + 1, SW - 2, INFO_H - 2, '#2c3328');
-    if (info && info.trophy) miniCup(sx + SW / 2, INFO_Y + 2, info.trophy);
+    if (info && info.trophies) info.trophies.forEach((on, d) => miniPokal(sx + SW / 2 - 12 + d * 12, INFO_Y + 2, d, !on));
     else if (info) text(info.txt, sx + SW / 2, INFO_Y + 2, 8, info.col, 'center', null);
   });
 }
@@ -89,7 +87,7 @@ export function drawSelectCar() {
   const infos = slotInfos(), def = CAR_DEFS[G.selCar], F = carSet(def, false), S3 = SS * 3, locked = isLocked(def);
   drawRack(infos);
   // what is being selected for, and the page-specific info of the focused car
-  const ctxt = G.mode === 'gp' && G.cup ? 'GRAND PRIX  CUP ' + G.cup.n : G.mode === 'single' || G.mode === 'tt' ? MODES.find(m => m.id === G.mode).name + '  ' + TRACKS[G.selTrack].name : MODES.find(m => m.id === G.mode).name;
+  const ctxt = G.mode === 'gp' && G.cup ? 'GRAND PRIX  ' + cupLabel(G.cup) : G.mode === 'single' || G.mode === 'tt' ? MODES.find(m => m.id === G.mode).name + '  ' + TRACKS[G.selTrack].name : MODES.find(m => m.id === G.mode).name;
   text(ctxt, 8, 103, 8, '#d8c4a8');
   if (infos[G.selCar]) text(infos[G.selCar].long, VW - 8, 103, 8, '#ffd23f', 'right');
   // the car stands still, facing right, and gently idles
@@ -117,5 +115,13 @@ export function drawSelectCar() {
     text('MATSCH', VW / 2 - 8, 227, 8, '#fff3dc', 'right');
     for (let i = 0; i < 5; i++) { star(VW / 2 + i * 10, 214, i < def.tempo); star(VW / 2 + i * 10, 227, i < def.matsch); }
   }
+  if (gpInfo() && !locked) drawShelf(trophies(G.cup, def));
   text('< > AUTO WAEHLEN    ENTER = WEITER', VW / 2, 252, 8, '#d8c4a8', 'center');
+}
+
+// the trophy shelf of the focused car (Grand Prix): LEICHT, MITTEL, SCHWER side by side, the ones not won yet as dark shapes
+function drawShelf(won) {
+  const x = 8, y = 238, w = 140;
+  R1(x - 1, y - 1, w + 2, 6, '#1b120c'); R1(x, y, w, 4, '#8a6440'); R1(x, y, w, 1, '#b08458');
+  [16, 56, 110].forEach((dx, d) => drawPokal(x + dx, y, d, 2, !won[d]));
 }

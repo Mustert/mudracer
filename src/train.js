@@ -2,13 +2,14 @@ import { G } from './g.js';
 import { SFX } from './audio.js';
 import { TRAIN_SPEED, VH, VW, WH, clamp } from './core.js';
 import { addP, mudBurst } from './particles.js';
+import { eventOn } from './events.js';
 import { cam } from './state.js';
 import { TRAIN } from './trainsprite.js';
 
 // ---------- train ----------
 
 export function updateTrain(dt) {
-  const R = G.T.rail; if (!R) return;
+  const R = G.T.rail; if (!R || !eventOn('zug')) return; // train switched off: the line stays empty
   const tr = R.train;
   tr.t -= dt;
   const vol = () => { const cxm = cam.x + VW / 2, cym = cam.y + VH / 2; let dm = 1e9; for (const cr of R.cross) dm = Math.min(dm, Math.hypot(cr.x - cxm, cr.y - cym)); return clamp(1 - dm / 600, .35, 1); };

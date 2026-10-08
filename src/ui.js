@@ -5,7 +5,10 @@ import { R1, drawRace, panel, text } from './draw.js';
 import { OPT, PAU } from './menus.js';
 import { drawSelectCar } from './carselect.js';
 import { drawSelectCup } from './cupselect.js';
-import { drawCeremony, drawMain, drawSelectCount, drawSelectTrack, drawStandings } from './screens.js';
+import { drawCustom } from './custom.js';
+import { drawRaceOpts } from './raceopts.js';
+import { drawCeremony, drawMain, drawSelectTrack, drawStandings } from './screens.js';
+import { drawShop } from './shop.js';
 import { drawTitleScreen } from './title.js';
 
 // ---------- gear (options) and menu button ----------
@@ -65,7 +68,9 @@ export function drawState(s) {
   else if (s === 'select_cup') drawSelectCup();
   else if (s === 'select_car') drawSelectCar();
   else if (s === 'select_track') drawSelectTrack();
-  else if (s === 'select_count') drawSelectCount();
+  else if (s === 'select_count') drawRaceOpts();
+  else if (s === 'custom') drawCustom();
+  else if (s === 'shop') drawShop();
   else if (s === 'standings') drawStandings();
   else if (s === 'ceremony') drawCeremony();
   else drawRace();
