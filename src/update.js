@@ -108,7 +108,10 @@ function updateRace(dt) {
   for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0) continue;
     const j = clamp(c.y | 0, 0, G.T.H - 1) * G.T.W + clamp(c.x | 0, 0, G.T.W - 1);
-    const prev = c.surf; c.surf = G.T.ter[j]; c.washing = !!G.T.washMask[j];
+    const prev = c.surf, wasWashing = c.washing; c.surf = G.T.ter[j];
+    // car wash, water hose and the beach showers: you drive through them in a moment, so they wash hard (a big rinse when you enter, then fast)
+    c.washing = !!G.T.washMask[j] || (!!G.T.showers && G.T.showers.some(s => Math.abs(c.x - s.x) < 14 && Math.abs(c.y - s.y) < 13));
+    if (c.washing && !wasWashing) c.dirt = Math.max(0, c.dirt - .35);
     // deep water: a car that is over it for a moment falls in (stepping stones and bridges are road)
     c.wet = c.surf === 5 ? c.wet + dt : 0;
     if (c.wet > .22) { sinkCar(c); continue; }
@@ -130,7 +133,7 @@ function updateRace(dt) {
     }
     if (c.boost > 0 && Math.random() < dt * 40) drop(c.x - Math.cos(c.ang) * 14, c.y - Math.sin(c.ang) * 14, c.ang + Math.PI + (Math.random() - .5) * .8, 20 + Math.random() * 30, 20 + Math.random() * 30, pick(RAINBOW), .8, false);
     if (c.washing) {
-      c.dirt = Math.max(0, c.dirt - .9 * dt);
+      c.dirt = Math.max(0, c.dirt - 3 * dt);
       if (Math.random() < dt * 30) addP({ t: 'bub', x: c.x + (Math.random() - .5) * 26, y: c.y + (Math.random() - .5) * 18, vx: (Math.random() - .5) * 12, vy: -12 - Math.random() * 14, life: 1, ml: 1 });
     }
     if (c.dirt > .8 && sp > 15 && Math.random() < dt * 3) mudBurst(c, 1);

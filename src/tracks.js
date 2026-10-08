@@ -57,7 +57,7 @@ const TRACK_DEFS = [
   // The building site: the road is packed earth. Everything inside the ring road is yard (solid, see bau.js), the road narrows at barriers, a crane
   // holds a concrete pipe over the road, a cement mixer leaks a grey puddle onto it, and dump trucks tip earth beside it (event kipper).
   // poly = [x, y, curve radius] (rounded corners), mudAt/waterAt/cement = [x, y, half length along the road, half width across]
-  { name: 'BAUSTELLE', rev: 1, seed: 6, theme: 'baustelle', song: 'site', events: ['kipper'], wall: [], wash: 0, washAt: [215, 375],
+  { name: 'BAUSTELLE', rev: 2, seed: 6, theme: 'baustelle', song: 'site', events: ['kipper'], wall: [], wash: 0, washAt: [215, 375],
     poly: [[75, 230, 0], [75, 75, 52], [265, 75, 45], [265, 215, 45], [405, 215, 45], [405, 75, 45], [725, 75, 45], [725, 185, 45], [565, 185, 45], [565, 280, 45], [725, 280, 45], [725, 375, 52],
       [475, 375, 45], [475, 300, 45], [335, 300, 45], [335, 375, 45], [75, 375, 52]],
     mud: [], water: [], ponds: [],
