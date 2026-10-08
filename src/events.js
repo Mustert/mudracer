@@ -5,6 +5,7 @@ import { R1, disc, text } from './draw.js';
 import { addP, drop, mudBurst, splash, WATC } from './particles.js';
 import { cam } from './state.js';
 import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
+import { drawMarshals, drawTyres, initReifen, tyreCollisions, updateReifen } from './ring.js';
 
 // ---------- track events: the map changes while you race ----------
 // Wiese: a herd of cows grazes on and next to the track (they are obstacles, they moo).
@@ -12,6 +13,8 @@ import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
 // Strand: from lap 2 the tide floods the lower part of the track, only a thin pier stays dry.
 // Garten: koi carp leap out of the water and over the bridges and the stepping stones (obstacles while they fly over the track).
 // Zug: the train (it can be switched off like the others, then it never comes).
+// Rennstrecke: tyres roll across the road (a marshal waves the yellow flag first), hard hits knock tyres out of the tyre walls,
+// from lap 2 the oil gets smeared along the road (see ring.js).
 // Every event can be switched off with G.events (see state.js); G.fx switches all of them for the current race (difficulty,
 // options, kids mode, see diff.js). A track is changed in place; setupEvents/resetTrackEvents put it back.
 
@@ -21,7 +24,7 @@ export const eventOn = key => !!G.fx && G.events[key] !== false;
 
 const bctx = T => T.bctx || (T.bctx = T.base.getContext('2d'));
 
-function snap(T, x, y, w, h) {
+export function snap(T, x, y, w, h) {
   x = clamp(x | 0, 0, WW - 1); y = clamp(y | 0, 0, WH - 1); w = Math.min(w, WW - x); h = Math.min(h, WH - y);
   const ter = new Uint8Array(w * h);
   for (let r = 0; r < h; r++) ter.set(T.ter.subarray((y + r) * WW + x, (y + r) * WW + x + w), r * w);
@@ -95,6 +98,7 @@ function updateCows(T, dt) {
 export function eventCollisions() {
   koiCollisions();
   truckCollisions();
+  tyreCollisions();
   const ev = G.T.ev; if (!ev) return;
   for (const w of ev.cows) for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
@@ -111,11 +115,11 @@ export function eventCollisions() {
   }
 }
 
-// computer cars steer around cows that are ahead of them
+// computer cars steer around cows (and loose tyres on the race circuit) that are ahead of them
 export function steerAround(c, tx, ty) {
-  const ev = G.T.ev; if (!ev || !ev.cows.length) return [tx, ty];
+  const ev = G.T.ev; if (!ev || !(ev.cows.length || (ev.tyres && ev.tyres.length))) return [tx, ty];
   const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
-  for (const w of ev.cows) {
+  for (const w of ev.tyres ? ev.cows.concat(ev.tyres) : ev.cows) {
     const dx = w.x - c.x, dy = w.y - c.y, d = Math.hypot(dx, dy);
     if (d > 75 || d < 1 || dx * fx + dy * fy < 0) continue;
     const side = dx * -fy + dy * fx, k = (1 - d / 75) * 55 * (side > 0 ? -1 : 1);
@@ -496,7 +500,7 @@ function drawLights(T) {
 
 // ======================================================= setup, update, drawing
 
-const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, zug: () => {} };
+const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {} };
 
 export function setupEvents(T) {
   resetAllEvents();
@@ -514,13 +518,14 @@ export function updateEvents(dt) {
   if (ev.holes.length) updateRain(T, dt);
   if (ev.kois.length) updateKois(T, dt);
   if (ev.kipper.length) updateKipper(T, dt);
+  if (ev.rollers && ev.rollers.length) updateReifen(T, dt);
   if (T.def.events && T.def.events.includes('flut') && eventOn('flut')) updateFlood(T, dt);
 }
 
 // cows, trucks and the mixer drum lie on the ground (below the cars); the moo, the dust cloud and the lamps are drawn above
 export function drawEventsGround() {
   const T = G.T; drawMixer(T);
-  const ev = T.ev; if (ev) { for (const w of ev.cows) drawCow(w); for (const s of ev.kipper) drawTruck(s); }
+  const ev = T.ev; if (ev) { for (const w of ev.cows) drawCow(w); for (const s of ev.kipper) drawTruck(s); if (ev.tyres) drawTyres(ev); }
 }
 
 export function drawEventsAbove() {
@@ -528,6 +533,7 @@ export function drawEventsAbove() {
   const ev = T.ev; if (!ev) return;
   for (const f of ev.kois) drawKoi(f);
   for (const s of ev.kipper) drawDust(s);
+  if (ev.rollers) drawMarshals(ev);
   for (const w of ev.cows) if (w.mooT > 0) text('MUH!', Math.round(w.x), Math.round(w.y - 16 - (1.3 - w.mooT) * 8), 8, '#ffffff', 'center');
 }
 

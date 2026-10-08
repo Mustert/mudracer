@@ -3,6 +3,7 @@ import { SFX } from './audio.js';
 import { ACC, LAPS, MAXS, MUD_A, MUD_B, angDiff, clamp } from './core.js';
 import { DIFFS } from './diff.js';
 import { steerAround } from './events.js';
+import { ringPitTarget } from './ring.js';
 import { setState } from './menus.js';
 import { finishRace } from './race.js';
 import { ttLap } from './timetrial.js';
@@ -18,7 +19,12 @@ function surfOf(c) {
     // cement: very sticky, the speed is far lower than in mud (about a quarter of it)
     case 6: return [(MUD_A + MUD_B * m) / 3.8, 3.2 * m, Math.min(.8, .55 * m) * .75];
     case 3: return [.72, 1.6, .65];
-    default: return [1, 10, 1];
+    // race circuit: gravel stops you harder than mud (gas hardly helps), oil does not brake but there is almost no grip, smeared oil is a little slippery
+    case 7: return [.3, 3.2, .5];
+    case 8: return [G.T.th.asphalt || 1, 1.1, .45];
+    case 9: return [c.pit ? .55 : G.T.th.asphalt || 1, 4.5, .8];
+    // asphalt is faster than an earth road; the pit lane has a speed limit
+    default: return [c.pit ? .55 : G.T.th.asphalt || 1, 10, 1];
   }
 }
 
@@ -34,10 +40,11 @@ export function physics(c, dt, thr, tgt) {
   if (thr > 0 && dirt > .15) c.ang += Math.sin(G.time * 5.5 + c.seed) * dirt * 1.1 * (soil / .18) * dt;
   const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
   let vf = c.vx * fx + c.vy * fy, vl = -c.vx * fy + c.vy * fx;
-  const max = MAXS * c.def.speed * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1);
+  // slipstream (race circuit): right behind another car you get up to 7 % faster
+  const max = MAXS * c.def.speed * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1) * (1 + .07 * c.draft);
   if (thr > 0 && vf < max * thr) {
     const sput = 1 - .35 * (soil / .18) * dirt * (.5 + .5 * Math.sin(G.time * 11 + c.seed * 3));
-    vf += ACC * c.def.acc * sput * (.5 + .5 * sp) * dt;
+    vf += ACC * c.def.acc * sput * (.5 + .5 * sp) * (c.rocket > 0 ? 2.4 : 1) * dt; // rocket start: a good start pushes hard for a moment
   }
   else if (thr < 0 && vf > -35) vf -= ACC * c.def.acc * .5 * (.5 + .5 * sp) * dt;
   if (c.boost > 0) vf = Math.max(vf, max * .9);
@@ -52,6 +59,9 @@ export function physics(c, dt, thr, tgt) {
 
 
 export function aiTarget(c) {
+  // race circuit: a dirty car goes through the pit lane (the box washes it)
+  const pt = G.T.ring && ringPitTarget(c);
+  if (pt) { const [tx, ty] = steerAround(c, pt[0], pt[1]); return Math.atan2(ty - c.y, tx - c.x); }
   const sp = Math.hypot(c.vx, c.vy), i = (c.idx + 18 + Math.round(sp / 8)) % G.T.N, p = G.T.path[i], n = G.T.nrm[i];
   // on the flooded pier there is no room to wander across the track
   // the higher the difficulty, the closer the opponents keep to the ideal line
@@ -61,8 +71,9 @@ export function aiTarget(c) {
   let lane = Math.sin(G.time * .4 + c.seed) * (G.T.ev && G.T.ev.pier ? 1.5 : tight ? 1 : D.wander);
   // every car drives its own way: cars that are bad in mud (mud < 1.15) steer around mud and cement puddles if there is room,
   // the off-roaders (monster, tractor, ...) plough straight through. How often they think of it depends on the difficulty.
-  if (c.def.mud < 1.15 && D.avoid && !tight && !(G.T.ev && G.T.ev.pier) && (c.seed * 7.31) % 1 < D.avoid) {
-    const sticky = l => { const x = (p.x + n.x * l) | 0, y = (p.y + n.y * l) | 0; if (x < 0 || y < 0 || x >= G.T.W || y >= G.T.H) return true; const t = G.T.ter[y * G.T.W + x]; return t === 2 || t === 6 || t === 0 || t === 5; };
+  // Oil and gravel (race circuit) are bad for every car.
+  if ((c.def.mud < 1.15 || G.T.ring) && D.avoid && !tight && !(G.T.ev && G.T.ev.pier) && (c.seed * 7.31) % 1 < D.avoid) {
+    const sticky = l => { const x = (p.x + n.x * l) | 0, y = (p.y + n.y * l) | 0; if (x < 0 || y < 0 || x >= G.T.W || y >= G.T.H) return true; const t = G.T.ter[y * G.T.W + x]; return t === 2 || t === 6 || t === 0 || t === 5 || t === 7 || t === 8; };
     if (sticky(lane)) for (const l of [lane + 12, lane - 12, lane + 22, lane - 22, 0]) if (Math.abs(l) < 26 && !sticky(l)) { lane = l; break; }
   }
   const [tx, ty] = steerAround(c, p.x + n.x * lane, p.y + n.y * lane);

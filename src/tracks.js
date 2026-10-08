@@ -1,5 +1,6 @@
 import { HALF, TAU, WH, WW, angDiff, clamp, hash, hex, mk, outlineImg, rng, toCanvas, vnoise } from './core.js';
 import { nearestIdx, paintSite, siteRing, siteYards } from './bau.js';
+import { paintRing, ringTerrain } from './ringmap.js';
 
 // ---------- tracks (800x450 world) ----------
 
@@ -22,6 +23,10 @@ export const THEMES = {
     track: ['#c4ad86', '#b59d76', '#d0ba94'], trackEdge: '#948063', trail: '#3f7a35', decor: 'garten', tree: 'cherry', treeCol: ['#c4547f', '#e98cb0', '#f9cfdf', '#4a2438'], trees: 14, fence: 'bamboo', ambient: 'sakura' },
   baustelle: { ...MUDDY, water: ['#5d7f86', '#6b909a', '#7da3ac', '#a9cdd3'], shore: ['#5a4630', '#4d3a26'], grass: ['#9b9684', '#8f8a79', '#a8a392'], grassEdge: '#6f6a5a', tuft: '#7c7766',
     track: ['#b78a57', '#a97d4c', '#c39662'], trackEdge: '#845e38', trail: '#6a5a44', decor: 'bau', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#1b120c'], trees: 0, fence: 'mesh' },
+  // race circuit: asphalt (faster than earth roads), oil instead of mud (it makes the cars black: goo 'oil'), start lights instead of 3-2-1
+  ring: { ...MUDDY, mud: ['#1a1a1f', '#141418', '#24242b'], mudEdge: '#0a0a0c', mudHi: '#5a4f86', mudP: ['#101014', '#1c1c22', '#2a2a32', '#0a0a0c'], mudTrail: ['#0e0e10', '#18181c'], goo: 'oil',
+    grass: ['#5fb04a', '#55a242', '#6bbd55'], grassEdge: '#4a9038', tuft: '#478a35', track: ['#55565b', '#4d4e53', '#5d5e63'], trackEdge: '#ecece6', trail: '#2f6d24', roadTrail: '#232327',
+    decor: 'ring', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 12, asphalt: 1.08, lights: true },
   bahn:   { ...MUDDY, grass: ['#8fbf4a', '#7fae3f', '#9fcc5a'], grassEdge: '#6f9a33', tuft: '#5f8a2a', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#4f7a22', decor: 'farm', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 18 },
 };
 
@@ -94,6 +99,22 @@ const TRACK_DEFS = [
     hedges: [[12, 159, 333, 159], [172, 80, 396, 80], [135, 258, 396, 258], [396, 78, 396, 300], [396, 300, 520, 314], [642, 98, 642, 290], [152, 260, 152, 376]],
     pagodas: [[765, 142, 4, 1.15], [758, 388, 4, 1.15], [452, 262, 3, .85]],
     koi: [[515, 140, 11, 9], [288, 380, 36, 11], [515, 84, 14, 10], [655, 303, 40, 3]] },
+  // The race circuit: an 8 on asphalt, the road crosses itself on a bridge (first over it, later underneath). Kerbs inside the corners, gravel
+  // outside, oil instead of mud, a pit lane along the start straight whose box washes the car, barriers all around (see ringmap.js, ring.js).
+  // oilAt = [x, y, half length, half width]; gravel and stacks (tyre walls) = [x, y, radius]; pit = lane points, half width, box (y from, to),
+  // pit wall [x, y from, to], garages [x0, y0, x1, y1]; rollers = [x, y, seconds between two tyres, first one] (event reifen)
+  { name: 'RENNSTRECKE', seed: 7, theme: 'ring', song: 'circuit', events: ['reifen'], wall: [], wash: null, ring: true,
+    poly: [[70, 185, 0], [70, 55, 55], [165, 55, 22], [195, 100, 22], [255, 100, 22], [285, 55, 22], [345, 55, 60], [540, 395, 65], [730, 395, 55], [730, 55, 48], [630, 55, 48],
+      [630, 175, 50], [270, 395, 65], [70, 395, 55]],
+    mud: [], water: [], ponds: [],
+    oilAt: [[730, 150, 16, 12], [300, 62, 10, 9], [340, 362, 13, 10]],
+    gravel: [[40, 30, 85], [700, 22, 95], [760, 425, 70]], stacks: [[680, 125, 40]],
+    // the pit lane forks off at the start of the bottom straight, runs behind the pit wall and joins the start straight again before turn 1
+    pit: { pts: [[238, 381, 0], [148, 381, 32], [148, 214, 46], [93, 120, 0]], half: 15, box: [270, 306], wall: [116, 196, 350], garage: [174, 226, 212, 348] },
+    rollers: [[730, 262, 17, 6], [636, 395, 19, 11], [120, 55, 16, 15]],
+    // scenery: stands [x, y, w, h, facing down 1 / up -1], team trucks [x, y, team], helipad, big screen, a flag mown into the grass, camera towers
+    stands: [[405, 6, 168, 32, 1], [358, 410, 136, 36, -1]], heli: [530, 118], screen: [450, 58], flag: [575, 275, 56, 40], towers: [[268, 210], [380, 388]],
+    trucks: [[230, 158, 0], [248, 158, 1], [266, 158, 2], [284, 158, 3], [302, 158, 4], [230, 262, 5], [248, 262, 6], [266, 262, 7], [284, 262, 1]] },
   { name: 'REGENBOGEN', seed: 3, theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 }
 ];
@@ -218,6 +239,7 @@ function buildTrack(def, ti) {
     return { i, x, y, px: x + nrm[i].x * s * 18, py: y + nrm[i].y * s * 18 };
   });
   (def.boost || []).forEach(t => band(Math.floor(t * N) % N, 16, (x, y, a, c) => { if (Math.abs(c) < 18) ter[y * WW + x] = 4; }));
+  const ringT = def.ring ? ringTerrain({ def, ter, dist, near, path, tan, nrm, N, stampAt }) : null;
   // railway: a straight vertical line through the whole world
   let rail = null;
   if (def.rail) {
@@ -401,7 +423,7 @@ function buildTrack(def, ti) {
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (WW - 10) | 0), y = 5 + (r() * (WH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
   const rock = (x, y) => { const L2 = hex('#c4c4bb'), M2 = hex('#9a9a92'), D2 = hex('#6e6e68'); for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(x + dx, y + dy, dy === 0 ? L2 : dy === 2 ? D2 : M2); };
   const trees = [], critters = [], C = th.treeCol.map(hex);
-  let windmill = null, lights = [], mixer = null, hose = null, tight = [];
+  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null;
   const darken = (x, y, rad, ox, oy) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + ox, yy = y + dy + oy; if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue; const i = (yy * WW + xx) * 4; d[i] *= .78; d[i + 1] *= .76; d[i + 2] *= .76; } };
   const flowers = (n, PET) => scatter(n, 2, (x, y) => { const pc = PET[(r() * PET.length) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, pc === PET[1] ? hex('#ff8c1a') : hex('#ffe14d')); });
   // wall look: fence + hay (meadow), log pile + pines (forest), beach bar + surfboards + palms (beach), asteroid belt (space), railway barrier (train)
@@ -755,6 +777,8 @@ function buildTrack(def, ti) {
     siteRing(yard, walls);
     const site = paintSite({ def, d, set, setT, px, darken, band, path, tan, nrm, yard, walls, scatter, rock, sd, washMask });
     lights = site.lights; mixer = site.mixer; hose = site.hose; tight = site.tight;
+  } else if (th.decor === 'ring') {
+    ring = paintRing({ def, d, set, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, th, RT: ringT });
   } else if (th.decor === 'farm') {
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
@@ -832,7 +856,7 @@ function buildTrack(def, ti) {
   mg.imageSmoothingEnabled = true; mg.drawImage(base, 0, 0, 120, 68); mg.drawImage(top, 0, 0, 120, 68);
   const wp = path[wi];
   return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: trees.concat(walls), critters, windmill, shoreY, boat: { x: 60 }, base, top, mini, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight };
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring };
 }
 
 

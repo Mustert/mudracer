@@ -256,8 +256,12 @@ function buildCar(def, k, pal) {
 // the rainbow track paints cars with purple glitter goo instead of mud; built the first time it is needed
 // sprites (48 turns x 6 dirt levels) are built the first time a car is shown
 
-// cem: the grey set for cars that drove through cement
-export function carSet(def, goo, cem) { const key = cem ? '_cem' : goo ? '_goo' : '_mud'; return def[key] || (def[key] = buildCar(def, def.k, cem ? CEM : goo ? GOO : DIRT)); }
+// cem: the grey set for cars that drove through cement; goo 'oil': the black set of the race circuit
+const OIL = ['#17171b', '#26262c', '#0c0c0e'].map(hex);
+export function carSet(def, goo, cem) {
+  const kind = cem ? 'cem' : goo === 'oil' ? 'oil' : goo ? 'goo' : 'mud', key = '_' + kind;
+  return def[key] || (def[key] = buildCar(def, def.k, { cem: CEM, oil: OIL, goo: GOO, mud: DIRT }[kind]));
+}
 
 
 // ---------- paint (Werkstatt): every car can get another colour; 0 is the car's own. Main, dark and light shade ----------
@@ -283,7 +287,7 @@ export function setPaint(def, i) {
   if (!def.own) def.own = { M: def.M, D: def.D, L: def.L, accent: def.accent }; // (not 'acc': that is the acceleration)
   const p = i > 0 && PAINTS[i] ? PAINTS[i] : def.own;
   def.M = p.M; def.D = p.D; def.L = p.L; def.accent = p.accent || def.own.accent; def.paint = PAINTS[i] && i > 0 ? i : 0;
-  delete def._mud; delete def._goo; delete def._cem; // the sprites are built again with the new colour
+  delete def._mud; delete def._goo; delete def._cem; delete def._oil; // the sprites are built again with the new colour
 }
 
 export function savePaint(def, i) { setPaint(def, i); try { localStorage.setItem(paintKey(def), String(def.paint)); } catch (e) {} }

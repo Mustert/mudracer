@@ -134,6 +134,17 @@ export const SFX = {
   beep: v => voice({ type: 'square', f: 1020, a: .004, hold: .07, d: .1, vol: .06 * v, lp: 2600 }),
   hydr: v => voice({ type: 'sawtooth', f: 120, to: 210, a: .12, hold: .6, d: .3, vol: .045 * v, lp: 520 }),
   dump: v => { noise({ type: 'lowpass', f: 700, to: 120, a: .05, hold: .5, d: 1.6, vol: .4 * v, q: .7 }); voice({ f: 70, to: 38, d: .9, vol: .3 * v }); noise({ t: .15, type: 'bandpass', f: 1800, to: 500, d: .5, vol: .12 * v }); },
+  // race circuit: start lights, the lights go out, tyres squeal on oil, the impact wrench in the box, the team radio, a tyre bouncing
+  light: () => voice({ type: 'square', f: 440, a: .003, hold: .16, d: .08, vol: .07, lp: 2400 }),
+  lightsOut: () => { voice({ type: 'square', f: 880, a: .003, hold: .34, d: .12, vol: .08, lp: 3000 }); noise({ type: 'bandpass', f: 400, to: 5000, d: .6, vol: .12, q: 1.5 }); },
+  squeal: () => { voice({ type: 'sawtooth', f: 1150, to: 820, a: .02, hold: .2, d: .22, vol: .05, bp: 1600, q: 6 }); voice({ type: 'square', f: 1190, to: 860, a: .02, hold: .2, d: .22, vol: .03, bp: 1700, q: 6 }); },
+  wrench: v => { for (let i = 0; i < 10; i++) { noise({ t: i * .034, type: 'bandpass', f: 2600, q: 3, d: .024, vol: .09 * v }); voice({ t: i * .034, type: 'square', f: 520, d: .02, vol: .03 * v, lp: 2000 }); } },
+  radio: () => {
+    noise({ type: 'bandpass', f: 1800, q: 1, d: .08, vol: .1 });
+    for (const t of [.1, .32]) { voice({ t, type: 'square', f: 300, to: 240, a: .01, hold: .1, d: .05, vol: .06, bp: 900, q: 2 }); noise({ t: t + .1, type: 'bandpass', f: 3500, q: 2, d: .05, vol: .05 }); }
+    noise({ t: .5, type: 'bandpass', f: 1800, q: 1, d: .06, vol: .08 });
+  },
+  tyre: v => { voice({ f: 190, to: 80, d: .16, vol: .25 * v }); noise({ type: 'lowpass', f: 900, d: .07, vol: .15 * v }); },
   rain: () => noise({ type: 'highpass', f: 4200, q: .5, a: 1.2, hold: 5.5, d: 2.5, vol: .09 }),
   thunder: () => { noise({ type: 'lowpass', f: 300, to: 70, a: .05, d: 2, vol: .45, q: .7 }); voice({ f: 62, to: 34, d: 1.6, vol: .3 }); },
   flood: () => { noise({ type: 'lowpass', f: 260, to: 1100, a: 2, hold: 4, d: 3.5, vol: .28, q: .6 }); noise({ type: 'bandpass', f: 2500, to: 700, a: 1, hold: 3, d: 3, vol: .1 }); },
@@ -240,7 +251,9 @@ export function engineSound(dt) {
   if (driving()) {
     const sp = Math.min(1, Math.hypot(G.player.vx, G.player.vy) / MAXS);
     if (G.player.washing) { type = 'highpass'; sf = 3500; q = .5; sg = .18; }
-    else if (G.player.surf === 1 || G.player.surf === 4) { sf = 1800 + sp * 900; q = .6; sg = .07 * sp; }
+    else if (G.player.kerb && sp > .2) { sf = Math.random() < .5 ? 160 : 320; q = 4; sg = .22 * sp; } // kerbs rattle
+    else if (G.player.surf === 7) { type = 'bandpass'; sf = 700 + Math.random() * 1600; q = .9; sg = .2 * Math.max(sp, .1); } // gravel crunches
+    else if (G.player.surf === 1 || G.player.surf === 4 || G.player.surf >= 8) { sf = 1800 + sp * 900; q = .6; sg = .07 * sp; }
     else if (G.player.surf === 0) { type = 'lowpass'; sf = 700; q = .7; sg = .06 * sp; }
     else if (G.player.surf === 6) { type = 'lowpass'; sf = 160 + Math.random() * 200; q = 7; sg = .2 * Math.max(sp, .1); }
     else if (G.player.surf === 2) { type = 'lowpass'; sf = 250 + Math.random() * 350; q = 6; sg = .16 * Math.max(sp, .1); }

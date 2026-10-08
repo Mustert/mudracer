@@ -4,6 +4,7 @@ import { FONT, HALF, LAPS, ROTS, SS, TAU, VH, VW, clamp, ctx, hash } from './cor
 import { drawEventsAbove, drawEventsGround, drawNight, drawRain } from './events.js';
 import { crossingAhead, placeOf } from './physics.js';
 import { drawRunFinish, drawRunHud } from './run.js';
+import { drawRingAbove, drawRingGround, drawStartLights, ghostUp } from './ring.js';
 import { cam } from './state.js';
 import { GHOST_DT, fmtDelta, fmtTime, ghostAt } from './timetrial.js';
 import { trail } from './tracks.js';
@@ -285,7 +286,9 @@ function ghostPose() {
 
 
 export function drawRace() {
-  const shake = G.T.run && G.run && G.run.shake > 0 ? Math.round((Math.random() - .5) * 20 * G.run.shake) : 0;
+  // the camera shakes after a jump (Matschfahrt) and a little on the kerbs (race circuit)
+  const P = G.player, kerb = P && P.kerb && G.state === 'race' && Math.hypot(P.vx, P.vy) > 40 ? Math.round(Math.random()) : 0;
+  const shake = G.T.run && G.run && G.run.shake > 0 ? Math.round((Math.random() - .5) * 20 * G.run.shake) : kerb;
   const cx = clamp(Math.round(cam.x) + shake, 0, G.T.W - VW), cy = clamp(Math.round(cam.y) + shake, 0, G.T.H - VH), R = G.T.rail;
   ctx.drawImage(G.T.base, cx, cy, VW, VH, 0, 0, VW, VH);
   ctx.drawImage(trail, cx, cy, VW, VH, 0, 0, VW, VH);
@@ -297,13 +300,17 @@ export function drawRace() {
   drawCritters();
   drawEventsGround();
   const sp = G.T.starPix; if (sp.length) for (let j = 0; j < 30; j++) { const p = sp[(hash(j, Math.floor(G.time * 2), 91) * sp.length) | 0], x = p % G.T.W, y = (p / G.T.W) | 0; ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3); }
-  const gh = ghostPose();
-  if (gh) {
+  if (G.T.ring) drawRingGround();
+  const gh = ghostPose(), drawGhost = () => {
     const F = carSet(G.player.def, G.T.th.goo);
     ctx.globalAlpha = .45; ctx.drawImage(F.frames[Math.round(gh.dirt * 5)][rotIndex(gh.ang)], Math.round(gh.x) - SS / 2, Math.round(gh.y) - SS / 2); ctx.globalAlpha = 1;
-  }
+  };
+  // the bridge of the race circuit: first the cars on the road below, then the bridge, then the cars up on it
+  const deck = G.T.ring && G.T.ring.deck, ghUp = gh && deck && ghostUp(gh);
+  if (gh && !ghUp) drawGhost();
   const order = [...G.cars].sort((a, b) => a.y - b.y);
-  for (const c of order) drawCar(c);
+  for (const c of order) if (!deck || c.lvl !== 1) drawCar(c);
+  if (deck) { ctx.drawImage(deck.c, deck.x, deck.y); if (ghUp) drawGhost(); for (const c of order) if (c.lvl === 1) drawCar(c); }
   if (R && R.train.phase === 'run') drawTrain(R);
   drawParticles();
   drawSmoke();
@@ -323,7 +330,7 @@ export function drawRace() {
   if ((G.state === 'countdown' || (G.state === 'race' && G.stateTime < 2.5)) && ((G.time * 4) | 0) % 2 === 0) {
     text('DU', px, py - 40, 8, '#ffd23f', 'center'); tri(px, py - 24, 'down', 5, '#ffd23f');
   }
-  if (!G.T.run && G.state === 'race' && G.player.off > HALF + 20 && !(G.T.stone && G.T.stone[clamp(py, 0, G.T.H - 1) * G.T.W + clamp(px, 0, G.T.W - 1)]) && !(G.player.fall > 0) && ((G.time * 3) | 0) % 2 === 0) {
+  if (!G.T.run && G.state === 'race' && G.player.off > HALF + 20 && !G.player.pit && !(G.T.stone && G.T.stone[clamp(py, 0, G.T.H - 1) * G.T.W + clamp(px, 0, G.T.W - 1)]) && !(G.player.fall > 0) && ((G.time * 3) | 0) % 2 === 0) {
     const p = G.T.path[(G.player.idx + 14) % G.T.N], a = Math.atan2(p.y - G.player.y, p.x - G.player.x);
     ctx.save(); ctx.translate(px + Math.cos(a) * 28, py + Math.sin(a) * 28); ctx.rotate(a);
     ctx.fillStyle = '#1b120c'; ctx.beginPath(); ctx.moveTo(11, 0); ctx.lineTo(-7, -10); ctx.lineTo(-3, 0); ctx.lineTo(-7, 10); ctx.closePath(); ctx.fill();
@@ -331,6 +338,7 @@ export function drawRace() {
     ctx.restore();
   }
   drawEventsAbove();
+  if (G.T.ring) drawRingAbove();
   ctx.restore();
   if (dark) { drawNight(cx, cy); ctx.save(); ctx.translate(-cx, -cy); drawFlyers(); ctx.restore(); }
   drawRain();
@@ -365,7 +373,10 @@ export function drawRace() {
     }
   }
   // countdown
-  if (G.state === 'countdown') {
+  if (G.T.th.lights && (G.state === 'countdown' || (G.state === 'race' && G.stateTime < .9))) {
+    drawStartLights();
+    if (G.state === 'race') text('LOS!', VW / 2, VH / 2 - 20, 40, '#7bd37b', 'center');
+  } else if (G.state === 'countdown') {
     const n = 3 - Math.floor(G.stateTime), f = G.stateTime % 1, sz = f < .15 ? 48 : 40;
     ell(VW / 2, VH / 2, 42, 32, 'rgba(27,18,12,.55)');
     text(String(n), VW / 2 + 2, VH / 2 - sz / 2, sz, ['#7bd37b', '#ffd23f', '#ff5a5a'][n - 1], 'center');

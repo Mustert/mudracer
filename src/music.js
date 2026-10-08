@@ -1,5 +1,6 @@
 import { G } from './g.js';
 import { AU, noise, synth, voice } from './audio.js';
+import { LAPS } from './core.js';
 
 // ---------- music: one original tune per track, sequenced live ----------
 
@@ -214,6 +215,34 @@ const SONGS = {
       if (s === 0 && bi === 0) M.crash(t);
       if (s === 0) M.pad(ch.n, t, 16 * M.sd, .014);
     } },
+  // race circuit: Eurobeat in A minor, a supersaw hook in sixteenths, octave bass, four on the floor, a car racing past before every new part.
+  // In the last lap the tune moves up a whole tone and plays only the refrain (up / upOrder).
+  circuit: { bpm: 160, swing: 0,
+    up: () => G.player && !G.T.run && G.player.lap >= LAPS && (G.state === 'race' || G.state === 'finish') ? 2 : 0, upOrder: ['B'],
+    chords: { Am: { r: 45, n: [57, 60, 64, 69] }, F: { r: 41, n: [57, 60, 65, 69] }, G: { r: 43, n: [55, 59, 62, 67] }, Em: { r: 40, n: [55, 59, 64, 67] }, E: { r: 40, n: [56, 59, 64, 68] } },
+    A: { ch: ['Am', 'F', 'G', 'Em', 'Am', 'F', 'G', 'G'], mel: mel([
+      'A5:0:1 C6:1:1 E6:2:2 A5:4:1 C6:5:1 E6:6:2 D6:8:2 C6:10:2 B5:12:2 C6:14:2', 'A5:0:1 C6:1:1 F6:2:2 A5:4:1 C6:5:1 F6:6:2 E6:8:2 D6:10:2 C6:12:4',
+      'G5:0:1 B5:1:1 D6:2:2 G5:4:1 B5:5:1 D6:6:2 E6:8:2 D6:10:2 B5:12:2 G5:14:2', 'E5:0:2 G5:2:2 B5:4:2 E6:6:2 D6:8:3 B5:11:1 G5:12:4',
+      'A5:0:1 C6:1:1 E6:2:2 A5:4:1 C6:5:1 E6:6:2 A6:8:2 G6:10:2 E6:12:2 C6:14:2', 'F6:0:2 E6:2:2 C6:4:2 A5:6:2 C6:8:2 F6:10:2 A6:12:4',
+      'G6:0:2 F6:2:2 D6:4:2 B5:6:2 D6:8:2 G6:10:2 B6:12:2 A6:14:2', 'G6:0:3 D6:3:1 B5:4:2 G5:6:2 B5:8:1 D6:9:1 G6:10:2 B6:12:4']) },
+    B: { ch: ['F', 'G', 'Em', 'Am', 'F', 'G', 'E', 'E'], mel: mel([
+      'C7:0:3 A6:3:1 F6:4:2 A6:6:2 C7:8:4 A6:12:2 C7:14:2', 'D7:0:3 B6:3:1 G6:4:2 B6:6:2 D7:8:4 E7:12:4',
+      'E7:0:2 D7:2:2 B6:4:2 G6:6:2 B6:8:2 D7:10:2 E7:12:2 G7:14:2', 'E7:0:6 C7:6:2 A6:8:6 E6:14:2',
+      'A6:0:2 C7:2:2 F7:4:4 E7:8:2 C7:10:2 A6:12:4', 'B6:0:2 D7:2:2 G7:4:4 F7:8:2 D7:10:2 B6:12:4',
+      'G#6:0:2 B6:2:2 E7:4:2 G#6:6:2 B6:8:2 E7:10:2 G#7:12:4', 'B7:0:4 G#7:4:2 E7:6:2 B6:8:2 G#6:10:2 E6:12:2 B5:14:2']) },
+    lead(M, m, t, d, sec) { M.supersaw(hz(m - 12), t, d); if (sec === 'B') M.supersaw(hz(m - 24), t, d, .55); },
+    band(M, s, t, bi, ch, sec) {
+      if (s % 2 === 0) M.bassEuro(hz(ch.r + ((s >> 1) % 2 ? 12 : 0)), t, M.sd * 1.6);
+      if (s % 4 === 0) M.kick(t);
+      if (s === 4 || s === 12) { M.clap(t); M.snare(t, .45); }
+      if ((s & 3) === 2) M.hat(t, true, .9); else if (s % 2) M.hat(t, false, .5);
+      if (s === 3 || s === 6 || s === 11 || s === 14) M.stab(ch.n, t);
+      if (sec === 'B' || s % 2) M.arp(hz(ch.n[(s * 3) % ch.n.length] + 12), t);
+      if (s === 0) M.pad(ch.n, t, 16 * M.sd, .014);
+      if (s === 0 && bi === 0) M.crash(t);
+      if (bi === 7 && s === 0) M.zoom(t, 16 * M.sd);
+      if (bi === 7 && s >= 12) M.snare(t, .35 + (s - 12) * .15);
+    } },
 };
 
 
@@ -235,7 +264,7 @@ export const Music = {
     if (this.next < A.currentTime - .2) this.next = A.currentTime + .05; // tab was asleep: skip instead of piling up
     while (this.next < A.currentTime + .15) {
       if (this.want !== this.cur && this.step % 4 === 0) {
-        this.cur = this.want; this.song = SONGS[this.cur]; this.sd = 60 / this.song.bpm / 4; this.step = 0;
+        this.cur = this.want; this.song = SONGS[this.cur]; this.sd = 60 / this.song.bpm / 4; this.step = 0; this.up = 0;
         this.dly.delayTime.setValueAtTime(this.sd * 3, this.next);
       }
       this.play(this.step, this.next); this.next += this.sd; this.step++;
@@ -253,11 +282,14 @@ export const Music = {
   },
   play(step, t) {
     if (!AU.music) return;
-    const S = this.song, order = S.order || ['A', 'B'], total = order.length * 8, from = (S.loop || 0) * 8;
+    const S = this.song;
+    // a key change (up, in semitones) only starts with a new bar; it can bring its own order of the parts
+    if ((step & 15) === 0) this.up = S.up ? S.up() : 0;
+    const up = this.up || 0, order = (up && S.upOrder) || S.order || ['A', 'B'], total = order.length * 8, from = up && S.upOrder ? 0 : (S.loop || 0) * 8;
     let bar = step >> 4; if (bar >= total) bar = from + (bar - from) % (total - from);
-    const s = step & 15, name = order[bar >> 3], sec = S[name], bi = bar & 7, ch = S.chords[sec.ch[bi]];
+    const s = step & 15, name = order[bar >> 3], sec = S[name], bi = bar & 7, c0 = S.chords[sec.ch[bi]], ch = up ? { r: c0.r + up, n: c0.n.map(m => m + up) } : c0;
     const tt = t + ((s & 3) === 2 ? S.swing * this.sd : 0);
-    for (const n of sec.mel[bi]) if (n[1] === s) S.lead(this, n[0], tt, n[2] * this.sd * .95, name);
+    for (const n of sec.mel[bi]) if (n[1] === s) S.lead(this, n[0] + up, tt, n[2] * this.sd * .95, name);
     S.band(this, s, tt, bi, ch, name);
   },
   // instruments
@@ -310,4 +342,12 @@ export const Music = {
   tom(f, t) { voice({ at: t, f, to: f * .6, a: .002, d: .25, vol: .3, dest: this.out }); },
   brush(t, v) { noise({ at: t, type: 'bandpass', f: 4000, q: .7, a: .01, d: .07, vol: .06 * v, dest: this.out }); },
   crash(t) { noise({ at: t, type: 'highpass', f: 5000, d: 1.3, vol: .09, dest: this.out }); },
+  // Eurobeat: a wide supersaw (detuned saws over a square an octave below), a distorted octave bass, a car racing past (Doppler)
+  supersaw(f, t, d, v = 1) { synth({ at: t, f, parts: [['sawtooth', 1, .45, -14], ['sawtooth', 1, .45, 14], ['sawtooth', 1, .35], ['square', .5, .18]], a: .006, hold: Math.max(0, d - .05), d: .09, vol: .055 * v, lp: 4200, lpTo: 2400, dest: this.leadBus }); },
+  bassEuro(f, t, d) { synth({ at: t, f, parts: [['sawtooth', 1, .8], ['square', 1, .3, 6]], a: .003, hold: d * .3, d: d * .5, vol: .13, lp: 1500, lpTo: 260, q: 4, dest: this.out }); },
+  zoom(t, dur) {
+    voice({ at: t, type: 'sawtooth', f: 90, to: 420, toAt: dur * .6, a: dur * .55, hold: dur * .05, d: .05, vol: .045, lp: 1800, dest: this.out });
+    voice({ at: t + dur * .6, type: 'sawtooth', f: 400, to: 140, a: .01, d: dur * .4, vol: .045, lp: 1500, dest: this.out });
+    noise({ at: t, type: 'bandpass', f: 400, to: 3200, a: dur * .6, d: dur * .3, vol: .05, q: 2, dest: this.out });
+  },
 };

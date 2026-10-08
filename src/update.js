@@ -8,6 +8,7 @@ import { Music } from './music.js';
 import { CONF, RAINBOW, WATC, addP, drop, mudBurst, splash } from './particles.js';
 import { aiTarget, physics, score, updateProgress } from './physics.js';
 import { eventCollisions, updateEvents } from './events.js';
+import { ringCountdown, ringGo, ringGround, ringStackHit, ringUpdate } from './ring.js';
 import { moveCamera } from './race.js';
 import { updateJumps } from './run.js';
 import { cam } from './state.js';
@@ -35,6 +36,7 @@ function updateRace(dt) {
   const racing = G.state === 'race' || G.state === 'finish';
   updateTrain(dt);
   updateEvents(dt);
+  ringUpdate(dt);
   for (const c of G.cars) {
     let thr = 0, tgt = null;
     c.brake = false;
@@ -82,11 +84,14 @@ function updateRace(dt) {
   for (const c of G.cars) {
     if (c.fall > 0) continue;
     for (const o of G.T.trees) {
+      // the bridge of the race circuit: its railings only stop the cars up on it, the walls under it only the cars below
+      if ((o.up && c.lvl !== 1) || (o.down && c.lvl !== 2)) continue;
       const dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy), mn = o.r + 9;
       if (d < mn && d > 0) {
         const nx = dx / d, ny = dy / d, vn = c.vx * nx + c.vy * ny;
         c.x = o.x + nx * mn; c.y = o.y + ny * mn;
-        if (vn < 0) { c.vx -= 1.6 * vn * nx; c.vy -= 1.6 * vn * ny; if (!c.ai && -vn > 35) SFX.bump(); }
+        // tyre walls are soft: the car bounces back less (and a hard hit knocks tyres loose)
+        if (vn < 0) { const k = o.stack ? 1.25 : 1.6; c.vx -= k * vn * nx; c.vy -= k * vn * ny; if (!c.ai && -vn > 35) SFX.bump(); if (o.stack && -vn > 70) ringStackHit(c, o, -vn); }
       }
     }
     if (c.x < 10) { c.x = 10; c.vx = Math.abs(c.vx) * .4; } if (c.x > G.T.W - 10) { c.x = G.T.W - 10; c.vx = -Math.abs(c.vx) * .4; }
@@ -96,6 +101,7 @@ function updateRace(dt) {
   for (let i = 0; i < G.cars.length; i++) for (let j = i + 1; j < G.cars.length; j++) {
     const a = G.cars[i], b = G.cars[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
     if (a.ghost > 0 || b.ghost > 0 || a.fall > 0 || b.fall > 0) continue; // a car that just came back out of the water is see-through for a moment
+    if (a.lvl && b.lvl && a.lvl !== b.lvl) continue; // one on the bridge, one below it
     if (d < 18 && d > 0) {
       const nx = dx / d, ny = dy / d, ov = (18 - d) / 2;
       a.x -= nx * ov; a.y -= ny * ov; b.x += nx * ov; b.y += ny * ov;
@@ -130,15 +136,20 @@ function updateRace(dt) {
       if (sp > 12 && Math.random() < dt * 5) addP({ t: 'ring', x: c.x, y: c.y, life: .7, ml: .7 });
     } else if (c.surf === 4 && prev !== 4) {
       c.boost = 1.3; SFX.boost(v);
+    } else if (c.surf === 8) {
+      // oil (race circuit): it does not brake, but the car slides and gets black (the dirt works like mud)
+      c.dirt = Math.min(1, c.dirt + .8 * dt * (sp > 8 ? 1 : .3)); c.oilT = 1; c.mudTrail = 1.2;
+      if (prev !== 8 && sp > 30 && !c.ai) SFX.squeal();
     }
+    if (G.T.ring) ringGround(c, j, sp, dt);
     if (c.boost > 0 && Math.random() < dt * 40) drop(c.x - Math.cos(c.ang) * 14, c.y - Math.sin(c.ang) * 14, c.ang + Math.PI + (Math.random() - .5) * .8, 20 + Math.random() * 30, 20 + Math.random() * 30, pick(RAINBOW), .8, false);
     if (c.washing) {
       c.dirt = Math.max(0, c.dirt - 3 * dt);
       if (Math.random() < dt * 30) addP({ t: 'bub', x: c.x + (Math.random() - .5) * 26, y: c.y + (Math.random() - .5) * 18, vx: (Math.random() - .5) * 12, vy: -12 - Math.random() * 14, life: 1, ml: 1 });
     }
     if (c.dirt > .8 && sp > 15 && Math.random() < dt * 3) mudBurst(c, 1);
-    if (c.surf === 1 && !th.space && sp > 80 && Math.random() < dt * 10) addP({ t: 'dust', x: c.x - Math.cos(c.ang) * 14, y: c.y - Math.sin(c.ang) * 14, vx: (Math.random() - .5) * 10, vy: (Math.random() - .5) * 10, life: .55, ml: .55 });
-    c.bump = (c.surf === 0 || c.surf === 2 || c.surf === 6) && sp > 25 && ((G.time * 14 + c.seed) | 0) % 2 ? 1 : 0;
+    if (c.surf === 1 && !th.space && !G.T.ring && sp > 80 && Math.random() < dt * 10) addP({ t: 'dust', x: c.x - Math.cos(c.ang) * 14, y: c.y - Math.sin(c.ang) * 14, vx: (Math.random() - .5) * 10, vy: (Math.random() - .5) * 10, life: .55, ml: .55 });
+    c.bump = (c.surf === 0 || c.surf === 2 || c.surf === 6 || c.surf === 7 || c.kerb) && sp > 25 && ((G.time * 14 + c.seed) | 0) % 2 ? 1 : 0;
     if (sp > 6) {
       const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
       for (const side of [-8, 8]) {
@@ -146,11 +157,13 @@ function updateRace(dt) {
         let col = null, a = 0;
         if (c.surf === 2) { col = th.mudTrail[0]; a = .5; }
         else if (c.surf === 6) { col = '#7d8188'; a = .55; }
+        else if (c.surf === 8) { col = '#0b0b0d'; a = .55; }
         else if (c.surf === 3 || c.surf === 5) col = null;
         else if (c.mudTrail > 0) { col = th.mudTrail[1]; a = .45 * c.mudTrail / 1.6; }
         else if (c.wetTrail > 0 && c.surf === 1) { col = '#7a5a3a'; a = .3 * c.wetTrail; }
         else if (c.surf === 0) { col = th.trail; a = .1; }
-        else if (!th.rainbow) { col = '#8a6440'; a = .09; }
+        else if (c.surf === 7) { col = '#8a7d5a'; a = .25; }
+        else if (!th.rainbow) { col = th.roadTrail || '#8a6440'; a = .09; }
         if (col) { tctx.globalAlpha = a; tctx.fillStyle = col; tctx.fillRect(Math.round(wx) - 1, Math.round(wy) - 1, 2, 2); }
       }
       tctx.globalAlpha = 1;
@@ -205,9 +218,10 @@ export function update(dt) {
   touchBox.hidden = !coarse || G.state === 'title';
   if (G.state === 'pause') { engineSound(dt); Music.level(); honkBtn.textContent = 'OK'; return; } // the race stands still
   if (G.state === 'countdown') {
-    const n = Math.floor(G.stateTime);
-    if (n !== G.lastCount && n < 3) { G.lastCount = n; SFX.count(); }
-    if (G.stateTime >= 3) { setState('race'); SFX.go(); }
+    const n = Math.floor(G.stateTime), lights = G.T.th.lights; // race circuit: start lights instead of 3-2-1
+    if (lights) ringCountdown();
+    else if (n !== G.lastCount && n < 3) { G.lastCount = n; SFX.count(); }
+    if (G.stateTime >= 3) { setState('race'); if (lights) { SFX.lightsOut(); ringGo(); } else SFX.go(); }
   }
   if (G.state === 'countdown' || G.state === 'race' || G.state === 'finish') {
     if (G.tt && G.state === 'race') {
