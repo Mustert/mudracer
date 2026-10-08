@@ -1,4 +1,5 @@
 import { HALF, TAU, WH, WW, angDiff, clamp, hash, hex, mk, outlineImg, rng, toCanvas, vnoise } from './core.js';
+import { nearestIdx, paintSite, siteRing, siteYards } from './bau.js';
 
 // ---------- tracks (800x450 world) ----------
 
@@ -9,7 +10,7 @@ const MUDDY = { mud: ['#5a3a1f', '#4b301a', '#664327'], mudEdge: '#3b2512', mudH
 export const THEMES = {
   wiese:  { ...MUDDY, grass: ['#63c24a', '#55b03e', '#74d05a'], grassEdge: '#4a9a36', tuft: '#3e8e2e', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#2f6d24', decor: 'wiese', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 26, fence: 'picket', ambient: 'butterfly' },
   gelaende: { ...MUDDY, grass: ['#6cbf4a', '#5eae3f', '#7ccc58'], grassEdge: '#4f9a36', tuft: '#468a30', track: ['#b98b58', '#aa7e4d', '#c79a66'], trackEdge: '#8a6440', trail: '#2f6d24', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], ambient: 'butterfly' },
-  wald:   { ...MUDDY, water: ['#1f4a5e', '#2a6078', '#35708a', '#4f8ea6'], leafWater: true, dark: true, fence: 'log', ambient: 'firefly', grass: ['#3f8d3c', '#367c33', '#4a9c47'], grassEdge: '#2f6e2c', tuft: '#27612a', track: ['#a9815a', '#9b744f', '#b68e65'], trackEdge: '#7b583a', trail: '#1f4a1f', decor: 'wald', tree: 'pine', treeCol: ['#1b573a', '#277048', '#3d9160', '#0d2e1e'], trees: 62 },
+  wald:   { ...MUDDY, water: ['#1f4a5e', '#2a6078', '#35708a', '#4f8ea6'], leafWater: true, dark: true, fence: 'log', ambient: 'firefly', grass: ['#3f8d3c', '#367c33', '#4a9c47'], grassEdge: '#2f6e2c', tuft: '#27612a', track: ['#a9815a', '#9b744f', '#b68e65'], trackEdge: '#7b583a', trail: '#1f4a1f', decor: 'wald', tree: 'pine', treeCol: ['#1b573a', '#277048', '#3d9160', '#0d2e1e'], trees: 170, treeGap: 17, treeEdge: true },
   strand: { ...MUDDY, water: ['#1d8fb3', '#2bb3cc', '#48cfd9', '#8aeee6'], shore: ['#c9a060', '#bf9655'],
     grass: ['#f3d995', '#ebcc81', '#f8e6b0'], grassEdge: '#dcb96c', tuft: '#e2c275', track: ['#bb8c5a', '#ae8050', '#c69864'], trackEdge: '#8f6a42', trail: '#b89656',
     decor: 'strand', tree: 'palm', treeCol: ['#2a8a3c', '#3cac4e', '#74d66c', '#18521f'], trees: 18, sea: true, fence: 'rope', ambient: 'gull' },
@@ -19,6 +20,8 @@ export const THEMES = {
     decor: 'space', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#000000'], trees: 0, space: true, rainbow: true },
   garten: { ...MUDDY, water: ['#2a7184', '#34899b', '#43a0ae', '#7ccfd2'], shore: ['#8d8f86', '#777970'], grass: ['#6fb85a', '#62a84e', '#7ec766'], grassEdge: '#54944a', tuft: '#4d8a42',
     track: ['#c4ad86', '#b59d76', '#d0ba94'], trackEdge: '#948063', trail: '#3f7a35', decor: 'garten', tree: 'cherry', treeCol: ['#c4547f', '#e98cb0', '#f9cfdf', '#4a2438'], trees: 14, fence: 'bamboo', ambient: 'sakura' },
+  baustelle: { ...MUDDY, water: ['#5d7f86', '#6b909a', '#7da3ac', '#a9cdd3'], shore: ['#5a4630', '#4d3a26'], grass: ['#9b9684', '#8f8a79', '#a8a392'], grassEdge: '#6f6a5a', tuft: '#7c7766',
+    track: ['#b78a57', '#a97d4c', '#c39662'], trackEdge: '#845e38', trail: '#6a5a44', decor: 'bau', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#1b120c'], trees: 0, fence: 'mesh' },
   bahn:   { ...MUDDY, grass: ['#8fbf4a', '#7fae3f', '#9fcc5a'], grassEdge: '#6f9a33', tuft: '#5f8a2a', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#4f7a22', decor: 'farm', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 18 },
 };
 
@@ -49,39 +52,76 @@ const TRACK_DEFS = [
     mud: B2([[.18, 0, 14, 18], [.5, 0, 18, 18], [.29, 4, 6, 7], [.78, -4, 6, 7]]), water: [], ponds: [[300, 240, 44, 26]], wash: null,
     // small beach showers that run all the time, each one leaves a mini puddle (t along the track, offset from the centre line); none on the lower part that gets flooded
     showers: [[.05, -15], [.25, 15], [.41, -15]] },
-  { name: 'REGENBOGEN', theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
-    mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 },
-  { name: 'ZUG', theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 406, y: 190, ang: 0, dirs: [-1] }, { x: 454, y: 190, ang: 0, dirs: [1] }], gate: { y: 190 }, pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
-    mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[280, 225, 40, 22]], rail: { x: 430 }, wash: .94 },
-  { name: 'GARTEN', theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: .06,
+  { name: 'ZUG', seed: 4, events: ['zug'], theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 365, y: 190, ang: 0 }], tunnels: [{ x: 365, y: 190, hw: 117, portals: [300, 430] }], pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
+    mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[560, 255, 40, 22]], rail: { x: 430, lines: [430, 300] }, wash: .94 },
+  // The building site: the road is packed earth. Everything inside the ring road is yard (solid, see bau.js), the road narrows at barriers, a crane
+  // holds a concrete pipe over the road, a cement mixer leaks a grey puddle onto it, and dump trucks tip earth beside it (event kipper).
+  // poly = [x, y, curve radius] (rounded corners), mudAt/waterAt/cement = [x, y, half length along the road, half width across]
+  { name: 'BAUSTELLE', rev: 2, seed: 6, theme: 'baustelle', song: 'site', events: ['kipper'], wall: [], wash: 0, washAt: [215, 375],
+    poly: [[75, 230, 0], [75, 75, 52], [265, 75, 45], [265, 215, 45], [405, 215, 45], [405, 75, 45], [725, 75, 45], [725, 185, 45], [565, 185, 45], [565, 280, 45], [725, 280, 45], [725, 375, 52],
+      [475, 375, 45], [475, 300, 45], [335, 300, 45], [335, 375, 45], [75, 375, 52]],
+    mud: [], water: [], ponds: [],
+    // after the cement there is no mud and no puddle any more: whoever got grey stays grey until the hose or the car wash
+    mudAt: [[75, 115, 30, 34], [650, 280, 15, 17], [475, 340, 30, 34]],
+    waterAt: [[75, 185, 28, 34], [725, 335, 26, 34]],
+    cement: [[272, 170, 20, 22]],
+    yards: [[96, 96, 610, 270], [296, -10, 82, 120], [366, 350, 78, 110], [690, 196, 120, 60]],
+    narrows: [[175, 75, 1], [560, 375, 1], [165, 375, -1]],
+    // cones: a narrow place built from traffic cones on both sides. hose: spray spot (x, y, r) on the outer lane of the top right curve, hydrant at rx/ry
+    cones: [[645, 185]],
+    hose: { x: 721, y: 79, r: 10, rx: 744, ry: 56 },
+    mixer: { x: 322, y: 96 }, crane: { x: 588, y: 128, pipe0: 552, pipeLen: 72, pipeD: 20, pipeY: 75 },
+    // [x, y, side, seconds between two visits, first arrival]: the truck stands beside the road, outside
+    kipper: [[75, 160, -1, 23, 12], [470, 75, -1, 26, 3], [725, 130, -1, 29, 8], [620, 375, -1, 25, 14]] },
+  { name: 'GARTEN', seed: 5, theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: .06,
     pts: [[100, 290], [100, 252], [103, 224], [125, 204], [170, 198], [235, 198], [300, 198], [332, 187], [344, 159], [332, 131], [305, 120], [240, 120], [180, 120],
       [148, 108], [134, 80], [148, 52], [180, 40], [250, 40], [320, 40], [392, 42], [424, 52], [444, 80], [447, 125], [458, 168], [484, 198], [515, 211], [546, 198], [572, 168], [583, 125], [585, 90],
       [595, 62], [620, 43], [642, 38], [665, 43], [690, 62], [700, 90], [706, 140], [700, 200], [692, 255], [690, 300], [688, 335],
       [678, 368], [654, 392], [620, 402], [560, 403], [500, 403], [440, 402], [412, 401], [386, 396], [374, 380], [370, 355], [370, 335], [360, 322], [345, 317], [300, 316], [260, 318], [232, 328],
       [212, 350], [205, 376], [204, 392], [194, 404], [170, 408], [142, 397], [117, 372], [102, 336]],
-    mud: [[.21, 0, 30, 34], [.33, 0, 30, 34], [.56, 0, 30, 34], [.69, 0, 30, 34], [.91, 0, 30, 34]], water: [[.10, 0, 28, 34], [.43, 0, 26, 34], [.62, 0, 26, 34], [.87, 0, 26, 34]], ponds: [],
+    mud: [[.21, 0, 30, 34], [.27, 0, 30, 34], [.56, 0, 30, 34], [.69, 0, 30, 34], [.94, 0, 30, 34]], water: [[.10, 0, 28, 34], [.37, 0, 26, 34], [.62, 0, 26, 34], [.955, 0, 26, 34]], ponds: [],
     // deep water: rivers and ponds as chains of circles [x, y, radius]. The river from the top runs into the pool and the pond inside the first U, the second river crosses the
     // lower road twice and feeds the lake in the middle (a channel), the lake drains to the south. You fall into deep water, roads over it are bridges.
     rivers: [
-      [[515, -14, 10], [515, 38, 11], [515, 82, 35], [515, 116, 14], [515, 148, 25]],
+      [[515, -14, 10], [515, 38, 11], [515, 82, 35], [515, 114, 14], [515, 140, 22]],
       [[812, 299, 13], [742, 301, 13], [660, 305, 13], [592, 312, 13], [543, 327, 13], [510, 350, 13], [500, 386, 13], [500, 422, 13], [502, 462, 13]],
       [[508, 350, 11], [462, 351, 10], [420, 352, 10], [372, 352, 10], [336, 360, 12]],
       [[264, 378, 24], [312, 378, 24]], [[288, 378, 26], [288, 378, 26]],
       [[288, 400, 12], [288, 462, 13]]],
-    // stepping stones: the short cut across the pool (top) and across the lake (bottom)
-    stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10], [322, 372, 9], [298, 388, 9], [272, 370, 9], [250, 384, 9]],
+    // stepping stones: the short cut across the pool at the top
+    stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10]],
     // clipped hedges that keep you from cutting across the garden: [x1, y1, x2, y2]
     hedges: [[12, 159, 333, 159], [172, 80, 396, 80], [135, 258, 396, 258], [396, 78, 396, 300], [396, 300, 520, 314], [642, 98, 642, 290], [152, 260, 152, 376]],
     pagodas: [[765, 142, 4, 1.15], [758, 388, 4, 1.15], [452, 262, 3, .85]],
-    koi: [[515, 148, 13, 10], [288, 380, 36, 11], [515, 84, 14, 10], [655, 303, 40, 3]] },
+    koi: [[515, 140, 11, 9], [288, 380, 36, 11], [515, 84, 14, 10], [655, 303, 40, 3]] },
+  { name: 'REGENBOGEN', seed: 3, theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
+    mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 }
 ];
 
 
+// the centre line with rounded corners: [x, y, r] (r = 0: plain point), a circle-like curve of size r at every corner, straight in between
+function roundedPath(poly) {
+  const raw = [], n = poly.length, k = .5523;
+  const line = (a, b) => { const l = Math.hypot(b[0] - a[0], b[1] - a[1]), m = Math.max(1, Math.ceil(l / 2)); for (let s = 0; s < m; s++) raw.push([a[0] + (b[0] - a[0]) * s / m, a[1] + (b[1] - a[1]) * s / m]); };
+  let cur = [poly[0][0], poly[0][1]];
+  for (let i = 1; i <= n; i++) {
+    const [x, y, r] = poly[i % n];
+    if (i === n || !r) { line(cur, [x, y]); cur = [x, y]; continue; }
+    const [qx, qy] = poly[i - 1], [nx, ny] = poly[(i + 1) % n], dp = Math.hypot(qx - x, qy - y), dn = Math.hypot(nx - x, ny - y), rp = Math.min(r, dp / 2), rn = Math.min(r, dn / 2);
+    const A = [x + (qx - x) / dp * rp, y + (qy - y) / dp * rp], B = [x + (nx - x) / dn * rn, y + (ny - y) / dn * rn];
+    line(cur, A);
+    const P1 = [A[0] + (x - A[0]) * k, A[1] + (y - A[1]) * k], P2 = [B[0] + (x - B[0]) * k, B[1] + (y - B[1]) * k], m = Math.max(8, Math.ceil((rp + rn) * .6));
+    for (let q = 0; q < m; q++) { const t = q / m, u = 1 - t; raw.push([0, 1].map(c => u * u * u * A[c] + 3 * u * u * t * P1[c] + 3 * u * t * t * P2[c] + t * t * t * B[c])); }
+    cur = B;
+  }
+  return raw;
+}
+
 
 function buildTrack(def, ti) {
-  const th = THEMES[def.theme], sd = ti * 131 + 17, r = rng(sd);
+  const th = THEMES[def.theme], sd = (def.seed !== undefined ? def.seed : ti) * 131 + 17, r = rng(sd);
   // centre line: closed Catmull-Rom, resampled every 2px
-  const P = def.pts, n = P.length, raw = [];
+  const P = def.pts || [], n = P.length, raw = def.poly ? roundedPath(def.poly) : [];
   for (let i = 0; i < n; i++) {
     const a = P[(i - 1 + n) % n], b = P[i], c = P[(i + 1) % n], d = P[(i + 2) % n];
     for (let k = 0; k < 40; k++) {
@@ -167,6 +207,11 @@ function buildTrack(def, ti) {
   def.mud.forEach(m => onPath(m[0], m[1], m[2], m[3], 2));
   def.water.forEach(m => onPath(m[0], m[1], m[2], m[3], 3));
   def.ponds.forEach(p => stamp(p[0], p[1], { x: 1, y: 0 }, { x: 0, y: 1 }, p[2], p[3], 3));
+  // puddles at fixed places: the direction of the road is taken from the nearest point of the centre line
+  const stampAt = (m, type) => { const i = nearestIdx(path, m[0], m[1]); stamp(m[0], m[1], tan[i], nrm[i], m[2], m[3], type); };
+  (def.mudAt || []).forEach(m => stampAt(m, 2));
+  (def.waterAt || []).forEach(m => stampAt(m, 3));
+  (def.cement || []).forEach(m => stampAt(m, 6));
   const showers = (def.showers || []).map(([t, off]) => {
     const i = Math.floor(t * N) % N, p = path[i], x = p.x + nrm[i].x * off, y = p.y + nrm[i].y * off, s = Math.sign(off) || 1;
     stamp(x, y, tan[i], nrm[i], 14, 12, 3);
@@ -176,12 +221,13 @@ function buildTrack(def, ti) {
   // railway: a straight vertical line through the whole world
   let rail = null;
   if (def.rail) {
-    const RX = def.rail.x;
-    for (let y = 0; y < WH; y++) for (let x = RX - 18; x <= RX + 18; x++) { const j = y * WW + x; if (ter[j] >= 2) ter[j] = dist[j] < HALF ? 1 : 0; }
+    const lines = def.rail.lines || [def.rail.x];
+    for (const RX of lines) for (let y = 0; y < WH; y++) for (let x = RX - 18; x <= RX + 18; x++) { const j = y * WW + x; if (ter[j] >= 2) ter[j] = dist[j] < HALF ? 1 : 0; }
     const cross = [];
-    for (let i = 0; i < N; i++) { const a = path[i], b = path[(i + 1) % N]; if ((a.x - RX) * (b.x - RX) <= 0 && !cross.some(c => Math.abs(c.i - i) < 30)) cross.push({ i, x: RX, y: (a.y + b.y) / 2 }); }
-    rail = { x: RX, cross, gate: 0, signal: false, bellT: 0, chuffT: 0, chuffN: 0, smokeT: 0, train: { phase: 'wait', t: 6, dir: 1, y: -9999 } };
+    for (const RX of lines) for (let i = 0; i < N; i++) { const a = path[i], b = path[(i + 1) % N]; if ((a.x - RX) * (b.x - RX) <= 0 && !cross.some(c => c.x === RX && Math.abs(c.i - i) < 30)) cross.push({ i, x: RX, y: (a.y + b.y) / 2 }); }
+    rail = { x: def.rail.x, lines, sw: -1, cross, gate: 0, signal: false, bellT: 0, chuffT: 0, chuffN: 0, smokeT: 0, train: { phase: 'wait', t: 6, dir: 1, y: -9999 } };
   }
+  const yard = siteYards(def, ter, dist), cemPix = [];
   const shore = new Uint8Array(A);
   for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) {
     const j = y * WW + x; if ((ter[j] !== 3 && ter[j] !== 5) || sea[j]) continue;
@@ -230,6 +276,11 @@ function buildTrack(def, ti) {
         if (th.leafWater && e > 2 && hash(x, y, sd + 5) < .012) col = [[224, 138, 44], [217, 180, 58], [181, 86, 42]][(h * 3) | 0];
       }
     } else if (shore[j]) col = SHORE[h < .5 ? 0 : 1];
+    else if (t === 6) {
+      // cement: grey and smooth, a darker rim
+      const e = ed(x, y, 6, 1);
+      if (e === 1) col = [92, 96, 102]; else { cemPix.push(j); const v = nv * .6 + h * .4; col = v < .38 ? [125, 129, 136] : v > .66 ? [154, 160, 167] : [140, 144, 151]; if (h < .03) col = [196, 201, 206]; }
+    }
     else if (t === 2) {
       const e = ed(x, y, 2, 1);
       if (e === 1) col = MUDE; else { mudPix.push(j); const v = nv * .6 + h * .4; col = v < .38 ? MUD[1] : v > .66 ? MUD[2] : MUD[0]; if (h < .025) col = MUDH; }
@@ -255,8 +306,8 @@ function buildTrack(def, ti) {
       if (dist[j] < HALF + 2.5) col = GE;
       else { const v = nv * .7 + h * .3; col = v < .38 ? G[1] : v > .66 ? G[2] : G[0]; if (h < .025 || hash(x, y + 1, sd) < .025 || hash(x, y + 2, sd) < .012) col = TU; }
     }
-    if (rail) {
-      const dx = x - rail.x, ax = Math.abs(dx);
+    if (rail) for (const RX of rail.lines) {
+      const dx = x - RX, ax = Math.abs(dx);
       if (ax <= 16) {
         if (dist[j] < HALF) col = (y >> 2) & 1 ? PLANK[0] : PLANK[1];
         else { col = BAL[(h * 3) | 0]; if (ax <= 12 && y % 7 < 3) col = SLEEPER[y % 7 === 0 ? 1 : 0]; }
@@ -304,7 +355,7 @@ function buildTrack(def, ti) {
   // start line (checkered), stop lines at the level crossings, car wash
   band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * WW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
   if (rail) for (const cr of rail.cross) band(cr.i, 34, (x, y, a, c) => { if (Math.abs(c) < HALF - 2 && Math.abs(Math.abs(a) - 30) < 1.6) set(y * WW + x, [245, 245, 240]); });
-  const hasWash = def.wash != null, wi = hasWash ? Math.floor(def.wash * N) % N : 0, washMask = new Uint8Array(A);
+  const hasWash = def.wash != null, wi = hasWash ? (def.washAt ? nearestIdx(path, def.washAt[0], def.washAt[1]) : Math.floor(def.wash * N) % N) : 0, washMask = new Uint8Array(A);
   const tp = new Uint8ClampedArray(A * 4);
   const setT = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= WW || y >= WH) return; const i = (y * WW + x) * 4; tp[i] = c[0]; tp[i + 1] = c[1]; tp[i + 2] = c[2]; tp[i + 3] = 255; };
   const FLOOR = [hex('#a9bccd'), hex('#93a8bb')], BEAM = [hex('#ffffff'), hex('#e84a5f'), hex('#b8354a')], POST = [hex('#4a5a8a'), hex('#6d7fb3')];
@@ -344,13 +395,13 @@ function buildTrack(def, ti) {
   // decor
   const ok = (x, y) => {
     x |= 0; y |= 0; if (x < 3 || y < 3 || x >= WW - 3 || y >= WH - 3) return false;
-    const j = y * WW + x; return ter[j] === 0 && dist[j] > HALF + 4 && !shore[j] && !washMask[j] && !wallMask[j] && (!rail || Math.abs(x - rail.x) > 20);
+    const j = y * WW + x; return ter[j] === 0 && dist[j] > HALF + 4 && !shore[j] && !washMask[j] && !wallMask[j] && !yard[j] && (!rail || rail.lines.every(L => Math.abs(x - L) > 20));
   };
   const px = (x, y, c) => { if (x >= 0 && y >= 0 && x < WW && y < WH) set(y * WW + x, c); };
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (WW - 10) | 0), y = 5 + (r() * (WH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
   const rock = (x, y) => { const L2 = hex('#c4c4bb'), M2 = hex('#9a9a92'), D2 = hex('#6e6e68'); for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(x + dx, y + dy, dy === 0 ? L2 : dy === 2 ? D2 : M2); };
   const trees = [], critters = [], C = th.treeCol.map(hex);
-  let windmill = null;
+  let windmill = null, lights = [], mixer = null, hose = null, tight = [];
   const darken = (x, y, rad, ox, oy) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + ox, yy = y + dy + oy; if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue; const i = (yy * WW + xx) * 4; d[i] *= .78; d[i + 1] *= .76; d[i + 2] *= .76; } };
   const flowers = (n, PET) => scatter(n, 2, (x, y) => { const pc = PET[(r() * PET.length) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, pc === PET[1] ? hex('#ff8c1a') : hex('#ffe14d')); });
   // wall look: fence + hay (meadow), log pile + pines (forest), beach bar + surfboards + palms (beach), asteroid belt (space), railway barrier (train)
@@ -429,15 +480,68 @@ function buildTrack(def, ti) {
     for (const sx of [rail.x - 28, rail.x + 28]) { for (let dy = -4; dy <= 4; dy++) for (let dx = -3; dx <= 3; dx++) px(sx + dx, gy + dy, PO); px(sx, gy - 3, hex('#ff3b3b')); }
   }
   // fence along both sides of the track: rope (beach), white pickets (meadow), logs (forest)
-  const FENCE = { rope: ['#f0dcaa', '#7a4f2a', '#a8743f', '#5a3a1c', 9], bamboo: ['#c9d49a', '#5f7d34', '#87a24b', '#364a1c', 9], picket: ['#e6e1d2', '#ffffff', '#f4f1e6', '#8a8472', 6], log: ['#8a6440', '#5a3a1c', '#7a5230', '#3b2512', 12] }[th.fence];
+  const FENCE = { rope: ['#f0dcaa', '#7a4f2a', '#a8743f', '#5a3a1c', 9], bamboo: ['#c9d49a', '#5f7d34', '#87a24b', '#364a1c', 9], picket: ['#e6e1d2', '#ffffff', '#f4f1e6', '#8a8472', 6], log: ['#8a6440', '#5a3a1c', '#7a5230', '#3b2512', 12], mesh: ['#e8872a', '#5a6068', '#7b838c', '#2c3036', 9] }[th.fence];
   if (FENCE) {
     const RL = hex(FENCE[0]), P0 = hex(FENCE[1]), P1 = hex(FENCE[2]), P2 = hex(FENCE[3]), RL2 = hex('#6b4a2e');
+    const SL = hex('#b8a14a'), SM = hex('#8f7a30'), SD = hex('#2a1e0c'), SP = hex('#5a4318'), SH = hex('#203a2a'); // solid palisade (garden)
     for (let i = 0; i < N; i++) for (const s of [-1, 1]) {
-      const x = Math.round(path[i].x + nrm[i].x * s * (HALF + 5)), y = Math.round(path[i].y + nrm[i].y * s * (HALF + 5));
-      if (x < 1 || y < 1 || x >= WW - 3 || y >= WH - 3) continue;
-      const j = y * WW + x; if (ter[j] !== 0 || dist[j] < HALF + 4 || shore[j] || washMask[j]) continue;
+      // the garden: if the first spot is already water, the fence moves out onto the grass strip next to the pond
+      let x = 0, y = 0, j = -1;
+      for (const o of th.decor === 'garten' ? [5, 7, 9, 11] : [5]) {
+        x = Math.round(path[i].x + nrm[i].x * s * (HALF + o)); y = Math.round(path[i].y + nrm[i].y * s * (HALF + o));
+        if (x < 1 || y < 1 || x >= WW - 3 || y >= WH - 3) { j = -1; break; }
+        j = y * WW + x; if (ter[j] === 0 && dist[j] >= HALF + 4 && !washMask[j] && (!shore[j] || th.decor === 'garten')) break; j = -1;
+      }
+      if (j < 0) continue;
+      if ((def.kipper || []).some(k => Math.hypot(k[0] - x, k[1] - y) < 52)) continue; // the dump trucks drive through a gap in the fence
+      // the garden: where deep water lies right behind the fence it is a solid barrier (except at the stepping stones, that is where you go in on purpose)
+      // it looks different from the low decoration fence: a thick dark bamboo palisade with posts
+      if (th.decor === 'garten' && !(def.stones || []).some(q => Math.hypot(q[0] - x, q[1] - y) < 60)) {
+        let wet = false; for (let dy = -12; dy <= 12 && !wet; dy += 4) for (let dx = -12; dx <= 12; dx += 4) { const xx = clamp(x + dx, 0, WW - 1), yy = clamp(y + dy, 0, WH - 1); if (ter[yy * WW + xx] === 5 && !bridgeMask[yy * WW + xx]) { wet = true; break; } }
+        if (wet) {
+          if (i % 3 === 0) walls.push({ x, y, r: 2.5 });
+          const ox = nrm[i].x * s, oy = nrm[i].y * s, P = (k, c) => px(Math.round(x + ox * k), Math.round(y + oy * k), c);
+          P(-1, SD); P(0, SL); P(1, SL); P(2, SM); P(3, SD); P(4, SH);
+          if (i % 4 === 0) for (let k = -1; k <= 3; k++) for (const q of [-1, 0, 1]) px(Math.round(x + ox * k - oy * q), Math.round(y + oy * k + ox * q), k === -1 || k === 3 || q ? SD : SP);
+          continue;
+        }
+      }
       if (i % FENCE[4] === 0) { px(x + 2, y + 2, P2); px(x, y, P1); px(x + 1, y, P0); px(x, y + 1, P0); px(x + 1, y + 1, P2); }
       else { px(x, y, RL); if (th.fence === 'log') px(x + Math.round(nrm[i].x * s), y + Math.round(nrm[i].y * s), RL2); }
+    }
+  }
+  // tunnel hills: a rocky hill with a grassy top on the wall line, the train disappears into it (the hill lies on the top layer, so it covers the train). Solid for cars.
+  for (const { x: hx, y: hy, hw, portals } of def.tunnels || []) {
+    const hh = 33, rr = 12, inside = (x, y) => { const qx = Math.abs(x - hx) - (hw - rr), qy = Math.abs(y - hy) - (hh - rr); return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rr; };
+    for (let q = hx - hw + 20; q <= hx + hw - 20; q += 20) darken(q, hy, 40, 6, 8);
+    for (let y = hy - hh - 1; y <= hy + hh + 1; y++) for (let x = hx - hw - 1; x <= hx + hw + 1; x++) {
+      const d = inside(x + .5, y + .5); if (d > 0) continue;
+      const dep = -d, n = vnoise(x * .22, y * .22, sd + 11), lit = ((hx - x) + (hy - y)) / (hw + hh) * 18;
+      let c;
+      if (dep < 2) c = [52, 52, 58];
+      else {
+        // one natural rock formation over the whole hill, lit from the top left, with boulders, ridges and a few dark cracks; the rim is a bit darker
+        const H = (X, Y) => vnoise(X * .1, Y * .1, sd + 14) * .55 + vnoise(X * .24, Y * .24, sd + 15) * .3 + vnoise(X * .6, Y * .6, sd + 16) * .15;
+        const sl = (H(x - 1, y - 1) - H(x + 1, y + 1)) * 170, crack = Math.abs(vnoise(x * .07, y * .09, sd + 17) - .5) < .012;
+        let g = 130 + (H(x, y) - .5) * 60 + sl + lit * .6; if (hash(x, y, sd + 13) < .05) g -= 12;
+        if (crack) g -= 30;
+        g *= .72 + .28 * Math.min(1, (dep - 2) / 12);
+        c = [g, g - 3, g - 8];
+      }
+      setT(x, y, c);
+    }
+    for (let gy = hy - hh + 4; gy <= hy + hh - 4; gy += 8) for (let gx = hx - hw + 4; gx <= hx + hw - 4; gx += 8) if (inside(gx, gy) < -3) walls.push({ x: gx, y: gy, r: 7 });
+    for (let y = hy - hh - 8; y <= hy + hh + 8; y++) for (let x = hx - hw - 4; x <= hx + hw + 4; x++) if (y >= 0 && y < WH && x >= 0 && x < WW) wallMask[y * WW + x] = 1;
+    // the tunnel mouths on both faces: stone frame and lintel, dark opening
+    for (const sy of [-1, 1]) {
+      const ye = hy + sy * hh;
+      for (const px0 of portals) for (let k = -3; k <= 14; k++) for (let dx = -19; dx <= 19; dx++) {
+        const ad = Math.abs(dx), y = ye - sy * k; let c = null;
+        if (k < 0) c = k === -3 ? [112, 108, 98] : [188, 184, 170];
+        else if (ad <= 14) c = k < 3 && ad >= 12 ? [96, 94, 100] : [Math.max(62, 118 - k * 4), Math.max(62, 118 - k * 4), Math.max(66, 124 - k * 4)];
+        else c = ad === 19 ? [112, 108, 98] : [176, 172, 160];
+        if (c) setT(px0 + dx, y, c);
+      }
     }
   }
   if (th.decor === 'wiese') {
@@ -579,8 +683,16 @@ function buildTrack(def, ti) {
   } else if (th.decor === 'garten') {
     const rc = (x0, y0, w, h, c) => { for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) setT(x0 + xx, y0 + yy, c); };
     const GR = ['#2f6b3a', '#3f8a47', '#58a85a', '#e8a6c0', '#ffffff'].map(hex);
-    // the rails of the bridges are solid
+    // the rails of the bridges are solid: red lacquered railings with dark posts and golden caps, a shadow on the water
     for (let i = 0; i < N; i += 3) if (isBridge[i]) for (const s of [-1, 1]) walls.push({ x: path[i].x + nrm[i].x * s * HALF, y: path[i].y + nrm[i].y * s * HALF, r: 3 });
+    const BR = [hex('#2a120c'), hex('#b8321f'), hex('#e0543a'), hex('#ff8a6a')], BP = hex('#3a1a10'), BG = hex('#e8c14a');
+    for (let j = 0; j < A; j++) {
+      if (!isBridge[near[j]] || dist[j] < HALF - 3 || dist[j] > HALF + 3) continue;
+      const dd = dist[j], i = near[j], x = j % WW, y = (j / WW) | 0;
+      if (dd > HALF + 1.5) { if (ter[j] === 5 || ter[j] === 3) { const q = j * 4; d[q] *= .6; d[q + 1] *= .6; d[q + 2] *= .65; } continue; }
+      const post = i % 9 < 2;
+      setT(x, y, post ? (dd > HALF - 2.4 && dd < HALF + .4 && i % 9 === 0 ? BG : BP) : dd < HALF - 2.2 || dd > HALF + .8 ? BR[0] : dd < HALF - 1.2 ? BR[3] : dd < HALF - .2 ? BR[2] : BR[1]);
+    }
     // clipped hedges between the roads: solid, a few blossoms
     for (const [x1, y1, x2, y2] of def.hedges || []) {
       const L = Math.hypot(x2 - x1, y2 - y1);
@@ -597,21 +709,22 @@ function buildTrack(def, ti) {
     }
     // large pagodas outside of the track: stone base, tiers of white walls with red posts and dark curved roofs
     const pagoda = (cx, cy, n, sc) => {
-      const WL = hex('#efe8d8'), WD = hex('#c9c0aa'), PO = hex('#b83a2a'), RF = ['#7a8496', '#556070', '#363d4b'].map(hex), ST = ['#b3b1a6', '#8c8a80'].map(hex), GD = hex('#e8c14a');
-      walls.push({ x: cx, y: cy - 4, r: Math.round(13 * sc) }); darken(cx, cy - 4, Math.round(15 * sc), 7, 5);
-      for (let dy = -Math.round(15 * sc); dy <= Math.round(15 * sc); dy++) for (let dx = -Math.round(15 * sc); dx <= Math.round(15 * sc); dx++) if (Math.hypot(dx, dy) < 15 * sc) wallMask[clamp(cy - 4 + dy, 0, WH - 1) * WW + clamp(cx + dx, 0, WW - 1)] = 1;
-      for (let dy = -Math.round((n * 12 + 16) * sc); dy <= 4; dy++) for (let dx = -Math.round(24 * sc); dx <= Math.round(24 * sc); dx++) wallMask[clamp(cy + dy, 0, WH - 1) * WW + clamp(cx + dx, 0, WW - 1)] = 1;
-      let y = cy; const bw = Math.round(21 * sc);
-      rc(cx - bw, y - 4, bw * 2, 4, ST[0]); rc(cx - bw, y - 1, bw * 2, 1, ST[1]); rc(cx - bw + 2, y - 5, bw * 2 - 4, 1, ST[0]); y -= 5;
+      // seen from above: stacked square tile roofs (four facets, ridges on the diagonals), each tier a bit smaller, a gold finial on top
+      const hw0 = Math.round(21 * sc), RF = [['#8793a6', '#6c778a'], ['#566174', '#3f4859']].map(p => p.map(hex)), RD = hex('#2b303c'), EV = hex('#b83a2a'), EV2 = hex('#8a2a1e'), GD = hex('#e8c14a');
+      walls.push({ x: cx, y: cy, r: Math.round(hw0 * .85) }); darken(cx, cy, Math.round(hw0 * 1.1), 5, 6);
+      for (let dy = -hw0 - 3; dy <= hw0 + 3; dy++) for (let dx = -hw0 - 3; dx <= hw0 + 3; dx++) wallMask[clamp(cy + dy, 0, WH - 1) * WW + clamp(cx + dx, 0, WW - 1)] = 1;
       for (let t = 0; t < n; t++) {
-        const hw = Math.round((15 - t * 2.4) * sc), wh = Math.round(7 * sc), rw = hw + Math.round(5 * sc);
-        rc(cx - hw, y - wh, hw * 2, wh, WL); rc(cx - hw, y - 1, hw * 2, 1, WD); rc(cx - hw, y - wh, 2, wh, PO); rc(cx + hw - 2, y - wh, 2, wh, PO); rc(cx - 1, y - wh, 2, wh, PO);
-        rc(cx - hw + 3, y - wh + 2, 3, wh - 3, hex('#3b2a22')); rc(cx + hw - 6, y - wh + 2, 3, wh - 3, hex('#3b2a22'));
-        y -= wh;
-        rc(cx - rw - 2, y - 1, (rw + 2) * 2, 1, RF[2]); rc(cx - rw, y - 2, rw * 2, 1, RF[1]); rc(cx - rw + 2, y - 3, (rw - 2) * 2, 1, RF[0]); rc(cx - rw + 5, y - 4, (rw - 5) * 2, 1, RF[1]);
-        rc(cx - rw - 3, y - 2, 1, 1, RF[1]); rc(cx + rw + 2, y - 2, 1, 1, RF[1]); y -= 4;
+        const hw = Math.round(hw0 - t * hw0 * .8 / n);
+        for (let dy = -hw; dy <= hw; dy++) for (let dx = -hw; dx <= hw; dx++) {
+          const ax = Math.abs(dx), ay = Math.abs(dy), m = Math.max(ax, ay);
+          let c;
+          if (m >= hw - 1) c = (dx + dy) > 0 ? EV2 : EV;
+          else if (Math.abs(ax - ay) <= 0) c = RD;
+          else { const up = ay >= ax ? dy < 0 : dx < 0; c = RF[(m + t) % 4 < 1 ? 1 : 0][up ? 0 : 1]; }
+          setT(cx + dx, cy + dy, c);
+        }
       }
-      const sp = Math.round(9 * sc); rc(cx, y - sp, 1, sp, hex('#8a6a30')); for (let k = 0; k < 3; k++) rc(cx - 1, y - 3 - k * 2, 3, 1, GD); rc(cx - 1, y - sp - 2, 3, 2, GD);
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (dx * dx + dy * dy <= 5) setT(cx + dx, cy + dy, dx + dy < 0 ? hex('#fff0a8') : GD);
     };
     for (const [x, y, n, sc] of def.pagodas || []) pagoda(x, y, n, sc);
     flowers(240, ['#ffc2d6', '#ffffff', '#ff9fbf', '#ffe14d', '#b9a2ff'].map(hex));
@@ -638,6 +751,10 @@ function buildTrack(def, ti) {
       px(lx - 1, ly - 1, hex('#ffb3cf')); px(lx, ly - 1, hex('#ffffff')); px(lx - 1, ly, hex('#ff8fb8'));
     }
     for (const [kx, ky, krx, kry] of def.koi || []) for (let k = 0; k < 3; k++) critters.push({ type: 'koi', x: kx, y: ky, rx: krx, ry: kry, ph: r() * TAU + k * 2.1, col: (r() * 3) | 0 });
+  } else if (th.decor === 'bau') {
+    siteRing(yard, walls);
+    const site = paintSite({ def, d, set, setT, px, darken, band, path, tan, nrm, yard, walls, scatter, rock, sd, washMask });
+    lights = site.lights; mixer = site.mixer; hose = site.hose; tight = site.tight;
   } else if (th.decor === 'farm') {
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
@@ -662,13 +779,14 @@ function buildTrack(def, ti) {
   }
   // trees: shadow on the ground, canopy on the top layer
   const forced = wallTrees.slice(), want = th.trees + forced.length;
-  for (let tries = 0; (forced.length || trees.length < want) && tries < 6000; tries++) {
+  for (let tries = 0; (forced.length || trees.length < want) && tries < 12000; tries++) {
     const f = forced.shift();
-    const x = f ? f.x : 14 + (r() * (WW - 28) | 0), y = f ? f.y : 14 + (r() * (WH - 28) | 0), j = y * WW + x;
+    // a forest (treeEdge) also grows right up to the edge of the map, the trees are cut off there
+    const m = th.treeEdge ? 2 : 14, x = f ? f.x : m + (r() * (WW - 2 * m) | 0), y = f ? f.y : m + (r() * (WH - 2 * m) | 0), j = y * WW + x;
     if (!f) {
       if (ter[j] !== 0 || dist[j] < HALF + 18 || shore[j] || wallMask[j]) continue;
-      if (rail && Math.abs(x - rail.x) < 36) continue;
-      if (trees.some(o => Math.hypot(o.x - x, o.y - y) < 26) || walls.some(o => Math.hypot(o.x - x, o.y - y) < 17)) continue;
+      if (rail && rail.lines.some(L => Math.abs(x - L) < 36)) continue;
+      if (trees.some(o => Math.hypot(o.x - x, o.y - y) < (th.treeGap || 26)) || walls.some(o => Math.hypot(o.x - x, o.y - y) < 17)) continue;
       let wet = false; for (let dy = -14; dy <= 14 && !wet; dy += 7) for (let dx = -14; dx <= 14; dx += 7) { const xx = clamp(x + dx, 0, WW - 1), yy = clamp(y + dy, 0, WH - 1); if (ter[yy * WW + xx] === 3 || ter[yy * WW + xx] === 5) wet = true; }
       if (wet) continue;
     }
@@ -714,7 +832,7 @@ function buildTrack(def, ti) {
   mg.imageSmoothingEnabled = true; mg.drawImage(base, 0, 0, 120, 68); mg.drawImage(top, 0, 0, 120, 68);
   const wp = path[wi];
   return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: trees.concat(walls), critters, windmill, shoreY, boat: { x: 60 }, base, top, mini, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges };
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight };
 }
 
 

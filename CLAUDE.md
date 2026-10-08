@@ -2,7 +2,7 @@
 
 ## Git
 
-Nach jeder Änderung in diesem Repo immer committen und nach `origin/main` pushen.
+Nach jeder Änderung in diesem Repo immer committen und auf den aktuellen Branch pushen (`origin/<aktueller Branch>`; auf `main` nur, wenn man dort arbeitet).
 Nur wenn der Nutzer im Prompt ausdrücklich sagt, dass es ohne Commit/Push erfolgen soll, entfällt das.
 
 ## Projektstruktur

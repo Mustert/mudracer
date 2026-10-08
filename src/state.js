@@ -12,8 +12,9 @@ G.selAnim = -1;
 G.selMode = 0;
 G.selCount = 3;
 G.selCup = 0;
-// track events (cows, rain, flood, koi). Not switchable in the game yet: all on. Later this becomes an option per track.
-G.events = { kuehe: true, regen: true, flut: true, kois: true };
+// track events (cows, rain, flood, koi, dump trucks, train), one switch each; G.fx turns all of them on or off for a race (diff.js)
+G.events = { kuehe: true, regen: true, flut: true, kois: true, kipper: true, zug: true };
+G.fx = true;
 G.cup = null;
 G.mode = 'single';
 
@@ -50,7 +51,12 @@ G.selGhost = true;
 export const cam = { x: 0, y: 0 };
 
 
-export const MODES = [{ id: 'gp', name: 'GRAND PRIX', sub: 'CUPS' }, { id: 'single', name: 'EINZELSTRECKE', sub: 'FREIE WAHL' }, { id: 'tt', name: 'ZEITFAHREN', sub: 'BESTZEITEN' }, { id: 'run', name: 'MATSCHFAHRT', sub: 'GELAENDE' }];
+// short: the name on a narrow (not focused) card of the main menu
+export const MODES = [{ id: 'gp', name: 'GRAND PRIX', short: 'GRAND PRIX', sub: 'CUPS' }, { id: 'single', name: 'EINZELSTRECKE', short: 'EINZEL', sub: 'FREIE WAHL' }, { id: 'tt', name: 'ZEITFAHREN', short: 'ZEITFAHREN', sub: 'BESTZEITEN' },
+  { id: 'run', name: 'MATSCHFAHRT', short: 'MATSCH', sub: 'GELAENDE' }, { id: 'shop', name: 'WERKSTATT', short: 'WERKSTATT', sub: 'LACKIEREN' }];
+
+// main menu: 0 = the cards, 1 = the kids mode switch (top left)
+G.mainRow = 0;
 
 
 try { G.selGhost = localStorage.getItem('mudracer-ghost') !== '0'; } catch (e) {}

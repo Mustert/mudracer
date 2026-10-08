@@ -1,11 +1,12 @@
 import { G } from './g.js';
 import { SFX, ambience, engineSound } from './audio.js';
 import { HALF, VH, VW, WW, clamp, pick } from './core.js';
+import { DIFFS } from './diff.js';
 import { coarse, held, honkBtn, touchBox } from './input.js';
 import { honk, setState } from './menus.js';
 import { Music } from './music.js';
 import { CONF, RAINBOW, WATC, addP, drop, mudBurst, splash } from './particles.js';
-import { aiTarget, crossingAhead, physics, score, updateProgress } from './physics.js';
+import { aiTarget, physics, score, updateProgress } from './physics.js';
 import { eventCollisions, updateEvents } from './events.js';
 import { moveCamera } from './race.js';
 import { updateJumps } from './run.js';
@@ -58,12 +59,17 @@ function updateRace(dt) {
       } else {
         tgt = aiTarget(c);
         thr = c.finished ? .45 : c.skill;
+        // opponents far ahead lift off a little, ones far behind push harder; never above full throttle (on SCHWER less of both)
         if (c.ai && !c.finished && !G.player.finished) {
-          const diff = score(c) - score(G.player);
-          if (diff > G.T.N * .08) thr *= .7; else if (diff < -G.T.N * .1) thr = Math.min(c.skill * 1.25, thr * 1.15);
+          const D = DIFFS[G.raceDiff || 0], diff = score(c) - score(G.player);
+          if (diff > G.T.N * D.ahead) thr *= D.slow; else if (diff < -G.T.N * D.behind) thr = Math.min(1, c.skill * D.catchUp, thr * 1.15);
         }
-        // computer cars wait in front of the level crossing while the lights flash
-        if (G.T.rail && G.T.rail.signal) { const d = crossingAhead(c); if (d > 13 && d < 50) { thr = 0; c.brake = true; } }
+        // stuck (against a tree or the edge, e.g. after a cow threw it there): back up for a moment, turning towards the track
+        if (G.state === 'race' && !c.finished) {
+          if (c.rev > 0) { c.rev -= dt; thr = -1; }
+          else if (Math.hypot(c.vx, c.vy) < 12) { c.stuckT = (c.stuckT || 0) + dt; if (c.stuckT > 1.2) { c.rev = .9; c.stuckT = 0; } }
+          else c.stuckT = 0;
+        }
       }
     }
     physics(c, dt, thr, tgt);
@@ -102,14 +108,18 @@ function updateRace(dt) {
   for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0) continue;
     const j = clamp(c.y | 0, 0, G.T.H - 1) * G.T.W + clamp(c.x | 0, 0, G.T.W - 1);
-    const prev = c.surf; c.surf = G.T.ter[j]; c.washing = !!G.T.washMask[j];
+    const prev = c.surf, wasWashing = c.washing; c.surf = G.T.ter[j];
+    // car wash, water hose and the beach showers: you drive through them in a moment, so they wash hard (a big rinse when you enter, then fast)
+    c.washing = !!G.T.washMask[j] || (!!G.T.showers && G.T.showers.some(s => Math.abs(c.x - s.x) < 14 && Math.abs(c.y - s.y) < 13));
+    if (c.washing && !wasWashing) c.dirt = Math.max(0, c.dirt - .35);
     // deep water: a car that is over it for a moment falls in (stepping stones and bridges are road)
     c.wet = c.surf === 5 ? c.wet + dt : 0;
     if (c.wet > .22) { sinkCar(c); continue; }
     const sp = Math.hypot(c.vx, c.vy), v = c.ai ? .35 : 1;
-    if (c.surf === 2) {
+    if (c.surf === 2 || c.surf === 6) {
+      c.cem = c.surf === 6; // the colour of the dirt on the car is the last thing it drove through
       c.dirt = Math.min(1, c.dirt + .55 * dt * (sp > 8 ? 1 : .3)); c.mudTrail = 1.6;
-      if (prev !== 2 && sp > 25) { mudBurst(c, 14); SFX.mud(v); if (G.T.run && !c.ai) G.run.muds++; }
+      if (prev !== c.surf && sp > 25) { mudBurst(c, 14); SFX.mud(v); if (G.T.run && !c.ai) G.run.muds++; }
       if (sp > 20 && Math.random() < dt * 35) mudBurst(c, 1);
       if (!c.ai && sp > 8 && Math.random() < dt * 2.5) SFX.blubb();
     } else if (c.surf === 3) {
@@ -123,18 +133,19 @@ function updateRace(dt) {
     }
     if (c.boost > 0 && Math.random() < dt * 40) drop(c.x - Math.cos(c.ang) * 14, c.y - Math.sin(c.ang) * 14, c.ang + Math.PI + (Math.random() - .5) * .8, 20 + Math.random() * 30, 20 + Math.random() * 30, pick(RAINBOW), .8, false);
     if (c.washing) {
-      c.dirt = Math.max(0, c.dirt - .9 * dt);
+      c.dirt = Math.max(0, c.dirt - 3 * dt);
       if (Math.random() < dt * 30) addP({ t: 'bub', x: c.x + (Math.random() - .5) * 26, y: c.y + (Math.random() - .5) * 18, vx: (Math.random() - .5) * 12, vy: -12 - Math.random() * 14, life: 1, ml: 1 });
     }
     if (c.dirt > .8 && sp > 15 && Math.random() < dt * 3) mudBurst(c, 1);
     if (c.surf === 1 && !th.space && sp > 80 && Math.random() < dt * 10) addP({ t: 'dust', x: c.x - Math.cos(c.ang) * 14, y: c.y - Math.sin(c.ang) * 14, vx: (Math.random() - .5) * 10, vy: (Math.random() - .5) * 10, life: .55, ml: .55 });
-    c.bump = (c.surf === 0 || c.surf === 2) && sp > 25 && ((G.time * 14 + c.seed) | 0) % 2 ? 1 : 0;
+    c.bump = (c.surf === 0 || c.surf === 2 || c.surf === 6) && sp > 25 && ((G.time * 14 + c.seed) | 0) % 2 ? 1 : 0;
     if (sp > 6) {
       const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
       for (const side of [-8, 8]) {
         const wx = c.x - fx * 11 - fy * side, wy = c.y - fy * 11 + fx * side;
         let col = null, a = 0;
         if (c.surf === 2) { col = th.mudTrail[0]; a = .5; }
+        else if (c.surf === 6) { col = '#7d8188'; a = .55; }
         else if (c.surf === 3 || c.surf === 5) col = null;
         else if (c.mudTrail > 0) { col = th.mudTrail[1]; a = .45 * c.mudTrail / 1.6; }
         else if (c.wetTrail > 0 && c.surf === 1) { col = '#7a5a3a'; a = .3 * c.wetTrail; }
@@ -209,6 +220,12 @@ export function update(dt) {
     if (w) for (let k = 0; k < 3; k++) {
       const ac = (Math.random() - .5) * 2 * HALF, al = (Math.random() - .5) * 6;
       addP({ t: 'd', x: w.x + w.nm.x * ac + w.tg.x * al, y: w.y + w.nm.y * ac + w.tg.y * al, z: 12, vx: 0, vy: 0, vz: -15, col: pick(WATC), s: 1, life: 1, ml: 1 });
+    }
+    // the hose on the building site: an arc of water drops from the nozzle onto the spray spot
+    const h = G.T.hose;
+    if (h) for (let k = 0; k < 3; k++) {
+      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * h.r, tx = h.x + Math.cos(a) * r, ty = h.y + Math.sin(a) * r, ft = .32;
+      addP({ t: 'd', x: h.nx, y: h.ny, z: 9, vx: (tx - h.nx) / ft, vy: (ty - h.ny) / ft, vz: 300 * ft / 2 - 9 / ft, col: pick(WATC), s: 1, life: 1, ml: 1 });
     }
     if (G.T.shoreY) {
       G.T.boat.x += 9 * dt; if (G.T.boat.x > WW + 30) G.T.boat.x = -30;

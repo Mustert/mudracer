@@ -46,7 +46,7 @@ export function rotIndex(a) { return (((Math.round(a / TAU * ROTS) % ROTS) + ROT
 function drawCar(c) {
   if (c.fall > 0) return; // under water
   if (c.ghost > 0 && ((G.time * 12) | 0) % 2) return; // blinks after coming back out of the water
-  const F = c.F, rot = rotIndex(c.ang), lv = Math.min(5, Math.round(c.dirt * 5));
+  const F = c.cem && c.Fc ? c.Fc : c.F, rot = rotIndex(c.ang), lv = Math.min(5, Math.round(c.dirt * 5));
   const x = Math.round(c.x) - SS / 2, y = Math.round(c.y) - SS / 2 - c.bump;
   if (c.z > 0) { // in the air: bigger car, shadow left on the ground
     const S = Math.round(SS * (1 + c.z / 90)), lift = Math.round(c.z * .6);
@@ -127,6 +127,7 @@ function drawCritters() {
     } else if (c.type === 'koi') {
       // koi swim slow circles under the surface
       const a = G.time * .32 + c.ph, x = c.x + Math.cos(a) * c.rx, y = c.y + Math.sin(a) * c.ry, h = Math.atan2(Math.cos(a) * c.ry, -Math.sin(a) * c.rx), wag = Math.sin(G.time * 6 + c.ph * 4) * .4;
+      if (G.T.ter[(Math.round(y)) * G.T.W + Math.round(x)] !== 5) continue; // only in open water, not over stones or bridges
       const B = [['#ff7a1a', '#fff7e8'], ['#fff7e8', '#ff7a1a'], ['#2b2b30', '#ff7a1a']][c.col];
       ctx.save(); ctx.globalAlpha = .85; ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(h);
       R1(-5, -2, 9, 4, B[0]); R1(0, -2, 3, 4, B[1]); R1(3, -1, 2, 2, B[0]);
@@ -240,7 +241,7 @@ function drawCrossings(R) {
     const p = G.T.path[cr.i], tg = G.T.tan[cr.i], nm = G.T.nrm[cr.i];
     for (const s of [-1, 1]) {
       const bx = p.x + tg.x * s * 30 + nm.x * s * (HALF + 7), by = p.y + tg.y * s * 30 + nm.y * s * (HALF + 7);
-      const len = 5 + (2 * HALF + 4) * R.gate;
+      const act = cr.x === R.x, sig = R.signal && act, len = 5 + (2 * HALF + 4) * (act ? R.gate : 0);
       for (const pass of [0, 1]) for (let k = 0; k < len; k++) {
         const x = Math.round(bx - nm.x * s * k), y = Math.round(by - nm.y * s * k);
         ctx.fillStyle = pass ? ((k >> 2) & 1 ? '#ffffff' : '#e53935') : '#1b120c';
@@ -249,10 +250,16 @@ function drawCrossings(R) {
       const px = Math.round(bx), py = Math.round(by);
       ctx.fillStyle = '#1b120c'; ctx.fillRect(px - 4, py - 4, 9, 9);
       ctx.fillStyle = '#555555'; ctx.fillRect(px - 3, py - 3, 7, 7);
-      ctx.fillStyle = R.signal && blink ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px - 3, py - 3, 3, 3);
-      ctx.fillStyle = R.signal && !blink ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px + 1, py + 1, 3, 3);
-      if (R.signal) { ctx.globalAlpha = .35; disc(px + (blink ? -2 : 2), py + (blink ? -2 : 2), 5, '#ff4040'); ctx.globalAlpha = 1; }
+      ctx.fillStyle = sig && blink ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px - 3, py - 3, 3, 3);
+      ctx.fillStyle = sig && !blink ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px + 1, py + 1, 3, 3);
+      if (sig) { ctx.globalAlpha = .35; disc(px + (blink ? -2 : 2), py + (blink ? -2 : 2), 5, '#ff4040'); ctx.globalAlpha = 1; }
     }
+  }  // the switch stand (Weiche) between the two lines: the lever points to the line the next train will take, the lamp over it is green
+  if (R.lines.length > 1) {
+    const sx = Math.round((R.lines[0] + R.lines[1]) / 2), sy = 36, a = Math.round(R.sw * 14);
+    ctx.fillStyle = '#1b120c'; ctx.fillRect(sx - 14, sy - 7, 29, 15); ctx.fillStyle = '#6b6f78'; ctx.fillRect(sx - 13, sy - 6, 27, 13); ctx.fillStyle = '#8d939d'; ctx.fillRect(sx - 13, sy - 6, 27, 2);
+    ctx.fillStyle = '#1b120c'; ctx.fillRect(Math.min(sx, sx + a) - 1, sy - 1, Math.abs(a) + 3, 5); ctx.fillStyle = '#ffd23f'; ctx.fillRect(Math.min(sx, sx + a), sy, Math.abs(a) + 1, 3);
+    ctx.fillStyle = R.sw < 0 ? '#5fe36a' : '#7a1c1c'; ctx.fillRect(sx - 11, sy - 4, 4, 4); ctx.fillStyle = R.sw > 0 ? '#5fe36a' : '#7a1c1c'; ctx.fillRect(sx + 8, sy - 4, 4, 4);
   }
 }
 
@@ -271,7 +278,7 @@ const MEDAL = ['#ffd23f', '#d9dde3', '#d98a4a', '#6fb3ff'], MEDAL_L = ['#fff08a'
 // the ghost of the best run (only when switched on); it waits on the grid during the countdown and parks at the line once it is done
 
 function ghostPose() {
-  if (!G.tt || !G.selGhost || !G.tt.rec0) return null;
+  if (!G.tt || !G.selGhost || G.kids || !G.tt.rec0) return null; // no ghosts in the kids mode
   const g = G.tt.rec0.g, len = (g.length / 4 - 1) * GHOST_DT, t = G.state === 'countdown' ? 0 : G.tt.t;
   return t > len + 2 ? null : ghostAt(g, t);
 }
@@ -285,6 +292,7 @@ export function drawRace() {
   ctx.save(); ctx.translate(-cx, -cy);
   const wp = G.T.watPix, k = Math.floor(G.time * 3);
   if (wp.length) for (let j = 0; j < 40; j++) { const p = wp[(hash(j, k, 77) * wp.length) | 0]; ctx.fillStyle = j % 2 ? '#e8f7ff' : '#9fd6ff'; ctx.fillRect(p % G.T.W, (p / G.T.W) | 0, 1, 1); }
+  const cp = G.T.cemPix; if (cp && cp.length) for (let j = 0; j < 6; j++) { const p = cp[(hash(j, k, 78) * cp.length) | 0]; ctx.fillStyle = '#d4d8dc'; ctx.fillRect(p % G.T.W, (p / G.T.W) | 0, 1, 1); }
   if (G.T.shoreY) drawBeach(cx);
   drawCritters();
   drawEventsGround();
@@ -343,22 +351,7 @@ export function drawRace() {
     text('PLATZ', px, 4, 8, '#fff3dc');
     disc(px + 52, 7, 6, '#1b120c'); disc(px + 52, 7, 5, medal(pl));
     text(String(pl), px + 53, 4, 8, '#1b120c', 'center', null);
-    if (G.mode === 'gp') text(G.gp.cup.name + ' CUP ' + (G.gp.race + 1) + '/' + G.gp.tracks.length, VW - 6, 4, 8, '#ffd23f', 'right');
-  }
-  // mini map
-  const mx = VW - 126, my = 20;
-  ctx.fillStyle = '#1b120c'; ctx.fillRect(mx - 2, my - 2, 124, 72);
-  ctx.globalAlpha = .9; ctx.drawImage(G.T.mini, mx, my); ctx.globalAlpha = 1;
-  ctx.strokeStyle = 'rgba(255,243,220,.7)'; ctx.lineWidth = 1; ctx.strokeRect(mx + Math.round(cx * .15) + .5, my + Math.round(cy * .15) + .5, Math.round(VW * .15), Math.round(VH * .15));
-  if (R) {
-    if (R.train.phase === 'run') { const ty0 = clamp(R.train.y * .15, 0, 68), ty1 = clamp((R.train.y + TRAIN.LEN) * .15, 0, 68); ctx.fillStyle = '#c0392b'; ctx.fillRect(mx + Math.round(R.x * .15) - 2, my + ty0, 4, ty1 - ty0); }
-    if (R.signal && ((G.time * 3) | 0) % 2) for (const cr of R.cross) { ctx.fillStyle = '#ff2d2d'; ctx.fillRect(mx + Math.round(cr.x * .15) - 2, my + Math.round(cr.y * .15) - 2, 5, 5); }
-  }
-  if (gh) { ctx.fillStyle = 'rgba(159,214,255,.9)'; ctx.fillRect(mx + Math.round(gh.x * .15) - 1, my + Math.round(gh.y * .15) - 1, 3, 3); }
-  for (const c of G.cars) {
-    const dx = mx + Math.round(c.x * .15), dy = my + Math.round(c.y * .15);
-    if (c === G.player) { ctx.fillStyle = ((G.time * 4) | 0) % 2 ? '#ffffff' : '#1b120c'; ctx.fillRect(dx - 3, dy - 3, 6, 6); }
-    ctx.fillStyle = '#1b120c'; ctx.fillRect(dx - 2, dy - 2, 4, 4); ctx.fillStyle = c.def.M; ctx.fillRect(dx - 1, dy - 1, 2, 2);
+    if (G.mode === 'gp') text((G.gp.cup.label || G.gp.cup.name + ' CUP') + ' ' + (G.gp.race + 1) + '/' + G.gp.tracks.length, VW - 6, 4, 8, '#ffd23f', 'right');
   }
   }
   // train warning: big stop sign while the lights flash and a crossing is ahead

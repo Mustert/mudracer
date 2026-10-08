@@ -1,5 +1,6 @@
 import { G } from './g.js';
 import { ROTS, TAU, clamp } from './core.js';
+import { fxActive } from './diff.js';
 import { rotIndex } from './draw.js';
 
 // ---------- Zeitfahren: lap times, best time per track and car, ghost of the best run ----------
@@ -8,7 +9,8 @@ export const GHOST_DT = .05;
 
 
 // tracks with events or other layout changes carry a revision: their records start fresh (the old ones stay in storage untouched)
-const ttKey = (t, def) => 'mudracer-tt-' + t.name + '-' + def.id + (t.def && t.def.rev ? '-r' + t.def.rev : '');
+// Without track effects a lap is a different race (no flood, no train), so those runs keep their own records and ghosts ('-fx0').
+const ttKey = (t, def) => 'mudracer-tt-' + t.name + '-' + def.id + (t.def && t.def.rev ? '-r' + t.def.rev : '') + (t.def && t.def.events && t.def.events.length && !fxActive() ? '-fx0' : '');
 
 // Records saved before the balance rework carry no version (v). Their times came from the old driving values, so on load they
 // are converted with the measured old-to-new lap time ratio per track and car (order of CAR_DEFS), ghost included. The stored

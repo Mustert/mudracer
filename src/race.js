@@ -1,7 +1,8 @@
 import { G } from './g.js';
 import { AU, SFX } from './audio.js';
 import { CAR_DEFS, GENERICS, carSet, isLocked } from './cars.js';
-import { cupReward, cupTrackIdx, markCupWon, saveBestPlace } from './cups.js';
+import { cupReward, cupTrackIdx, hasTrophy, markCupWon, saveBestPlace } from './cups.js';
+import { aiSkill, curDiff, fxActive } from './diff.js';
 import { setupEvents } from './events.js';
 import { VH, VW, clamp, rng } from './core.js';
 import { POINTS, setState } from './menus.js';
@@ -10,12 +11,13 @@ import { cam } from './state.js';
 import { loadRecord, saveRecord, ttLap, ttSample } from './timetrial.js';
 import { TRACKS, tctx, trail } from './tracks.js';
 
-// the Grand Prix field: your car, every other unlocked car, then plain cars up to eight
+// the Grand Prix field: your car, every other unlocked car, then plain cars up to eight (the custom cup: as many as chosen)
+// the difficulty is fixed for the whole cup when it starts
 
 export function startGP() {
-  const me = CAR_DEFS[G.selCar];
-  const field = [me, ...CAR_DEFS.filter(d => d !== me && !isLocked(d)).sort(() => Math.random() - .5), ...GENERICS].slice(0, 8);
-  G.gp = { cup: G.cup, tracks: cupTrackIdx(G.cup), race: 0, entries: field.map((def, i) => ({ def, pts: 0, last: 0, me: i === 0, skill: i ? .52 + (i - 1) / 6 * .14 : 1 })) };
+  const me = CAR_DEFS[G.selCar], n = G.cup.custom ? G.custom.count + 1 : 8;
+  const field = [me, ...CAR_DEFS.filter(d => d !== me && !isLocked(d)).sort(() => Math.random() - .5), ...GENERICS].slice(0, n);
+  G.gp = { cup: G.cup, diff: curDiff(), tracks: cupTrackIdx(G.cup), race: 0, entries: field.map((def, i) => ({ def, pts: 0, last: 0, me: i === 0, skill: i ? aiSkill(i, field.length - 1) : 1 })) };
   startRace();
 }
 
@@ -33,7 +35,7 @@ export function resetWorld() {
 
 
 export function makeCar(def, x, y, ang, ai, skill, entry) {
-  return { def, entry, F: carSet(def, G.T.th.goo), x, y, ang, vx: 0, vy: 0, dirt: 0, lap: 0, cp: 0, idx: 0, off: 0, ai, skill, seed: Math.random() * 100,
+  return { def, entry, F: carSet(def, G.T.th.goo), Fc: G.T.def.cement ? carSet(def, false, true) : null, cem: false, x, y, ang, vx: 0, vy: 0, dirt: 0, lap: 0, cp: 0, idx: 0, off: 0, ai, skill, seed: Math.random() * 100,
     surf: 1, mudTrail: 0, wetTrail: 0, finished: false, place: 0, honk: 0, bump: 0, washing: false, boost: 0, stun: 0, spin: 0, brake: false, z: 0, vz: 0, wet: 0, fall: 0, ghost: 0, safe: 0 };
 }
 
@@ -42,7 +44,9 @@ export function startRace() {
   let entries;
   if (G.mode === 'gp') { G.T = TRACKS[G.gp.tracks[G.gp.race]]; entries = G.gp.entries; }
   else if (G.mode === 'tt') { G.T = TRACKS[G.selTrack]; entries = [{ def: CAR_DEFS[G.selCar], me: true, skill: 1 }]; }
-  else { G.T = TRACKS[G.selTrack]; entries = singleField().map((def, i, all) => ({ def, me: i === 0, skill: i ? .52 + (all.length > 2 ? (i - 1) / (all.length - 2) : 0) * .14 : 1 })); }
+  else { G.T = TRACKS[G.selTrack]; entries = singleField().map((def, i, all) => ({ def, me: i === 0, skill: i ? aiSkill(i, all.length - 1) : 1 })); }
+  G.raceDiff = G.mode === 'gp' ? G.gp.diff : curDiff();
+  G.fx = G.mode === 'gp' ? G.gp.diff > 0 && !G.kids : fxActive();
   resetWorld();
   setupEvents(G.T);
   // two cars per row behind the start line; you start in the front row
@@ -53,7 +57,7 @@ export function startRace() {
     c.idx = i; return c;
   });
   G.player = G.cars[0];
-  if (G.T.rail) Object.assign(G.T.rail, { gate: 0, signal: false, train: { phase: 'wait', t: 6, dir: 1, y: -9999 } });
+  if (G.T.rail) Object.assign(G.T.rail, { x: G.T.rail.lines[0], sw: -1, gate: 0, signal: false, train: { phase: 'wait', t: 6, dir: 1, y: -9999 } });
   // time trial: the train keeps a fixed timetable so every run (and the ghost) meets it at the same moment
   G.ttRand = G.mode === 'tt' ? rng(2024) : null;
   G.tt = G.mode === 'tt' ? { t: 0, lapStart: 0, laps: [], rec: [], recT: 0, rec0: loadRecord(G.T, G.player.def), delta: null, deltaT: 0, done: false, newBest: false } : null;
@@ -81,12 +85,16 @@ export function standings() { return [...G.gp.entries].sort((a, b) => b.pts - a.
 
 
 export function beginCeremony() {
-  const sorted = standings(), won = sorted[0].me;
-  let newCar = null;
+  const sorted = standings(), won = sorted[0].me, cup = G.gp.cup, d = G.gp.diff;
+  let newCar = null, trophy = -1;
   const mine = sorted.find(e => e.me);
-  saveBestPlace(G.gp.cup, mine.def, sorted.indexOf(mine) + 1);
-  if (won && markCupWon(G.gp.cup)) newCar = cupReward(G.gp.cup) || null;
-  G.ceremony = { sorted, won, newCar };
+  // the custom cup has no trophies and unlocks nothing; the kids mode wins trophies (LEICHT) but does not unlock cars for the normal game
+  if (!cup.custom) {
+    if (won && !hasTrophy(cup, mine.def, d)) trophy = d;
+    saveBestPlace(cup, mine.def, sorted.indexOf(mine) + 1, d);
+    if (won && !G.kids && markCupWon(cup)) newCar = cupReward(cup) || null;
+  }
+  G.ceremony = { sorted, won, newCar, trophy, diff: d };
   G.parts = [];
   setState('ceremony');
   SFX.fanfare();

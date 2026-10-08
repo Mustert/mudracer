@@ -2,13 +2,18 @@ import { G } from './g.js';
 import { AU, HONK_LEN, SFX } from './audio.js';
 import { CAR_DEFS, isLocked } from './cars.js';
 import { carSlotAt } from './carselect.js';
-import { CUPS, cupReady } from './cups.js';
-import { cupRowAt } from './cupselect.js';
+import { CUPS, cupLocked, cupReady } from './cups.js';
+import { DIFF_BOX, cupRowAt } from './cupselect.js';
+import { customClick, customKey, openCustom } from './custom.js';
+import { setDiff, setFx, toggleKids } from './diff.js';
 import { resetAllEvents } from './events.js';
 import { VW, clamp } from './core.js';
 import { is } from './input.js';
 import { beginCeremony, startGP, startRace } from './race.js';
+import { openRaceOpts, raceOptsClick, raceOptsKey } from './raceopts.js';
 import { startRun } from './run.js';
+import { KIDS_BTN, mainCardAt } from './screens.js';
+import { openShop, shopClick, shopKey } from './shop.js';
 import { MODES } from './state.js';
 import { TRACKS } from './tracks.js';
 
@@ -23,14 +28,14 @@ if (isLocked(CAR_DEFS[G.selCar])) G.selCar = 0;
 
 
 // in the menus every track looks as it was built (events change the map during a race)
-const CLEAN = ['title', 'main', 'select_cup', 'select_car', 'select_track', 'select_count'];
+const CLEAN = ['title', 'main', 'select_cup', 'select_car', 'select_track', 'select_count', 'custom', 'shop'];
 
 
 export function setState(s) { G.state = s; G.stateTime = 0; if (CLEAN.includes(s)) resetAllEvents(); }
 
 
 // a car in the selection strip gets focus (arrow keys and taps alike): locked ones are silent and are not remembered
-function pickCar(i) {
+export function pickCar(i) {
   G.selCar = i; G.selAnim = G.time;
   if (isLocked(CAR_DEFS[i])) SFX.click(); else { SFX.honk[CAR_DEFS[i].honk](); try { localStorage.setItem('mudracer-car', i); } catch (e) {} }
 }
@@ -52,7 +57,7 @@ const toggleMusic = () => { AU.music = !AU.music; try { localStorage.setItem('mu
 const toggleCtrl = () => { G.CTRL = G.CTRL === 'std' ? 'alt' : 'std'; try { localStorage.setItem('mudracer-ctrl', G.CTRL); } catch (e) {} };
 
 
-export const gearVisible = () => G.state === 'main' || G.state === 'select_cup' || G.state === 'select_car' || G.state === 'select_track' || G.state === 'select_count';
+export const gearVisible = () => ['main', 'select_cup', 'select_car', 'select_track', 'select_count', 'custom', 'shop'].includes(G.state);
 
 
 export const menuBtnVisible = () => G.state !== 'title' && G.state !== 'main' && G.state !== 'options' && G.state !== 'pause';
@@ -101,30 +106,46 @@ export function onPress(k) {
   const lr = is(k, 'left') || is(k, 'right'), ok = is(k, 'ok'), back = is(k, 'back');
   if (G.state === 'options') { optionsKey(k); return; }
   if (G.state === 'pause') { pauseKey(k); return; }
+  if (G.state === 'custom') { customKey(k); return; }
+  if (G.state === 'shop') { shopKey(k); return; }
   if (G.state === 'main') {
-    if (lr) { G.selMode = step(G.selMode, k, MODES.length); G.selAnim = G.time; SFX.click(); }
-    else if (ok) { G.mode = MODES[G.selMode].id; G.tt = null; SFX.select(); setState(G.mode === 'gp' ? 'select_cup' : G.mode === 'run' ? 'select_car' : 'select_track'); }
+    if (k === 'k' || k === 'K') { toggleKids(); SFX.click(); return; }
+    if (G.mainRow === 1) {
+      if (is(k, 'down') || back) { G.mainRow = 0; SFX.click(); }
+      else if (lr || ok) { toggleKids(); SFX.select(); }
+      return;
+    }
+    if (is(k, 'up')) { G.mainRow = 1; SFX.click(); }
+    else if (lr) { G.selMode = step(G.selMode, k, MODES.length); G.selAnim = G.time; SFX.click(); }
+    else if (ok) {
+      const id = MODES[G.selMode].id; SFX.select();
+      if (id === 'shop') { openShop(); return; }
+      G.mode = id; G.tt = null; setState(G.mode === 'gp' ? 'select_cup' : G.mode === 'run' ? 'select_car' : 'select_track');
+    }
   } else if (G.state === 'select_cup') {
-    const ud = is(k, 'up') || is(k, 'left') ? -1 : is(k, 'down') || is(k, 'right') ? 1 : 0;
+    const ud = is(k, 'up') ? -1 : is(k, 'down') ? 1 : 0;
     if (ud) { G.selCup = (G.selCup + ud + CUPS.length) % CUPS.length; G.selAnim = G.time; SFX.click(); }
-    else if (ok) { if (cupReady(CUPS[G.selCup])) { G.cup = CUPS[G.selCup]; SFX.select(); setState('select_car'); } else SFX.bump(); }
+    else if (lr) { if (G.kids) SFX.bump(); else { setDiff(G.diff + (is(k, 'left') ? -1 : 1)); setFx(G.diff > 0); SFX.click(); } }
+    else if (ok) {
+      const cup = CUPS[G.selCup];
+      if (cupLocked(cup) || !cupReady(cup)) SFX.bump();
+      else if (cup.custom) { SFX.select(); openCustom(); }
+      else { G.cup = cup; SFX.select(); setState('select_car'); }
+    }
     else if (back) setState('main');
   } else if (G.state === 'select_car') {
     if (lr) pickCar(step(G.selCar, k, CAR_DEFS.length));
     else if (ok) {
       if (isLocked(CAR_DEFS[G.selCar])) { SFX.bump(); return; }
       SFX.select();
-      if (G.mode === 'gp') startGP(); else if (G.mode === 'run') startRun(); else setState('select_count');
-    } else if (back) setState(G.mode === 'gp' ? 'select_cup' : G.mode === 'run' ? 'main' : 'select_track');
+      if (G.mode === 'gp') startGP(); else if (G.mode === 'run') startRun(); else openRaceOpts();
+    } else if (back) setState(G.mode === 'gp' ? (G.cup && G.cup.custom ? 'custom' : 'select_cup') : G.mode === 'run' ? 'main' : 'select_track');
   } else if (G.state === 'select_track') {
     if (lr) { G.selTrack = step(G.selTrack, k, TRACKS.length); G.selAnim = G.time; SFX.click(); }
     else if (ok) { SFX.select(); setState('select_car'); }
     else if (back) setState('main');
   } else if (G.state === 'select_count') {
-    if (lr && G.mode === 'tt') { G.selGhost = !G.selGhost; G.selAnim = G.time; SFX.click(); try { localStorage.setItem('mudracer-ghost', G.selGhost ? '1' : '0'); } catch (e) {} }
-    else if (lr) { G.selCount = clamp(G.selCount + (is(k, 'left') ? -1 : 1), 1, 7); G.selAnim = G.time; SFX.click(); }
-    else if (ok) startRace();
-    else if (back) setState('select_car');
+    raceOptsKey(k);
   } else if (G.state === 'countdown' || G.state === 'race') {
     if (k === ' ') honk(G.player);
     else if (k === 'Escape' || k === 'p' || k === 'P') openPause();
@@ -175,7 +196,20 @@ export function onClick(x, y) {
   if (G.state === 'pause') { pauseClick(x, y); return; }
   if (menuBtnVisible() && x < 30 && y < 24) { menuBtnAct(); return; }
   if (gearVisible() && x > VW - 34 && y < 30) { openOptions(); return; }
+  if (G.state === 'main') {
+    const b = KIDS_BTN;
+    if (x >= b.x - 2 && x < b.x + b.w + 2 && y >= b.y - 2 && y < b.y + b.h + 4) { G.mainRow = 1; onPress('Enter'); return; }
+    const i = mainCardAt(x, y);
+    G.mainRow = 0;
+    if (i >= 0) { if (i === G.selMode) onPress('Enter'); else { G.selMode = i; G.selAnim = G.time; SFX.click(); } }
+    return;
+  }
+  if (G.state === 'custom') { customClick(x, y); return; }
+  if (G.state === 'shop') { shopClick(x, y); return; }
+  if (G.state === 'select_count' && raceOptsClick(x, y)) return;
   if (G.state === 'select_cup') {
+    const d = DIFF_BOX;
+    if (y < d.y + d.h + 4 && x > d.x - 20 && x < d.x + d.w + 20) { onPress(x < d.x + d.w / 2 ? 'ArrowLeft' : 'ArrowRight'); return; }
     const i = cupRowAt(y);
     if (i >= 0) { if (i === G.selCup) onPress('Enter'); else { G.selCup = i; G.selAnim = G.time; SFX.click(); } }
     return;
