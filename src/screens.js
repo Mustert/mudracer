@@ -44,7 +44,7 @@ export function drawMain() {
     ctx.fillStyle = sel ? '#ffd23f' : '#3a2a1c'; ctx.fillRect(x - 3, y - 3, cw + 6, chh + 6);
     ctx.fillStyle = '#1b120c'; ctx.fillRect(x - 1, y - 1, cw + 2, chh + 2);
     ctx.fillStyle = '#5a3a1f'; ctx.fillRect(x, y, cw, chh);
-    const t = TRACKS[[0, 2, 4, 1][i]], ih = 92;
+    const t = TRACKS[[0, 2, 3, 1][i]], ih = 92;
     ctx.drawImage(t.base, 120, 60, 460, 330, x, y, cw, ih);
     const cx = x + cw / 2, cy = y + ih / 2;
     if (i === 0) { drawTrophy(cx, cy + 6, 1.6); }

@@ -195,6 +195,7 @@ export const isLocked = def => !!def.cup && !G.cupsWon.includes(def.cup);
 const DIRT = ['#6b4a2b', '#58391f', '#7d5a36'].map(hex);
 
 
+const CEM = ['#8c9097', '#a4a9af', '#6f747a'].map(hex);
 const GOO = ['#c04dd8', '#a33bbf', '#e38cf5'].map(hex);
 
 
@@ -251,4 +252,5 @@ function buildCar(def, k, pal) {
 // the rainbow track paints cars with purple glitter goo instead of mud; built the first time it is needed
 // sprites (48 turns x 6 dirt levels) are built the first time a car is shown
 
-export function carSet(def, goo) { const key = goo ? '_goo' : '_mud'; return def[key] || (def[key] = buildCar(def, def.k, goo ? GOO : DIRT)); }
+// cem: the grey set for cars that drove through cement
+export function carSet(def, goo, cem) { const key = cem ? '_cem' : goo ? '_goo' : '_mud'; return def[key] || (def[key] = buildCar(def, def.k, cem ? CEM : goo ? GOO : DIRT)); }

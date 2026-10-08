@@ -46,7 +46,7 @@ export function rotIndex(a) { return (((Math.round(a / TAU * ROTS) % ROTS) + ROT
 function drawCar(c) {
   if (c.fall > 0) return; // under water
   if (c.ghost > 0 && ((G.time * 12) | 0) % 2) return; // blinks after coming back out of the water
-  const F = c.F, rot = rotIndex(c.ang), lv = Math.min(5, Math.round(c.dirt * 5));
+  const F = c.cem && c.Fc ? c.Fc : c.F, rot = rotIndex(c.ang), lv = Math.min(5, Math.round(c.dirt * 5));
   const x = Math.round(c.x) - SS / 2, y = Math.round(c.y) - SS / 2 - c.bump;
   if (c.z > 0) { // in the air: bigger car, shadow left on the ground
     const S = Math.round(SS * (1 + c.z / 90)), lift = Math.round(c.z * .6);

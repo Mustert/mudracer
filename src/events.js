@@ -338,14 +338,14 @@ function drawKoi(f) {
 
 // A truck backs up to the road edge from outside (beeping), tips its load next to the road and drives away. The tipping raises a cloud of earth
 // that drifts onto the road and makes cars dirty. Everything depends only on the race time, so a time trial repeats it.
-const DT = { len: 38, arrive: 2.8, wait: 3.4, up: 4.4, down: 6.6, down2: 7.6, leave: 10.2, cloud0: 4.7, cloud: 6.5 };
+const DT = { len: 46, arrive: 2.8, wait: 3.4, up: 4.4, down: 6.6, down2: 7.6, leave: 10.2, cloud0: 4.7, cloud: 6.5 };
 const SOIL = ['#4a321d', '#5a3a1f', '#6a4b2e', '#8a6440'];
 const ease = x => x * x * (3 - 2 * x);
 
 function initKipper(T) {
   T.ev.kipper = (T.def.kipper || []).map(([x, y, side, per, t0], k) => {
     let bi = 0, bd = 1e12; for (let i = 0; i < T.N; i++) { const dd = (T.path[i].x - x) ** 2 + (T.path[i].y - y) ** 2; if (dd < bd) { bd = dd; bi = i; } }
-    const p = T.path[bi], n = T.nrm[bi], tg = T.tan[bi], ox = n.x * side, oy = n.y * side, cx = p.x + ox * (HALF + 4 + DT.len / 2), cy = p.y + oy * (HALF + 4 + DT.len / 2);
+    const p = T.path[bi], n = T.nrm[bi], tg = T.tan[bi], ox = n.x * side, oy = n.y * side, cx = p.x + ox * (HALF + 3 + DT.len / 2), cy = p.y + oy * (HALF + 3 + DT.len / 2);
     // the truck starts outside of the world, so it drives in from the edge
     let far = 40; while (far < 170) { const qx = cx + ox * far, qy = cy + oy * far; if (qx < -26 || qy < -26 || qx > WW + 26 || qy > WH + 26) break; far += 6; }
     let ang = Math.atan2(oy, ox); const q = Math.round(ang / (Math.PI / 2)) * Math.PI / 2; if (Math.abs(ang - q) < .25) ang = q;
@@ -357,10 +357,10 @@ const near = (x, y) => Math.hypot(x - cam.x - VW / 2, y - cam.y - VH / 2);
 const vol = (x, y) => clamp(1 - near(x, y) / 460, 0, 1);
 
 function paintPile(T, s, stage) {
-  const horiz = Math.abs(s.tg.x) > Math.abs(s.tg.y), cx = s.p.x + s.ox * (HALF + 9), cy = s.p.y + s.oy * (HALF + 9);
-  const along = [9, 12, 15][stage - 1] + s.piles % 2 * 2, across = [5, 7, 9][stage - 1];
+  const horiz = Math.abs(s.tg.x) > Math.abs(s.tg.y), cx = s.p.x + s.ox * (HALF + 11), cy = s.p.y + s.oy * (HALF + 11);
+  const along = [13, 17, 21][stage - 1] + s.piles % 2 * 2, across = [7, 10, 12][stage - 1];
   const rx = horiz ? along : across, ry = horiz ? across : along, S4 = SOIL.map(hex);
-  snap(T, cx - 22, cy - 22, 44, 44);
+  snap(T, cx - 28, cy - 28, 56, 56);
   blob(T, cx, cy, rx, ry, 61 + s.k * 7 + s.piles, (rel, x, y) => {
     const lit = ((x - cx) + (y - cy)) / (rx + ry), n = hash(x, y, 71);
     return rel > .84 ? S4[0] : n < .1 ? S4[0] : lit < -.12 ? (n > .85 ? S4[3] : S4[2]) : lit > .22 ? S4[1] : S4[2];
@@ -392,7 +392,7 @@ function updateKipper(T, dt) {
     // the cloud of earth: it grows, drifts across the road edge towards the middle and thins out
     const cu = u - DT.cloud0;
     if (cu >= 0 && cu < DT.cloud) {
-      const r = 11 + 20 * Math.min(1, cu / 2.2), a = clamp(cu / .7, 0, 1) * (1 - clamp((cu - 4.2) / 2.3, 0, 1));
+      const r = 16 + 30 * Math.min(1, cu / 2.2), a = clamp(cu / .7, 0, 1) * (1 - clamp((cu - 4.2) / 2.3, 0, 1));
       s.cloud = { x: s.p.x + s.ox * (HALF + 2 - cu * 4.2) + s.tg.x * cu * 2, y: s.p.y + s.oy * (HALF + 2 - cu * 4.2) + s.tg.y * cu * 2, r, a };
       for (const c of G.cars) {
         if (c.fall > 0 || c.z > 0 || Math.hypot(c.x - s.cloud.x, c.y - s.cloud.y) > r * .95) continue;
@@ -409,8 +409,8 @@ function truckCollisions() {
     const tx = s.cx + s.ox * s.dist, ty = s.cy + s.oy * s.dist;
     for (const c of G.cars) {
       if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
-      for (const q of [-13, 0, 13]) {
-        const px = tx + s.ox * q, py = ty + s.oy * q, dx = c.x - px, dy = c.y - py, d = Math.hypot(dx, dy), mn = 17;
+      for (const q of [-16, 0, 16]) {
+        const px = tx + s.ox * q, py = ty + s.oy * q, dx = c.x - px, dy = c.y - py, d = Math.hypot(dx, dy), mn = 18;
         if (d >= mn || d === 0) continue;
         const nx = dx / d, ny = dy / d, vn = c.vx * nx + c.vy * ny;
         c.x = px + nx * mn; c.y = py + ny * mn;
@@ -424,8 +424,8 @@ function drawTruck(s) {
   if (!s.show) return;
   const x = s.cx + s.ox * s.dist, y = s.cy + s.oy * s.dist;
   if (x < cam.x - 50 || x > cam.x + VW + 50 || y < cam.y - 50 || y > cam.y + VH + 50) return;
-  ctx.globalAlpha = .25; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(Math.round(x) + 3, Math.round(y) + 4, 20, 10, s.ang, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
-  ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(s.ang);
+  ctx.globalAlpha = .25; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(Math.round(x) + 3, Math.round(y) + 4, 24, 12, s.ang, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+  ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(s.ang); ctx.scale(1.2, 1.2);
   const R = (dx, dy, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(dx, dy, w, h); }, moving = s.dist > 0, tl = s.tilt;
   for (const wx of [11, -3, -12]) { R(wx, -10, 6, 3, '#1b120c'); R(wx, 7, 6, 3, '#1b120c'); }
   R(-19, -5, 38, 10, '#2c2c30');
@@ -442,7 +442,7 @@ function drawTruck(s) {
 
 function drawDust(s) {
   const c = s.cloud; if (!c || c.a <= 0 || near(c.x, c.y) > 330) return;
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 22; i++) {
     const a = hash(i, s.k, 11) * TAU + G.time * .3 * (hash(i, s.k, 14) - .5), rr = Math.sqrt(hash(i, s.k, 12)) * c.r * .8, rad = c.r * (.3 + .22 * hash(i, s.k, 13));
     ctx.globalAlpha = .34 * c.a; disc(Math.round(c.x + Math.cos(a) * rr), Math.round(c.y + Math.sin(a) * rr * .85), Math.round(rad), i % 3 ? '#7e5c3a' : '#a07c52');
   }

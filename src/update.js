@@ -106,6 +106,7 @@ function updateRace(dt) {
     if (c.wet > .22) { sinkCar(c); continue; }
     const sp = Math.hypot(c.vx, c.vy), v = c.ai ? .35 : 1;
     if (c.surf === 2 || c.surf === 6) {
+      c.cem = c.surf === 6; // the colour of the dirt on the car is the last thing it drove through
       c.dirt = Math.min(1, c.dirt + .55 * dt * (sp > 8 ? 1 : .3)); c.mudTrail = 1.6;
       if (prev !== c.surf && sp > 25) { mudBurst(c, 14); SFX.mud(v); if (G.T.run && !c.ai) G.run.muds++; }
       if (sp > 20 && Math.random() < dt * 35) mudBurst(c, 1);
