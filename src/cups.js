@@ -8,7 +8,7 @@ import { TRACKS } from './tracks.js';
 
 export const CUPS = [
   { n: 1, name: 'BRONZE', tracks: ['WIESE', 'WALD', 'STRAND'] },
-  { n: 2, name: 'SILBER', tracks: [] },
+  { n: 2, name: 'SILBER', tracks: ['ZUG', 'BAUSTELLE', 'GARTEN'] },
   { n: 3, name: 'GOLD', tracks: [] },
   { n: 4, name: 'PLATIN', tracks: [] },
   { n: 5, name: 'FANTASY', tracks: [] },
