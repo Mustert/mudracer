@@ -132,6 +132,46 @@ export function paintSite(S) {
     lights.push({ x: p.x - tg.x * 12 + nm.x * side * 20, y: p.y - tg.y * 12 + nm.y * side * 20, k: lights.length });
   }
 
+  // ----- narrow places made of traffic cones only: a funnel from both sides, the gap in the middle is just wide enough for one car -----
+  const tight = [];
+  for (const [x, y] of def.cones || []) {
+    const i = nearestIdx(path, x, y), p = path[i], tg = tan[i], nm = nrm[i];
+    for (const side of [-1, 1]) for (const [a, l] of [[-34, 28], [-26, 25], [-18, 22], [-10, 19], [0, 19], [10, 19], [18, 22], [26, 26]]) {
+      const cx = p.x + tg.x * a + nm.x * side * l, cy = p.y + tg.y * a + nm.y * side * l; cone(cx, cy); walls.push({ x: cx, y: cy, r: 2.5 });
+    }
+    tight.push(i);
+  }
+
+  // ----- the water hose: a hydrant beside the outer edge of a curve sprays onto the road; driving through the spray washes the car
+  // (also the cement off). It is on the outside of the curve, away from the ideal line, so a clean car costs a little time -----
+  let hose = null;
+  if (def.hose) {
+    const { x: hx, y: hy, r: hr, rx, ry } = def.hose, wet = [hex('#4f6e78'), hex('#5d7f86'), hex('#a9cdd3')];
+    for (let yy = Math.floor(hy - hr - 2); yy <= hy + hr + 2; yy++) for (let xx = Math.floor(hx - hr - 2); xx <= hx + hr + 2; xx++) {
+      if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue;
+      const dd = Math.hypot(xx + .5 - hx, yy + .5 - hy) + (hash(xx, yy, S.sd + 31) - .5) * 2.5, j = yy * WW + xx;
+      if (dd > hr + 1.5) continue;
+      if (dd <= hr) S.washMask[j] = 1;
+      // wet ground: mixed with the colour of water, darker at the rim
+      const i = j * 4, m = dd > hr - 1.5 ? .35 : .55, W = dd > hr - 1.5 ? wet[0] : wet[1];
+      for (let q = 0; q < 3; q++) d[i + q] = d[i + q] * (1 - m) + W[q] * m;
+      if (dd < hr - 2 && hash(xx, yy, S.sd + 32) < .05) S.set(j, wet[2]);
+    }
+    // the hose from the hydrant to the nozzle at the edge of the road
+    const ux = hx - rx, uy = hy - ry, ul = Math.hypot(ux, uy), nx = Math.round(rx + ux / ul * (ul - hr - 6)), ny = Math.round(ry + uy / ul * (ul - hr - 6));
+    const HOSE = hex('#2f8a3a'), HOSED = hex('#1f5f28'), n = Math.max(Math.abs(nx - rx), Math.abs(ny - ry));
+    for (let k = 0; k <= n; k++) { const t = k / n, sag = Math.sin(t * Math.PI) * 3; S.setT(rx + (nx - rx) * t + sag, ry + (ny - ry) * t + sag, k % 4 ? HOSE : HOSED); }
+    // a coil of hose lying next to the hydrant
+    for (let a = 0; a < 40; a++) { const an = a / 40 * Math.PI * 2; S.setT(rx + 10 + Math.cos(an) * 5, ry - 2 + Math.sin(an) * 4, a % 5 ? HOSE : HOSED); S.setT(rx + 10 + Math.cos(an) * 3, ry - 2 + Math.sin(an) * 2, HOSED); }
+    // the hydrant: red body, a cap, two side valves
+    for (let yy = -6; yy <= 5; yy++) for (let xx = -3; xx <= 3; xx++) S.setT(rx + xx, ry + yy, Math.abs(xx) === 3 || yy === 5 ? K.blk : yy < -3 ? (Math.abs(xx) < 2 ? K.red : K.blk) : xx < 0 ? hex('#ef5a4e') : K.red);
+    for (const sx of [-5, 4]) { S.setT(rx + sx, ry - 1, K.greyD); S.setT(rx + sx + 1, ry - 1, K.grey); }
+    S.setT(rx, ry - 7, K.grey);
+    // the nozzle
+    for (let yy = -1; yy <= 1; yy++) for (let xx = -1; xx <= 1; xx++) S.setT(nx + xx, ny + yy, xx || yy ? K.greyD : K.grey);
+    hose = { x: hx, y: hy, r: hr, nx, ny };
+  }
+
   // ----- the big building (Rohbau): concrete slab, columns, lift shaft, stairs, safety rail -----
   const rohbau = (x0, y0, w, h) => {
     shade(x0 + 7, y0 + 9, w, h, .62);
@@ -269,5 +309,5 @@ export function paintSite(S) {
       for (let s = 0; s <= n; s++) T(Math.round(hookX + (ex - hookX) * s / n), Math.round(hookY + (ey - hookY) * s / n), K.blk);
     }
   }
-  return { lights, mixer };
+  return { lights, mixer, hose, tight };
 }

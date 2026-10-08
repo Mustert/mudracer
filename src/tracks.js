@@ -57,15 +57,19 @@ const TRACK_DEFS = [
   // The building site: the road is packed earth. Everything inside the ring road is yard (solid, see bau.js), the road narrows at barriers, a crane
   // holds a concrete pipe over the road, a cement mixer leaks a grey puddle onto it, and dump trucks tip earth beside it (event kipper).
   // poly = [x, y, curve radius] (rounded corners), mudAt/waterAt/cement = [x, y, half length along the road, half width across]
-  { name: 'BAUSTELLE', seed: 6, theme: 'baustelle', song: 'site', events: ['kipper'], wall: [], wash: 0, washAt: [215, 375],
+  { name: 'BAUSTELLE', rev: 1, seed: 6, theme: 'baustelle', song: 'site', events: ['kipper'], wall: [], wash: 0, washAt: [215, 375],
     poly: [[75, 230, 0], [75, 75, 52], [265, 75, 45], [265, 215, 45], [405, 215, 45], [405, 75, 45], [725, 75, 45], [725, 185, 45], [565, 185, 45], [565, 280, 45], [725, 280, 45], [725, 375, 52],
       [475, 375, 45], [475, 300, 45], [335, 300, 45], [335, 375, 45], [75, 375, 52]],
     mud: [], water: [], ponds: [],
-    mudAt: [[75, 115, 30, 34], [405, 150, 15, 17], [650, 280, 15, 17], [475, 340, 30, 34]],
-    waterAt: [[75, 185, 28, 34], [655, 75, 26, 34], [725, 335, 26, 34]],
+    // after the cement there is no mud and no puddle any more: whoever got grey stays grey until the hose or the car wash
+    mudAt: [[75, 115, 30, 34], [650, 280, 15, 17], [475, 340, 30, 34]],
+    waterAt: [[75, 185, 28, 34], [725, 335, 26, 34]],
     cement: [[272, 170, 20, 22]],
     yards: [[96, 96, 610, 270], [296, -10, 82, 120], [366, 350, 78, 110], [690, 196, 120, 60]],
     narrows: [[175, 75, 1], [560, 375, 1], [165, 375, -1]],
+    // cones: a narrow place built from traffic cones on both sides. hose: spray spot (x, y, r) on the outer lane of the top right curve, hydrant at rx/ry
+    cones: [[645, 185]],
+    hose: { x: 721, y: 79, r: 10, rx: 744, ry: 56 },
     mixer: { x: 322, y: 96 }, crane: { x: 588, y: 128, pipe0: 552, pipeLen: 72, pipeD: 20, pipeY: 75 },
     // [x, y, side, seconds between two visits, first arrival]: the truck stands beside the road, outside
     kipper: [[75, 160, -1, 23, 12], [470, 75, -1, 26, 3], [725, 130, -1, 29, 8], [620, 375, -1, 25, 14]] },
@@ -397,7 +401,7 @@ function buildTrack(def, ti) {
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (WW - 10) | 0), y = 5 + (r() * (WH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
   const rock = (x, y) => { const L2 = hex('#c4c4bb'), M2 = hex('#9a9a92'), D2 = hex('#6e6e68'); for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(x + dx, y + dy, dy === 0 ? L2 : dy === 2 ? D2 : M2); };
   const trees = [], critters = [], C = th.treeCol.map(hex);
-  let windmill = null, lights = [], mixer = null;
+  let windmill = null, lights = [], mixer = null, hose = null, tight = [];
   const darken = (x, y, rad, ox, oy) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + ox, yy = y + dy + oy; if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue; const i = (yy * WW + xx) * 4; d[i] *= .78; d[i + 1] *= .76; d[i + 2] *= .76; } };
   const flowers = (n, PET) => scatter(n, 2, (x, y) => { const pc = PET[(r() * PET.length) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, pc === PET[1] ? hex('#ff8c1a') : hex('#ffe14d')); });
   // wall look: fence + hay (meadow), log pile + pines (forest), beach bar + surfboards + palms (beach), asteroid belt (space), railway barrier (train)
@@ -733,8 +737,8 @@ function buildTrack(def, ti) {
     for (const [kx, ky, krx, kry] of def.koi || []) for (let k = 0; k < 3; k++) critters.push({ type: 'koi', x: kx, y: ky, rx: krx, ry: kry, ph: r() * TAU + k * 2.1, col: (r() * 3) | 0 });
   } else if (th.decor === 'bau') {
     siteRing(yard, walls);
-    const site = paintSite({ def, d, set, setT, px, darken, band, path, tan, nrm, yard, walls, scatter, rock, sd });
-    lights = site.lights; mixer = site.mixer;
+    const site = paintSite({ def, d, set, setT, px, darken, band, path, tan, nrm, yard, walls, scatter, rock, sd, washMask });
+    lights = site.lights; mixer = site.mixer; hose = site.hose; tight = site.tight;
   } else if (th.decor === 'farm') {
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
@@ -811,7 +815,7 @@ function buildTrack(def, ti) {
   mg.imageSmoothingEnabled = true; mg.drawImage(base, 0, 0, 120, 68); mg.drawImage(top, 0, 0, 120, 68);
   const wp = path[wi];
   return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: trees.concat(walls), critters, windmill, shoreY, boat: { x: 60 }, base, top, mini, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix };
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight };
 }
 
 

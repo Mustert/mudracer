@@ -56,10 +56,12 @@ export function aiTarget(c) {
   // on the flooded pier there is no room to wander across the track
   // the higher the difficulty, the closer the opponents keep to the ideal line
   const D = DIFFS[G.raceDiff || 0];
-  let lane = Math.sin(G.time * .4 + c.seed) * (G.T.ev && G.T.ev.pier ? 1.5 : D.wander);
+  // at a narrow place built from cones everybody squeezes through the middle
+  const N = G.T.N, tight = G.T.tight && G.T.tight.some(t => Math.abs(((i - t + N + N / 2) % N) - N / 2) < 45);
+  let lane = Math.sin(G.time * .4 + c.seed) * (G.T.ev && G.T.ev.pier ? 1.5 : tight ? 1 : D.wander);
   // every car drives its own way: cars that are bad in mud (mud < 1.15) steer around mud and cement puddles if there is room,
   // the off-roaders (monster, tractor, ...) plough straight through. How often they think of it depends on the difficulty.
-  if (c.def.mud < 1.15 && D.avoid && !(G.T.ev && G.T.ev.pier) && (c.seed * 7.31) % 1 < D.avoid) {
+  if (c.def.mud < 1.15 && D.avoid && !tight && !(G.T.ev && G.T.ev.pier) && (c.seed * 7.31) % 1 < D.avoid) {
     const sticky = l => { const x = (p.x + n.x * l) | 0, y = (p.y + n.y * l) | 0; if (x < 0 || y < 0 || x >= G.T.W || y >= G.T.H) return true; const t = G.T.ter[y * G.T.W + x]; return t === 2 || t === 6 || t === 0 || t === 5; };
     if (sticky(lane)) for (const l of [lane + 12, lane - 12, lane + 22, lane - 22, 0]) if (Math.abs(l) < 26 && !sticky(l)) { lane = l; break; }
   }

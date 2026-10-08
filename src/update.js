@@ -218,6 +218,12 @@ export function update(dt) {
       const ac = (Math.random() - .5) * 2 * HALF, al = (Math.random() - .5) * 6;
       addP({ t: 'd', x: w.x + w.nm.x * ac + w.tg.x * al, y: w.y + w.nm.y * ac + w.tg.y * al, z: 12, vx: 0, vy: 0, vz: -15, col: pick(WATC), s: 1, life: 1, ml: 1 });
     }
+    // the hose on the building site: an arc of water drops from the nozzle onto the spray spot
+    const h = G.T.hose;
+    if (h) for (let k = 0; k < 3; k++) {
+      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * h.r, tx = h.x + Math.cos(a) * r, ty = h.y + Math.sin(a) * r, ft = .32;
+      addP({ t: 'd', x: h.nx, y: h.ny, z: 9, vx: (tx - h.nx) / ft, vy: (ty - h.ny) / ft, vz: 300 * ft / 2 - 9 / ft, col: pick(WATC), s: 1, life: 1, ml: 1 });
+    }
     if (G.T.shoreY) {
       G.T.boat.x += 9 * dt; if (G.T.boat.x > WW + 30) G.T.boat.x = -30;
     }
