@@ -8,6 +8,7 @@ import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
 import { drawMarshals, drawTyres, initReifen, tyreCollisions, updateReifen } from './ring.js';
 import { desertCollisions, desertUpdate, initDesert, initStorm } from './desert.js';
 import { iceCollisions, iceUpdate, initFrost, initIce, initPenguins } from './ice.js';
+import { initEruption, initVolcano, volcanoUpdate } from './volcano.js';
 
 // ---------- track events: the map changes while you race ----------
 // Wiese: a herd of cows grazes on and next to the track (they are obstacles, they moo).
@@ -19,6 +20,7 @@ import { iceCollisions, iceUpdate, initFrost, initIce, initPenguins } from './ic
 // from lap 2 the oil gets smeared along the road (see ring.js).
 // Wueste: from lap 2 a sandstorm (little to see, wind from the right, sand drifts, tumbleweeds; see desert.js).
 // Eis: from lap 2 frost (three corners freeze, avalanches); penguins cross the road (see ice.js).
+// Vulkan: from lap 2 the eruption (lava bombs, a lava tongue over the serpentine, ash rain; see volcano.js).
 // Every event can be switched off with G.events (see state.js); G.fx switches all of them for the current race (difficulty,
 // options, kids mode, see diff.js). A track is changed in place; setupEvents/resetTrackEvents put it back.
 
@@ -506,7 +508,7 @@ function drawLights(T) {
 
 // ======================================================= setup, update, drawing
 
-const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {}, sandsturm: initStorm, frost: initFrost, pinguine: initPenguins };
+const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {}, sandsturm: initStorm, frost: initFrost, pinguine: initPenguins, ausbruch: initEruption };
 
 export function setupEvents(T) {
   resetAllEvents();
@@ -514,6 +516,7 @@ export function setupEvents(T) {
   // the desert and the ice have things that are always there (cacti, cracking lake ice) besides their events
   if (T.desert) initDesert(T);
   if (T.ice) initIce(T);
+  if (T.volcano) initVolcano(T);
   for (const name of T.def.events || []) if (eventOn(name)) INIT[name](T);
 }
 
@@ -525,6 +528,7 @@ export function updateEvents(dt) {
   ev.t += dt;
   if (T.desert) desertUpdate(T, dt);
   if (T.ice) iceUpdate(T, dt);
+  if (T.volcano) volcanoUpdate(T, dt);
   if (ev.cows.length) updateCows(T, dt);
   if (ev.holes.length) updateRain(T, dt);
   if (ev.kois.length) updateKois(T, dt);

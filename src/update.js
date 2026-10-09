@@ -12,6 +12,7 @@ import { ringCountdown, ringGo, ringGround, ringStackHit, ringUpdate } from './r
 import { airborne, groundFx, pushCars } from './trackfx.js';
 import { desertGround } from './desert.js';
 import { iceGround, iceStuck } from './ice.js';
+import { volcanoGround } from './volcano.js';
 import { moveCamera } from './race.js';
 import { updateJumps } from './run.js';
 import { cam } from './state.js';
@@ -30,9 +31,16 @@ function sinkCar(c) {
 
 function respawn(c) {
   // the gorge sets you down behind it, a hole in the ice on the shore next to it (respawnI)
-  const N = G.T.N, i = c.respawnI != null ? c.respawnI : ((c.safe || c.idx) - 5 + N) % N, p = G.T.path[i], tg = G.T.tan[i];
+  const T = G.T, N = T.N, i0 = c.respawnI != null ? c.respawnI : ((c.safe || c.idx) - 5 + N) % N;
   c.respawnI = null; c.fallKind = null; c.sink = 0;
-  c.x = p.x; c.y = p.y; c.ang = Math.atan2(tg.y, tg.x); c.vx = c.vy = 0; c.idx = i; c.surf = 1; c.ghost = 2.4;
+  // never onto lava, the gorge or deep water (the middle of the road can be lava, e.g. between the bridges of the ford): further back or to the side
+  const bad = (x, y) => { const t = T.ter[clamp(y | 0, 0, T.H - 1) * T.W + clamp(x | 0, 0, T.W - 1)]; return t === 15 || t === 11 || t === 5 || (t === 16 && T.volcano && T.volcano.hot); };
+  let i = i0, o = 0;
+  search: for (let k = 0; k < 90; k += 3) for (const q of [0, -16, 16, -22, 22]) {
+    const j = (i0 - k + N) % N, p = T.path[j]; if (!bad(p.x + T.nrm[j].x * q, p.y + T.nrm[j].y * q)) { i = j; o = q; break search; }
+  }
+  const p = T.path[i], tg = T.tan[i];
+  c.x = p.x + T.nrm[i].x * o; c.y = p.y + T.nrm[i].y * o; c.ang = Math.atan2(tg.y, tg.x); c.vx = c.vy = 0; c.idx = i; c.surf = 1; c.ghost = 2.4;
   splash(c.x, c.y, 8);
 }
 
@@ -95,6 +103,7 @@ function updateRace(dt) {
     for (const o of G.T.trees) {
       // the bridge of the race circuit: its railings only stop the cars up on it, the walls under it only the cars below
       if ((o.up && c.lvl !== 1) || (o.down && c.lvl !== 2)) continue;
+      if (o.ground && c.z > 0) continue; // the rocky edge in front of the lava ditch: the cars the geyser throws fly over it
       const dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy), mn = o.r + 9;
       if (d < mn && d > 0) {
         const nx = dx / d, ny = dy / d, vn = c.vx * nx + c.vy * ny;
@@ -161,6 +170,7 @@ function updateRace(dt) {
     if (G.T.jumps) { groundFx(c, sp, dt); if (c.fall > 0) continue; }
     if (G.T.desert) desertGround(c, sp, dt);
     if (G.T.ice) { iceGround(c, j, sp, dt); if (c.fall > 0) continue; }
+    if (G.T.volcano) volcanoGround(c, sp, dt);
     if (c.boost > 0 && Math.random() < dt * 40) drop(c.x - Math.cos(c.ang) * 14, c.y - Math.sin(c.ang) * 14, c.ang + Math.PI + (Math.random() - .5) * .8, 20 + Math.random() * 30, 20 + Math.random() * 30, pick(RAINBOW), .8, false);
     if (c.washing) {
       c.dirt = Math.max(0, c.dirt - 3 * dt);

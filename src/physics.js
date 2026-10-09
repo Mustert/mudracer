@@ -6,6 +6,7 @@ import { steerAround } from './events.js';
 import { ringPitTarget } from './ring.js';
 import { desertLane } from './desert.js';
 import { iceTarget } from './ice.js';
+import { volcanoLane, volcanoTarget } from './volcano.js';
 import { setState } from './menus.js';
 import { finishRace } from './race.js';
 import { ttLap } from './timetrial.js';
@@ -51,7 +52,7 @@ export function physics(c, dt, thr, tgt) {
   // slipstream (race circuit): right behind another car you get up to 7 % faster
   const spd = G.T.th.flat ? 1 + (c.def.speed - 1) * G.T.th.flat : c.def.speed;
   // downhill (ice) the car runs faster than its top speed
-  const max = MAXS * spd * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1) * (1 + .07 * c.draft) * (1 + (c.slope || 0));
+  const max = MAXS * spd * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1) * (1 + .07 * c.draft) * (1 + (c.slope || 0)) * (c.hot ? .85 : 1);
   if (thr > 0 && vf < max * thr) {
     const sput = 1 - .35 * (soil / .18) * dirt * (.5 + .5 * Math.sin(G.time * 11 + c.seed * 3));
     vf += ACC * c.def.acc * sput * (.5 + .5 * sp) * (c.rocket > 0 ? 2.4 : 1) * am * dt; // rocket start: a good start pushes hard for a moment
@@ -71,7 +72,8 @@ export function physics(c, dt, thr, tgt) {
 export function aiTarget(c) {
   // race circuit: a dirty car goes through the pit lane (the box washes it)
   // ice: the short cut across the frozen lake
-  const pt = (G.T.ring && ringPitTarget(c)) || (G.T.ice && iceTarget(c));
+  // volcano: the long way round the crust when the stream is about to break through
+  const pt = (G.T.ring && ringPitTarget(c)) || (G.T.ice && iceTarget(c)) || (G.T.volcano && volcanoTarget(c));
   if (pt) { const [tx, ty] = steerAround(c, pt[0], pt[1]); return Math.atan2(ty - c.y, tx - c.x); }
   const sp = Math.hypot(c.vx, c.vy), i = (c.idx + 18 + Math.round(sp / 8)) % G.T.N, p = G.T.path[i], n = G.T.nrm[i];
   // on the flooded pier there is no room to wander across the track
@@ -90,6 +92,8 @@ export function aiTarget(c) {
   }
   // desert: everybody keeps away from the middle of the quicksand; at the gorge they choose the jump or the rope bridge
   if (G.T.desert) lane = desertLane(c, i, lane);
+  // volcano: the open bridge of the ford, away from the lava on the serpentine and from where a lava bomb will land
+  if (G.T.volcano) lane = volcanoLane(c, i, lane);
   const [tx, ty] = steerAround(c, p.x + n.x * lane, p.y + n.y * lane);
   return Math.atan2(ty - c.y, tx - c.x);
 }

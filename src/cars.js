@@ -260,9 +260,11 @@ function buildCar(def, k, pal) {
 const OIL = ['#17171b', '#26262c', '#0c0c0e'].map(hex);
 // the desert makes the cars sandy (beige), the ice track white with snow
 const SAND = ['#d9b878', '#c9a263', '#ead09a'].map(hex), SNOW = ['#f6f9fc', '#dde8f2', '#ffffff'].map(hex);
+// the volcano makes them sooty: grey and black ash
+const ASH = ['#55524e', '#77736d', '#34312e'].map(hex);
 export function carSet(def, goo, cem) {
   const kind = cem ? 'cem' : typeof goo === 'string' ? goo : goo ? 'goo' : 'mud', key = '_' + kind;
-  return def[key] || (def[key] = buildCar(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, goo: GOO, mud: DIRT }[kind]));
+  return def[key] || (def[key] = buildCar(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, ash: ASH, goo: GOO, mud: DIRT }[kind]));
 }
 
 
@@ -289,7 +291,7 @@ export function setPaint(def, i) {
   if (!def.own) def.own = { M: def.M, D: def.D, L: def.L, accent: def.accent }; // (not 'acc': that is the acceleration)
   const p = i > 0 && PAINTS[i] ? PAINTS[i] : def.own;
   def.M = p.M; def.D = p.D; def.L = p.L; def.accent = p.accent || def.own.accent; def.paint = PAINTS[i] && i > 0 ? i : 0;
-  delete def._mud; delete def._goo; delete def._cem; delete def._oil; delete def._sand; delete def._snow; // the sprites are built again with the new colour
+  delete def._mud; delete def._goo; delete def._cem; delete def._oil; delete def._sand; delete def._snow; delete def._ash; // the sprites are built again with the new colour
 }
 
 export function savePaint(def, i) { setPaint(def, i); try { localStorage.setItem(paintKey(def), String(def.paint)); } catch (e) {} }

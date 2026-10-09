@@ -5,8 +5,10 @@ import { addP, drop, splash } from './particles.js';
 import { cam } from './state.js';
 
 // ---------- Cup 3 building blocks (desert and ice): jumps in a race, stretches that push the cars (slope, wind), falling into a gorge,
-// sinking in quicksand. Terrain codes: 10 quicksand, 11 gorge (no ground), 12 sheet ice, 14 swinging rope bridge.
-// A jump: { x, y (the lip), tx, ty (the way you jump), lo, hi (how far to the side of the lip, along the normal -ty, tx), vz (speed upwards) }.
+// sinking in quicksand, burning in lava (volcano). Terrain codes: 10 quicksand, 11 gorge (no ground), 12 sheet ice, 14 swinging rope bridge,
+// 15 lava, 16 the crust over the lava stream (lava while the stream breaks through, see volcano.js).
+// A jump: { x, y (the lip), tx, ty (the way you jump), lo, hi (how far to the side of the lip, along the normal -ty, tx), vz (speed upwards),
+// push (optional: at least this speed forwards, the geyser), off (true: it does not throw you right now) }.
 // A push: { i0, i1 (stretch of the centre line, in driving order), f (push along the road, px/s²) }. ----------
 
 const GRAV = 380;
@@ -28,9 +30,10 @@ export function airborne(c, dt) {
   T.jumps.forEach((J, k) => {
     const dx = c.x - J.x, dy = c.y - J.y, a = dx * J.tx + dy * J.ty, l = -dx * J.ty + dy * J.tx, pa = c.ja[k];
     c.ja[k] = a;
-    if (pa === undefined || pa >= 0 || a < 0 || a > 20 || l < J.lo || l > J.hi) return;
-    const fwd = c.vx * J.tx + c.vy * J.ty; if (fwd < 30) return;
+    if (J.off || pa === undefined || pa >= 0 || a < 0 || a > 20 || l < J.lo || l > J.hi) return;
+    const fwd = c.vx * J.tx + c.vy * J.ty; if (fwd < (J.push ? 5 : 30)) return;
     c.z = .01; c.vz = J.vz; c.air = 0;
+    if (J.push && fwd < J.push) { c.vx += J.tx * (J.push - fwd); c.vy += J.ty * (J.push - fwd); }
     const v = loud(c, c.x, c.y); if (v > .02) (J.vz > 120 ? SFX.bigJump : SFX.jump)(v);
   });
 }
@@ -40,6 +43,7 @@ function land(c) {
   const T = G.T, j = clamp(c.y | 0, 0, WH - 1) * WW + clamp(c.x | 0, 0, WW - 1), t = T.ter[j], v = loud(c, c.x, c.y), big = c.air > .7;
   c.z = 0; c.vz = 0;
   if (t === 11) { fallCar(c, 'abyss', T.desert && T.desert.landI); return; }
+  if (t === 15 || (t === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }
   if (t === 3 || t === 5) { splash(c.x, c.y, 24); SFX.splash(v); return; }
   const col = T.th.decor === 'eis' ? ['#ffffff', '#e6eef6', '#cfdcea'] : ['#e8d2a8', '#d9b878', '#c9a263'];
   for (let i = 0; i < (big ? 22 : 10); i++) drop(c.x + (Math.random() - .5) * 20, c.y + (Math.random() - .5) * 14, Math.random() * 6.3, 20 + Math.random() * 50, 30 + Math.random() * 50, col[(Math.random() * 3) | 0], .8, false);
@@ -56,8 +60,10 @@ export function fallCar(c, kind, at) {
   c.fall = kind === 'sand' ? 1.1 : 1.4; c.fallT0 = c.fall; c.fallKind = kind; c.fx0 = c.x; c.fy0 = c.y;
   c.vx = c.vy = 0; c.boost = 0; c.stun = 0; c.z = 0; c.sink = 0;
   c.respawnI = at === undefined ? null : at;
-  if (kind === 'sand') c.dirt = 1;
-  const v = loud(c, c.x, c.y); if (v > .02) (kind === 'abyss' ? SFX.fall : SFX.sink)(v);
+  // quicksand leaves the car beige, lava sooty (and it comes back hot)
+  if (kind === 'sand' || kind === 'lava') c.dirt = 1;
+  if (kind === 'lava') { c.heat = .6; c.burnT = 1.3; for (let i = 0; i < 16; i++) addP({ t: 'smoke', x: c.x + (Math.random() - .5) * 16, y: c.y + (Math.random() - .5) * 12, vx: (Math.random() - .5) * 20, vy: -15 - Math.random() * 20, life: 1.2, ml: 1.2 }); }
+  const v = loud(c, c.x, c.y); if (v > .02) ({ abyss: SFX.fall, sand: SFX.sink, lava: SFX.burn }[kind] || SFX.sink)(v);
 }
 
 // the push of the slopes along the road, and the wind (desert storm) for everybody; in the air the wind blows twice as hard
@@ -81,6 +87,7 @@ export function pushCars(dt) {
 export function groundFx(c, sp, dt) {
   const T = G.T;
   if (c.surf === 11) { fallCar(c, 'abyss', T.desert && T.desert.landI); return; }
+  if (c.surf === 15 || (c.surf === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }
   if (c.surf === 10 && T.desert) {
     const q = T.desert.quick.find(([x, y, r]) => Math.hypot(c.x - x, c.y - y) < r + 2);
     if (q) {

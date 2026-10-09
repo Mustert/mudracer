@@ -7,6 +7,7 @@ import { drawRunFinish, drawRunHud } from './run.js';
 import { drawRingAbove, drawRingGround, drawStartLights, ghostUp } from './ring.js';
 import { drawDesertAbove, drawDesertGround, drawStorm } from './desert.js';
 import { drawIceAbove, drawIceGround, drawIceSky } from './ice.js';
+import { drawVolcanoAbove, drawVolcanoGround, drawVolcanoSky } from './volcano.js';
 import { cam } from './state.js';
 import { GHOST_DT, fmtDelta, fmtTime, ghostAt } from './timetrial.js';
 import { trail } from './tracks.js';
@@ -51,6 +52,10 @@ function drawCar(c) {
   if (c.fall > 0) {
     // into the gorge or under the quicksand: the car gets smaller for a moment, then it is gone (under water it is gone at once)
     const t = c.fallKind ? (c.fallT0 - c.fall) / .55 : 1; if (t >= 1) return;
+    if (c.fallKind === 'lava') { // like on a hot stove: the car jumps up and is gone
+      ctx.globalAlpha = 1 - t * .7; ctx.drawImage(F.frames[lv][rot], Math.round(c.fx0 - SS / 2), Math.round(c.fy0 - SS / 2 - Math.sin(t * Math.PI) * 18 - t * 6)); ctx.globalAlpha = 1;
+      return;
+    }
     const S = Math.max(4, Math.round(SS * (c.fallKind === 'sand' ? .55 : 1) * (1 - t * .85)));
     ctx.globalAlpha = 1 - t * .6; ctx.drawImage(F.frames[lv][rot], Math.round(c.fx0 - S / 2), Math.round(c.fy0 - S / 2 + (c.fallKind === 'abyss' ? t * 10 : 0)), S, S); ctx.globalAlpha = 1;
     return;
@@ -320,6 +325,7 @@ export function drawRace() {
   if (G.T.ring) drawRingGround();
   if (G.T.desert) drawDesertGround();
   if (G.T.ice) drawIceGround();
+  if (G.T.volcano) drawVolcanoGround();
   const gh = ghostPose(), drawGhost = () => {
     const F = carSet(G.player.def, G.T.th.goo);
     ctx.globalAlpha = .45; ctx.drawImage(F.frames[Math.round(gh.dirt * 5)][rotIndex(gh.ang)], Math.round(gh.x) - SS / 2, Math.round(gh.y) - SS / 2); ctx.globalAlpha = 1;
@@ -359,11 +365,13 @@ export function drawRace() {
   if (G.T.ring) drawRingAbove();
   if (G.T.desert) drawDesertAbove(cx, cy);
   if (G.T.ice) drawIceAbove();
+  if (G.T.volcano) drawVolcanoAbove();
   ctx.restore();
   if (dark) { drawNight(cx, cy); ctx.save(); ctx.translate(-cx, -cy); drawFlyers(); ctx.restore(); }
   drawRain();
   if (G.T.desert) drawStorm(cx, cy);
   if (G.T.ice) drawIceSky(cx, cy);
+  if (G.T.volcano) drawVolcanoSky(cx, cy);
   drawMood();
   // the 1P sign floats over your car the whole race, above night, storm and snow, so you find yourself among dirty (or snowed-in) cars;
   // at the start it bounces higher

@@ -165,6 +165,17 @@ export const SFX = {
   frost: () => { for (let i = 0; i < 7; i++) voice({ t: i * .12, type: 'sine', f: 2093 * [1, 1.26, 1.5, 1.68, 2, 1.5, 2.52][i], a: .002, d: .5, vol: .04 }); noise({ type: 'highpass', f: 6000, a: .8, hold: 1, d: 1.5, vol: .05 }); },
   rumble: () => { noise({ type: 'lowpass', f: 160, to: 90, a: 1, hold: 1.5, d: 1.5, vol: .5, q: .7 }); voice({ f: 48, to: 36, a: .8, hold: 1.4, d: 1.2, vol: .25 }); },
   crunch: v => { for (let i = 0; i < 8; i++) noise({ t: i * .04 + Math.random() * .03, type: 'bandpass', f: 1400 + Math.random() * 1600, q: 1.5, d: .05, vol: .16 * v }); },
+  // volcano: hissing steam and lava, the crust crackling, a hot engine coughing, the eruption, a lava bomb whistling down and hitting, "aua, heiss!"
+  hiss: v => noise({ type: 'highpass', f: 2500, to: 5000, a: .05, hold: .5, d: .8, vol: .16 * v }),
+  crackle: () => { for (let i = 0; i < 3; i++) noise({ t: Math.random() * .1, type: 'bandpass', f: 2000 + Math.random() * 3000, q: 3, d: .02, vol: .08 }); },
+  cough: () => { for (const t of [0, .14, .3]) { noise({ t, type: 'lowpass', f: 500, d: .08, vol: .2 }); voice({ t, type: 'square', f: 70, to: 50, d: .07, vol: .06, lp: 400 }); } },
+  bang: () => { noise({ type: 'lowpass', f: 900, to: 60, a: .01, hold: .3, d: 2.4, vol: .8, q: .7 }); voice({ f: 60, to: 26, d: 1.8, vol: .5 }); noise({ t: .05, type: 'bandpass', f: 1500, to: 300, d: 1.2, vol: .25 }); },
+  boom: v => { noise({ type: 'lowpass', f: 1400, to: 120, d: .6, vol: .5 * v }); voice({ f: 110, to: 40, d: .4, vol: .35 * v }); },
+  bombWhistle: () => voice({ type: 'sine', f: 2200, to: 700, a: .05, hold: .6, d: .2, vol: .07 }),
+  burn: v => {
+    noise({ type: 'highpass', f: 3000, a: .01, hold: .3, d: .5, vol: .16 * v });
+    voice({ t: .05, type: 'square', f: 520, to: 880, a: .01, hold: .08, d: .08, vol: .06 * v, lp: 2400 }); voice({ t: .25, type: 'square', f: 880, to: 600, a: .01, hold: .12, d: .15, vol: .06 * v, lp: 2400 });
+  },
   quack: v => { for (const t of [0, .16]) voice({ t, type: 'sawtooth', f: 700, to: 420, a: .01, hold: .04, d: .09, vol: .06 * v, bp: 1200, q: 4 }); },
   rain: () => noise({ type: 'highpass', f: 4200, q: .5, a: 1.2, hold: 5.5, d: 2.5, vol: .09 }),
   thunder: () => { noise({ type: 'lowpass', f: 300, to: 70, a: .05, d: 2, vol: .45, q: .7 }); voice({ f: 62, to: 34, d: 1.6, vol: .3 }); },

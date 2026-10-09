@@ -271,6 +271,30 @@ const SONGS = {
       if (storm && s === 0) M.sandWind(t, 16 * M.sd, ev.gust || 0, ev.warn || 0);
       if (s === 0 && bi === 0 && sec === 'A') M.crash(t);
     } },
+  // volcano: C minor, metal and orchestra, 150 BPM. Taiko drums carry it, brass stabs on 1 and 3+, a distorted guitar plays palm-muted eighths
+  // (power chords in part B), the bass under it. From the eruption a double bass drum and a low choir; in the last lap it speeds up to 160 BPM
+  // (the song "volcanoFast") and the brass plays the tune as well.
+  volcano: { bpm: 150, swing: 0, swap: () => G.player && !G.T.run && G.player.lap >= LAPS && (G.state === 'race' || G.state === 'finish') ? 'volcanoFast' : null,
+    chords: { Cm: { r: 36, n: [60, 63, 67] }, Ab: { r: 44, n: [60, 63, 68] }, Bb: { r: 46, n: [62, 65, 70] }, G: { r: 43, n: [59, 62, 67] }, Fm: { r: 41, n: [60, 65, 68] } },
+    A: { ch: ['Cm', 'Ab', 'Bb', 'G', 'Cm', 'Ab', 'Fm', 'G'], mel: mel([
+      'C5:0:4 D#5:4:2 G5:6:2 C6:8:4 A#5:12:2 G5:14:2', 'G#5:0:4 G5:4:2 D#5:6:2 C5:8:6 D#5:14:2', 'D5:0:4 F5:4:2 A#5:6:2 D6:8:4 C6:12:2 A#5:14:2', 'B5:0:6 G5:6:2 D5:8:4 B4:12:4',
+      'C6:0:4 A#5:4:2 G5:6:2 D#5:8:4 G5:12:4', 'G#5:0:2 G5:2:2 F5:4:2 D#5:6:2 C5:8:8', 'F5:0:4 G#5:4:2 C6:6:2 F6:8:4 D#6:12:2 C6:14:2', 'D6:0:4 B5:4:4 G5:8:4 D5:12:4']) },
+    B: { ch: ['Ab', 'Bb', 'Cm', 'Cm', 'Fm', 'G', 'Ab', 'G'], mel: mel([
+      'D#6:0:6 C6:6:2 G#5:8:4 C6:12:4', 'F6:0:6 D6:6:2 A#5:8:4 D6:12:4', 'G6:0:8 D#6:8:4 C6:12:4', 'C6:0:2 D6:2:2 D#6:4:2 F6:6:2 G6:8:8',
+      'G#6:0:6 F6:6:2 C6:8:4 G#5:12:4', 'G6:0:6 D6:6:2 B5:8:4 D6:12:4', 'C6:0:4 D#6:4:4 G#6:8:4 G6:12:4', 'F6:0:4 D6:4:4 B5:8:8']) },
+    lead(M, m, t, d) { M.gtrLead(hz(m - 12), t, d); if (M.song.fast) M.brass([m - 12, m - 24], t, d * .9, 1.4); },
+    band(M, s, t, bi, ch, sec) {
+      const ev = G.T && G.T.ev, erupt = !!(ev && ev.erupt && G.T.volcano);
+      if (s === 0 || s === 6 || (s === 8 && bi % 2) || s === 11) M.taiko(s === 0 ? 62 : 84, t, s === 0 ? 1 : .7);
+      if (s === 0 || s === 10) M.brass(ch.n.map(m => m - 12), t, .14);
+      if (sec === 'A') { if (s % 2 === 0) { M.gtr(hz(ch.r), t, M.sd * .8, true); M.bassSaw(hz(ch.r - 12), t, M.sd * .9); } }
+      else if (s % 4 === 0) { M.gtr(hz(ch.r), t, M.sd * 3.6, false); M.gtr(hz(ch.r + 7), t, M.sd * 3.6, false); M.bassSaw(hz(ch.r - 12), t, M.sd * 3.6); }
+      if (s === 4 || s === 12) M.snare(t, .9);
+      if (erupt) { M.kick(t, s % 4 === 0 ? 1 : .6); if (s === 0) M.choir(ch.n.map(m => m - 12), t, 16 * M.sd); }
+      else if (s % 4 === 0) M.kick(t);
+      if (s % 2 === 1) M.hat(t, false, .5);
+      if (s === 0 && bi === 0) M.crash(t);
+    } },
   // ice: B minor, it builds up with the race. Lap 1: celesta, a glockenspiel echo, soft strings, sleigh bells, hardly any bass (it feels like 84 BPM).
   // From the frost (lap 2): a fast breakbeat, a deep sub bass and quick arpeggios ("ice crystals"). Last lap: a choir, strings in sixteenths, timpani.
   // Before every avalanche a low timpani roll.
@@ -308,6 +332,10 @@ const SONGS = {
 };
 
 
+// the volcano in the last lap: the same song, faster, the brass plays the tune
+SONGS.volcanoFast = { ...SONGS.volcano, bpm: 160, swap: null, fast: true };
+
+
 export const Music = {
   init() {
     const A = AU.a;
@@ -336,7 +364,8 @@ export const Music = {
     if (!AU.a) return;
     const vs = G.state === 'options' ? G.optFrom : G.state;
     const menuish = ['title', 'main', 'select_cup', 'select_track', 'select_car', 'select_count', 'standings', 'ceremony'].includes(vs);
-    const w = menuish ? 'menu' : G.T.def.song;
+    let w = menuish ? 'menu' : G.T.def.song;
+    if (SONGS[w] && SONGS[w].swap) w = SONGS[w].swap() || w; // a song can hand over to another one (the volcano gets faster in the last lap)
     this.want = SONGS[w] ? w : 'kart';
     let v = .5;
     if (G.state === 'pause') v = .22; else if (G.state === 'countdown') v = .32; else if (G.state === 'finish') v = G.stateTime < 3.5 ? .12 : .4; else if (G.state === 'ceremony') v = G.stateTime < 3.5 ? .15 : .45;
@@ -430,5 +459,10 @@ export const Music = {
   sub(f, t, d) { synth({ at: t, f, parts: [['sine', 1, 1], ['triangle', 1, .2]], a: .01, hold: d * .6, d: d * .4, vol: .3, dest: this.out }); },
   choir(ns, t, d) { for (const m of ns) synth({ at: t, f: hz(m), parts: [['sawtooth', 1, .5, -6], ['sawtooth', 1, .5, 6]], a: .4, hold: Math.max(0, d - .8), d: .5, vol: .02, ft: 'bandpass', lp: 800, q: 1.4, vib: [5, .006], dest: this.out }); },
   strings(f, t) { synth({ at: t, f, parts: [['sawtooth', 1, .6], ['sawtooth', 1, .4, 9]], a: .01, hold: this.sd * .5, d: .06, vol: .03, lp: 2400, dest: this.out }); },
+  // volcano: taiko (a deep drum with a long tail), brass stabs, a distorted guitar (palm-muted or ringing), a singing lead guitar
+  taiko(f, t, v = 1) { voice({ at: t, f, to: f * .55, a: .003, d: .7, vol: .45 * v, dest: this.out }); noise({ at: t, type: 'lowpass', f: 400, d: .25, vol: .15 * v, dest: this.out }); },
+  brass(ns, t, d, v = 1) { for (const m of ns) synth({ at: t, f: hz(m), parts: [['sawtooth', 1, .6], ['sawtooth', 1, .4, 8], ['square', .5, .2]], a: .015, hold: Math.max(0, d - .04), d: .08, vol: .045 * v, lp: 2600, lpTo: 1200, dest: this.out }); },
+  gtr(f, t, d, mute) { synth({ at: t, f, parts: [['sawtooth', 1, .6], ['square', 1, .5, 12], ['sawtooth', 2, .25, -7]], a: .002, hold: mute ? d * .3 : d * .8, d: mute ? .05 : .15, vol: mute ? .07 : .06, lp: mute ? 900 : 1900, q: 3, dest: this.out }); },
+  gtrLead(f, t, d) { synth({ at: t, f, parts: [['sawtooth', 1, .5], ['square', 1, .4, 9], ['sawtooth', 2, .2]], a: .01, hold: Math.max(0, d - .06), d: .1, vol: .06, lp: 2800, q: 2, vib: [5.5, .008], dest: this.leadBus }); },
   timp(f, t, v = 1) { voice({ at: t, f: f * 1.02, to: f, a: .003, d: .6, vol: .3 * v, dest: this.out }); noise({ at: t, type: 'lowpass', f: 300, d: .15, vol: .1 * v, dest: this.out }); },
 };
