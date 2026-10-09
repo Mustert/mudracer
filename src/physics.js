@@ -4,6 +4,8 @@ import { ACC, LAPS, MAXS, MUD_A, MUD_B, angDiff, clamp } from './core.js';
 import { DIFFS } from './diff.js';
 import { steerAround } from './events.js';
 import { ringPitTarget } from './ring.js';
+import { desertLane } from './desert.js';
+import { iceTarget } from './ice.js';
 import { setState } from './menus.js';
 import { finishRace } from './race.js';
 import { ttLap } from './timetrial.js';
@@ -23,6 +25,12 @@ function surfOf(c) {
     case 7: return [.3, 3.2, .5];
     case 8: return [G.T.th.asphalt || 1, 1.1, .45];
     case 9: return [c.pit ? .55 : G.T.th.asphalt || 1, 4.5, .8];
+    // desert: quicksand holds you like cement (it also pulls, see trackfx.js), the swinging rope bridge is slow
+    case 10: return [.3, 4, .6];
+    case 14: return [.6, 10, .85];
+    // sheet ice: full speed, but hardly any grip to the side, half the steering, gas and brakes only half as strong (4th value).
+    // The grip grows with the car's steering (turn), so the nimble cars are best here.
+    case 12: return [1, 1.25 * c.def.turn * c.def.turn, .5, .5];
     // asphalt is faster than an earth road; the pit lane has a speed limit
     default: return [c.pit ? .55 : G.T.th.asphalt || 1, 10, 1];
   }
@@ -31,7 +39,7 @@ function surfOf(c) {
 
 export function physics(c, dt, thr, tgt) {
   if (c.z > 0) { c.x += c.vx * dt; c.y += c.vy * dt; return; } // flying: no grip, no steering
-  const [sp, grip, tm] = surfOf(c), dirt = c.dirt, soil = c.def.soil;
+  const [sp, grip, tm, am = 1] = surfOf(c), dirt = c.dirt, soil = c.def.soil;
   const vf0 = c.vx * Math.cos(c.ang) + c.vy * Math.sin(c.ang);
   if (tgt !== null) {
     const d = angDiff(tgt, c.ang), tr = 4.6 * c.def.turn * tm * (1 - 2.5 * soil * dirt) * (.45 + .55 * Math.min(1, Math.abs(vf0) / 55)) * dt;
@@ -41,15 +49,16 @@ export function physics(c, dt, thr, tgt) {
   const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
   let vf = c.vx * fx + c.vy * fy, vl = -c.vx * fy + c.vy * fx;
   // slipstream (race circuit): right behind another car you get up to 7 % faster
-  const max = MAXS * c.def.speed * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1) * (1 + .07 * c.draft);
+  // downhill (ice) the car runs faster than its top speed
+  const max = MAXS * c.def.speed * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1) * (1 + .07 * c.draft) * (1 + (c.slope || 0));
   if (thr > 0 && vf < max * thr) {
     const sput = 1 - .35 * (soil / .18) * dirt * (.5 + .5 * Math.sin(G.time * 11 + c.seed * 3));
-    vf += ACC * c.def.acc * sput * (.5 + .5 * sp) * (c.rocket > 0 ? 2.4 : 1) * dt; // rocket start: a good start pushes hard for a moment
+    vf += ACC * c.def.acc * sput * (.5 + .5 * sp) * (c.rocket > 0 ? 2.4 : 1) * am * dt; // rocket start: a good start pushes hard for a moment
   }
-  else if (thr < 0 && vf > -35) vf -= ACC * c.def.acc * .5 * (.5 + .5 * sp) * dt;
+  else if (thr < 0 && vf > -35) vf -= ACC * c.def.acc * .5 * (.5 + .5 * sp) * am * dt;
   if (c.boost > 0) vf = Math.max(vf, max * .9);
   vf *= Math.exp(-(thr > 0 ? .25 : 3) * dt);
-  if (c.brake) vf *= Math.exp(-6 * dt);
+  if (c.brake) vf *= Math.exp(-6 * am * dt);
   if (vf > max) vf += (max - vf) * Math.min(1, 3.5 * dt);
   if (vf < -35) vf = -35;
   vl *= Math.exp(-grip * dt);
@@ -60,7 +69,8 @@ export function physics(c, dt, thr, tgt) {
 
 export function aiTarget(c) {
   // race circuit: a dirty car goes through the pit lane (the box washes it)
-  const pt = G.T.ring && ringPitTarget(c);
+  // ice: the short cut across the frozen lake
+  const pt = (G.T.ring && ringPitTarget(c)) || (G.T.ice && iceTarget(c));
   if (pt) { const [tx, ty] = steerAround(c, pt[0], pt[1]); return Math.atan2(ty - c.y, tx - c.x); }
   const sp = Math.hypot(c.vx, c.vy), i = (c.idx + 18 + Math.round(sp / 8)) % G.T.N, p = G.T.path[i], n = G.T.nrm[i];
   // on the flooded pier there is no room to wander across the track
@@ -68,7 +78,8 @@ export function aiTarget(c) {
   const D = DIFFS[G.raceDiff || 0];
   // at a narrow place built from cones everybody squeezes through the middle
   const N = G.T.N, tight = G.T.tight && G.T.tight.some(t => Math.abs(((i - t + N + N / 2) % N) - N / 2) < 45);
-  let lane = Math.sin(G.time * .4 + c.seed) * (G.T.ev && G.T.ev.pier ? 1.5 : tight ? 1 : D.wander);
+  // on the ice they wander less
+  let lane = Math.sin(G.time * .4 + c.seed) * (G.T.ev && G.T.ev.pier ? 1.5 : tight ? 1 : D.wander * (G.T.ice ? .5 : 1));
   // every car drives its own way: cars that are bad in mud (mud < 1.15) steer around mud and cement puddles if there is room,
   // the off-roaders (monster, tractor, ...) plough straight through. How often they think of it depends on the difficulty.
   // Oil and gravel (race circuit) are bad for every car.
@@ -76,6 +87,8 @@ export function aiTarget(c) {
     const sticky = l => { const x = (p.x + n.x * l) | 0, y = (p.y + n.y * l) | 0; if (x < 0 || y < 0 || x >= G.T.W || y >= G.T.H) return true; const t = G.T.ter[y * G.T.W + x]; return t === 2 || t === 6 || t === 0 || t === 5 || t === 7 || t === 8; };
     if (sticky(lane)) for (const l of [lane + 12, lane - 12, lane + 22, lane - 22, 0]) if (Math.abs(l) < 26 && !sticky(l)) { lane = l; break; }
   }
+  // desert: everybody keeps away from the middle of the quicksand; at the gorge they choose the jump or the rope bridge
+  if (G.T.desert) lane = desertLane(c, i, lane);
   const [tx, ty] = steerAround(c, p.x + n.x * lane, p.y + n.y * lane);
   return Math.atan2(ty - c.y, tx - c.x);
 }

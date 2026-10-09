@@ -11,7 +11,7 @@ import { TRACKS } from './tracks.js';
 export const CUPS = [
   { n: 1, name: 'BRONZE', tracks: ['WIESE', 'WALD', 'STRAND'] },
   { n: 2, name: 'SILBER', tracks: ['ZUG', 'BAUSTELLE', 'GARTEN'] },
-  { n: 3, name: 'GOLD', tracks: ['RENNSTRECKE'] },
+  { n: 3, name: 'GOLD', tracks: ['RENNSTRECKE', 'WUESTE', 'EIS'] },
   { n: 4, name: 'PLATIN', tracks: [] },
   { n: 5, name: 'FANTASY', tracks: [] },
   { n: 6, name: 'SUPER', label: 'SUPERCUP', all: 4, unlock: () => [1, 2, 3, 4].every(n => G.cupsWon.includes(n)), need: 'GEWINNE CUP 1 BIS 4' },

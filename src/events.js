@@ -6,6 +6,8 @@ import { addP, drop, mudBurst, splash, WATC } from './particles.js';
 import { cam } from './state.js';
 import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
 import { drawMarshals, drawTyres, initReifen, tyreCollisions, updateReifen } from './ring.js';
+import { desertCollisions, desertUpdate, initDesert, initStorm } from './desert.js';
+import { iceCollisions, iceUpdate, initFrost, initIce, initPenguins } from './ice.js';
 
 // ---------- track events: the map changes while you race ----------
 // Wiese: a herd of cows grazes on and next to the track (they are obstacles, they moo).
@@ -15,6 +17,8 @@ import { drawMarshals, drawTyres, initReifen, tyreCollisions, updateReifen } fro
 // Zug: the train (it can be switched off like the others, then it never comes).
 // Rennstrecke: tyres roll across the road (a marshal waves the yellow flag first), hard hits knock tyres out of the tyre walls,
 // from lap 2 the oil gets smeared along the road (see ring.js).
+// Wueste: from lap 2 a sandstorm (little to see, wind from the right, sand drifts, tumbleweeds; see desert.js).
+// Eis: from lap 2 frost (three corners freeze, avalanches); penguins cross the road (see ice.js).
 // Every event can be switched off with G.events (see state.js); G.fx switches all of them for the current race (difficulty,
 // options, kids mode, see diff.js). A track is changed in place; setupEvents/resetTrackEvents put it back.
 
@@ -99,6 +103,8 @@ export function eventCollisions() {
   koiCollisions();
   truckCollisions();
   tyreCollisions();
+  if (G.T.desert) desertCollisions();
+  if (G.T.ice) iceCollisions();
   const ev = G.T.ev; if (!ev) return;
   for (const w of ev.cows) for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
@@ -115,11 +121,11 @@ export function eventCollisions() {
   }
 }
 
-// computer cars steer around cows (and loose tyres on the race circuit) that are ahead of them
+// computer cars steer around cows (and loose tyres on the race circuit, cacti, tumbleweeds and penguins: ev.obst) that are ahead of them
 export function steerAround(c, tx, ty) {
-  const ev = G.T.ev; if (!ev || !(ev.cows.length || (ev.tyres && ev.tyres.length))) return [tx, ty];
+  const ev = G.T.ev; if (!ev || !(ev.cows.length || (ev.tyres && ev.tyres.length) || (ev.obst && ev.obst.length))) return [tx, ty];
   const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
-  for (const w of ev.tyres ? ev.cows.concat(ev.tyres) : ev.cows) {
+  for (const w of ev.cows.concat(ev.tyres || [], ev.obst || [])) {
     const dx = w.x - c.x, dy = w.y - c.y, d = Math.hypot(dx, dy);
     if (d > 75 || d < 1 || dx * fx + dy * fy < 0) continue;
     const side = dx * -fy + dy * fx, k = (1 - d / 75) * 55 * (side > 0 ? -1 : 1);
@@ -500,11 +506,14 @@ function drawLights(T) {
 
 // ======================================================= setup, update, drawing
 
-const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {} };
+const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {}, sandsturm: initStorm, frost: initFrost, pinguine: initPenguins };
 
 export function setupEvents(T) {
   resetAllEvents();
   T.ev = { t: 0, cows: [], holes: [], rain: null, flood: null, pier: false, kois: [], kipper: [] };
+  // the desert and the ice have things that are always there (cacti, cracking lake ice) besides their events
+  if (T.desert) initDesert(T);
+  if (T.ice) initIce(T);
   for (const name of T.def.events || []) if (eventOn(name)) INIT[name](T);
 }
 
@@ -514,6 +523,8 @@ export function updateEvents(dt) {
   updateMixer(T, dt);
   const ev = T.ev; if (!ev) return;
   ev.t += dt;
+  if (T.desert) desertUpdate(T, dt);
+  if (T.ice) iceUpdate(T, dt);
   if (ev.cows.length) updateCows(T, dt);
   if (ev.holes.length) updateRain(T, dt);
   if (ev.kois.length) updateKois(T, dt);

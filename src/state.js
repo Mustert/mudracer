@@ -12,8 +12,8 @@ G.selAnim = -1;
 G.selMode = 0;
 G.selCount = 3;
 G.selCup = 0;
-// track events (cows, rain, flood, koi, dump trucks, train, tyres), one switch each; G.fx turns all of them on or off for a race (diff.js)
-G.events = { kuehe: true, regen: true, flut: true, kois: true, kipper: true, zug: true, reifen: true };
+// track events (cows, rain, flood, koi, dump trucks, train, tyres, sandstorm, frost, penguins), one switch each; G.fx turns all of them on or off for a race (diff.js)
+G.events = { kuehe: true, regen: true, flut: true, kois: true, kipper: true, zug: true, reifen: true, sandsturm: true, frost: true, pinguine: true };
 G.fx = true;
 G.cup = null;
 G.mode = 'single';

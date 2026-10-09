@@ -1,6 +1,8 @@
 import { HALF, TAU, WH, WW, angDiff, clamp, hash, hex, mk, outlineImg, rng, toCanvas, vnoise } from './core.js';
 import { nearestIdx, paintSite, siteRing, siteYards } from './bau.js';
 import { paintRing, ringTerrain } from './ringmap.js';
+import { desertTerrain, paintDesert } from './desertmap.js';
+import { iceTerrain, paintIce } from './icemap.js';
 
 // ---------- tracks (800x450 world) ----------
 
@@ -27,6 +29,14 @@ export const THEMES = {
   ring: { ...MUDDY, mud: ['#1a1a1f', '#141418', '#24242b'], mudEdge: '#0a0a0c', mudHi: '#5a4f86', mudP: ['#101014', '#1c1c22', '#2a2a32', '#0a0a0c'], mudTrail: ['#0e0e10', '#18181c'], goo: 'oil',
     grass: ['#5fb04a', '#55a242', '#6bbd55'], grassEdge: '#4a9038', tuft: '#478a35', track: ['#55565b', '#4d4e53', '#5d5e63'], trackEdge: '#ecece6', trail: '#2f6d24', roadTrail: '#232327',
     decor: 'ring', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 12, asphalt: 1.08, lights: true },
+  // desert: a sand road, the dunes beside it make the cars sandy (dusty), sand drifts instead of mud (goo 'sand': beige cars), an oasis washes
+  wueste: { ...MUDDY, mud: ['#d9b77a', '#cfa96a', '#e3c48c'], mudEdge: '#b8915a', mudHi: '#f6e2b4', mudP: ['#e3c48c', '#d4b074', '#c49a5c', '#f0d9a6'], mudTrail: ['#b8915a', '#c9a46c'], goo: 'sand',
+    water: ['#1f8c9c', '#2fa6b2', '#46bcc2', '#8ee0dc'], shore: ['#c2a266', '#b39256'], grass: ['#ecca8a', '#e2bf7c', '#f4d69e'], grassEdge: '#d6b070', tuft: '#c9a060',
+    track: ['#d9b57c', '#cfaa6e', '#e2c08a'], trackEdge: '#b8915a', trail: '#c69a5c', roadTrail: '#9c7444', trailA: .16, decor: 'wueste', tree: 'none', treeCol: ['#2a8a3c', '#3cac4e', '#74d66c', '#18521f'], trees: 0, dusty: true },
+  // ice: packed snow road, deep snow instead of mud (goo 'snow': white cars), sheet ice (terrain 12), a hot spring washes
+  eis: { ...MUDDY, mud: ['#f2f6fb', '#e4ecf5', '#fdfeff'], mudEdge: '#c2d2e2', mudHi: '#ffffff', mudP: ['#ffffff', '#eef4fa', '#dce8f2', '#f8fbff'], mudTrail: ['#c8d6e4', '#dde7f0'], goo: 'snow',
+    water: ['#2c98a6', '#3eb2ba', '#5ac8c8', '#a4ece8'], shore: ['#9aa8b6', '#8b99a8'], grass: ['#eef4fa', '#e3ebf4', '#f9fbfe'], grassEdge: '#cfdbe8', tuft: '#d6e0ec',
+    track: ['#dfe6ef', '#d3dbe6', '#e9eef5'], trackEdge: '#aebdcd', trail: '#c4d0dc', roadTrail: '#8f9eb0', trailA: .14, decor: 'eis', tree: 'pine', treeCol: ['#2b5a45', '#e6f0f6', '#ffffff', '#163428'], trees: 30, treeGap: 22 },
   bahn:   { ...MUDDY, grass: ['#8fbf4a', '#7fae3f', '#9fcc5a'], grassEdge: '#6f9a33', tuft: '#5f8a2a', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#4f7a22', decor: 'farm', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 18 },
 };
 
@@ -115,6 +125,38 @@ const TRACK_DEFS = [
     // scenery: stands [x, y, w, h, facing down 1 / up -1], team trucks [x, y, team], helipad, big screen, a flag mown into the grass, camera towers
     stands: [[405, 6, 168, 32, 1], [358, 410, 136, 36, -1]], heli: [530, 118], screen: [450, 58], flag: [575, 275, 56, 40], towers: [[268, 210], [380, 388]],
     trucks: [[230, 158, 0], [248, 158, 1], [266, 158, 2], [284, 158, 3], [302, 158, 4], [230, 262, 5], [248, 262, 6], [266, 262, 7], [284, 262, 1]] },
+  // The desert: a sand road with three dunes to jump over, through the big pyramid (a tunnel, dark inside), a slalom between cacti, the gorge
+  // (jump over it from the rocky ramp or take the slow swinging rope bridge beside it), quicksand, the oasis at the start (see desertmap.js, desert.js).
+  // oasis = [x, y, rx, ry] (the shallow rim reaches the road and washes, the deep middle is deep water); dunes = x of the crests on the top straight;
+  // pyramid = [x, y, half size]; cacti = [x, y] on the road; canyon = x, half width, from y, ramp lip x and its y range, rope bridge y (middle) and half width;
+  // quick = quicksand [x, y, r]; drifts = where the sandstorm blows sand onto the road [x, y, r]; minis = small pyramids [x, y, half size]; sphinx = [x, y]
+  { name: 'WUESTE', seed: 8, theme: 'wueste', song: 'desert', events: ['sandsturm'], wall: [], wash: null, desert: true,
+    poly: [[70, 330, 0], [70, 70, 55], [680, 70, 45], [680, 390, 55], [70, 390, 55]],
+    mud: [], water: [], ponds: [],
+    oasis: [140, 208, 52, 38], dunes: [178, 268, 358], pyramid: [660, 86, 80],
+    cacti: [[667, 206], [694, 242], [666, 278], [693, 312]],
+    canyon: { x: 566, hw: 20, y0: 286, lip: 592, lane: [358, 396], bridge: 414, bh: 14 },
+    quick: [[452, 378, 21], [352, 402, 18], [262, 372, 22]],
+    drifts: [[70, 160, 13], [300, 66, 14], [520, 76, 13], [684, 350, 13], [150, 392, 14]],
+    minis: [[300, 230, 30], [452, 250, 22]], sphinx: [758, 300] },
+  // The ice: the ski jump (a boost pad on the run-up, about a second in the air), the bob run with springy walls and a hairpin, deep snow and the
+  // penguins on the way down, the frozen lake (the road goes round it, the short cut across the thin ice cracks and breaks), a wooden bridge over
+  // the glacier stream, then the icy run down to the line past the hot spring (see icemap.js, ice.js).
+  // jump = lip [x, y] and the speed upwards; landing = the icy slope after it; slopes = [x0, y0, x1, y1 of the stretch, push]; bob = road from [x, y] to [x, y];
+  // lake = [x, y, rx, ry]; spring = hot spring [x, y, rx, ry]; frost = the three corners that freeze from lap 2; colony = penguins [x, y];
+  // avalanche = from [x, y] to [x, y]; village = the ski hut [x, y]
+  { name: 'EIS', seed: 9, theme: 'eis', song: 'ice', events: ['frost', 'pinguine'], wall: [], wash: null, ice: true,
+    poly: [[70, 330, 0], [70, 55, 50], [745, 55, 50], [745, 165, 50], [600, 165, 40], [600, 395, 45], [520, 395, 40], [520, 262, 40], [280, 262, 40], [280, 395, 40], [70, 395, 50]],
+    mud: [], water: [], ponds: [],
+    boostAt: [[168, 55]], jump: [246, 55, 190], landing: [[392, 55], [540, 55]],
+    slopes: [[392, 55, 540, 55, 46], [262, 395, 70, 345, 34]],
+    bob: [[592, 55], [612, 165]],
+    mudAt: [[586, 248, 20, 13], [616, 318, 22, 12], [440, 262, 18, 12]],
+    lake: [400, 372, 118, 72],
+    rivers: [[[196, 112, 7], [208, 180, 9], [216, 250, 10], [219, 320, 11], [218, 400, 12], [220, 462, 12]]],
+    spring: [148, 428, 26, 15],
+    frost: [[70, 55], [600, 395], [70, 395]], colony: [700, 300], avalanche: [[790, 214], [548, 252]],
+    village: [150, 300] },
   { name: 'REGENBOGEN', seed: 3, theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 }
 ];
@@ -238,8 +280,11 @@ function buildTrack(def, ti) {
     stamp(x, y, tan[i], nrm[i], 14, 12, 3);
     return { i, x, y, px: x + nrm[i].x * s * 18, py: y + nrm[i].y * s * 18 };
   });
-  (def.boost || []).forEach(t => band(Math.floor(t * N) % N, 16, (x, y, a, c) => { if (Math.abs(c) < 18) ter[y * WW + x] = 4; }));
+  const boosts = (def.boost || []).concat((def.boostAt || []).map(([x, y]) => nearestIdx(path, x, y) / N));
+  boosts.forEach(t => band(Math.floor(t * N) % N, 16, (x, y, a, c) => { if (Math.abs(c) < 18) ter[y * WW + x] = 4; }));
   const ringT = def.ring ? ringTerrain({ def, ter, dist, near, path, tan, nrm, N, stampAt }) : null;
+  const deserT = def.desert ? desertTerrain({ def, ter, dist, near, path, tan, nrm, N, deep }) : null;
+  const iceT = def.ice ? iceTerrain({ def, ter, dist, near, path, tan, nrm, N, deep }) : null;
   // railway: a straight vertical line through the whole world
   let rail = null;
   if (def.rail) {
@@ -370,7 +415,7 @@ function buildTrack(def, ti) {
     }
   }
   // boost pads: yellow chevrons pointing the way
-  (def.boost || []).forEach(t => band(Math.floor(t * N) % N, 16, (x, y, a, c) => {
+  boosts.forEach(t => band(Math.floor(t * N) % N, 16, (x, y, a, c) => {
     const ac = Math.abs(c); if (ac >= 18) return;
     set(y * WW + x, ac > 16 || Math.abs(a) > 14.5 ? [255, 255, 255] : ((a + ac * .8 + 100) % 10) < 4 ? [255, 230, 109] : [74, 36, 140]);
   }));
@@ -423,7 +468,7 @@ function buildTrack(def, ti) {
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (WW - 10) | 0), y = 5 + (r() * (WH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
   const rock = (x, y) => { const L2 = hex('#c4c4bb'), M2 = hex('#9a9a92'), D2 = hex('#6e6e68'); for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(x + dx, y + dy, dy === 0 ? L2 : dy === 2 ? D2 : M2); };
   const trees = [], critters = [], C = th.treeCol.map(hex);
-  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null;
+  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null, desert = null, ice = null;
   const darken = (x, y, rad, ox, oy) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + ox, yy = y + dy + oy; if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue; const i = (yy * WW + xx) * 4; d[i] *= .78; d[i + 1] *= .76; d[i + 2] *= .76; } };
   const flowers = (n, PET) => scatter(n, 2, (x, y) => { const pc = PET[(r() * PET.length) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, pc === PET[1] ? hex('#ff8c1a') : hex('#ffe14d')); });
   // wall look: fence + hay (meadow), log pile + pines (forest), beach bar + surfboards + palms (beach), asteroid belt (space), railway barrier (train)
@@ -779,6 +824,10 @@ function buildTrack(def, ti) {
     lights = site.lights; mixer = site.mixer; hose = site.hose; tight = site.tight;
   } else if (th.decor === 'ring') {
     ring = paintRing({ def, d, set, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, th, RT: ringT });
+  } else if (th.decor === 'wueste') {
+    desert = paintDesert({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT: deserT });
+  } else if (th.decor === 'eis') {
+    ice = paintIce({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, isBridge, sd, th, r, critters, darken, RT: iceT });
   } else if (th.decor === 'farm') {
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
@@ -856,7 +905,9 @@ function buildTrack(def, ti) {
   mg.imageSmoothingEnabled = true; mg.drawImage(base, 0, 0, 120, 68); mg.drawImage(top, 0, 0, 120, 68);
   const wp = path[wi];
   return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: trees.concat(walls), critters, windmill, shoreY, boat: { x: 60 }, base, top, mini, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring };
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice,
+    // Cup 3 building blocks (see trackfx.js): ramps to jump from, stretches that push the cars, where a second way runs beside the road
+    jumps: (desert || ice || {}).jumps || [], pushes: (desert || ice || {}).pushes || [], alt: (desert || ice || {}).alt || null };
 }
 
 

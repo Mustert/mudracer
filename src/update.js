@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { SFX, ambience, engineSound } from './audio.js';
-import { HALF, VH, VW, WW, clamp, pick } from './core.js';
+import { HALF, VH, VW, WW, angDiff, clamp, pick } from './core.js';
 import { DIFFS } from './diff.js';
 import { coarse, held, honkBtn, touchBox } from './input.js';
 import { honk, setState } from './menus.js';
@@ -9,6 +9,9 @@ import { CONF, RAINBOW, WATC, addP, drop, mudBurst, splash } from './particles.j
 import { aiTarget, physics, score, updateProgress } from './physics.js';
 import { eventCollisions, updateEvents } from './events.js';
 import { ringCountdown, ringGo, ringGround, ringStackHit, ringUpdate } from './ring.js';
+import { airborne, groundFx, pushCars } from './trackfx.js';
+import { desertGround } from './desert.js';
+import { iceGround, iceStuck } from './ice.js';
 import { moveCamera } from './race.js';
 import { updateJumps } from './run.js';
 import { cam } from './state.js';
@@ -26,7 +29,9 @@ function sinkCar(c) {
 
 
 function respawn(c) {
-  const N = G.T.N, i = ((c.safe || c.idx) - 5 + N) % N, p = G.T.path[i], tg = G.T.tan[i];
+  // the gorge sets you down behind it, a hole in the ice on the shore next to it (respawnI)
+  const N = G.T.N, i = c.respawnI != null ? c.respawnI : ((c.safe || c.idx) - 5 + N) % N, p = G.T.path[i], tg = G.T.tan[i];
+  c.respawnI = null; c.fallKind = null; c.sink = 0;
   c.x = p.x; c.y = p.y; c.ang = Math.atan2(tg.y, tg.x); c.vx = c.vy = 0; c.idx = i; c.surf = 1; c.ghost = 2.4;
   splash(c.x, c.y, 8);
 }
@@ -37,11 +42,13 @@ function updateRace(dt) {
   updateTrain(dt);
   updateEvents(dt);
   ringUpdate(dt);
+  if (G.T.jumps) pushCars(dt);
   for (const c of G.cars) {
     let thr = 0, tgt = null;
     c.brake = false;
     c.ghost = Math.max(0, c.ghost - dt);
     if (c.fall > 0) { c.fall -= dt; c.vx = c.vy = 0; if (c.fall <= 0) respawn(c); continue; } // sunk in the water, comes back on the track in a moment
+    if (c.snowT > 0) { iceStuck(c, dt, racing); continue; } // snowed in by the avalanche: stuck until shaken free
     if (c.stun > 0) {
       c.stun -= dt; c.ang += c.spin * dt; c.spin *= Math.exp(-2 * dt); if (c.stun <= 0) c.stun = 0;
     } else if (racing && !(G.T.run && c.finished)) {
@@ -61,6 +68,8 @@ function updateRace(dt) {
       } else {
         tgt = aiTarget(c);
         thr = c.finished ? .45 : c.skill;
+        // on sheet ice they lift off before a bend
+        if (c.surf === 12 && tgt !== null && Math.abs(angDiff(tgt, c.ang)) > .35) thr *= .55;
         // opponents far ahead lift off a little, ones far behind push harder; never above full throttle (on SCHWER less of both)
         if (c.ai && !c.finished && !G.player.finished) {
           const D = DIFFS[G.raceDiff || 0], diff = score(c) - score(G.player);
@@ -75,7 +84,7 @@ function updateRace(dt) {
       }
     }
     physics(c, dt, thr, tgt);
-    if (G.T.run) updateJumps(c, dt);
+    if (G.T.run) updateJumps(c, dt); else if (G.T.jumps && (G.T.jumps.length || c.z > 0)) airborne(c, dt);
     c.honk = Math.max(0, c.honk - dt);
     c.boost = Math.max(0, c.boost - dt);
     if (c.ai && racing && Math.random() < dt * .03) honk(c);
@@ -91,7 +100,11 @@ function updateRace(dt) {
         const nx = dx / d, ny = dy / d, vn = c.vx * nx + c.vy * ny;
         c.x = o.x + nx * mn; c.y = o.y + ny * mn;
         // tyre walls are soft: the car bounces back less (and a hard hit knocks tyres loose)
-        if (vn < 0) { const k = o.stack ? 1.25 : 1.6; c.vx -= k * vn * nx; c.vy -= k * vn * ny; if (!c.ai && -vn > 35) SFX.bump(); if (o.stack && -vn > 70) ringStackHit(c, o, -vn); }
+        // the springy walls of the bob run: the car glides along them without losing speed
+        if (vn < 0) {
+          const k = o.bob ? 1.08 : o.stack ? 1.25 : 1.6; c.vx -= k * vn * nx; c.vy -= k * vn * ny;
+          if (!c.ai && -vn > 35) (o.bob ? SFX.bonk : SFX.bump)(); if (o.stack && -vn > 70) ringStackHit(c, o, -vn);
+        }
       }
     }
     if (c.x < 10) { c.x = 10; c.vx = Math.abs(c.vx) * .4; } if (c.x > G.T.W - 10) { c.x = G.T.W - 10; c.vx = -Math.abs(c.vx) * .4; }
@@ -142,6 +155,9 @@ function updateRace(dt) {
       if (prev !== 8 && sp > 30 && !c.ai) SFX.squeal();
     }
     if (G.T.ring) ringGround(c, j, sp, dt);
+    if (G.T.jumps) { groundFx(c, sp, dt); if (c.fall > 0) continue; }
+    if (G.T.desert) desertGround(c, sp, dt);
+    if (G.T.ice) { iceGround(c, j, sp, dt); if (c.fall > 0) continue; }
     if (c.boost > 0 && Math.random() < dt * 40) drop(c.x - Math.cos(c.ang) * 14, c.y - Math.sin(c.ang) * 14, c.ang + Math.PI + (Math.random() - .5) * .8, 20 + Math.random() * 30, 20 + Math.random() * 30, pick(RAINBOW), .8, false);
     if (c.washing) {
       c.dirt = Math.max(0, c.dirt - 3 * dt);
@@ -161,9 +177,9 @@ function updateRace(dt) {
         else if (c.surf === 3 || c.surf === 5) col = null;
         else if (c.mudTrail > 0) { col = th.mudTrail[1]; a = .45 * c.mudTrail / 1.6; }
         else if (c.wetTrail > 0 && c.surf === 1) { col = '#7a5a3a'; a = .3 * c.wetTrail; }
-        else if (c.surf === 0) { col = th.trail; a = .1; }
+        else if (c.surf === 0) { col = th.trail; a = th.trailA ? .2 : .1; }
         else if (c.surf === 7) { col = '#8a7d5a'; a = .25; }
-        else if (!th.rainbow) { col = th.roadTrail || '#8a6440'; a = .09; }
+        else if (!th.rainbow) { col = th.roadTrail || '#8a6440'; a = th.trailA || .09; }
         if (col) { tctx.globalAlpha = a; tctx.fillStyle = col; tctx.fillRect(Math.round(wx) - 1, Math.round(wy) - 1, 2, 2); }
       }
       tctx.globalAlpha = 1;

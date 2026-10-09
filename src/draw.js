@@ -5,6 +5,8 @@ import { drawEventsAbove, drawEventsGround, drawNight, drawRain } from './events
 import { crossingAhead, placeOf } from './physics.js';
 import { drawRunFinish, drawRunHud } from './run.js';
 import { drawRingAbove, drawRingGround, drawStartLights, ghostUp } from './ring.js';
+import { drawDesertAbove, drawDesertGround, drawStorm } from './desert.js';
+import { drawIceAbove, drawIceGround, drawIceSky } from './ice.js';
 import { cam } from './state.js';
 import { GHOST_DT, fmtDelta, fmtTime, ghostAt } from './timetrial.js';
 import { trail } from './tracks.js';
@@ -45,10 +47,21 @@ export function rotIndex(a) { return (((Math.round(a / TAU * ROTS) % ROTS) + ROT
 
 
 function drawCar(c) {
-  if (c.fall > 0) return; // under water
-  if (c.ghost > 0 && ((G.time * 12) | 0) % 2) return; // blinks after coming back out of the water
   const F = c.cem && c.Fc ? c.Fc : c.F, rot = rotIndex(c.ang), lv = Math.min(5, Math.round(c.dirt * 5));
+  if (c.fall > 0) {
+    // into the gorge or under the quicksand: the car gets smaller for a moment, then it is gone (under water it is gone at once)
+    const t = c.fallKind ? (c.fallT0 - c.fall) / .55 : 1; if (t >= 1) return;
+    const S = Math.max(4, Math.round(SS * (c.fallKind === 'sand' ? .55 : 1) * (1 - t * .85)));
+    ctx.globalAlpha = 1 - t * .6; ctx.drawImage(F.frames[lv][rot], Math.round(c.fx0 - S / 2), Math.round(c.fy0 - S / 2 + (c.fallKind === 'abyss' ? t * 10 : 0)), S, S); ctx.globalAlpha = 1;
+    return;
+  }
+  if (c.ghost > 0 && ((G.time * 12) | 0) % 2) return; // blinks after coming back out of the water
   const x = Math.round(c.x) - SS / 2, y = Math.round(c.y) - SS / 2 - c.bump;
+  if (c.sink > 0) { // sinking in quicksand: smaller, sand trickles round it
+    const S = Math.round(SS * (1 - .45 * Math.min(1, c.sink / 1.2)));
+    ctx.drawImage(F.frames[lv][rot], Math.round(c.x - S / 2), Math.round(c.y - S / 2), S, S);
+    return;
+  }
   if (c.z > 0) { // in the air: bigger car, shadow left on the ground
     const S = Math.round(SS * (1 + c.z / 90)), lift = Math.round(c.z * .6);
     ctx.globalAlpha = .3 * Math.max(.2, 1 - c.z / 80); ctx.drawImage(F.shadow[rot], x + 3 + Math.round(c.z * .3), y + 4 + Math.round(c.z * .4)); ctx.globalAlpha = 1;
@@ -57,6 +70,10 @@ function drawCar(c) {
   }
   ctx.globalAlpha = .3; ctx.drawImage(F.shadow[rot], x + 3, y + 4 + c.bump); ctx.globalAlpha = 1;
   ctx.drawImage(F.frames[lv][rot], x, y);
+  if (c.snowT > 0) { // snowed in: a white lump of snow over the car
+    const X = Math.round(c.x), Y = Math.round(c.y), w = Math.round(Math.sin(G.time * 40) * (c.shake || 0) * 2);
+    ell(X + w, Y, 16, 12, '#9fb2c6'); ell(X + w, Y - 1, 15, 11, '#eef4fa'); ell(X - 4 + w, Y - 4, 8, 5, '#ffffff');
+  }
 }
 
 
@@ -288,7 +305,7 @@ function ghostPose() {
 export function drawRace() {
   // the camera shakes after a jump (Matschfahrt) and a little on the kerbs (race circuit)
   const P = G.player, kerb = P && P.kerb && G.state === 'race' && Math.hypot(P.vx, P.vy) > 40 ? Math.round(Math.random()) : 0;
-  const shake = G.T.run && G.run && G.run.shake > 0 ? Math.round((Math.random() - .5) * 20 * G.run.shake) : kerb;
+  const shake = G.T.run && G.run && G.run.shake > 0 ? Math.round((Math.random() - .5) * 20 * G.run.shake) : G.jumpShake > 0 ? Math.round((Math.random() - .5) * 14 * G.jumpShake) : kerb;
   const cx = clamp(Math.round(cam.x) + shake, 0, G.T.W - VW), cy = clamp(Math.round(cam.y) + shake, 0, G.T.H - VH), R = G.T.rail;
   ctx.drawImage(G.T.base, cx, cy, VW, VH, 0, 0, VW, VH);
   ctx.drawImage(trail, cx, cy, VW, VH, 0, 0, VW, VH);
@@ -301,6 +318,8 @@ export function drawRace() {
   drawEventsGround();
   const sp = G.T.starPix; if (sp.length) for (let j = 0; j < 30; j++) { const p = sp[(hash(j, Math.floor(G.time * 2), 91) * sp.length) | 0], x = p % G.T.W, y = (p / G.T.W) | 0; ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3); }
   if (G.T.ring) drawRingGround();
+  if (G.T.desert) drawDesertGround();
+  if (G.T.ice) drawIceGround();
   const gh = ghostPose(), drawGhost = () => {
     const F = carSet(G.player.def, G.T.th.goo);
     ctx.globalAlpha = .45; ctx.drawImage(F.frames[Math.round(gh.dirt * 5)][rotIndex(gh.ang)], Math.round(gh.x) - SS / 2, Math.round(gh.y) - SS / 2); ctx.globalAlpha = 1;
@@ -330,7 +349,9 @@ export function drawRace() {
   if ((G.state === 'countdown' || (G.state === 'race' && G.stateTime < 2.5)) && ((G.time * 4) | 0) % 2 === 0) {
     text('DU', px, py - 40, 8, '#ffd23f', 'center'); tri(px, py - 24, 'down', 5, '#ffd23f');
   }
-  if (!G.T.run && G.state === 'race' && G.player.off > HALF + 20 && !G.player.pit && !(G.T.stone && G.T.stone[clamp(py, 0, G.T.H - 1) * G.T.W + clamp(px, 0, G.T.W - 1)]) && !(G.player.fall > 0) && ((G.time * 3) | 0) % 2 === 0) {
+  // no arrow back to the road on the stepping stones and on a second way (rope bridge, frozen lake)
+  const pj = clamp(py, 0, G.T.H - 1) * G.T.W + clamp(px, 0, G.T.W - 1);
+  if (!G.T.run && G.state === 'race' && G.player.off > HALF + 20 && !G.player.pit && !(G.T.stone && G.T.stone[pj]) && !(G.T.alt && G.T.alt[pj]) && !(G.player.fall > 0) && !(G.player.z > 0) && ((G.time * 3) | 0) % 2 === 0) {
     const p = G.T.path[(G.player.idx + 14) % G.T.N], a = Math.atan2(p.y - G.player.y, p.x - G.player.x);
     ctx.save(); ctx.translate(px + Math.cos(a) * 28, py + Math.sin(a) * 28); ctx.rotate(a);
     ctx.fillStyle = '#1b120c'; ctx.beginPath(); ctx.moveTo(11, 0); ctx.lineTo(-7, -10); ctx.lineTo(-3, 0); ctx.lineTo(-7, 10); ctx.closePath(); ctx.fill();
@@ -339,9 +360,13 @@ export function drawRace() {
   }
   drawEventsAbove();
   if (G.T.ring) drawRingAbove();
+  if (G.T.desert) drawDesertAbove(cx, cy);
+  if (G.T.ice) drawIceAbove();
   ctx.restore();
   if (dark) { drawNight(cx, cy); ctx.save(); ctx.translate(-cx, -cy); drawFlyers(); ctx.restore(); }
   drawRain();
+  if (G.T.desert) drawStorm(cx, cy);
+  if (G.T.ice) drawIceSky(cx, cy);
   drawMood();
   // HUD
   if (G.T.run) drawRunHud(); else {

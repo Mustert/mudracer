@@ -243,6 +243,68 @@ const SONGS = {
       if (bi === 7 && s === 0) M.zoom(t, 16 * M.sd);
       if (bi === 7 && s >= 12) M.snare(t, .35 + (s - 12) * .15);
     } },
+  // desert: D phrygian dominant (D Eb F# G A Bb C), a snake charmer's reed flute, oud, darbuka in the maqsum rhythm, finger cymbals, a drone on D and A.
+  // In the sandstorm a layer of wind comes in (its filter opens with the gusts) and the darbuka plays twice as fast.
+  desert: { bpm: 132, swing: 0,
+    chords: { D: { r: 38, n: [62, 66, 69] }, Eb: { r: 39, n: [63, 67, 70] }, Gm: { r: 43, n: [62, 67, 70] }, Cm: { r: 36, n: [60, 63, 67] }, Bb: { r: 34, n: [62, 65, 70] } },
+    A: { ch: ['D', 'Eb', 'D', 'D', 'Gm', 'Eb', 'D', 'D'], mel: mel([
+      'D5:0:2 D#5:2:2 F#5:4:4 G5:8:2 F#5:10:2 D#5:12:2 D5:14:2', 'D#5:0:3 G5:3:1 A#5:4:4 A5:8:2 G5:10:2 F#5:12:4',
+      'A5:0:2 A#5:2:2 A5:4:2 G5:6:2 F#5:8:4 D#5:12:2 F#5:14:2', 'D5:0:12 A4:12:4',
+      'G5:0:2 A5:2:2 A#5:4:4 D6:8:4 C6:12:2 A#5:14:2', 'A#5:0:2 G5:2:2 D#5:4:4 G5:8:2 A#5:10:2 C6:12:4',
+      'D6:0:3 C6:3:1 A#5:4:2 A5:6:2 G5:8:2 F#5:10:2 D#5:12:2 F#5:14:2', 'D5:0:8 A5:8:2 F#5:10:2 D5:12:4']) },
+    B: { ch: ['Cm', 'Bb', 'Eb', 'D', 'Gm', 'Cm', 'Eb', 'D'], mel: mel([
+      'C6:0:2 D#6:2:2 G6:4:4 F#6:8:1 G6:9:1 F#6:10:2 D#6:12:2 C6:14:2', 'D6:0:2 F6:2:2 A#6:4:4 A6:8:1 A#6:9:1 A6:10:2 F6:12:2 D6:14:2',
+      'D#6:0:2 G6:2:2 A#6:4:2 G6:6:2 D#6:8:2 C6:10:2 A#5:12:4', 'A5:0:1 A#5:1:1 A5:2:1 G5:3:1 F#5:4:4 D#5:8:2 F#5:10:2 D5:12:4',
+      'G5:0:1 A5:1:1 A#5:2:1 C6:3:1 D6:4:4 D#6:8:2 D6:10:2 C6:12:4', 'C6:0:1 D6:1:1 D#6:2:1 F#6:3:1 G6:4:4 F#6:8:2 D#6:10:2 C6:12:4',
+      'A#5:0:2 D#6:2:2 G6:4:4 F#6:8:2 D#6:10:2 D6:12:2 C6:14:2', 'D6:0:6 A5:6:2 F#5:8:2 D#5:10:2 D5:12:4']) },
+    lead(M, m, t, d, sec) { M.reed(hz(m), t, d); if (sec === 'B') M.oud(hz(m - 12), t, .5); },
+    band(M, s, t, bi, ch, sec) {
+      const ev = G.T && G.T.ev, storm = !!(ev && ev.storm && G.T.desert);
+      // the oud: arpeggios in part A, tremolo on the root in part B
+      if (sec === 'A' ? s % 4 === 2 : s % 2 === 0) M.oud(hz((sec === 'A' ? ch.n[(s >> 2) % ch.n.length] : ch.n[0]) - 12), t, sec === 'A' ? .8 : .45);
+      if (s === 0) { M.drone(hz(38), t, 16 * M.sd); M.drone(hz(45), t, 16 * M.sd, .5); }
+      if (sec === 'B' && s % 4 === 0) M.bassWarm(hz(ch.r - 12 + [0, 7, 12, 7][s >> 2]), t, 3 * M.sd);
+      // maqsum: dum, tek, -, tek, dum, -, tek, - (in eighths); in the storm twice as fast
+      if (s === 0 || s === 8) M.dum(t); if (s === 2 || s === 6 || s === 12) M.tek(t, 1);
+      if (storm && (s % 2 === 1)) M.tek(t, .5); if (storm && s === 10) M.dum(t, .7);
+      if (s % 4 === 0) M.zill(t);
+      if (storm && s === 0) M.sandWind(t, 16 * M.sd, ev.gust || 0, ev.warn || 0);
+      if (s === 0 && bi === 0 && sec === 'A') M.crash(t);
+    } },
+  // ice: B minor, it builds up with the race. Lap 1: celesta, a glockenspiel echo, soft strings, sleigh bells, hardly any bass (it feels like 84 BPM).
+  // From the frost (lap 2): a fast breakbeat, a deep sub bass and quick arpeggios ("ice crystals"). Last lap: a choir, strings in sixteenths, timpani.
+  // Before every avalanche a low timpani roll.
+  ice: { bpm: 168, swing: 0,
+    chords: { Hm: { r: 35, n: [59, 62, 66] }, G: { r: 43, n: [59, 62, 67] }, D: { r: 38, n: [62, 66, 69] }, A: { r: 45, n: [61, 64, 69] }, Em: { r: 40, n: [59, 64, 67] },
+      'F#7': { r: 42, n: [61, 64, 66, 70] }, 'F#m': { r: 42, n: [61, 66, 69] } },
+    A: { ch: ['Hm', 'G', 'D', 'A', 'Em', 'G', 'F#7', 'Hm'], mel: mel([
+      'F#6:0:8 D6:8:8', 'B5:0:8 D6:8:4 G6:12:4', 'F#6:0:12 E6:12:4', 'C#6:0:8 E6:8:8',
+      'G6:0:8 E6:8:4 B5:12:4', 'D6:0:8 B5:8:8', 'A#5:0:8 C#6:8:4 E6:12:4', 'D6:0:12 B5:12:4']) },
+    B: { ch: ['G', 'A', 'F#m', 'Hm', 'Em', 'F#7', 'Hm', 'Hm'], mel: mel([
+      'G6:0:4 F#6:4:4 D6:8:8', 'E6:0:4 F#6:4:4 A6:8:8', 'C#7:0:8 A6:8:4 F#6:12:4', 'B6:0:12 F#6:12:4',
+      'G6:0:4 B6:4:4 E7:8:8', 'D7:0:4 C#7:4:4 A#6:8:8', 'B6:0:8 D7:8:4 F#7:12:4', 'B6:0:16']) },
+    lead(M, m, t, d) { M.celesta(hz(m - 12), t, d); M.glock(hz(m), t + 3 * M.sd, .5); },
+    band(M, s, t, bi, ch, sec) {
+      const P = G.player, lap = P && !G.T.run && (G.state === 'race' || G.state === 'finish') ? P.lap : 1, frost = lap >= 2, last = lap >= LAPS, ev = G.T && G.T.ev;
+      if (s === 0) M.pad(ch.n, t, 16 * M.sd, frost ? .012 : .018);
+      if (s % 2 === 0) M.sleigh(t, s % 4 === 0 ? 1 : .55);
+      if (!frost) { if (s === 0 && bi % 2 === 0) M.bassWarm(hz(ch.r - 12), t, 14 * M.sd); }
+      else {
+        // drum and bass: kick on 1 and the "and" of 3, snare on 2 and 4, sixteenth hats; a sub bass under it; ice crystal arpeggios
+        if (s === 0 || s === 10) M.kick(t); if (s === 4 || s === 12) M.snare(t, .8); if (s === 7 && bi % 2) M.snare(t, .3);
+        M.hat(t, s === 14, s % 2 ? .45 : .8);
+        if (s === 0 || s === 10) M.sub(hz(ch.r - 12), t, 6 * M.sd);
+        M.arp(hz(ch.n[(s * 2) % ch.n.length] + 24), t);
+      }
+      if (last) {
+        if (s === 0) M.choir(ch.n, t, 16 * M.sd);
+        M.strings(hz(ch.n[[0, 1, 2, 1][s & 3] % ch.n.length]), t);
+        if (s === 0 || (s === 8 && bi % 2)) M.timp(hz(ch.r), t);
+      }
+      // a low roll before the avalanche
+      if (ev && ev.aval && ev.aval.warn) M.timp(hz(ch.r - 12), t, .45);
+      if (s === 0 && bi === 0) M.crash(t);
+    } },
 };
 
 
@@ -350,4 +412,23 @@ export const Music = {
     voice({ at: t + dur * .6, type: 'sawtooth', f: 400, to: 140, a: .01, d: dur * .4, vol: .045, lp: 1500, dest: this.out });
     noise({ at: t, type: 'bandpass', f: 400, to: 3200, a: dur * .6, d: dur * .3, vol: .05, q: 2, dest: this.out });
   },
+  // desert: a nasal reed flute with a slide into the note and vibrato, the oud (a pluck that bends up a little), the darbuka (dum, tek),
+  // finger cymbals, a drone, the wind of the storm
+  reed(f, t, d) {
+    synth({ at: t, f, parts: [['sawtooth', 1, .5], ['square', 1, .3, 6], ['sine', 2, .2]], a: .04, hold: Math.max(0, d * .8), d: .12, vol: .1, ft: 'bandpass', lp: Math.min(5000, f * 2.6), q: 2.2, vib: [6.2, .014], dest: this.leadBus });
+    voice({ at: t, type: 'sine', f: f * .94, to: f, toAt: .05, a: .01, d: .06, vol: .03, dest: this.leadBus });
+  },
+  oud(f, t, v = 1) { voice({ at: t, type: 'sawtooth', f: f * .97, to: f, toAt: .03, a: .002, d: .32, vol: .07 * v, lp: 2200, dest: this.out }); voice({ at: t, type: 'triangle', f: f * 2, a: .002, d: .12, vol: .03 * v, dest: this.out }); },
+  dum(t, v = 1) { voice({ at: t, f: 120, to: 70, a: .002, d: .28, vol: .42 * v, dest: this.out }); noise({ at: t, type: 'lowpass', f: 500, d: .06, vol: .12 * v, dest: this.out }); },
+  tek(t, v = 1) { noise({ at: t, type: 'bandpass', f: 3200, q: 1.6, a: .001, d: .045, vol: .16 * v, dest: this.out }); voice({ at: t, type: 'triangle', f: 760, d: .03, vol: .05 * v, dest: this.out }); },
+  zill(t) { voice({ at: t, f: 3150, a: .001, d: .35, vol: .025, dest: this.out }); voice({ at: t, f: 4720, a: .001, d: .22, vol: .015, dest: this.out }); },
+  drone(f, t, d, v = 1) { synth({ at: t, f, parts: [['sawtooth', 1, .5], ['sawtooth', 1.003, .5]], a: .3, hold: Math.max(0, d - .5), d: .3, vol: .045 * v, lp: 700, dest: this.out }); },
+  sandWind(t, d, gust, warn) { noise({ at: t, type: 'bandpass', f: 500 + 1400 * Math.max(gust, warn * .6), to: 600 + 2200 * Math.max(gust, warn), a: d * .4, hold: d * .3, d: d * .3, vol: .07 + .06 * gust, q: 1.3, dest: this.out }); },
+  // ice: celesta, sleigh bells, a sub bass, a choir singing "aah", strings in sixteenths, timpani
+  celesta(f, t, d) { synth({ at: t, f, parts: [['sine', 1, 1], ['sine', 4, .25], ['triangle', 2, .15]], a: .002, d: Math.max(.6, d), vol: .07, dest: this.leadBus }); },
+  sleigh(t, v = 1) { for (let i = 0; i < 3; i++) noise({ at: t + i * .012, type: 'bandpass', f: 7000 + i * 900, q: 4, a: .001, d: .05, vol: .03 * v, dest: this.out }); },
+  sub(f, t, d) { synth({ at: t, f, parts: [['sine', 1, 1], ['triangle', 1, .2]], a: .01, hold: d * .6, d: d * .4, vol: .3, dest: this.out }); },
+  choir(ns, t, d) { for (const m of ns) synth({ at: t, f: hz(m), parts: [['sawtooth', 1, .5, -6], ['sawtooth', 1, .5, 6]], a: .4, hold: Math.max(0, d - .8), d: .5, vol: .02, ft: 'bandpass', lp: 800, q: 1.4, vib: [5, .006], dest: this.out }); },
+  strings(f, t) { synth({ at: t, f, parts: [['sawtooth', 1, .6], ['sawtooth', 1, .4, 9]], a: .01, hold: this.sd * .5, d: .06, vol: .03, lp: 2400, dest: this.out }); },
+  timp(f, t, v = 1) { voice({ at: t, f: f * 1.02, to: f, a: .003, d: .6, vol: .3 * v, dest: this.out }); noise({ at: t, type: 'lowpass', f: 300, d: .15, vol: .1 * v, dest: this.out }); },
 };
