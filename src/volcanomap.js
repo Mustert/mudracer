@@ -35,7 +35,7 @@ function polyPts(P) {
 }
 
 // a narrow road of its own (the long way round the crust, the short cut over the geyser): every pixel within `half` of the line
-function stampLine(P, half, fn) {
+export function stampLine(P, half, fn) {
   const pts = polyPts(P), R = Math.ceil(half + 1), D = new Map();
   for (const p of pts) for (let y = Math.max(0, Math.floor(p.y - R)); y <= Math.min(WH - 1, p.y + R); y++) for (let x = Math.max(0, Math.floor(p.x - R)); x <= Math.min(WW - 1, p.x + R); x++) {
     const dd = Math.hypot(x + .5 - p.x, y + .5 - p.y); if (dd >= half) continue;

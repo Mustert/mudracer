@@ -13,6 +13,7 @@ import { airborne, groundFx, pushCars } from './trackfx.js';
 import { desertGround } from './desert.js';
 import { iceGround, iceStuck } from './ice.js';
 import { volcanoGround } from './volcano.js';
+import { jungleGround, jungleStuck } from './jungle.js';
 import { moveCamera } from './race.js';
 import { updateJumps } from './run.js';
 import { cam } from './state.js';
@@ -57,6 +58,7 @@ function updateRace(dt) {
     c.ghost = Math.max(0, c.ghost - dt);
     if (c.fall > 0) { c.fall -= dt; c.vx = c.vy = 0; if (c.fall <= 0) respawn(c); continue; } // sunk in the water, comes back on the track in a moment
     if (c.snowT > 0) { iceStuck(c, dt, racing); continue; } // snowed in by the avalanche: stuck until shaken free
+    if (c.flatT > 0) { jungleStuck(c, dt); continue; } // flattened by the stone ball: a moment flat on the ground
     if (c.stun > 0) {
       c.stun -= dt; c.ang += c.spin * dt; c.spin *= Math.exp(-2 * dt); if (c.stun <= 0) c.stun = 0;
     } else if (racing && !(G.T.run && c.finished)) {
@@ -171,6 +173,7 @@ function updateRace(dt) {
     if (G.T.desert) desertGround(c, sp, dt);
     if (G.T.ice) { iceGround(c, j, sp, dt); if (c.fall > 0) continue; }
     if (G.T.volcano) volcanoGround(c, sp, dt);
+    if (G.T.jungle) jungleGround(c, sp, dt);
     if (c.boost > 0 && Math.random() < dt * 40) drop(c.x - Math.cos(c.ang) * 14, c.y - Math.sin(c.ang) * 14, c.ang + Math.PI + (Math.random() - .5) * .8, 20 + Math.random() * 30, 20 + Math.random() * 30, pick(RAINBOW), .8, false);
     if (c.washing) {
       c.dirt = Math.max(0, c.dirt - 3 * dt);

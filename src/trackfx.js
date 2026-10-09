@@ -9,7 +9,8 @@ import { cam } from './state.js';
 // 15 lava, 16 the crust over the lava stream (lava while the stream breaks through, see volcano.js).
 // A jump: { x, y (the lip), tx, ty (the way you jump), lo, hi (how far to the side of the lip, along the normal -ty, tx), vz (speed upwards),
 // push (optional: at least this speed forwards, the geyser), off (true: it does not throw you right now) }.
-// A push: { i0, i1 (stretch of the centre line, in driving order), f (push along the road, px/s²) }. ----------
+// A push: { i0, i1 (stretch of the centre line, in driving order), f (push along the road, px/s²) }, or a current in a box
+// { rect: [x0, y0, x1, y1], fx, fy } (the ford in the jungle). ----------
 
 const GRAV = 380;
 G.jumpShake = 0;
@@ -34,7 +35,7 @@ export function airborne(c, dt) {
     const fwd = c.vx * J.tx + c.vy * J.ty; if (fwd < (J.push ? 5 : 30)) return;
     c.z = .01; c.vz = J.vz; c.air = 0;
     if (J.push && fwd < J.push) { c.vx += J.tx * (J.push - fwd); c.vy += J.ty * (J.push - fwd); }
-    const v = loud(c, c.x, c.y); if (v > .02) (J.vz > 120 ? SFX.bigJump : SFX.jump)(v);
+    const v = loud(c, c.x, c.y); if (v > .02) (J.sfx ? SFX[J.sfx] : J.vz > 120 ? SFX.bigJump : SFX.jump)(v);
   });
 }
 
@@ -61,7 +62,7 @@ export function fallCar(c, kind, at) {
   c.vx = c.vy = 0; c.boost = 0; c.stun = 0; c.z = 0; c.sink = 0;
   c.respawnI = at === undefined ? null : at;
   // quicksand leaves the car beige, lava sooty (and it comes back hot)
-  if (kind === 'sand' || kind === 'lava') c.dirt = 1;
+  if (kind === 'sand' || kind === 'lava') c.dirt = 1; // (in the jungle the deep swamp makes it green)
   if (kind === 'lava') { c.heat = .6; c.burnT = 1.3; for (let i = 0; i < 16; i++) addP({ t: 'smoke', x: c.x + (Math.random() - .5) * 16, y: c.y + (Math.random() - .5) * 12, vx: (Math.random() - .5) * 20, vy: -15 - Math.random() * 20, life: 1.2, ml: 1.2 }); }
   const v = loud(c, c.x, c.y); if (v > .02) ({ abyss: SFX.fall, sand: SFX.sink, lava: SFX.burn }[kind] || SFX.sink)(v);
 }
@@ -75,6 +76,7 @@ export function pushCars(dt) {
     c.slope = 0;
     for (const P of T.pushes) {
       if (c.z > 0) continue;
+      if (P.rect) { const [x0, y0, x1, y1] = P.rect; if (c.x >= x0 && c.x <= x1 && c.y >= y0 && c.y <= y1) { c.vx += P.fx * dt; c.vy += P.fy * dt; } continue; }
       const inside = P.i0 <= P.i1 ? c.idx >= P.i0 && c.idx <= P.i1 : c.idx >= P.i0 || c.idx <= P.i1;
       if (!inside) continue;
       const tg = T.tan[c.idx]; c.vx += tg.x * P.f * dt; c.vy += tg.y * P.f * dt; c.slope = P.f / 300;
@@ -88,15 +90,17 @@ export function groundFx(c, sp, dt) {
   const T = G.T;
   if (c.surf === 11) { fallCar(c, 'abyss', T.desert && T.desert.landI); return; }
   if (c.surf === 15 || (c.surf === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }
-  if (c.surf === 10 && T.desert) {
-    const q = T.desert.quick.find(([x, y, r]) => Math.hypot(c.x - x, c.y - y) < r + 2);
+  // quicksand (desert) and deep swamp (jungle, it pulls less and swallows more slowly)
+  const Q = T.desert || T.jungle;
+  if (c.surf === 10 && Q) {
+    const q = Q.quick.find(([x, y, r]) => Math.hypot(c.x - x, c.y - y) < r + 2), soft = !!T.jungle;
     if (q) {
-      const dx = q[0] - c.x, dy = q[1] - c.y, d = Math.hypot(dx, dy) || 1, pull = 150 / c.def.mud;
+      const dx = q[0] - c.x, dy = q[1] - c.y, d = Math.hypot(dx, dy) || 1, pull = (soft ? 85 : 150) / c.def.mud;
       c.vx += dx / d * pull * dt; c.vy += dy / d * pull * dt;
       c.dirt = Math.min(1, c.dirt + .5 * dt);
-      if (d < q[2] * .38) c.sink = (c.sink || 0) + dt; else c.sink = Math.max(0, (c.sink || 0) - dt * .8);
-      if (Math.random() < dt * 25) addP({ t: 'd', x: c.x + (Math.random() - .5) * 18, y: c.y + (Math.random() - .5) * 12, z: 4, vx: 0, vy: 0, vz: 10, col: ['#e3c48c', '#c49a5c', '#f0d9a6'][(Math.random() * 3) | 0], s: 1, life: .6, ml: .6 });
-      if (!c.ai && Math.random() < dt * 3) SFX.trickle();
+      if (d < q[2] * .38) c.sink = (c.sink || 0) + dt * (soft ? .7 : 1); else c.sink = Math.max(0, (c.sink || 0) - dt * .8);
+      if (Math.random() < dt * 25) addP({ t: 'd', x: c.x + (Math.random() - .5) * 18, y: c.y + (Math.random() - .5) * 12, z: 4, vx: 0, vy: 0, vz: 10, col: (soft ? ['#4a6a2a', '#6a8a3a', '#3a5420'] : ['#e3c48c', '#c49a5c', '#f0d9a6'])[(Math.random() * 3) | 0], s: 1, life: .6, ml: .6 });
+      if (!c.ai && Math.random() < dt * 3) (soft ? SFX.blubb : SFX.trickle)();
       if (c.sink > 1.2) fallCar(c, 'sand');
       return;
     }

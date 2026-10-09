@@ -9,6 +9,7 @@ import { drawMarshals, drawTyres, initReifen, tyreCollisions, updateReifen } fro
 import { desertCollisions, desertUpdate, initDesert, initStorm } from './desert.js';
 import { iceCollisions, iceUpdate, initFrost, initIce, initPenguins } from './ice.js';
 import { initEruption, initVolcano, volcanoUpdate } from './volcano.js';
+import { initCrocs, initJungle, initTrees, jungleCollisions, jungleUpdate } from './jungle.js';
 
 // ---------- track events: the map changes while you race ----------
 // Wiese: a herd of cows grazes on and next to the track (they are obstacles, they moo).
@@ -21,6 +22,8 @@ import { initEruption, initVolcano, volcanoUpdate } from './volcano.js';
 // Wueste: from lap 2 a sandstorm (little to see, wind from the right, sand drifts, tumbleweeds; see desert.js).
 // Eis: from lap 2 frost (three corners freeze, avalanches); penguins cross the road (see ice.js).
 // Vulkan: from lap 2 the eruption (lava bombs, a lava tongue over the serpentine, ash rain; see volcano.js).
+// Dschungel: rotten trees fall across the road and stay there as little ramps, from lap 2 a stone ball rolls through the temple;
+// crocodiles snap in the ford and the swamp (see jungle.js).
 // Every event can be switched off with G.events (see state.js); G.fx switches all of them for the current race (difficulty,
 // options, kids mode, see diff.js). A track is changed in place; setupEvents/resetTrackEvents put it back.
 
@@ -107,6 +110,7 @@ export function eventCollisions() {
   tyreCollisions();
   if (G.T.desert) desertCollisions();
   if (G.T.ice) iceCollisions();
+  if (G.T.jungle) jungleCollisions();
   const ev = G.T.ev; if (!ev) return;
   for (const w of ev.cows) for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
@@ -508,7 +512,7 @@ function drawLights(T) {
 
 // ======================================================= setup, update, drawing
 
-const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {}, sandsturm: initStorm, frost: initFrost, pinguine: initPenguins, ausbruch: initEruption };
+const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {}, sandsturm: initStorm, frost: initFrost, pinguine: initPenguins, ausbruch: initEruption, baeume: initTrees, kroko: initCrocs };
 
 export function setupEvents(T) {
   resetAllEvents();
@@ -517,6 +521,7 @@ export function setupEvents(T) {
   if (T.desert) initDesert(T);
   if (T.ice) initIce(T);
   if (T.volcano) initVolcano(T);
+  if (T.jungle) initJungle(T);
   for (const name of T.def.events || []) if (eventOn(name)) INIT[name](T);
 }
 
@@ -529,6 +534,7 @@ export function updateEvents(dt) {
   if (T.desert) desertUpdate(T, dt);
   if (T.ice) iceUpdate(T, dt);
   if (T.volcano) volcanoUpdate(T, dt);
+  if (T.jungle) jungleUpdate(T, dt);
   if (ev.cows.length) updateCows(T, dt);
   if (ev.holes.length) updateRain(T, dt);
   if (ev.kois.length) updateKois(T, dt);

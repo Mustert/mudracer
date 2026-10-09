@@ -7,6 +7,7 @@ import { ringPitTarget } from './ring.js';
 import { desertLane } from './desert.js';
 import { iceTarget } from './ice.js';
 import { volcanoLane, volcanoTarget } from './volcano.js';
+import { jungleLane, jungleTarget } from './jungle.js';
 import { setState } from './menus.js';
 import { finishRace } from './race.js';
 import { ttLap } from './timetrial.js';
@@ -73,7 +74,7 @@ export function aiTarget(c) {
   // race circuit: a dirty car goes through the pit lane (the box washes it)
   // ice: the short cut across the frozen lake
   // volcano: the long way round the crust when the stream is about to break through
-  const pt = (G.T.ring && ringPitTarget(c)) || (G.T.ice && iceTarget(c)) || (G.T.volcano && volcanoTarget(c));
+  const pt = (G.T.ring && ringPitTarget(c)) || (G.T.ice && iceTarget(c)) || (G.T.volcano && volcanoTarget(c)) || (G.T.jungle && jungleTarget(c));
   if (pt) { const [tx, ty] = steerAround(c, pt[0], pt[1]); return Math.atan2(ty - c.y, tx - c.x); }
   const sp = Math.hypot(c.vx, c.vy), i = (c.idx + 18 + Math.round(sp / 8)) % G.T.N, p = G.T.path[i], n = G.T.nrm[i];
   // on the flooded pier there is no room to wander across the track
@@ -94,6 +95,8 @@ export function aiTarget(c) {
   if (G.T.desert) lane = desertLane(c, i, lane);
   // volcano: the open bridge of the ford, away from the lava on the serpentine and from where a lava bomb will land
   if (G.T.volcano) lane = volcanoLane(c, i, lane);
+  // jungle: the liana or the log bridge at the gorge, the boardwalk in the swamp, away from fallen trees when slow
+  if (G.T.jungle) lane = jungleLane(c, i, lane);
   const [tx, ty] = steerAround(c, p.x + n.x * lane, p.y + n.y * lane);
   return Math.atan2(ty - c.y, tx - c.x);
 }

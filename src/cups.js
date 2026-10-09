@@ -12,7 +12,7 @@ export const CUPS = [
   { n: 1, name: 'BRONZE', tracks: ['WIESE', 'WALD', 'STRAND'] },
   { n: 2, name: 'SILBER', tracks: ['ZUG', 'BAUSTELLE', 'GARTEN'] },
   { n: 3, name: 'GOLD', tracks: ['RENNSTRECKE', 'WUESTE', 'EIS'] },
-  { n: 4, name: 'PLATIN', tracks: ['VULKAN'] },
+  { n: 4, name: 'PLATIN', tracks: ['VULKAN', 'DSCHUNGEL'] },
   { n: 5, name: 'FANTASY', tracks: [] },
   { n: 6, name: 'SUPER', label: 'SUPERCUP', all: 4, unlock: () => [1, 2, 3, 4].every(n => G.cupsWon.includes(n)), need: 'GEWINNE CUP 1 BIS 4' },
   { n: 7, name: 'SUPERDUPER', label: 'SUPERDUPER', all: 5, unlock: () => G.cupsWon.includes(5), need: 'GEWINNE CUP 5 (FANTASY)' },

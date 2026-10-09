@@ -295,6 +295,33 @@ const SONGS = {
       if (s % 2 === 1) M.hat(t, false, .5);
       if (s === 0 && bi === 0) M.crash(t);
     } },
+  // jungle: E minor, 126 BPM, tribal. Bongos and congas take turns, a shaker in sixteenths, a wood block; a pan flute plays the tune, a marimba
+  // the arpeggios, a soft round bass. The jungle is part of the beat: a frog as the rimshot, birds answer the flute, crickets in the back.
+  // In the temple everything goes quiet and far away; in the last lap deep temple drums and a gong on every one.
+  jungle: { bpm: 126, swing: .06,
+    chords: { Em: { r: 40, n: [59, 64, 67] }, C: { r: 36, n: [60, 64, 67] }, D: { r: 38, n: [62, 66, 69] }, B7: { r: 35, n: [59, 63, 66, 69] }, Am: { r: 33, n: [57, 60, 64] } },
+    A: { ch: ['Em', 'C', 'D', 'Em', 'Em', 'C', 'D', 'B7'], mel: mel([
+      'E5:0:3 G5:3:1 A5:4:2 B5:6:2 D6:8:4 B5:12:4', 'C6:0:3 B5:3:1 A5:4:2 G5:6:2 E5:8:8', 'F#5:0:2 A5:2:2 D6:4:4 C6:8:2 A5:10:2 F#5:12:4', 'G5:0:4 E5:4:4 B4:8:8',
+      'E5:0:2 G5:2:2 B5:4:2 E6:6:2 D6:8:4 B5:12:4', 'G5:0:2 A5:2:2 C6:4:4 B5:8:2 A5:10:2 G5:12:4', 'A5:0:3 F#5:3:1 D5:4:4 E5:8:2 F#5:10:2 A5:12:4', 'D#6:0:4 B5:4:4 F#5:8:4 D#5:12:4']) },
+    B: { ch: ['Am', 'Em', 'C', 'D', 'Am', 'Em', 'B7', 'Em'], mel: mel([
+      'A5:0:4 C6:4:2 E6:6:2 D6:8:4 C6:12:4', 'B5:0:4 G5:4:2 E5:6:2 G5:8:4 B5:12:4', 'C6:0:2 E6:2:2 G6:4:4 E6:8:2 D6:10:2 C6:12:4', 'D6:0:4 A5:4:4 F#5:8:4 A5:12:4',
+      'E6:0:3 D6:3:1 C6:4:2 A5:6:2 C6:8:4 E6:12:4', 'G6:0:4 E6:4:4 B5:8:8', 'F#6:0:2 D#6:2:2 B5:4:4 A5:8:2 F#5:10:2 D#5:12:4', 'E6:0:12 B5:12:4']) },
+    lead(M, m, t, d) { const J = G.T && G.T.jungle, deep = J && J.inTemple; M.panflute(hz(m - 12), t, d, deep ? .45 : 1); },
+    band(M, s, t, bi, ch) {
+      const J = G.T && G.T.jungle, deep = !!(J && J.inTemple), P = G.player, last = P && !G.T.run && P.lap >= LAPS && (G.state === 'race' || G.state === 'finish');
+      if (s === 0 || s === 10) M.bassWarm(hz(ch.r - 12), t, 5 * M.sd);
+      if (deep) { if (s % 4 === 0) M.tom(70, t); return; } // in the temple: only the bass and a far drum
+      if ([0, 3, 6, 8, 11, 14].includes(s)) M.conga(s % 6 === 0 ? 180 : 260, t, s === 0 ? 1 : .7);
+      if ([2, 5, 10, 13].includes(s)) M.conga(s % 2 ? 420 : 360, t, .55);
+      M.shaker(t, s % 4 === 0 ? .6 : .3);
+      if (s === 7 || s === 15) M.rim(t);
+      if (s % 2 === 0) M.marimba(hz(ch.n[(s >> 1) % ch.n.length] + 12), t);
+      if (s === 12 && bi % 2) M.frog(t);
+      if (s === 14 && bi % 4 === 1) M.bird(t, hz(ch.n[2] + 24));
+      if (s === 0) M.crickets(t, 16 * M.sd);
+      if (last) { if (s === 0) { M.taiko(55, t, 1); M.gong(t); } if (s === 8) M.taiko(70, t, .8); }
+      else if (s === 0 && bi === 0) M.crash(t);
+    } },
   // ice: B minor, it builds up with the race. Lap 1: celesta, a glockenspiel echo, soft strings, sleigh bells, hardly any bass (it feels like 84 BPM).
   // From the frost (lap 2): a fast breakbeat, a deep sub bass and quick arpeggios ("ice crystals"). Last lap: a choir, strings in sixteenths, timpani.
   // Before every avalanche a low timpani roll.
@@ -464,5 +491,14 @@ export const Music = {
   brass(ns, t, d, v = 1) { for (const m of ns) synth({ at: t, f: hz(m), parts: [['sawtooth', 1, .6], ['sawtooth', 1, .4, 8], ['square', .5, .2]], a: .015, hold: Math.max(0, d - .04), d: .08, vol: .045 * v, lp: 2600, lpTo: 1200, dest: this.out }); },
   gtr(f, t, d, mute) { synth({ at: t, f, parts: [['sawtooth', 1, .6], ['square', 1, .5, 12], ['sawtooth', 2, .25, -7]], a: .002, hold: mute ? d * .3 : d * .8, d: mute ? .05 : .15, vol: mute ? .07 : .06, lp: mute ? 900 : 1900, q: 3, dest: this.out }); },
   gtrLead(f, t, d) { synth({ at: t, f, parts: [['sawtooth', 1, .5], ['square', 1, .4, 9], ['sawtooth', 2, .2]], a: .01, hold: Math.max(0, d - .06), d: .1, vol: .06, lp: 2800, q: 2, vib: [5.5, .008], dest: this.leadBus }); },
+  // jungle: a pan flute (breathy), a frog, a bird answering, crickets, a gong
+  panflute(f, t, d, v = 1) {
+    synth({ at: t, f, parts: [['sine', 1, 1], ['triangle', 2, .1]], a: .04, hold: Math.max(0, d * .8), d: .15, vol: .12 * v, vib: [5, .005], dest: this.leadBus });
+    noise({ at: t, type: 'bandpass', f: Math.min(8000, f * 2), q: 1.5, a: .02, hold: Math.max(0, d * .5), d: .1, vol: .03 * v, dest: this.leadBus });
+  },
+  frog(t) { voice({ at: t, type: 'square', f: 140, to: 100, a: .002, d: .06, vol: .07, lp: 700, dest: this.out }); voice({ at: t + .07, type: 'square', f: 150, to: 105, a: .002, d: .06, vol: .06, lp: 700, dest: this.out }); },
+  bird(t, f) { voice({ at: t, f, to: f * 1.5, a: .01, d: .08, vol: .04, dest: this.out }); voice({ at: t + .1, f: f * 1.2, to: f * 1.8, a: .01, d: .08, vol: .035, dest: this.out }); },
+  crickets(t, d) { for (let i = 0; i < 6; i++) noise({ at: t + i * d / 6, type: 'bandpass', f: 4500, q: 8, a: .01, d: .05, vol: .02, dest: this.out }); },
+  gong(t) { synth({ at: t, f: 98, parts: [['sine', 1, 1], ['sine', 2.7, .5], ['sine', 5.1, .25]], a: .01, d: 2.2, vol: .08, dest: this.out }); },
   timp(f, t, v = 1) { voice({ at: t, f: f * 1.02, to: f, a: .003, d: .6, vol: .3 * v, dest: this.out }); noise({ at: t, type: 'lowpass', f: 300, d: .15, vol: .1 * v, dest: this.out }); },
 };

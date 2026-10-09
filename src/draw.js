@@ -8,6 +8,7 @@ import { drawRingAbove, drawRingGround, drawStartLights, ghostUp } from './ring.
 import { drawDesertAbove, drawDesertGround, drawStorm } from './desert.js';
 import { drawIceAbove, drawIceGround, drawIceSky } from './ice.js';
 import { drawVolcanoAbove, drawVolcanoGround, drawVolcanoSky } from './volcano.js';
+import { drawJungleAbove, drawJungleGround, drawJungleSky } from './jungle.js';
 import { cam } from './state.js';
 import { GHOST_DT, fmtDelta, fmtTime, ghostAt } from './timetrial.js';
 import { trail } from './tracks.js';
@@ -61,6 +62,11 @@ function drawCar(c) {
     return;
   }
   if (c.ghost > 0 && ((G.time * 12) | 0) % 2) return; // blinks after coming back out of the water
+  if (c.flatT > 0) { // flattened by the stone ball: wide and thin for a moment
+    const s = Math.min(1, c.flatT / .3);
+    ctx.drawImage(F.frames[lv][rotIndex(c.ang)], Math.round(c.x - SS * (.5 + .25 * s)), Math.round(c.y - SS * (.5 - .3 * s)), Math.round(SS * (1 + .5 * s)), Math.round(SS * (1 - .6 * s)));
+    return;
+  }
   const x = Math.round(c.x) - SS / 2, y = Math.round(c.y) - SS / 2 - c.bump;
   if (c.sink > 0) { // sinking in quicksand: smaller, sand trickles round it
     const S = Math.round(SS * (1 - .45 * Math.min(1, c.sink / 1.2)));
@@ -326,6 +332,7 @@ export function drawRace() {
   if (G.T.desert) drawDesertGround();
   if (G.T.ice) drawIceGround();
   if (G.T.volcano) drawVolcanoGround();
+  if (G.T.jungle) drawJungleGround();
   const gh = ghostPose(), drawGhost = () => {
     const F = carSet(G.player.def, G.T.th.goo);
     ctx.globalAlpha = .45; ctx.drawImage(F.frames[Math.round(gh.dirt * 5)][rotIndex(gh.ang)], Math.round(gh.x) - SS / 2, Math.round(gh.y) - SS / 2); ctx.globalAlpha = 1;
@@ -366,12 +373,14 @@ export function drawRace() {
   if (G.T.desert) drawDesertAbove(cx, cy);
   if (G.T.ice) drawIceAbove();
   if (G.T.volcano) drawVolcanoAbove();
+  if (G.T.jungle) drawJungleAbove();
   ctx.restore();
   if (dark) { drawNight(cx, cy); ctx.save(); ctx.translate(-cx, -cy); drawFlyers(); ctx.restore(); }
   drawRain();
   if (G.T.desert) drawStorm(cx, cy);
   if (G.T.ice) drawIceSky(cx, cy);
   if (G.T.volcano) drawVolcanoSky(cx, cy);
+  if (G.T.jungle) drawJungleSky(cx, cy);
   drawMood();
   // the 1P sign floats over your car the whole race, above night, storm and snow, so you find yourself among dirty (or snowed-in) cars;
   // at the start it bounces higher

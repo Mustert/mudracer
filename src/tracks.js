@@ -4,6 +4,7 @@ import { paintRing, ringTerrain } from './ringmap.js';
 import { desertTerrain, paintDesert } from './desertmap.js';
 import { iceTerrain, paintIce } from './icemap.js';
 import { paintVolcano, volcanoTerrain } from './volcanomap.js';
+import { jungleTerrain, paintJungle } from './junglemap.js';
 
 // ---------- tracks (800x450 world) ----------
 
@@ -44,6 +45,10 @@ export const THEMES = {
   vulkan: { ...MUDDY, mud: ['#b4b0aa', '#a29e98', '#c4c0ba'], mudEdge: '#8a8680', mudHi: '#dedad4', mudP: ['#c4c0ba', '#a29e98', '#8a8680', '#dedad4'], mudTrail: ['#8a8680', '#a29e98'], goo: 'ash',
     water: ['#2a7fa8', '#3a98c2', '#58b4d8', '#9edcf0'], shore: ['#3a3634', '#2e2a28'], grass: ['#4a4442', '#423c3a', '#544e4a'], grassEdge: '#36302e', tuft: '#5a3a2a',
     track: ['#3c3a3a', '#363434', '#444242'], trackEdge: '#262424', trail: '#2a2624', roadTrail: '#8a8682', trailA: .12, decor: 'vulkan', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#140c0a'], trees: 0 },
+  // jungle: a wet earth road, swamp instead of mud (goo 'swamp': green cars), a river (deep: you fall in), dense trees everywhere
+  dschungel: { ...MUDDY, mud: ['#4e5a2a', '#424e22', '#5a6a32'], mudEdge: '#33401a', mudHi: '#8aa83a', mudP: ['#4e5a2a', '#5a6a32', '#6a8a3a', '#3a4a1e'], mudTrail: ['#33401a', '#465626'], goo: 'swamp',
+    water: ['#2a6a6a', '#2f8080', '#3c9490', '#7cc4b4'], shore: ['#4a3a22', '#3e301c'], grass: ['#2f6a2a', '#286024', '#367a30'], grassEdge: '#22501e', tuft: '#1e4a1a',
+    track: ['#7a5a36', '#6e5030', '#86643e'], trackEdge: '#4e3a22', trail: '#1e4a1a', roadTrail: '#4a3420', decor: 'dschungel', tree: 'round', treeCol: ['#1e5a24', '#2f7a2e', '#5aa83e', '#0e2e12'], trees: 46, treeGap: 22, ambient: 'butterfly', beams: true },
   bahn:   { ...MUDDY, grass: ['#8fbf4a', '#7fae3f', '#9fcc5a'], grassEdge: '#6f9a33', tuft: '#5f8a2a', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#4f7a22', decor: 'farm', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 18 },
 };
 
@@ -183,6 +188,25 @@ const TRACK_DEFS = [
     walls: [[24, 212, 205, 212], [112, 133, 300, 133], [30, 376, 268, 376], [665, 160, 665, 214], [665, 268, 665, 300]],
     ash: [[150, 255, 18, 18], [600, 95, 16, 18], [300, 410, 18, 16]],
     tongue: [[165, 170], [165, 255]] },
+  // The jungle: from the expedition camp under a canopy of leaves (you only see round your own car; under it the road forks into a fast swampy way
+  // and a dry detour), over the gorge (swing across on the liana when it is on your side, or the narrow log bridge), through the dark temple ruin
+  // (a waterfall falls into its hall), across the ford (the current pushes you towards the deep water), through the swamp on a boardwalk (see
+  // junglemap.js, jungle.js). canopy = [x0, y0, x1, y1]; detour = the dry way (points, half width); gorge = river x, half width, liana lane (y from, to),
+  // log bridge (y, half width); river = deep water as circles; temple = road from [x, y] to [x, y], hall = waterfall [x, y, r]; ford = shallow box,
+  // current, stones; boardwalk = [x from, x to, offset, half width]; quick = deep swamp [x, y, r]; trees = [x, y on the road, side, seconds, first]
+  // (event baeume); crocs = [x, y] (event kroko); camp = [x, y]; heads = stone heads [x, y]
+  { name: 'DSCHUNGEL', seed: 11, theme: 'dschungel', song: 'jungle', events: ['baeume', 'kroko'], wall: [], wash: null, jungle: true,
+    poly: [[60, 340, 0], [60, 70, 45], [720, 70, 50], [720, 400, 50], [60, 400, 45]],
+    mud: [], water: [], ponds: [],
+    mudAt: [[250, 70, 36, 30], [336, 70, 28, 30], [60, 240, 16, 20], [500, 400, 24, 30], [420, 400, 22, 30], [330, 400, 26, 30], [240, 400, 22, 30]],
+    canopy: [95, 0, 482, 200], detour: { pts: [[176, 70, 0], [206, 152, 24], [394, 152, 24], [424, 70, 0]], half: 17 },
+    gorge: { x: 562, hw: 20, lane: [40, 76], log: 89, lh: 8 },
+    river: [[[562, -12, 20], [562, 70, 20], [570, 130, 15], [582, 220, 15], [598, 300, 16], [614, 372, 20]], [[618, 436, 22], [622, 470, 24]]],
+    temple: [[720, 118], [720, 336]], hall: [720, 228, 14],
+    ford: { rect: [586, 366, 656, 434], push: 58, stones: [[602, 410, 5], [640, 424, 5]] },
+    boardwalk: [548, 168, -10, 7], quick: [[372, 424, 12], [286, 377, 11]],
+    trees: [[60, 196, -1, 17, 6], [300, 400, 1, 19, 11], [468, 400, 1, 16, 3], [720, 368, -1, 18, 14]],
+    crocs: [[612, 404], [400, 426], [250, 376]], camp: [150, 320], heads: [[776, 34], [778, 440], [22, 442]] },
   { name: 'REGENBOGEN', seed: 3, theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 }
 ];
@@ -312,6 +336,7 @@ function buildTrack(def, ti) {
   const deserT = def.desert ? desertTerrain({ def, ter, dist, near, path, tan, nrm, N, deep }) : null;
   const iceT = def.ice ? iceTerrain({ def, ter, dist, near, path, tan, nrm, N, deep }) : null;
   const volT = def.volcano ? volcanoTerrain({ def, ter, dist, near, path, tan, nrm, N, stampAt }) : null;
+  const junT = def.jungle ? jungleTerrain({ def, ter, dist, near, path, tan, nrm, N }) : null;
   // railway: a straight vertical line through the whole world
   let rail = null;
   if (def.rail) {
@@ -495,7 +520,7 @@ function buildTrack(def, ti) {
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (WW - 10) | 0), y = 5 + (r() * (WH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
   const rock = (x, y) => { const L2 = hex('#c4c4bb'), M2 = hex('#9a9a92'), D2 = hex('#6e6e68'); for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(x + dx, y + dy, dy === 0 ? L2 : dy === 2 ? D2 : M2); };
   const trees = [], critters = [], C = th.treeCol.map(hex);
-  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null, desert = null, ice = null, volcano = null;
+  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null, desert = null, ice = null, volcano = null, jungle = null;
   const darken = (x, y, rad, ox, oy) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + ox, yy = y + dy + oy; if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue; const i = (yy * WW + xx) * 4; d[i] *= .78; d[i + 1] *= .76; d[i + 2] *= .76; } };
   const flowers = (n, PET) => scatter(n, 2, (x, y) => { const pc = PET[(r() * PET.length) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, pc === PET[1] ? hex('#ff8c1a') : hex('#ffe14d')); });
   // wall look: fence + hay (meadow), log pile + pines (forest), beach bar + surfboards + palms (beach), asteroid belt (space), railway barrier (train)
@@ -857,6 +882,8 @@ function buildTrack(def, ti) {
     ice = paintIce({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, isBridge, sd, th, r, critters, darken, RT: iceT });
   } else if (th.decor === 'vulkan') {
     volcano = paintVolcano({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT: volT });
+  } else if (th.decor === 'dschungel') {
+    jungle = paintJungle({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, th, r, critters, darken, RT: junT });
   } else if (th.decor === 'farm') {
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
@@ -934,9 +961,9 @@ function buildTrack(def, ti) {
   mg.imageSmoothingEnabled = true; mg.drawImage(base, 0, 0, 120, 68); mg.drawImage(top, 0, 0, 120, 68);
   const wp = path[wi];
   return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: trees.concat(walls), critters, windmill, shoreY, boat: { x: 60 }, base, top, mini, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice, volcano,
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice, volcano, jungle,
     // Cup 3 building blocks (see trackfx.js): ramps to jump from, stretches that push the cars, where a second way runs beside the road
-    jumps: (desert || ice || volcano || {}).jumps || [], pushes: (desert || ice || volcano || {}).pushes || [], alt: (desert || ice || volcano || {}).alt || null };
+    jumps: (desert || ice || volcano || jungle || {}).jumps || [], pushes: (desert || ice || volcano || jungle || {}).pushes || [], alt: (desert || ice || volcano || jungle || {}).alt || null };
 }
 
 

@@ -176,6 +176,14 @@ export const SFX = {
     noise({ type: 'highpass', f: 3000, a: .01, hold: .3, d: .5, vol: .16 * v });
     voice({ t: .05, type: 'square', f: 520, to: 880, a: .01, hold: .08, d: .08, vol: .06 * v, lp: 2400 }); voice({ t: .25, type: 'square', f: 880, to: 600, a: .01, hold: .12, d: .15, vol: .06 * v, lp: 2400 });
   },
+  // jungle: the Tarzan yell on the liana, the stone ball (click, rolling), a tree creaking and crashing down, a crocodile snapping, parrots, "plopp"
+  tarzan: v => { [[0, 330, .32], [.3, 440, .2], [.48, 330, .2], [.66, 440, .2], [.84, 330, .4]].forEach(([t, f, d]) => voice({ t, type: 'sawtooth', f, to: f * 1.06, a: .03, hold: d * .7, d: d * .3, vol: .07 * v, bp: 1100, q: 2 })); },
+  roll: () => noise({ type: 'lowpass', f: 180, a: .05, hold: .2, d: .2, vol: .25 }),
+  creakTree: () => { voice({ type: 'sawtooth', f: 110, to: 70, a: .3, hold: .9, d: .5, vol: .06, bp: 400, q: 6 }); voice({ t: .5, type: 'sawtooth', f: 140, to: 90, a: .2, hold: .6, d: .4, vol: .05, bp: 500, q: 6 }); },
+  thud: () => { noise({ type: 'lowpass', f: 600, to: 80, a: .01, hold: .1, d: .9, vol: .6 }); voice({ f: 70, to: 32, d: .7, vol: .45 }); },
+  snap: () => { noise({ type: 'bandpass', f: 1800, q: 2, d: .05, vol: .3 }); voice({ type: 'square', f: 300, to: 120, d: .08, vol: .1, lp: 1500 }); },
+  parrot: () => { for (let i = 0; i < 3; i++) voice({ t: i * .12 + Math.random() * .05, type: 'sawtooth', f: 1400 + Math.random() * 600, to: 900, a: .01, d: .1, vol: .04, bp: 2200, q: 3 }); },
+  plopp: () => { voice({ f: 300, to: 900, a: .005, d: .12, vol: .25 }); voice({ t: .08, f: 600, to: 1200, d: .08, vol: .12 }); },
   quack: v => { for (const t of [0, .16]) voice({ t, type: 'sawtooth', f: 700, to: 420, a: .01, hold: .04, d: .09, vol: .06 * v, bp: 1200, q: 4 }); },
   rain: () => noise({ type: 'highpass', f: 4200, q: .5, a: 1.2, hold: 5.5, d: 2.5, vol: .09 }),
   thunder: () => { noise({ type: 'lowpass', f: 300, to: 70, a: .05, d: 2, vol: .45, q: .7 }); voice({ f: 62, to: 34, d: 1.6, vol: .3 }); },
