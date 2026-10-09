@@ -78,7 +78,7 @@ function updateRace(dt) {
         // stuck (against a tree or the edge, e.g. after a cow threw it there): back up for a moment, turning towards the track
         if (G.state === 'race' && !c.finished) {
           if (c.rev > 0) { c.rev -= dt; thr = -1; }
-          else if (Math.hypot(c.vx, c.vy) < 12) { c.stuckT = (c.stuckT || 0) + dt; if (c.stuckT > 1.2) { c.rev = .9; c.stuckT = 0; } }
+          else if (Math.hypot(c.vx, c.vy) < 12 && !c.pit) { c.stuckT = (c.stuckT || 0) + dt; if (c.stuckT > 1.2) { c.rev = .9; c.stuckT = 0; } }
           else c.stuckT = 0;
         }
       }
@@ -103,7 +103,7 @@ function updateRace(dt) {
         // the springy walls of the bob run: the car glides along them without losing speed
         if (vn < 0) {
           const k = o.bob ? 1.08 : o.stack ? 1.25 : 1.6; c.vx -= k * vn * nx; c.vy -= k * vn * ny;
-          if (!c.ai && -vn > 35) (o.bob ? SFX.bonk : SFX.bump)(); if (o.stack && -vn > 70) ringStackHit(c, o, -vn);
+          if (!c.ai && -vn > 35) (o.bob ? SFX.bonk : SFX.bump)(); if (o.stack && -vn > 50) ringStackHit(c, o, -vn);
         }
       }
     }
@@ -151,8 +151,11 @@ function updateRace(dt) {
       c.boost = 1.3; SFX.boost(v);
     } else if (c.surf === 8) {
       // oil (race circuit): it does not brake, but the car slides and gets black (the dirt works like mud)
-      c.dirt = Math.min(1, c.dirt + .8 * dt * (sp > 8 ? 1 : .3)); c.oilT = 1; c.mudTrail = 1.2;
-      if (prev !== 8 && sp > 30 && !c.ai) SFX.squeal();
+      c.dirt = Math.min(1, c.dirt + 1.36 * dt * (sp > 8 ? 1 : .3)); c.oilT = 1; c.mudTrail = 1;
+      // the car twitches on the oil: a jerk when it hits the patch, then it wobbles while it slides through
+      if (prev !== 8 && sp > 30) { c.ang += (Math.random() < .5 ? -1 : 1) * .35 * Math.min(1, sp / 120); mudBurst(c, 10); if (!c.ai) SFX.squeal(); }
+      c.ang += Math.sin(G.time * 9 + c.seed) * 1.8 * dt * Math.min(1, sp / 100);
+      if (sp > 20 && Math.random() < dt * 10) mudBurst(c, 1);
     }
     if (G.T.ring) ringGround(c, j, sp, dt);
     if (G.T.jumps) { groundFx(c, sp, dt); if (c.fall > 0) continue; }
@@ -219,7 +222,8 @@ function updateParticles(dt) {
     if (p.vx !== undefined) { p.x += p.vx * dt; p.y += p.vy * dt; }
     if (p.t === 'd') {
       p.vz -= 300 * dt; p.z += p.vz * dt; p.vx *= .98; p.vy *= .98;
-      if (p.z <= 0) { if (p.mud) { tctx.globalAlpha = .6; tctx.fillStyle = p.col; tctx.fillRect(p.x | 0, p.y | 0, p.s, p.s); tctx.globalAlpha = 1; } p.life = 0; }
+      // drops of mud stay on the ground (oil drops on the race circuit only faintly, black on asphalt would pile up)
+      if (p.z <= 0) { if (p.mud) { const oil = !!G.T.ring; tctx.globalAlpha = oil ? .2 : .6; tctx.fillStyle = p.col; tctx.fillRect(p.x | 0, p.y | 0, oil ? 1 : p.s, oil ? 1 : p.s); tctx.globalAlpha = 1; } p.life = 0; }
     } else if (p.t === 'conf') p.x += Math.sin(G.time * 5 + p.ph) * 14 * dt;
     else if (p.t === 'bfly' || p.t === 'ffly') { const k = p.t === 'bfly' ? 90 : 30, m = p.t === 'bfly' ? 28 : 12; p.vx = clamp(p.vx + (Math.random() - .5) * k * dt, -m, m); p.vy = clamp(p.vy + (Math.random() - .5) * k * dt, -m, m); }
     else if (p.t === 'leaf') p.vx = 14 + Math.sin(G.time * 2 + p.ph) * 22;

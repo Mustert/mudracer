@@ -25,6 +25,7 @@ function level(c, R) {
 
 export function ringUpdate(dt) {
   const R = G.T.ring; if (!R) return;
+  if (R.pit) updateCrew(R, dt);
   for (const c of G.cars) {
     c.lvl = level(c, R);
     c.rocket = Math.max(0, c.rocket - dt);
@@ -67,15 +68,35 @@ export function ringGo() {
   for (const c of G.cars) if (c.ai && Math.random() < p) c.rocket = .8;
 }
 
-// ground under a car (from update.js): kerbs rattle, gravel throws up dust and stones, the pit lane has a speed limit, the box washes
+// the middle of the box: where a car stops, and which way it points
+function boxPose(R) {
+  if (R.boxP !== undefined) return R.boxP;
+  const P = R.pit && R.pit.pts; if (!P) return (R.boxP = null);
+  const mid = (R.pit.box[0] + R.pit.box[1]) / 2;
+  let k = 1, bd = 1e9; for (let q = 1; q < P.length - 1; q++) { const d = Math.abs(P[q].y - mid); if (d < bd) { bd = d; k = q; } }
+  return (R.boxP = { x: P[k].x, y: P[k].y, ang: Math.atan2(P[k + 1].y - P[k - 1].y, P[k + 1].x - P[k - 1].x) });
+}
+
+// ground under a car (from update.js): kerbs rattle, gravel throws up dust and stones, the pit lane has a speed limit.
+// The pit stop: in the middle of the box the car stops for a moment, the crew rushes in, washes it and changes the wheels.
+const STOP = 1;
 export function ringGround(c, j, sp, dt) {
   const R = G.T.ring; if (!R) return;
   c.kerb = !!R.kerb[j]; c.oilT = Math.max(0, c.oilT - dt);
-  const pit = !!R.pitMask[j];
+  const pit = !!R.pitMask[j], B = boxPose(R);
   if (pit && !c.pit && !c.ai) { c.msg = 'BOX BOX!'; c.msgT = 1.6; SFX.radio(); }
   c.pit = pit;
-  if (c.washing && !c.boxed && pit) { c.dirt = 0; if (near(c.x, c.y) < 300) SFX.wrench(c.ai ? .35 : 1); }
-  c.boxed = c.washing && pit;
+  if (!pit) c.boxDone = false;
+  if (B && pit && !c.boxDone && Math.hypot(c.x - B.x, c.y - B.y) < 7) {
+    c.boxDone = true; c.boxT = STOP;
+    if (!c.ai) { c.msg = 'BOXENSTOPP!'; c.msgT = STOP; }
+    if (near(c.x, c.y) < 300) { SFX.wrench(c.ai ? .4 : 1); setTimeout(() => SFX.wrench(c.ai ? .3 : .8), 380); }
+  }
+  if (c.boxT > 0) {
+    c.boxT -= dt; c.x = B.x; c.y = B.y; c.ang = B.ang; c.vx = c.vy = 0; c.boost = 0;
+    c.dirt = Math.max(0, c.dirt - dt * 2);
+    if (c.boxT <= 0) { c.boxT = 0; c.dirt = 0; if (!c.ai) { c.msg = 'LOS!'; c.msgT = .9; } SFX.boost(c.ai ? .2 : .6); }
+  }
   if (c.surf === 7 && sp > 20) {
     if (Math.random() < dt * 30) addP({ t: 'dust', x: c.x - Math.cos(c.ang) * 12 + (Math.random() - .5) * 14, y: c.y - Math.sin(c.ang) * 12 + (Math.random() - .5) * 14, vx: (Math.random() - .5) * 30, vy: (Math.random() - .5) * 30, life: .8, ml: .8 });
     if (Math.random() < dt * 25) drop(c.x - Math.cos(c.ang) * 12, c.y - Math.sin(c.ang) * 12, c.ang + Math.PI + (Math.random() - .5) * 1.6, 20 + Math.random() * 50, 40 + Math.random() * 50, ['#bdae86', '#978b6a', '#dccfab'][(Math.random() * 3) | 0], 1, false);
@@ -117,8 +138,8 @@ export function initReifen(T) {
     // from the side that lies further out
     const s = Math.hypot(p.x + n.x * 40 - WW / 2, p.y + n.y * 40 - WH / 2) > Math.hypot(p.x - n.x * 40 - WW / 2, p.y - n.y * 40 - WH / 2) ? 1 : -1;
     const o = HALF + 14;
-    return { k, per, t0, sx: p.x + n.x * s * o, sy: p.y + n.y * s * o, ex: p.x - n.x * s * o, ey: p.y - n.y * s * o,
-      mx: p.x + n.x * s * (HALF + 27) - tg.x * 22, my: p.y + n.y * s * (HALF + 27) - tg.y * 22, flag: false, cyc: -1 };
+    return { k, per, t0, sx: p.x + n.x * s * o, sy: p.y + n.y * s * o, ex: p.x - n.x * s * o, ey: p.y - n.y * s * o, tx: tg.x, ty: tg.y,
+      mx: p.x + n.x * s * (HALF + 27) - tg.x * 26, my: p.y + n.y * s * (HALF + 27) - tg.y * 26, flag: false, cyc: -1, second: 0 };
   });
   snap(T, 0, 0, WW, WH); // the smeared oil changes the ground; this puts it back after the race
 }
@@ -130,16 +151,14 @@ function addTyre(ev, t) {
 
 export function updateReifen(T, dt) {
   const ev = T.ev;
+  // two tyres, one shortly after the other, bounce across the road
+  const roll = (r, off) => { const dx = r.ex - r.sx, dy = r.ey - r.sy, l = Math.hypot(dx, dy); addTyre(ev, { x: r.sx + r.tx * off, y: r.sy + r.ty * off, vx: dx / l * 105, vy: dy / l * 105 }); if (near(r.sx, r.sy) < 340) SFX.tyre(.6); };
   for (const r of ev.rollers) {
     const tn = ev.t - r.t0, ph = ((tn % r.per) + r.per) % r.per;
-    r.flag = (tn > -2.2 && ph > r.per - 2.2) || (tn >= 0 && ph < 1.3);
+    r.flag = (tn > -2.6 && ph > r.per - 2.6) || (tn >= 0 && ph < 1.6);
     const cyc = tn >= 0 ? Math.floor(tn / r.per) : -1;
-    if (cyc > r.cyc) {
-      r.cyc = cyc;
-      const dx = r.ex - r.sx, dy = r.ey - r.sy, l = Math.hypot(dx, dy);
-      addTyre(ev, { x: r.sx, y: r.sy, vx: dx / l * 92, vy: dy / l * 92 });
-      if (near(r.sx, r.sy) < 320) SFX.tyre(.5);
-    }
+    if (cyc > r.cyc) { r.cyc = cyc; roll(r, 0); r.second = .38; }
+    if (r.second > 0 && (r.second -= dt) <= 0) roll(r, 18);
   }
   for (let q = ev.tyres.length - 1; q >= 0; q--) {
     const ty = ev.tyres[q];
@@ -148,15 +167,15 @@ export function updateReifen(T, dt) {
     // a rolling tyre keeps going on the road, grass and gravel stop it
     const f = road ? (ty.roll ? .25 : 3) : t === 7 ? 4 : 1.8;
     ty.vx *= Math.exp(-f * dt); ty.vy *= Math.exp(-f * dt);
-    if (ty.roll) { ty.rot += sp * dt / 5; ty.z = Math.abs(Math.sin(ty.rot * .6)) * 2.5 * Math.min(1, sp / 60); if (sp < 14) { ty.roll = false; ty.z = 0; } }
+    if (ty.roll) { ty.rot += sp * dt / 7; ty.z = Math.abs(Math.sin(ty.rot * .45)) * 8 * Math.min(1, sp / 70); if (sp < 14) { ty.roll = false; ty.z = 0; } }
     for (const o of T.trees) {
       if (o.up || o.down) continue;
-      const dx = ty.x - o.x, dy = ty.y - o.y, d = Math.hypot(dx, dy), mn = o.r + 5;
+      const dx = ty.x - o.x, dy = ty.y - o.y, d = Math.hypot(dx, dy), mn = o.r + 7;
       if (d < mn && d > 0) { const nx = dx / d, ny = dy / d, vn = ty.vx * nx + ty.vy * ny; ty.x = o.x + nx * mn; ty.y = o.y + ny * mn; if (vn < 0) { ty.vx -= 1.4 * vn * nx; ty.vy -= 1.4 * vn * ny; } }
     }
     ty.x = clamp(ty.x, 4, WW - 4); ty.y = clamp(ty.y, 4, WH - 4);
-    ty.idle = !road && !ty.roll ? ty.idle + dt : 0;
-    if (ty.idle > 5) ev.tyres.splice(q, 1); // tyres that lie off the road are cleared away
+    ty.idle = !ty.roll ? ty.idle + dt * (road ? .4 : 1) : 0;
+    if (ty.idle > 5) ev.tyres.splice(q, 1); // tyres that lie still are cleared away (on the road after a while longer)
   }
   // from lap 2 the oil gets smeared: cars that drove through oil leave a slippery black trail for a moment
   if (G.player && G.player.lap >= 2) for (const c of G.cars) {
@@ -168,7 +187,7 @@ export function updateReifen(T, dt) {
         const x = wx + dx, y = wy + dy; if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
         const j = y * WW + x; if (T.ter[j] === 1 && !T.ring.pitMask[j]) T.ter[j] = 9;
       }
-      tctx.globalAlpha = .3 * c.oilT; tctx.fillStyle = '#0a0a0c'; tctx.fillRect(wx - 1, wy - 1, 3, 3); tctx.globalAlpha = 1;
+      tctx.globalAlpha = .16 * c.oilT; tctx.fillStyle = '#0a0a0c'; tctx.fillRect(wx - 1, wy - 1, 3, 3); tctx.globalAlpha = 1;
     }
   }
 }
@@ -178,7 +197,7 @@ export function ringStackHit(c, o, v) {
   const ev = G.T.ev; if (!ev || !ev.rollers || !eventOn('reifen') || (o.cool || 0) > G.time) return;
   o.cool = G.time + 3;
   const dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy) || 1;
-  for (let k = 0; k < (v > 110 ? 2 : 1); k++) {
+  for (let k = 0; k < (v > 100 ? 3 : 2); k++) {
     const a = Math.atan2(dy, dx) + (Math.random() - .5) * 1.2, s = 60 + v * .35;
     addTyre(ev, { x: o.x + dx / d * 6, y: o.y + dy / d * 6, vx: Math.cos(a) * s, vy: Math.sin(a) * s, owner: c, ownT: 1.2 });
   }
@@ -190,7 +209,7 @@ export function tyreCollisions() {
   const ev = G.T.ev; if (!ev || !ev.tyres || !ev.tyres.length) return;
   for (const ty of ev.tyres) for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0 || c.ghost > 0 || c.lvl === 1) continue;
-    const dx = c.x - ty.x, dy = c.y - ty.y, d = Math.hypot(dx, dy), mn = 14;
+    const dx = c.x - ty.x, dy = c.y - ty.y, d = Math.hypot(dx, dy), mn = 16;
     if (d >= mn || d === 0) continue;
     const nx = dx / d, ny = dy / d, tsp = Math.hypot(ty.vx, ty.vy), mine = ty.owner === c && ty.ownT > 0;
     if (ty.roll && tsp > 45 && !c.stun && ty.hitT <= 0 && !mine) {
@@ -214,17 +233,19 @@ export function drawTyres(ev) {
   for (const ty of ev.tyres) {
     const x = Math.round(ty.x), y = Math.round(ty.y);
     if (x < cam.x - 20 || x > cam.x + VW + 20 || y < cam.y - 20 || y > cam.y + VH + 20) continue;
-    ctx.globalAlpha = .3; R1(x - 4, y + 3, 9, 3, '#000'); ctx.globalAlpha = 1;
+    // the shadow stays on the ground and shrinks while the tyre is up in the air
+    const sw = Math.max(7, 15 - Math.round(ty.z));
+    ctx.globalAlpha = .35; R1(x - (sw >> 1), y + 4, sw, 4, '#000'); ctx.globalAlpha = 1;
     if (ty.roll) {
-      // standing on its edge, seen from above: a short dark bar along the way it rolls, the tread runs round
+      // standing on its edge, seen from above: a dark bar along the way it rolls (a white racing band on the side), the tread runs round
       const a = Math.atan2(ty.vy, ty.vx), yy = y - Math.round(ty.z);
       ctx.save(); ctx.translate(x, yy); ctx.rotate(a);
-      R1(-6, -3, 12, 6, '#0c0c0e'); R1(-5, -2, 10, 4, '#26262a');
-      for (let k = 0; k < 4; k++) R1(-5 + ((Math.floor(ty.rot * 3) + k * 3) % 10), -2, 1, 4, '#4a4a50');
-      R1(-5, -1, 10, 1, '#f2f2ee');
+      R1(-9, -5, 18, 10, '#0c0c0e'); R1(-8, -4, 16, 8, '#26262a');
+      for (let k = 0; k < 5; k++) R1(-8 + ((Math.floor(ty.rot * 4) + k * 3) % 16), -4, 1, 8, '#4a4a50');
+      R1(-8, -2, 16, 1, '#f2f2ee'); R1(-8, 1, 16, 1, '#ffd23f');
       ctx.restore();
     } else {
-      disc(x, y, 5, '#0c0c0e'); disc(x, y, 4, '#232327'); disc(x, y, 2, '#8a8d94'); R1(x - 1, y - 1, 2, 2, '#c9ccd2');
+      disc(x, y, 7, '#0c0c0e'); disc(x, y, 6, '#26262a'); disc(x, y, 4, '#ffd23f'); disc(x, y, 3, '#5a5d64'); R1(x - 1, y - 1, 2, 2, '#c9ccd2');
     }
   }
 }
@@ -233,11 +254,15 @@ export function drawTyres(ev) {
 export function drawMarshals(ev) {
   for (const r of ev.rollers) {
     const x = Math.round(r.mx), y = Math.round(r.my); if (near(x, y) > 320) continue;
-    R1(x - 3, y - 2, 6, 7, '#1b120c'); R1(x - 2, y - 1, 4, 5, '#f07a1a'); R1(x - 2, y - 5, 4, 4, '#1b120c'); R1(x - 1, y - 4, 2, 2, '#f2c9a0');
+    // the marshal post: a little box with an amber lamp that flashes while the flag is out
+    const on = r.flag && ((G.time * 5) | 0) % 2;
+    R1(x - 14, y - 4, 9, 9, '#1b120c'); R1(x - 13, y - 3, 7, 7, '#e6e1d2'); R1(x - 12, y - 2, 5, 3, on ? '#ffd23f' : '#7a5a1a');
+    if (on) { ctx.globalAlpha = .4; disc(x - 10, y - 1, 9, '#ffd23f'); ctx.globalAlpha = 1; }
+    R1(x - 4, y - 3, 8, 10, '#1b120c'); R1(x - 3, y - 2, 6, 8, '#f07a1a'); R1(x - 3, y + 1, 6, 1, '#ffffff'); R1(x - 3, y - 8, 6, 6, '#1b120c'); R1(x - 2, y - 7, 4, 4, '#f2c9a0');
     if (r.flag) {
-      const w = ((G.time * 8) | 0) % 2, fx = x + 3, fy = y - 9 - w;
-      R1(fx, fy, 1, 10, '#5a3a1c'); R1(fx + 1, fy, 7, 5, '#1b120c'); R1(fx + 1, fy + 1, 6 - w, 3, '#ffd23f');
-      if (((G.time * 4) | 0) % 2) { ctx.globalAlpha = .35; disc(fx + 4, fy + 2, 6, '#ffd23f'); ctx.globalAlpha = 1; }
+      // the yellow flag, big and waving
+      const w = ((G.time * 8) | 0) % 2, fx = x + 4, fy = y - 16 - w;
+      R1(fx, fy, 2, 16, '#5a3a1c'); R1(fx + 2, fy, 13, 9, '#1b120c'); R1(fx + 2, fy + 1, 12 - w * 2, 7, '#ffd23f'); R1(fx + 2, fy + 1, 12 - w * 2, 1, '#fff08a');
     }
   }
 }
@@ -261,18 +286,60 @@ export function drawRingGround() {
     R1(S.x, S.y, S.w, S.h, ((G.time * 2) | 0) % 2 ? '#1f3a6b' : '#20242c');
     text('P' + (G.player.finished ? G.player.place : placeOf(G.player)), S.x + S.w / 2 + 1, S.y + 7, 8, '#ffd23f', 'center', null);
   }
-  if (!R.pit) return;
-  const [b0, b1] = R.pit.box, busy = G.cars.find(c => c.pit && c.washing), lane = R.pit.pts.find(q => q.y > b0 && q.y < b1), cx = lane ? lane.x : 128;
-  for (let m = 0; m < 3; m++) {
-    const y = b0 + 6 + m * 14, x = cx + R.pit.half + 4 + (busy ? -3 : 0), bob = busy ? ((G.time * 10 + m) | 0) % 2 : 0;
-    R1(x - 3, y - 3 - bob, 6, 7, '#1b120c'); R1(x - 2, y - 2 - bob, 4, 5, '#d83a2c'); R1(x - 2, y - 2 - bob, 4, 1, '#ffffff'); R1(x - 1, y - 5 - bob, 3, 3, '#f2f2ee');
-    if (busy && Math.random() < .5) addP({ t: 'd', x: x - 3, y: y - 1, z: 6, vx: (busy.x - x) * 2 + (Math.random() - .5) * 20, vy: (busy.y - y) * 2 + (Math.random() - .5) * 20, vz: 30, col: WATC[(Math.random() * 4) | 0], s: 1, life: .5, ml: .5 });
+}
+
+// ======================================================= the pit crew
+// Six mechanics wait in a row in front of the garage. When a car comes into the box they run to it: the lollipop man in front of it
+// (red sign = stay, green = go), four with wheel guns at the wheels, one with the hose who washes the car. f/l: place ahead / to the side of the car.
+const CREW = [{ r: 'lolli', f: 27, l: 0 }, { r: 'gun', f: 11, l: -16 }, { r: 'gun', f: 11, l: 16 }, { r: 'gun', f: -11, l: -16 }, { r: 'gun', f: -11, l: 16 }, { r: 'hose', f: 0, l: 27 }];
+
+function updateCrew(R, dt) {
+  const B = boxPose(R); if (!B) return;
+  // side: towards the garages
+  const fx = Math.cos(B.ang), fy = Math.sin(B.ang), nx = -fy, ny = fx, side = R.pit.garage && (R.pit.garage[0] - B.x) * nx < 0 ? -1 : 1;
+  if (!R.crew) R.crew = CREW.map((m, k) => { const hf = -25 + k * 10, hl = (R.pit.half + 9) * side; return { ...m, k, l: m.l * (m.r === 'hose' ? side : 1), hx: B.x + fx * hf + nx * hl, hy: B.y + fy * hf + ny * hl, x: B.x + fx * hf + nx * hl, y: B.y + fy * hf + ny * hl, run: 0 }; });
+  const held = G.cars.find(c => c.boxT > 0), coming = held || G.cars.find(c => c.pit && !c.boxDone && Math.hypot(c.x - B.x, c.y - B.y) < 80);
+  R.crewCar = held || null;
+  for (const m of R.crew) {
+    const tx = coming ? B.x + fx * m.f + nx * m.l : m.hx, ty = coming ? B.y + fy * m.f + ny * m.l : m.hy, ox = m.x, oy = m.y;
+    m.x += (tx - m.x) * Math.min(1, dt * 11); m.y += (ty - m.y) * Math.min(1, dt * 11);
+    m.run = Math.hypot(m.x - ox, m.y - oy) / dt > 15;
+    if (!held) continue;
+    // at work: the wheel guns smoke and spark, the hose sprays water onto the car
+    if (m.r === 'gun' && Math.random() < dt * 14) { addP({ t: 'smoke', x: m.x + (held.x - m.x) * .4, y: m.y + (held.y - m.y) * .4, vx: (Math.random() - .5) * 16, vy: -10 - Math.random() * 10, life: .5, ml: .5 }); if (Math.random() < .4) addP({ t: 'd', x: m.x + (held.x - m.x) * .5, y: m.y + (held.y - m.y) * .5, z: 4, vx: (Math.random() - .5) * 60, vy: (Math.random() - .5) * 60, vz: 40, col: '#ffd23f', s: 1, life: .3, ml: .3 }); }
+    if (m.r === 'hose') for (let q = 0; q < 2; q++) addP({ t: 'd', x: m.x, y: m.y - 4, z: 6, vx: (held.x - m.x) * 2.4 + (Math.random() - .5) * 30, vy: (held.y - m.y) * 2.4 + (Math.random() - .5) * 30, vz: 25, col: WATC[(Math.random() * 4) | 0], s: Math.random() < .3 ? 2 : 1, life: .45, ml: .45 });
+  }
+}
+
+function drawCrew(R) {
+  if (!R.crew) return;
+  const B = boxPose(R), c = R.crewCar;
+  // the hose: from the garage to the man who holds it
+  const h = R.crew.find(m => m.r === 'hose');
+  if (h && near(h.x, h.y) < 320) { ctx.fillStyle = '#2f6fd8'; const n = 12; for (let q = 0; q <= n; q++) { const t = q / n, sag = Math.sin(t * Math.PI) * 4; ctx.fillRect(Math.round(h.hx + (h.x - h.hx) * t + 3), Math.round(h.hy + (h.y - h.hy) * t + sag), 2, 2); } }
+  for (const m of [...R.crew].sort((a, b) => a.y - b.y)) {
+    if (near(m.x, m.y) > 320) continue;
+    const x = Math.round(m.x), y = Math.round(m.y), step = m.run ? ((G.time * 14 + m.k) | 0) % 2 : 0, bob = !m.run && !c ? ((G.time * 2 + m.k * .7) | 0) % 2 : 0;
+    // a little mechanic seen from the front: red overalls with a white stripe, white helmet with a dark visor
+    ctx.globalAlpha = .3; R1(x - 4, y + 4, 9, 3, '#000'); ctx.globalAlpha = 1;
+    R1(x - 3, y + 1, 3, 5 - step, '#1b120c'); R1(x + 1, y + 1, 3, 4 + step, '#1b120c');
+    R1(x - 4, y - 6 - bob, 9, 9, '#1b120c'); R1(x - 3, y - 5 - bob, 7, 7, '#d83a2c'); R1(x - 3, y - 2 - bob, 7, 1, '#ffffff'); R1(x - 2, y + 1 - bob, 2, 2, '#9a1f16'); R1(x + 1, y + 1 - bob, 2, 2, '#9a1f16');
+    R1(x - 3, y - 12 - bob, 7, 7, '#1b120c'); R1(x - 2, y - 11 - bob, 5, 5, '#f2f2ee'); R1(x - 2, y - 9 - bob, 5, 2, '#20242c'); R1(x - 2, y - 11 - bob, 5, 1, '#d83a2c');
+    // tools
+    if (m.r === 'gun' && c) { const ax = Math.sign(c.x - m.x) || 1, ay = Math.sign(c.y - m.y); R1(x + (ax > 0 ? 4 : -7), y - 3 + ay, 4, 3, '#1b120c'); R1(x + (ax > 0 ? 5 : -6), y - 2 + ay, 2, 1, '#8d939d'); }
+    if (m.r === 'lolli') {
+      const up = !!c, sx = x + 5, sy = y - (up ? 18 : 8), col = !c ? '#8d939d' : c.boxT < .3 ? '#3fd35a' : '#ff2d2d';
+      R1(sx, sy + 4, 1, up ? 14 : 6, '#5a3a1c'); disc(sx, sy, 5, '#1b120c'); disc(sx, sy, 4, col); R1(sx - 2, sy, 5, 1, '#ffffff');
+    }
+    if (m.r === 'hose' && c) R1(x - 6, y - 3, 4, 2, '#2f6fd8');
+    if (!c && !m.run && m.k === 3 && ((G.time * 3) | 0) % 2) R1(x + 4, y - 10, 2, 5, '#d83a2c'); // one of them waves
   }
 }
 
 // above the cars: the start gantry with its lamps, slipstream streaks, messages over your car, a sign at the pit lane
 export function drawRingAbove() {
   const R = G.T.ring; if (!R) return;
+  drawCrew(R);
   const p = G.T.path[0], n = G.T.nrm[0], lit = G.state === 'countdown' ? Math.min(5, Math.floor(G.stateTime / .5)) : 0;
   const ax = p.x - n.x * (HALF + 9), ay = p.y - n.y * (HALF + 9), L = 2 * (HALF + 9);
   ctx.globalAlpha = .25; for (let s = 0; s <= L; s += 1) R1(Math.round(ax + n.x * s) + 6, Math.round(ay + n.y * s) + 8, 2, 2, '#000'); ctx.globalAlpha = 1;

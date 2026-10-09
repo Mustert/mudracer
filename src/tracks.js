@@ -28,7 +28,9 @@ export const THEMES = {
   // race circuit: asphalt (faster than earth roads), oil instead of mud (it makes the cars black: goo 'oil'), start lights instead of 3-2-1
   ring: { ...MUDDY, mud: ['#1a1a1f', '#141418', '#24242b'], mudEdge: '#0a0a0c', mudHi: '#5a4f86', mudP: ['#101014', '#1c1c22', '#2a2a32', '#0a0a0c'], mudTrail: ['#0e0e10', '#18181c'], goo: 'oil',
     grass: ['#5fb04a', '#55a242', '#6bbd55'], grassEdge: '#4a9038', tuft: '#478a35', track: ['#55565b', '#4d4e53', '#5d5e63'], trackEdge: '#ecece6', trail: '#2f6d24', roadTrail: '#232327',
-    decor: 'ring', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 12, asphalt: 1.08, lights: true },
+    decor: 'ring', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 12, asphalt: 1.03, lights: true,
+    // on asphalt the cars are closer together: only this share of the difference in top speed counts (so the fast cars do not run away)
+    flat: .5 },
   // desert: a sand road, the dunes beside it make the cars sandy (dusty), sand drifts instead of mud (goo 'sand': beige cars), an oasis washes
   wueste: { ...MUDDY, mud: ['#d9b77a', '#cfa96a', '#e3c48c'], mudEdge: '#b8915a', mudHi: '#f6e2b4', mudP: ['#e3c48c', '#d4b074', '#c49a5c', '#f0d9a6'], mudTrail: ['#b8915a', '#c9a46c'], goo: 'sand',
     water: ['#1f8c9c', '#2fa6b2', '#46bcc2', '#8ee0dc'], shore: ['#c2a266', '#b39256'], grass: ['#ecca8a', '#e2bf7c', '#f4d69e'], grassEdge: '#d6b070', tuft: '#c9a060',
@@ -117,11 +119,12 @@ const TRACK_DEFS = [
     poly: [[70, 185, 0], [70, 55, 55], [165, 55, 22], [195, 100, 22], [255, 100, 22], [285, 55, 22], [345, 55, 60], [540, 395, 65], [730, 395, 55], [730, 55, 48], [630, 55, 48],
       [630, 175, 50], [270, 395, 65], [70, 395, 55]],
     mud: [], water: [], ponds: [],
-    oilAt: [[730, 150, 16, 12], [300, 62, 10, 9], [340, 362, 13, 10]],
+    // the patch after turn 1 lies on the upper half of the road: along the lower edge there is a clean lane
+    oilAt: [[300, 64, 22, 18], [150, 45, 16, 11], [422, 190, 22, 16], [640, 395, 24, 16]],
     gravel: [[40, 30, 85], [700, 22, 95], [760, 425, 70]], stacks: [[680, 125, 40]],
     // the pit lane forks off at the start of the bottom straight, runs behind the pit wall and joins the start straight again before turn 1
     pit: { pts: [[238, 381, 0], [148, 381, 32], [148, 214, 46], [93, 120, 0]], half: 15, box: [270, 306], wall: [116, 196, 350], garage: [174, 226, 212, 348] },
-    rollers: [[730, 262, 17, 6], [636, 395, 19, 11], [120, 55, 16, 15]],
+    rollers: [[730, 262, 12, 5], [600, 395, 13, 9], [120, 55, 11, 4], [400, 316, 12, 8], [225, 100, 14, 12]],
     // scenery: stands [x, y, w, h, facing down 1 / up -1], team trucks [x, y, team], helipad, big screen, a flag mown into the grass, camera towers
     stands: [[405, 6, 168, 32, 1], [358, 410, 136, 36, -1]], heli: [530, 118], screen: [450, 58], flag: [575, 275, 56, 40], towers: [[268, 210], [380, 388]],
     trucks: [[230, 158, 0], [248, 158, 1], [266, 158, 2], [284, 158, 3], [302, 158, 4], [230, 262, 5], [248, 262, 6], [266, 262, 7], [284, 262, 1]] },
