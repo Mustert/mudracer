@@ -144,6 +144,8 @@ export const SFX = {
     for (const t of [.1, .32]) { voice({ t, type: 'square', f: 300, to: 240, a: .01, hold: .1, d: .05, vol: .06, bp: 900, q: 2 }); noise({ t: t + .1, type: 'bandpass', f: 3500, q: 2, d: .05, vol: .05 }); }
     noise({ t: .5, type: 'bandpass', f: 1800, q: 1, d: .06, vol: .08 });
   },
+  // the marshal's whistle: two short shrill blasts
+  pfiff: () => { for (const t of [0, .2]) { voice({ t, type: 'square', f: 2900, to: 3100, a: .005, hold: .1, d: .04, vol: .05, bp: 3000, q: 4 }); noise({ t, type: 'bandpass', f: 3000, q: 6, a: .005, hold: .1, d: .04, vol: .06 }); } },
   tyre: v => { voice({ f: 190, to: 80, d: .16, vol: .25 * v }); noise({ type: 'lowpass', f: 900, d: .07, vol: .15 * v }); },
   rain: () => noise({ type: 'highpass', f: 4200, q: .5, a: 1.2, hold: 5.5, d: 2.5, vol: .09 }),
   thunder: () => { noise({ type: 'lowpass', f: 300, to: 70, a: .05, d: 2, vol: .45, q: .7 }); voice({ f: 62, to: 34, d: 1.6, vol: .3 }); },

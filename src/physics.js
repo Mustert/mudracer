@@ -21,10 +21,10 @@ function surfOf(c) {
     case 3: return [.72, 1.6, .65];
     // race circuit: gravel stops you harder than mud (gas hardly helps), oil does not brake but there is almost no grip, smeared oil is a little slippery
     case 7: return [.3, 3.2, .5];
-    case 8: return [G.T.th.asphalt || 1, 1.1, .45];
-    case 9: return [c.pit ? .55 : G.T.th.asphalt || 1, 4.5, .8];
-    // asphalt is faster than an earth road; the pit lane has a speed limit
-    default: return [c.pit ? .55 : G.T.th.asphalt || 1, 10, 1];
+    case 8: return [G.T.th.asphalt || 1, .55, .3];
+    case 9: return [c.pit ? .62 : G.T.th.asphalt || 1, 3.2, .7];
+    // asphalt is a little faster than an earth road; the pit lane has a speed limit
+    default: return [c.pit ? .62 : G.T.th.asphalt || 1, 10, 1];
   }
 }
 
@@ -41,7 +41,8 @@ export function physics(c, dt, thr, tgt) {
   const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
   let vf = c.vx * fx + c.vy * fy, vl = -c.vx * fy + c.vy * fx;
   // slipstream (race circuit): right behind another car you get up to 7 % faster
-  const max = MAXS * c.def.speed * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1) * (1 + .07 * c.draft);
+  const spd = G.T.th.flat ? 1 + (c.def.speed - 1) * G.T.th.flat : c.def.speed;
+  const max = MAXS * spd * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1) * (1 + .07 * c.draft);
   if (thr > 0 && vf < max * thr) {
     const sput = 1 - .35 * (soil / .18) * dirt * (.5 + .5 * Math.sin(G.time * 11 + c.seed * 3));
     vf += ACC * c.def.acc * sput * (.5 + .5 * sp) * (c.rocket > 0 ? 2.4 : 1) * dt; // rocket start: a good start pushes hard for a moment

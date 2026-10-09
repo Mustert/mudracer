@@ -192,19 +192,26 @@ export function paintRing(S) {
     const st = stackAt(x, y), w = { x: x + .5, y: y + .5, r: st ? 4 : 3.5, stack: st };
     walls.push(w); (grid.get(key(x, y)) || grid.set(key(x, y), []).get(key(x, y))).push(w);
   }
-  // armco: a light steel band on the edge, a darker one behind it, a post every few metres
+  // armco, clearly a wall: a dark outline towards the track, a bright steel rail, its shaded underside, a dark back, a shadow on the grass behind.
+  // depth = how far a cell of the barrier lies behind its edge
+  const depth = new Uint8Array(A).fill(9);
+  for (let j = 0; j < A; j++) if (edge[j]) depth[j] = 0;
+  for (let k = 1; k <= 6; k++) for (let j = 0; j < A; j++) {
+    if (!bar[j] || depth[j] < 9) continue;
+    for (const q of [j - 1, j + 1, j - WW, j + WW]) if (q >= 0 && q < A && depth[q] === k - 1) { depth[j] = k; break; }
+  }
+  const RAIL = [hex('#23262c'), K.steel, hex('#f6f8fb'), hex('#a3aab4'), hex('#4c525b')];
   for (let j = 0; j < A; j++) {
     if (!bar[j]) continue;
-    const x = j % WW, y = j / WW | 0; if (stackAt(x, y)) continue;
-    if (edge[j]) { set(j, K.steel); continue; }
-    let nb = false; for (const q of [j - 1, j + 1, j - WW, j + WW]) if (q >= 0 && q < A && edge[q]) nb = true;
-    if (nb) set(j, K.steelD); else if (dist[j] < HALF + 60) { let n2 = false; for (const q of [j - 2, j + 2, j - 2 * WW, j + 2 * WW]) if (q >= 0 && q < A && edge[q]) n2 = true; if (n2) darken(j, .8); }
+    const x = j % WW, y = j / WW | 0, dp = depth[j]; if (stackAt(x, y)) continue;
+    if (dp < RAIL.length) set(j, RAIL[dp]); else if (dp < 8) darken(j, .62 + dp * .03);
   }
   let n = 0;
   for (const w of walls) {
     if (w.stack === undefined) continue;
     const X = Math.floor(w.x), Y = Math.floor(w.y);
-    if (!w.stack) { if (n++ % 3 === 0) for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) set((Y + dy) * WW + X + dx, K.post); continue; }
+    // the posts: dark blocks every few metres, reaching over the rail
+    if (!w.stack) { if (n++ % 2 === 0) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const q = (Y + dy) * WW + X + dx; if (q >= 0 && q < A && bar[q] && depth[q] <= 4) set(q, dx + dy < 0 ? hex('#6b727c') : K.post); } continue; }
     // a stack of tyres, painted in turn white, red, yellow and blue
     const col = TYRE[(hash(X, Y, 5) * 4) | 0];
     for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
