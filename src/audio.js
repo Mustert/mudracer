@@ -185,7 +185,9 @@ export const SFX = {
     voice({ t: .34, type: 'sawtooth', f: 1650, to: 1000, a: .02, d: .22, vol: .04, bp: 2000, q: 4 });
     voice({ t: .62, type: 'sawtooth', f: 1600, to: 900, a: .02, d: .2, vol: .03, bp: 2000, q: 4 });
   },
-  lap: () => [1047, 1319, 1568, 2093].forEach((f, i) => bell(f, i * .09, .13)),
+  // a new car is revealed: a whoosh and a bright rising chime
+  unlock: () => { noise({ type: 'bandpass', f: 300, to: 6000, d: .5, vol: .16, q: 1.4 }); [784, 988, 1175, 1568, 2093].forEach((f, i) => bell(f, .08 + i * .07, .14)); voice({ type: 'sawtooth', f: 220, to: 880, d: .4, vol: .05, lp: 2600 }); },
+  lap: () =>[1047, 1319, 1568, 2093].forEach((f, i) => bell(f, i * .09, .13)),
   fanfare: () => {
     const notes = [[523, 0, .12], [659, .15, .12], [784, .3, .12]];
     for (const [f, t, h] of notes) { voice({ type: 'sawtooth', f, t, a: .02, hold: h, d: .1, vol: .09, lp: 2600 }); voice({ type: 'sawtooth', f, detune: 10, t, a: .02, hold: h, d: .1, vol: .07, lp: 2600 }); }

@@ -66,3 +66,5 @@ export function saveBestPlace(cup, def, place, d) {
 // a trophy is the cup won (first place in the final standings) on that difficulty
 export const hasTrophy = (cup, def, d) => loadBestPlace(cup, def, d) === 1;
 export const trophies = (cup, def) => [0, 1, 2].map(d => hasTrophy(cup, def, d));
+// the best final place per difficulty (0 = not raced yet): 1-3 a gold, silver or bronze cup, from 4 on a ribbon
+export const places = (cup, def) => [0, 1, 2].map(d => loadBestPlace(cup, def, d));

@@ -1,7 +1,7 @@
 import { G } from './g.js';
 import { CAR_DEFS, carSet, isLocked } from './cars.js';
 import { SS, VW, ctx } from './core.js';
-import { CUPS, cupLabel, cupTrackIdx, loadBestPlace, trophies } from './cups.js';
+import { CUPS, cupLabel, cupTrackIdx, loadBestPlace, places } from './cups.js';
 import { DIFFS, curDiff } from './diff.js';
 import { R1, ell, star, text, tri } from './draw.js';
 import { drawLock, drawMenuBg } from './screens.js';
@@ -40,7 +40,7 @@ function slotInfos() {
   if (!cache || G.stateTime < cacheT) {
     cache = CAR_DEFS.map(def => {
       if (isLocked(def)) return null;
-      if (gpInfo()) { const d = curDiff(), p = loadBestPlace(G.cup, def, d); return { trophies: trophies(G.cup, def), long: 'BESTER PLATZ ' + (p || '-') + ' (' + DIFFS[d].name + ')' }; }
+      if (gpInfo()) { const d = curDiff(), p = loadBestPlace(G.cup, def, d); return { places: places(G.cup, def), long: 'BESTER PLATZ ' + (p || '-') + ' (' + DIFFS[d].name + ')' }; }
       if (G.mode === 'tt') { const r = loadRecord(TRACKS[G.selTrack], def); return r ? { txt: fmtTime(r.t).slice(0, 4), col: '#ffd23f', long: 'BESTZEIT ' + fmtTime(r.t) } : { txt: '--', col: '#6b5a48', long: 'BESTZEIT -:--.--' }; }
       return null;
     });
@@ -77,7 +77,7 @@ export function drawRack(infos) {
     if (!hasInfo()) return;
     const info = infos[i];
     R1(sx - (sel ? 2 : 0), INFO_Y - (sel ? 1 : 0), SW + (sel ? 4 : 0), INFO_H + (sel ? 2 : 0), sel ? '#ffd23f' : '#1b120c'); R1(sx + 1, INFO_Y + 1, SW - 2, INFO_H - 2, '#2c3328');
-    if (info && info.trophies) info.trophies.forEach((on, d) => miniPokal(sx + SW / 2 - 12 + d * 12, INFO_Y + 2, d, !on));
+    if (info && info.places) info.places.forEach((p, d) => miniPokal(sx + SW / 2 - 12 + d * 12, INFO_Y + 2, d, p));
     else if (info) text(info.txt, sx + SW / 2, INFO_Y + 2, 8, info.col, 'center', null);
   });
 }
@@ -115,13 +115,14 @@ export function drawSelectCar() {
     text('MATSCH', VW / 2 - 8, 227, 8, '#fff3dc', 'right');
     for (let i = 0; i < 5; i++) { star(VW / 2 + i * 10, 214, i < def.tempo); star(VW / 2 + i * 10, 227, i < def.matsch); }
   }
-  if (gpInfo() && !locked) drawShelf(trophies(G.cup, def));
+  if (gpInfo() && !locked) drawShelf(places(G.cup, def));
   text('< > AUTO WAEHLEN    ENTER = WEITER', VW / 2, 252, 8, '#d8c4a8', 'center');
 }
 
-// the trophy shelf of the focused car (Grand Prix): LEICHT, MITTEL, SCHWER side by side, the ones not won yet as dark shapes
-function drawShelf(won) {
+// the trophy shelf of the focused car (Grand Prix): LEICHT, MITTEL, SCHWER side by side; gold, silver, bronze cup for places 1-3,
+// a ribbon with the number below that, a dark shape where the cup has not been raced yet
+function drawShelf(pl) {
   const x = 8, y = 238, w = 140;
   R1(x - 1, y - 1, w + 2, 6, '#1b120c'); R1(x, y, w, 4, '#8a6440'); R1(x, y, w, 1, '#b08458');
-  [16, 56, 110].forEach((dx, d) => drawPokal(x + dx, y, d, 2, !won[d]));
+  [16, 56, 110].forEach((dx, d) => drawPokal(x + dx, y, d, 2, pl[d]));
 }

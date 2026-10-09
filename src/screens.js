@@ -3,14 +3,15 @@ import { CAR_DEFS, carSet, isLocked } from './cars.js';
 import { SS, TAU, VH, VW, WH, WW, ctx, hash } from './core.js';
 import { cupLabel } from './cups.js';
 import { DIFFS } from './diff.js';
-import { R1, blink, disc, drawConfetti, ell, medal, medalL, panel, text, tri } from './draw.js';
+import { R1, blink, disc, drawConfetti, drawTag, ell, medal, medalL, panel, star, text, tri } from './draw.js';
+import { SFX } from './audio.js';
 import { standings } from './race.js';
 import { MODES } from './state.js';
 import { fmtTime, loadRecord } from './timetrial.js';
 import { TRACKS } from './tracks.js';
 import { drawMenuLogo } from './title.js';
 import { TRAIN } from './trainsprite.js';
-import { drawPokal } from './trophy.js';
+import { drawPokal, drawRibbon } from './trophy.js';
 
 export function drawMenuBg(t) {
   t = t || TRACKS[(G.state === 'options' ? G.optFrom : G.state) === 'select_track' ? G.selTrack : 0];
@@ -170,38 +171,84 @@ export function drawCeremony() {
   ctx.save(); ctx.globalAlpha = .1; ctx.fillStyle = '#fff3b0';
   for (const s of [-1, 1]) { const sx = VW / 2 + s * 200, tx = VW / 2 + Math.sin(G.time * .9 + s) * 90; ctx.beginPath(); ctx.moveTo(sx - 8, 0); ctx.lineTo(sx + 8, 0); ctx.lineTo(tx + 60, VH); ctx.lineTo(tx - 60, VH); ctx.closePath(); ctx.fill(); }
   ctx.restore();
+  const cer = G.ceremony, custom = G.gp.cup.custom, pl = cer.place;
   text('SIEGEREHRUNG', VW / 2, 8, 16, '#ffd23f', 'center');
-  if (G.ceremony.won && !G.gp.cup.custom) drawPokal(VW / 2, 82, G.ceremony.diff, 2); else drawTrophy(VW / 2, 52, 1.4);
-  text(G.ceremony.won ? 'DU HAST GEWONNEN!' : 'SUPER GEFAHREN!', VW / 2, 84 + Math.round(Math.sin(G.time * 5) * 2), 8, '#ffffff', 'center');
-  const blocks = [{ pl: 2, x: VW / 2 - 124, h: 44 }, { pl: 1, x: VW / 2 - 40, h: 64 }, { pl: 3, x: VW / 2 + 44, h: 30 }], bw = 80, base = 252;
+  // your cup (gold, silver, bronze) or your ribbon, and what you reached
+  if (!custom) drawPokal(VW / 2, 82, cer.diff, 2, pl); else if (cer.won) drawTrophy(VW / 2, 52, 1.4);
+  const msg = cer.won ? 'DU HAST GEWONNEN!' : pl === 2 ? 'PLATZ 2 - SILBER!' : pl === 3 ? 'PLATZ 3 - BRONZE!' : 'PLATZ ' + pl + ' - SUPER GEFAHREN!';
+  text(msg, VW / 2, 86 + Math.round(Math.sin(G.time * 5) * 2), 8, '#ffffff', 'center');
+  const blocks = [{ pl: 2, x: VW / 2 - 124, h: 48 }, { pl: 1, x: VW / 2 - 40, h: 64 }, { pl: 3, x: VW / 2 + 44, h: 40 }], bw = 80, base = 252;
+  // not on the podium: you still stand next to it, on a low step of your own, with your ribbon
+  if (pl > 3) blocks.push({ pl, x: VW / 2 + 134, h: 14, w: 64, me: true });
+  // a spotlight on your car
+  const mine = blocks.find(b => b.me || (cer.sorted[b.pl - 1] && cer.sorted[b.pl - 1].me));
+  if (mine) {
+    const cx = mine.x + (mine.w || bw) / 2, top = base - mine.h;
+    ctx.save(); ctx.globalAlpha = .16 + .05 * Math.sin(G.time * 4); ctx.fillStyle = '#fff3b0';
+    ctx.beginPath(); ctx.moveTo(cx - 6, 0); ctx.lineTo(cx + 6, 0); ctx.lineTo(cx + 44, top + 4); ctx.lineTo(cx - 44, top + 4); ctx.closePath(); ctx.fill(); ctx.restore();
+  }
   for (const b of blocks) {
-    const e = G.ceremony.sorted[b.pl - 1], top = base - b.h;
+    const e = b.me ? cer.sorted.find(q => q.me) : cer.sorted[b.pl - 1], top = base - b.h, w = b.w || bw;
     if (!e) continue;
-    R1(b.x - 1, top - 1, bw + 2, b.h + 2, '#1b120c'); R1(b.x, top, bw, b.h, medal(b.pl)); R1(b.x, top, bw, 3, medalL(b.pl)); R1(b.x, base - 4, bw, 4, 'rgba(0,0,0,.25)');
-    text(String(b.pl), b.x + bw / 2 + 1, top + 8, 16, '#1b120c', 'center', null);
-    text(e.def.name.slice(0, 9), b.x + bw / 2, top + 28, 8, '#1b120c', 'center', null);
+    const col = b.me ? '#8d939d' : medal(b.pl), colL = b.me ? '#c9ccd2' : medalL(b.pl);
+    R1(b.x - 1, top - 1, w + 2, b.h + 2, '#1b120c'); R1(b.x, top, w, b.h, col); R1(b.x, top, w, 3, colL); R1(b.x, base - 4, w, 4, 'rgba(0,0,0,.25)');
+    if (b.me) { drawRibbon(b.x + w + 13, base, b.pl, 2); text(e.def.name.slice(0, 8), b.x + w / 2 + 1, top + 4, 8, '#1b120c', 'center', null); }
+    else {
+      text(String(b.pl), b.x + w / 2 + 1, top + 8, 16, '#1b120c', 'center', null);
+      text(e.def.name.slice(0, 9), b.x + w / 2, top + 28, 8, e.me ? '#7a1c16' : '#1b120c', 'center', null);
+    }
     const hop = b.pl === 1 ? Math.round(Math.abs(Math.sin(G.time * 4)) * 6) : 0;
-    ctx.drawImage(carSet(e.def, false).frames[0][0], b.x + bw / 2 - 33, top - 48 - hop, 66, 66);
-    if (e.me && blink(4)) { text('DU', b.x + bw / 2, top - 62 - hop, 8, '#ffd23f', 'center'); }
+    ctx.drawImage(carSet(e.def, false).frames[0][0], b.x + w / 2 - 33, top - 48 - hop, 66, 66);
+    // your car: the 1P sign from the race floats over it
+    if (e.me) drawTag(b.x + w / 2, top - 44 - hop - Math.round(Math.abs(Math.sin(G.time * 5)) * 3));
   }
   drawConfetti();
-  // after a while a panel: first the new car (if any), then the new trophy, otherwise just "cup won"
-  const cer = G.ceremony, carT = cer.newCar ? 5 : -1, trT = cer.trophy >= 0 ? (cer.newCar ? 9 : 5) : -1;
-  if (G.stateTime > 5 && (cer.newCar || cer.won)) {
+  // after a while a panel: first the new car (if any), then the new cup or ribbon (a better place than ever), otherwise just "cup won"
+  const t = G.stateTime, carT = cer.newCar ? 5 : -1, trT = cer.trophy >= 0 && !custom ? (cer.newCar ? 10.5 : 5) : -1;
+  if (t > 5 && (cer.newCar || cer.won || trT > 0)) {
     const w = 260, h = 170, x = VW / 2 - w / 2, y = 50;
     panel(x, y, w, h);
-    if (trT > 0 && G.stateTime > trT) {
-      text('NEUER POKAL!', VW / 2, y + 12 + Math.round(Math.sin(G.time * 6) * 2), 16, '#ffd23f', 'center');
-      drawPokal(VW / 2, y + 132, cer.trophy, 3);
-      text(cupLabel(G.gp.cup) + '  ' + DIFFS[cer.trophy].name, VW / 2, y + 146, 8, DIFFS[cer.trophy].col, 'center');
-    } else if (carT > 0) {
-      text('NEUES AUTO!', VW / 2, y + 12 + Math.round(Math.sin(G.time * 6) * 2), 16, '#ffd23f', 'center');
-      ctx.drawImage(carSet(cer.newCar, false).frames[0][0], VW / 2 - 66, y + 26, 132, 132);
-      text(cer.newCar.name, VW / 2, y + 146, 8, '#ffffff', 'center');
-    } else {
+    if (trT > 0 && t > trT) {
+      text(pl <= 3 ? 'NEUER POKAL!' : 'NEUE SCHLEIFE!', VW / 2, y + 12 + Math.round(Math.sin(G.time * 6) * 2), 16, '#ffd23f', 'center');
+      drawPokal(VW / 2, y + 132, cer.trophy, 3, pl);
+      text(cupLabel(G.gp.cup) + '  ' + DIFFS[cer.trophy].name + '  PLATZ ' + pl, VW / 2, y + 146, 8, DIFFS[cer.trophy].col, 'center');
+    } else if (carT > 0) drawUnlock(t - carT, cer, x, y, w, h);
+    else if (cer.won) {
       text('CUP', VW / 2, y + 50, 16, '#ffd23f', 'center');
       text('GEWONNEN!', VW / 2, y + 76, 16, '#ffd23f', 'center');
     }
   }
-  if (G.stateTime > 3 && blink()) text('TASTE = MENUE', VW / 2, 258, 8, '#d8c4a8', 'center');
+  if (t > 3 && blink()) text('TASTE = MENUE', VW / 2, 258, 8, '#d8c4a8', 'center');
+}
+
+// a new car is revealed: first only its dark shape behind a shaking lock, then the lock breaks off with a flash,
+// the car pops out in its colours, light rays turn behind it and stars sparkle around it
+function drawUnlock(u, cer, x, y, w, h) {
+  const def = cer.newCar, F = carSet(def, false), cx = VW / 2, cy = y + 92, R = .9 + .35;
+  ctx.save(); ctx.beginPath(); ctx.rect(x + 3, y + 3, w - 6, h - 6); ctx.clip();
+  if (u >= R) {
+    if (!cer.unlocked) { cer.unlocked = true; SFX.unlock(); }
+    ctx.globalAlpha = Math.min(.22, (u - R) * .5); ctx.fillStyle = '#fff3b0';
+    for (let k = 0; k < 12; k++) { const a = G.time * .7 + k * TAU / 12; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a - .12) * 200, cy + Math.sin(a - .12) * 200); ctx.lineTo(cx + Math.cos(a + .12) * 200, cy + Math.sin(a + .12) * 200); ctx.closePath(); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  }
+  const pop = u >= R ? 1 + .4 * Math.max(0, 1 - (u - R) / .35) : 1, bob = u >= R + .6 ? Math.round(Math.abs(Math.sin(G.time * 4)) * 4) : 0, S = Math.round(132 * pop);
+  if (u < R) {
+    // the dark shape, the lock shakes harder and harder
+    ctx.globalAlpha = .9; ctx.drawImage(F.shadow[0], cx - S / 2, cy - S / 2, S, S); ctx.globalAlpha = 1;
+    const sh = u * 3.5;
+    ctx.save(); ctx.translate(Math.round(cx + (Math.random() - .5) * sh), Math.round(cy + 6 + (Math.random() - .5) * sh)); ctx.scale(2, 2); drawLock(0, 0); ctx.restore();
+    text('???', cx, y + 146, 8, '#9a8a78', 'center');
+  } else {
+    ctx.drawImage(F.frames[0][0], cx - S / 2, cy - S / 2 - bob, S, S);
+    const fade = 1 - (u - R) / .5; if (fade > 0) { ctx.globalAlpha = fade; ctx.drawImage(F.shadow[0], cx - S / 2, cy - S / 2 - bob, S, S); ctx.globalAlpha = 1; }
+    // the lock flies off, turning
+    const lu = u - R; if (lu < 1) { ctx.save(); ctx.translate(cx + lu * 120, cy + 6 - lu * 90 + lu * lu * 140); ctx.rotate(lu * 7); ctx.scale(2, 2); drawLock(0, 0); ctx.restore(); }
+    for (let k = 0; k < 8; k++) { const a = G.time * 1.3 + k * TAU / 8, rr = 64 + Math.sin(G.time * 3 + k) * 6; if (((G.time * 6 + k) | 0) % 3) star(Math.round(cx + Math.cos(a) * rr * 1.4) - 3, Math.round(cy + Math.sin(a) * rr * .7) - 3, true, k % 2 ? '#ffffff' : '#ffd23f'); }
+    text(def.name, cx, y + 146, 8, '#ffffff', 'center');
+    // the flash
+    const fl = 1 - (u - R) / .3; if (fl > 0) { ctx.globalAlpha = fl; R1(x, y, w, h, '#ffffff'); ctx.globalAlpha = 1; }
+  }
+  ctx.restore();
+  text(u < R ? 'NEUES AUTO...' : 'NEUES AUTO!', cx, y + 12 + Math.round(Math.sin(G.time * 6) * 2), 16, '#ffd23f', 'center');
 }

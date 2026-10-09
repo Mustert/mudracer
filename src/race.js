@@ -1,7 +1,7 @@
 import { G } from './g.js';
 import { AU, SFX } from './audio.js';
 import { CAR_DEFS, GENERICS, carSet, isLocked } from './cars.js';
-import { cupReward, cupTrackIdx, hasTrophy, markCupWon, saveBestPlace } from './cups.js';
+import { cupReward, cupTrackIdx, loadBestPlace, markCupWon, saveBestPlace } from './cups.js';
 import { aiSkill, curDiff, fxActive } from './diff.js';
 import { setupEvents } from './events.js';
 import { VH, VW, clamp, rng } from './core.js';
@@ -89,14 +89,16 @@ export function standings() { return [...G.gp.entries].sort((a, b) => b.pts - a.
 export function beginCeremony() {
   const sorted = standings(), won = sorted[0].me, cup = G.gp.cup, d = G.gp.diff;
   let newCar = null, trophy = -1;
-  const mine = sorted.find(e => e.me);
-  // the custom cup has no trophies and unlocks nothing; the kids mode wins trophies (LEICHT) but does not unlock cars for the normal game
+  const mine = sorted.find(e => e.me), place = sorted.indexOf(mine) + 1;
+  // the custom cup has no trophies and unlocks nothing; the kids mode wins trophies (LEICHT) but does not unlock cars for the normal game.
+  // trophy: the difficulty when the place is better than the best one so far (a new cup in gold, silver or bronze, or a new ribbon)
   if (!cup.custom) {
-    if (won && !hasTrophy(cup, mine.def, d)) trophy = d;
-    saveBestPlace(cup, mine.def, sorted.indexOf(mine) + 1, d);
+    const old = loadBestPlace(cup, mine.def, d);
+    if (!old || place < old) trophy = d;
+    saveBestPlace(cup, mine.def, place, d);
     if (won && !G.kids && markCupWon(cup)) newCar = cupReward(cup) || null;
   }
-  G.ceremony = { sorted, won, newCar, trophy, diff: d };
+  G.ceremony = { sorted, won, newCar, trophy, diff: d, place, def: mine.def };
   G.parts = [];
   setState('ceremony');
   SFX.fanfare();

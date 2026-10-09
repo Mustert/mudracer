@@ -346,9 +346,6 @@ export function drawRace() {
     if (c.stun > 0) for (let q = 0; q < 3; q++) { const a = G.time * 6 + q * TAU / 3; star(Math.round(c.x + Math.cos(a) * 13) - 3, Math.round(c.y - 22 + Math.sin(a) * 4) - 3, true); }
   }
   const px = Math.round(G.player.x), py = Math.round(G.player.y);
-  if ((G.state === 'countdown' || (G.state === 'race' && G.stateTime < 2.5)) && ((G.time * 4) | 0) % 2 === 0) {
-    text('DU', px, py - 40, 8, '#ffd23f', 'center'); tri(px, py - 24, 'down', 5, '#ffd23f');
-  }
   // no arrow back to the road on the stepping stones and on a second way (rope bridge, frozen lake)
   const pj = clamp(py, 0, G.T.H - 1) * G.T.W + clamp(px, 0, G.T.W - 1);
   if (!G.T.run && G.state === 'race' && G.player.off > HALF + 20 && !G.player.pit && !(G.T.stone && G.T.stone[pj]) && !(G.T.alt && G.T.alt[pj]) && !(G.player.fall > 0) && !(G.player.z > 0) && ((G.time * 3) | 0) % 2 === 0) {
@@ -368,6 +365,12 @@ export function drawRace() {
   if (G.T.desert) drawStorm(cx, cy);
   if (G.T.ice) drawIceSky(cx, cy);
   drawMood();
+  // the 1P sign floats over your car the whole race, above night, storm and snow, so you find yourself among dirty (or snowed-in) cars;
+  // at the start it bounces higher
+  if (!(G.player.fall > 0)) {
+    const hop = G.state === 'countdown' || (G.state === 'race' && G.stateTime < 2.5) ? Math.abs(Math.sin(G.time * 7)) * 6 : Math.abs(Math.sin(G.time * 3)) * 2;
+    drawTag(px - cx, py - cy - 17 - Math.round((G.player.z || 0) * .6 + hop));
+  }
   // HUD
   if (G.T.run) drawRunHud(); else {
   ctx.fillStyle = 'rgba(27,18,12,.6)'; ctx.fillRect(0, 0, VW, 15);
@@ -409,6 +412,15 @@ export function drawRace() {
     text('LOS!', VW / 2, VH / 2 - 20, 40, '#7bd37b', 'center');
   }
   if (G.state === 'finish') { if (G.T.run) drawRunFinish(); else drawFinish(); }
+}
+
+
+// the 1P sign: an orange tag with a little arrow, its tip at (x, y)
+export function drawTag(x, y) {
+  x = Math.round(x); y = Math.round(y);
+  tri(x, y + 1, 'down', 5, '#1b120c'); tri(x, y, 'down', 4, '#f07a1a');
+  R1(x - 12, y - 16, 24, 13, '#1b120c'); R1(x - 11, y - 15, 22, 11, '#f07a1a'); R1(x - 11, y - 15, 22, 1, '#ffb45e');
+  text('1P', x + 1, y - 13, 8, '#ffffff', 'center', null);
 }
 
 
