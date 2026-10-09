@@ -109,7 +109,8 @@ const TRACK_DEFS = [
     poly: [[70, 185, 0], [70, 55, 55], [165, 55, 22], [195, 100, 22], [255, 100, 22], [285, 55, 22], [345, 55, 60], [540, 395, 65], [730, 395, 55], [730, 55, 48], [630, 55, 48],
       [630, 175, 50], [270, 395, 65], [70, 395, 55]],
     mud: [], water: [], ponds: [],
-    oilAt: [[730, 150, 30, 22], [300, 64, 22, 18], [340, 362, 26, 18], [150, 58, 20, 15], [422, 190, 22, 16], [640, 395, 24, 16]],
+    // the patch after turn 1 lies on the upper half of the road: along the lower edge there is a clean lane
+    oilAt: [[300, 64, 22, 18], [150, 45, 16, 11], [422, 190, 22, 16], [640, 395, 24, 16]],
     gravel: [[40, 30, 85], [700, 22, 95], [760, 425, 70]], stacks: [[680, 125, 40]],
     // the pit lane forks off at the start of the bottom straight, runs behind the pit wall and joins the start straight again before turn 1
     pit: { pts: [[238, 381, 0], [148, 381, 32], [148, 214, 46], [93, 120, 0]], half: 15, box: [270, 306], wall: [116, 196, 350], garage: [174, 226, 212, 348] },

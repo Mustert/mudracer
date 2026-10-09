@@ -138,7 +138,7 @@ function updateRace(dt) {
       c.boost = 1.3; SFX.boost(v);
     } else if (c.surf === 8) {
       // oil (race circuit): it does not brake, but the car slides and gets black (the dirt works like mud)
-      c.dirt = Math.min(1, c.dirt + 1.6 * dt * (sp > 8 ? 1 : .3)); c.oilT = 1; c.mudTrail = 1;
+      c.dirt = Math.min(1, c.dirt + 1.36 * dt * (sp > 8 ? 1 : .3)); c.oilT = 1; c.mudTrail = 1;
       // the car twitches on the oil: a jerk when it hits the patch, then it wobbles while it slides through
       if (prev !== 8 && sp > 30) { c.ang += (Math.random() < .5 ? -1 : 1) * .35 * Math.min(1, sp / 120); mudBurst(c, 10); if (!c.ai) SFX.squeal(); }
       c.ang += Math.sin(G.time * 9 + c.seed) * 1.8 * dt * Math.min(1, sp / 100);

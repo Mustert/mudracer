@@ -4,7 +4,7 @@ import { FONT, HALF, LAPS, ROTS, SS, TAU, VH, VW, clamp, ctx, hash } from './cor
 import { drawEventsAbove, drawEventsGround, drawNight, drawRain } from './events.js';
 import { crossingAhead, placeOf } from './physics.js';
 import { drawRunFinish, drawRunHud } from './run.js';
-import { drawRingAbove, drawRingGround, drawRingHud, drawStartLights, ghostUp } from './ring.js';
+import { drawRingAbove, drawRingGround, drawStartLights, ghostUp } from './ring.js';
 import { cam } from './state.js';
 import { GHOST_DT, fmtDelta, fmtTime, ghostAt } from './timetrial.js';
 import { trail } from './tracks.js';
@@ -362,7 +362,6 @@ export function drawRace() {
     if (G.mode === 'gp') text((G.gp.cup.label || G.gp.cup.name + ' CUP') + ' ' + (G.gp.race + 1) + '/' + G.gp.tracks.length, VW - 6, 4, 8, '#ffd23f', 'right');
   }
   }
-  if (G.T.ring) drawRingHud();
   // train warning: big stop sign while the lights flash and a crossing is ahead
   if (R && R.signal && G.state === 'race' && !G.player.stun) {
     const d = crossingAhead(G.player);

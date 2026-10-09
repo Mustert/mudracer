@@ -154,9 +154,8 @@ export function updateReifen(T, dt) {
   // two tyres, one shortly after the other, bounce across the road
   const roll = (r, off) => { const dx = r.ex - r.sx, dy = r.ey - r.sy, l = Math.hypot(dx, dy); addTyre(ev, { x: r.sx + r.tx * off, y: r.sy + r.ty * off, vx: dx / l * 105, vy: dy / l * 105 }); if (near(r.sx, r.sy) < 340) SFX.tyre(.6); };
   for (const r of ev.rollers) {
-    const tn = ev.t - r.t0, ph = ((tn % r.per) + r.per) % r.per, was = r.flag;
+    const tn = ev.t - r.t0, ph = ((tn % r.per) + r.per) % r.per;
     r.flag = (tn > -2.6 && ph > r.per - 2.6) || (tn >= 0 && ph < 1.6);
-    if (r.flag && !was && near(r.mx, r.my) < 380) SFX.pfiff();
     const cyc = tn >= 0 ? Math.floor(tn / r.per) : -1;
     if (cyc > r.cyc) { r.cyc = cyc; roll(r, 0); r.second = .38; }
     if (r.second > 0 && (r.second -= dt) <= 0) roll(r, 18);
@@ -369,18 +368,6 @@ export function drawRingAbove() {
   }
   const P = G.player;
   if (P && P.msgT > 0) text(P.msg, Math.round(P.x), Math.round(P.y - 34 - (1.6 - P.msgT) * 6), 8, P.msg === 'BOX BOX!' ? '#9fd6ff' : '#ffd23f', 'center');
-}
-
-// screen: a yellow flag warning while a marshal near you has the flag out (only for the part of the track in front of you)
-export function drawRingHud() {
-  const ev = G.T.ev, P = G.player; if (!ev || !ev.rollers || !P || G.state !== 'race' || P.finished) return;
-  const fx = Math.cos(P.ang), fy = Math.sin(P.ang);
-  const r = ev.rollers.find(q => { const dx = (q.sx + q.ex) / 2 - P.x, dy = (q.sy + q.ey) / 2 - P.y, d = Math.hypot(dx, dy); return q.flag && d < 260 && (d < 70 || dx * fx + dy * fy > 0); });
-  if (!r || ((G.time * 4) | 0) % 4 === 3) return;
-  const x = VW / 2, y = 22, w = ((G.time * 8) | 0) % 2;
-  R1(x - 64, y, 128, 18, '#1b120c'); R1(x - 63, y + 1, 126, 16, '#ffd23f');
-  R1(x - 58, y + 3, 2, 12, '#5a3a1c'); R1(x - 56, y + 3, 9 - w, 6, '#1b120c'); R1(x - 55, y + 4, 7 - w, 4, '#fff08a');
-  text('GELBE FLAGGE!', x + 6, y + 5, 8, '#1b120c', 'center', null);
 }
 
 // the start lights in the middle of the screen, instead of the 3-2-1
