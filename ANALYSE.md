@@ -3,7 +3,7 @@
 Die eine Liste für alles, was am Spiel schwach, offen oder geplant ist. Enthält auch die früheren Verbesserungsideen (ehemals `VERBESSERUNGEN.md`, Abschnitt I).
 
 - Analyse am 2026-10-09 auf Stand `c5aed10` bis `42eb5ec`, am 2026-10-11 gegen `2d022f4` (Branch `map_pack`, 12 Strecken) nachgeprüft.
-- Zuletzt abgeglichen: 2026-10-11, Commit `6dafaa6`. (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
+- Zuletzt abgeglichen: 2026-10-11, Commit `b18d2d0` (Code unverändert seit `2d022f4`). (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
 - Ausführliche Fassung der Analyse mit Begründungen (Stand 2026-10-09): https://claude.ai/code/artifact/5ecd1e70-685b-404d-b2e6-ed798433c1fb
 
 ## So wird diese Datei benutzt

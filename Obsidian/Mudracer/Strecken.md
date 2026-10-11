@@ -1,7 +1,7 @@
 
-Stand 2026-10-07, Branch `content_patch_01`. Die Strecken 1 bis 6 sind umgesetzt, 7 als Prototyp, für 8 bis 15 gibt es ausgearbeitete Vorschläge.
+Stand 2026-10-11, Branch `map_pack`. Die Strecken 1 bis 6 sind umgesetzt, 7 bis 11 als Prototyp, für 12 bis 15 gibt es ausgearbeitete Vorschläge. Im Spiel ist außerdem noch die alte Regenbogen-Strecke (Plattformen im All, siehe 15). Reihenfolge in Einzelstrecke und Zeitfahren heute: Wiese, Wald, Strand, Zug, Baustelle, Garten, Rennstrecke, Wüste, Eis, Vulkan, Dschungel, Regenbogen.
 
-**Streckenereignisse** lassen sich pro Ereignis ein- und ausschalten: `G.events` in `src/state.js` (`kuehe`, `regen`, `flut`, `kois`, `kipper`, alle auf `true`). Eine Option im Spiel gibt es noch nicht. Die Ereignisse ändern die Karte während des Rennens (die Karte wird dafür zur Laufzeit umgemalt). Nach dem Rennen stellt das Spiel die Strecke wieder her, Menüs und Vorschaubilder zeigen die saubere Strecke.
+**Streckenereignisse** lassen sich im Code pro Ereignis ein- und ausschalten: `G.events` in `src/state.js` (`kuehe`, `regen`, `flut`, `kois`, `kipper`, `zug`, `reifen`, `sandsturm`, `frost`, `pinguine`, `ausbruch`, `baeume`, `kroko`, alle auf `true`). Im Spiel gibt es einen gemeinsamen Schalter „Streckeneffekte“ (Einzelstrecke und Zeitfahren in den Optionen; im Grand Prix ab MITTEL an; im Kindermodus immer aus, `fxActive` in `src/diff.js`). Die Ereignisse ändern die Karte während des Rennens (die Karte wird dafür zur Laufzeit umgemalt). Nach dem Rennen stellt das Spiel die Strecke wieder her, Menüs und Vorschaubilder zeigen die saubere Strecke.
 
 **Zeitfahren-Rekorde:** Wiese, Wald und Strand haben durch die Änderungen eine neue Revision (`rev: 1`). Ihre Rekorde starten neu (Schlüssel mit Zusatz `-r1`), die alten Zeiten bleiben unangetastet im Speicher.
 
@@ -94,11 +94,11 @@ Streckenereignis: Der Zug (schon im Spiel).
 ![[Pasted image 20261007173448.png]]
 
 ## 5. Baustelle
-Status: **umgesetzt** (Streckenname `BAUSTELLE`, Streckenereignis Kipplaster `kipper`, neue Oberfläche „Zement“). Noch in keinem Cup (Cup 2 hat jetzt alle drei Strecken, ist aber noch nicht eingetragen), spielbar in Einzelstrecke und Zeitfahren.
+Status: **umgesetzt** (Streckenname `BAUSTELLE`, Streckenereignis Kipplaster `kipper`, neue Oberfläche „Zement“). Im Cup SILBER eingetragen (Zug, Baustelle, Garten). Zeitfahr-Revision 2 (`rev: 2`, seit 42eb5ec).
 
 Umsetzung: Die Strecke ist ein Erdweg (Matsch und Pfützen bleiben wie gehabt, vier Matschstellen (zwei davon nur halb so groß) und drei Pfützen). Fahrtrichtung im Uhrzeigersinn, Start links, es geht zuerst nach oben. Wie im Garten ist die Strecke ein Ring mit Ausbuchtungen: oben ein U nach unten (um das Betonwerk), rechts ein Zickzack (Haarnadel nach links und wieder zurück), unten ein ∩ nach oben (um die Baugrube). Alles innerhalb des Rings sind **Baustellenhöfe**: feste Fläche, die niemand betreten kann (ein Ring aus festen Kreisen am Rand, dadurch gibt es keine Abkürzungen). Die Höfe sind nur Kulisse: Rohbau mit Säulen und Aufzugschacht, Materiallager mit Betonrohren, Ziegelpaletten, Sand und Kies, Bauwagen und Dixis, Baugrube mit Bagger, Betonwerk mit Silos, Containerdorf, Fundament mit Armierung, Holzstapel. Außerhalb der Strecke liegen Schutt, Bretter, Fässer, Reifen und Pylonen. Der Rand der Strecke ist mit orangem Bauzaun gesäumt.
 - **Engstellen:** An drei Stellen ragt eine Betonleitwand (orange-weiß, fest) von einer Seite in die Fahrbahn, davor und dahinter Pylonen (fest), dazu eine blinkende Warnlampe. Die Fahrbahn wird dort auf etwa drei Viertel schmal.
-- **Betonmischer:** Ein geparkter Betonmischer steht im U (die Trommel dreht sich, aus der Rutsche tropft es) und läuft aus. Das graue Rinnsal führt über den Straßenrand in eine **graue Pfütze** auf der Strecke (Terrain 6, Zement), die fast die ganze Straßenbreite einnimmt (links bleibt nur ein Spalt, der knapp zu schmal für ein Auto ist). Wer hindurchfährt, wird **grau** statt braun (die Farbe des Drecks ist das, wodurch man zuletzt gefahren ist). Zement bremst viel stärker als Matsch (die Höchstgeschwindigkeit ist nur 1/2,6 so hoch wie im Matsch), klebt stärker und macht dreckig.
+- **Betonmischer:** Ein geparkter Betonmischer steht im U (die Trommel dreht sich, aus der Rutsche tropft es) und läuft aus. Das graue Rinnsal führt über den Straßenrand in eine **graue Pfütze** auf der Strecke (Terrain 6, Zement), die fast die ganze Straßenbreite einnimmt (links bleibt nur ein Spalt, der knapp zu schmal für ein Auto ist). Wer hindurchfährt, wird **grau** statt braun (die Farbe des Drecks ist das, wodurch man zuletzt gefahren ist). Zement bremst viel stärker als Matsch (die Höchstgeschwindigkeit ist nur etwa ein Viertel, genau 1/3,8, so hoch wie im Matsch, seit 42eb5ec; vorher 1/2,6), klebt stärker und macht dreckig. Schlauch und Waschanlage waschen seit 42eb5ec viel kräftiger (großer Spülstoß beim Hineinfahren, dann schnell).
 - **Kran mit Rohr:** Oben an der Geraden steht ein Turmdrehkran. Sein Ausleger quert die Strecke und hält an einem Haken ein Betonrohr, das über der Fahrbahn hängt (stillstehend, mit Schatten auf dem Boden). Man fährt **unter** dem Rohr durch, das Auto verschwindet kurz dahinter (das Rohr liegt auf der obersten Ebene).
 - Die Reifenwäsche (Waschanlage) steht unten links.
 Streckenereignis **Kipplaster** (`kipper`):
@@ -108,7 +108,7 @@ Streckenereignis **Kipplaster** (`kipper`):
 - Die Besuche hängen nur an der Rennzeit (alle 23 bis 29 Sekunden, versetzt), im Zeitfahren sind sie also bei jedem Versuch gleich.
 - Musik `site`: Industrial-Funk in e-Moll, Warnpiepser als Lead, Sägezahn-Bass, Amboss-Schläge und Presslufthammer-Rattern.
 
-Offen: nichts aus der Änderungsliste. Die Strecke ist noch in keinem Cup eingetragen.
+Offen: nichts aus der Änderungsliste.
 
 Ursprüngliche Vorgabe (die Abrissbirne und „Mud ist Zement“ wurden durch die Vorgaben oben ersetzt, Pylonen und Absperrungen bleiben als Hindernisse):
 Enger Kurs um Kräne, Betonmischer und Baugruben, viele Engstellen.
@@ -118,7 +118,7 @@ Musik: Stampfender Industrial-Funk in e-Moll. Metallisches Hämmern als Percussi
 Streckenereignis: (Vorschlag) Ein Abrissbirnen-Kran schwingt periodisch über die Strecke; wer getroffen wird, wird weggeschleudert. Ein Schatten kündigt den Einschlag an. **Ersetzt durch:** Kipplaster, Erdwolke, Rohr am Kran, auslaufender Betonmischer.
 
 ## 6. Japanischer Garten
-Status: **umgesetzt** (Streckenname `GARTEN`, Streckenereignis Kois, neue Mechanik „Ins Wasser fallen"). Noch in keinem Cup (Cup 2 hat erst Zug und Garten, die Baustelle fehlt), spielbar in Einzelstrecke und Zeitfahren.
+Status: **umgesetzt** (Streckenname `GARTEN`, Streckenereignis Kois, neue Mechanik „Ins Wasser fallen"). Im Cup SILBER eingetragen (Zug, Baustelle, Garten).
 
 Umsetzung (Abweichungen von der Skizze, weil die Welt 800x450 quer ist): Start links, es geht zuerst die Schlängellinie nach oben (drei Bahnen), dann oben das U um den Teich mit dem Fluss von oben (Stein-Abkürzung über den Teich), rechts außen runter, über eine Brücke, unten links herum, die zweite Brücke und das ∩ um den See in der Mitte (zweite Stein-Abkürzung quer über den See). Der Fluss unten kommt vom rechten Rand, kreuzt die Strecke zweimal und speist den See; der See läuft nach unten ab. Brücken: 3 (Geländer sind fest). Heckenwände verhindern das Abkürzen quer durch den Garten, das Wasser sperrt den Rest.
 - Tiefes Wasser (Terrain 5): wer länger als 0,22 s darüber ist, fällt hinein, ist 1,4 s weg (Spritzer, Auto wird sauber), wird dann an der letzten sicheren Stelle der Strecke wieder abgesetzt, blinkt und ist 2,4 s durchlässig für andere Autos und Hindernisse. Trittsteine und Brücken sind normale Strecke.
@@ -139,7 +139,7 @@ Optik: Kirschblüten wehen über die Strecke (rein optisch), Große Pagoden steh
 Legende/Erläuterung zur gezeichneten Strecke: Fahrtrichtung Uhrzeigersinn. Schwarz ist die Straße gemalt. Grün die Ziellinie. Erdweg mit Pfützen und Matsch wie gehabt. Oben ist ein Teich. Man kann die Lange Strecke fahren oder eine Abkürzung über die Steine Hopsen (vielleicht leichtes Gefälle). Neue Mechanik: Ins Wasser Fallen. Fällt man ins Wasser wird man kurz darauf wieder auf der Strecke platziert und blinkt erst und ist durchlässig für kurze Zeit. Der See in der Mitte sollte auch mit dem Fluss verbunden sein, sonst machen die zweiten Steine keinen Sinn. Braun sind die Brücken. Diese haben Geländer, dort kann man nicht runterfallen, aber dort springen die Kois. Die Kois springen auch über die Steine. 
 ![[Pasted image 20261007174132.png]]
 # Cup 3
-Stand 2026-10-09, Branch `map_pack` (Prototyping, geht nicht auf `main`). Die drei Strecken unten sind **ausgearbeitete Vorschläge**, noch nichts davon ist umgesetzt.
+Stand 2026-10-11, Branch `map_pack` (Prototyping, geht nicht auf `main`). Alle drei Strecken unten sind als **Prototyp umgesetzt** (erster Wurf, Abweichungen stehen jeweils beim Status); der Rest des Textes ist der ausgearbeitete Vorschlag.
 
 **Steigerung im Cup:** Jede Strecke ist schwerer als alles aus Cup 1 und 2 und schwerer als die vorige. Jede bevorzugt eine andere Art von Auto, damit im Cup nicht immer dasselbe Auto gewinnt.
 
@@ -154,7 +154,7 @@ Stand 2026-10-09, Branch `map_pack` (Prototyping, geht nicht auf `main`). Die dr
 Reihenfolge in Einzelstrecke und Zeitfahren: … Garten, **Rennstrecke, Wüste, Eis**, Regenbogen. Cup 3 (`GOLD` in `src/cups.js`): `['RENNSTRECKE', 'WUESTE', 'EIS']`.
 
 ## 7. Rennstrecke
-Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `RENNSTRECKE`, Theme `ring`, Musik `circuit`, Streckenereignis Reifen `reifen`; Code in `src/ringmap.js` und `src/ring.js`). Im Cup GOLD eingetragen (bisher als einzige Strecke).
+Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `RENNSTRECKE`, Theme `ring`, Musik `circuit`, Streckenereignis Reifen `reifen`; Code in `src/ringmap.js` und `src/ring.js`). Im Cup GOLD eingetragen (mit Wüste und Eis).
 
 Abweichungen vom Vorschlag: Start-Ziel-Gerade ist die linke Gerade (Start links, es geht nach oben, wie bei den anderen Strecken). Die Boxengasse zweigt am Anfang der unteren Geraden ab (weiße Trennlinie, schraffierte Sperrfläche), läuft hinter einer Boxenmauer neben der Start-Ziel-Geraden und fädelt vor Kurve 1 wieder ein. Rundherum Leitplanken, an den Kiesbetten Reifenstapel. Kulisse: zwei Tribünen mit winkenden Fans, Fahrerlager mit Team-Trucks, Hubschrauberlandeplatz, Großbildleinwand (zeigt deinen Platz), in die Wiese gemähte Zielflagge, Kameratürme.
 
@@ -330,7 +330,7 @@ Streckenereignis: (Vorschlag) Ab Runde 2 friert ein Teil der Strecke zu, Eisflä
 
 
 # Cup 4
-Stand 2026-10-09, Branch `map_pack`. Die drei Strecken unten sind **ausgearbeitete Vorschläge**, noch nichts davon ist umgesetzt.
+Stand 2026-10-11, Branch `map_pack`. Vulkan und Dschungel sind als **Prototyp umgesetzt** (Abweichungen beim Status), das Weltall ist noch ein **Vorschlag**.
 
 **Steigerung im Cup:** In Cup 3 waren die Strecken schwer zu fahren. In Cup 4 wird **die Strecke selbst zum Gegner**: Sie verändert sich während des Rennens, Wege gehen auf und zu, und man muss vorausschauen statt nur gut zu lenken. Jede Strecke bevorzugt wieder eine andere Art von Auto.
 
@@ -342,7 +342,7 @@ Stand 2026-10-09, Branch `map_pack`. Die drei Strecken unten sind **ausgearbeite
 
 **Gemeinsame Bausteine:** Fast alles baut auf Cup 3 auf. Die Schubzone (Wind, Gefälle) wird zur Strömung im Fluss und zur Schwerkraft eines Planeten (dort zeigt die Kraft zur Mitte, wie der Sog im Treibsand, nur ohne Einsinken). Das „Ins Wasser fallen“ aus dem Garten ist hier Lava, Fluss und Weltall (weg, absetzen, blinken). Die Sprünge kommen aus der Matschfahrt. Das Sichtfeld aus dem Wald (Scheinwerfer) gibt es in der Lavaröhre und im Tempel. **Neu für den ganzen Cup:** Strecken, die sich zeitgesteuert öffnen und schließen („Weg zu“), immer mit Vorwarnung (Blinken, Text, Ton), damit es fair bleibt. Alle Ereignisse hängen nur an der Rennzeit, im Zeitfahren sind sie bei jedem Versuch gleich. Neue Schalter in `G.events`: `ausbruch`, `baeume`, `kroko`, `asteroiden`, `schwarzesloch`.
 
-Reihenfolge in Einzelstrecke und Zeitfahren: … Eis, **Vulkan, Dschungel, Weltall**, Süßigkeitenland, Spielzimmer, Regenbogen. Cup 4 (`PLATIN` in `src/cups.js`): `['VULKAN', 'DSCHUNGEL', 'WELTALL']`.
+Reihenfolge in Einzelstrecke und Zeitfahren: … Eis, **Vulkan, Dschungel, Weltall**, Süßigkeitenland, Spielzimmer, Regenbogen. Cup 4 (`PLATIN` in `src/cups.js`): geplant `['VULKAN', 'DSCHUNGEL', 'WELTALL']`, heute `['VULKAN', 'DSCHUNGEL']`.
 
 ## 10. Vulkan
 Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `VULKAN`, Theme `vulkan`, Musik `volcano`, Streckenereignis Ausbruch `ausbruch`; Code in `src/volcanomap.js` und `src/volcano.js`). Im Cup PLATIN eingetragen.
@@ -527,7 +527,7 @@ Stand 2026-10-09, Branch `map_pack`. Die drei Strecken unten sind **ausgearbeite
 
 **Gemeinsame Bausteine:** Die Fantasy-Strecken verwenden fast nur vorhandene Mechaniken, neu gemischt: Kleben ist Matsch mit Nachwirkung, das Trampolin ist ein Sprung, die Zuckerwatte ist die federnde Bande aus der Bobbahn, der Saugroboter ist der Treibsand-Sog auf Rädern, Licht aus ist der Wald. Der **Regenbogen** baut auf allem auf und sollte darum als Letztes umgesetzt werden. Neue Schalter in `G.events`: `schoko`, `zuckerwatte`, `saugroboter`, `spielzeug`, `einhorn`, `gewitter`.
 
-Reihenfolge in Einzelstrecke und Zeitfahren: … Weltall, **Süßigkeitenland, Spielzimmer, Regenbogen**. Cup 5 (`FANTASY` in `src/cups.js`): `['SUESS', 'SPIELZIMMER', 'REGENBOGEN']`. Der Regenbogen ist damit auch das letzte Rennen des Superdupercups.
+Reihenfolge in Einzelstrecke und Zeitfahren: … Weltall, **Süßigkeitenland, Spielzimmer, Regenbogen**. Cup 5 (`FANTASY` in `src/cups.js`): geplant `['SUESS', 'SPIELZIMMER', 'REGENBOGEN']`, heute leer. Der Regenbogen ist damit auch das letzte Rennen des Superdupercups. Im Code hat Cup 5 noch keine Freischaltbedingung (geplant: 1. Sieg im Supercup).
 
 ## 13. Süßigkeitenland
 Status: **Vorschlag** (Streckenname `SUESS`, Theme `suess`, Musik `candy`, Streckenereignisse Schokolade `schoko` und Zuckerwatte `zuckerwatte`)
@@ -732,3 +732,5 @@ Superdupercup
 Custom
 - Auswahl wie viele Gegner (1-9)
 - Auswahl wie viele und welche Strecken.
+
+Stand im Spiel (2026-10-11, `src/cups.js`): Cup 1 bis 4 haben Strecken (Cup 4 noch ohne Weltall), Cup 5 ist leer. Supercup = alle Strecken der Cups 1 bis 4 (heute 11), offen nach den ersten Siegen in Cup 1 bis 4. Superdupercup = alle Strecken der Cups 1 bis 5, offen nach dem ersten Sieg in Cup 5. Custom Cup: bis 12 Strecken in beliebiger Folge (auch doppelt), 2 bis 7 Gegner.

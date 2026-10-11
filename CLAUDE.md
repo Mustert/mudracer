@@ -25,7 +25,7 @@ Jede Änderung am Spiel wird vor dem Commit mit `ANALYSE.md` und der Obsidian-Do
    - die Zeile „Zuletzt abgeglichen“ oben auf Datum und Commit nachziehen.
 3. Die Grundregel „Spielstände bleiben gültig“ in `ANALYSE.md` gilt für jede Änderung.
 
-**Obsidian-Doku** unter `Obsidian/Mudracer/` (Obsidian-Vault des Nutzers, zurzeit nicht im Git):
+**Obsidian-Doku** unter `Obsidian/Mudracer/` (Obsidian-Vault des Nutzers, im Git; nur das Fensterlayout `.obsidian/workspace*.json` ist ignoriert):
 - `Strecken.md`: Plan aller Strecken und Cups (Cup 1 bis 5, Strecken 1 bis 15) mit Thema, Ereignis und Ideen; Grundlage für neue Strecken, zusammen mit den Streckendesign-Grundsätzen unten.
 - `Autos.md`: alle Autos mit Freischaltung, Sternen, Feinwerten (`speed`, `mud`, `acc`, `turn`, `engine`), Hupe und Änderungswünschen; dazu die Füllautos.
 - `Spielmodi.md`: Menüfluss und Bildschirme (Hauptmenü, Autowahl, Cup-Wahl, Einzelstrecke, Zeitfahren, Matschfahrt) mit Mockups.
