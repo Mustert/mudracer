@@ -2,3 +2,6 @@
 .impeccable/
 node_modules/
 dist/
+
+# Obsidian: window layout changes all the time
+Obsidian/**/.obsidian/workspace*.json
