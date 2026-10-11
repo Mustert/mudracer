@@ -8,6 +8,7 @@ import { WATC, addP, drop } from './particles.js';
 import { placeOf } from './physics.js';
 import { cam } from './state.js';
 import { nearestIdx } from './bau.js';
+import { nearObstacles } from './grid.js';
 import { tctx } from './tracks.js';
 
 // ---------- Rennstrecke while racing: the bridge (two levels), slipstream, start lights with a rocket start, kerbs, gravel, the pit stop,
@@ -168,7 +169,7 @@ export function updateReifen(T, dt) {
     const f = road ? (ty.roll ? .25 : 3) : t === 7 ? 4 : 1.8;
     ty.vx *= Math.exp(-f * dt); ty.vy *= Math.exp(-f * dt);
     if (ty.roll) { ty.rot += sp * dt / 7; ty.z = Math.abs(Math.sin(ty.rot * .45)) * 8 * Math.min(1, sp / 70); if (sp < 14) { ty.roll = false; ty.z = 0; } }
-    for (const o of T.trees) {
+    for (const o of nearObstacles(T.grid, ty.x, ty.y)) {
       if (o.up || o.down) continue;
       const dx = ty.x - o.x, dy = ty.y - o.y, d = Math.hypot(dx, dy), mn = o.r + 7;
       if (d < mn && d > 0) { const nx = dx / d, ny = dy / d, vn = ty.vx * nx + ty.vy * ny; ty.x = o.x + nx * mn; ty.y = o.y + ny * mn; if (vn < 0) { ty.vx -= 1.4 * vn * nx; ty.vy -= 1.4 * vn * ny; } }

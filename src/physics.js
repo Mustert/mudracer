@@ -11,6 +11,7 @@ import { jungleLane, jungleTarget } from './jungle.js';
 import { setState } from './menus.js';
 import { finishRace } from './race.js';
 import { ttLap } from './timetrial.js';
+import { reportError } from './errors.js';
 
 // ---------- physics ----------
 
@@ -67,6 +68,16 @@ export function physics(c, dt, thr, tgt) {
   vl *= Math.exp(-grip * dt);
   c.vx = fx * vf - fy * vl; c.vy = fy * vf + fx * vl;
   c.x += c.vx * dt; c.y += c.vy * dt;
+}
+
+// a car must never get NaN or Infinity into its numbers (a broken value once froze a whole race, see ANALYSE.md T1):
+// it is put back where it was last fine, stopped, and the error is reported
+export function guardCar(c) {
+  if (Number.isFinite(c.x + c.y + c.vx + c.vy + c.ang + c.dirt + (c.z || 0))) { c.okX = c.x; c.okY = c.y; c.okA = c.ang; return; }
+  reportError(new Error('NaN bei ' + c.def.id + ' x=' + c.x + ' vx=' + c.vx + ' ang=' + c.ang + ' dirt=' + c.dirt), 'Physik');
+  const p = G.T.path[c.idx] || { x: G.T.W / 2, y: G.T.H / 2 };
+  c.x = c.okX ?? p.x; c.y = c.okY ?? p.y; c.ang = c.okA ?? 0; c.vx = c.vy = 0; c.z = c.vz = 0;
+  if (!Number.isFinite(c.dirt)) c.dirt = 0;
 }
 
 

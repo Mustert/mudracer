@@ -1,5 +1,6 @@
 import { G } from './g.js';
 import { MAXS, VH, VW, clamp } from './core.js';
+import { reportError } from './errors.js';
 import { held } from './input.js';
 import { Music } from './music.js';
 import { cam } from './state.js';
@@ -274,6 +275,13 @@ function buildSurface() {
 const driving = () => G.player && (G.state === 'race' || G.state === 'countdown' || G.state === 'finish');
 
 
+// an audio parameter only takes finite numbers: a NaN (a broken car value) would throw every frame, so it is left out and reported once
+let nanSaid = false;
+function aim(p, v, t, k) {
+  if (Number.isFinite(v)) { p.setTargetAtTime(v, t, k); return; }
+  if (!nanSaid) { nanSaid = true; reportError(new Error('Motorgeraeusch: ' + v), 'Audio'); }
+}
+
 export function engineSound(dt) {
   if (!AU.a) return;
   const E = AU.E, t = AU.a.currentTime;
@@ -286,9 +294,9 @@ export function engineSound(dt) {
     g = G.state === 'finish' ? .05 : .12 * (.65 + .35 * AU.rev);
   }
   const base = G.player ? G.player.def.engine : 50, f = base * (1 + rpm * 1.6) * (1 - .1 * (G.player ? G.player.dirt : 0));
-  E.o1.frequency.setTargetAtTime(f, t, .05); E.o2.frequency.setTargetAtTime(f * .5 * 1.003, t, .05); E.lfo.frequency.setTargetAtTime(f * .5, t, .05);
-  E.lp.frequency.setTargetAtTime(250 + rpm * 900 + AU.rev * 300, t, .05);
-  E.out.gain.setTargetAtTime(g, t, .08);
+  aim(E.o1.frequency, f, t, .05); aim(E.o2.frequency, f * .5 * 1.003, t, .05); aim(E.lfo.frequency, f * .5, t, .05);
+  aim(E.lp.frequency, 250 + rpm * 900 + AU.rev * 300, t, .05);
+  aim(E.out.gain, g, t, .08);
   const S = AU.S; let sg = 0, type = 'bandpass', sf = 2000, q = .8;
   if (driving()) {
     const sp = Math.min(1, Math.hypot(G.player.vx, G.player.vy) / MAXS);
@@ -302,7 +310,7 @@ export function engineSound(dt) {
     else if (G.player.surf === 3) { type = 'highpass'; sf = 2500; q = .5; sg = .14 * sp; }
   }
   if (S.f.type !== type) S.f.type = type;
-  S.f.frequency.setTargetAtTime(sf, t, .03); S.f.Q.setTargetAtTime(q, t, .05); S.g.gain.setTargetAtTime(sg, t, .06);
+  aim(S.f.frequency, sf, t, .03); aim(S.f.Q, q, t, .05); aim(S.g.gain, sg, t, .06);
 }
 
 // ocean waves on the beach, crossing bell and puffing steam engine on the train track

@@ -1,10 +1,10 @@
 import { G } from './g.js';
 import { isLocked } from './cars.js';
-import { VW, WH, WW, ctx } from './core.js';
+import { VW, ctx } from './core.js';
 import { CUPS, cupLabel, cupLocked, cupReady, cupReward, cupTrackIdx, cupWon } from './cups.js';
 import { DIFFS, curDiff } from './diff.js';
 import { R1, disc, text, tri } from './draw.js';
-import { drawLock, drawMenuBg, drawTrophy } from './screens.js';
+import { drawLock, drawMenuBg, drawTrackPic, drawTrophy } from './screens.js';
 import { TRACKS } from './tracks.js';
 
 // ---------- cup selection (Grand Prix): one row per cup, the focused row steps out of the list ----------
@@ -101,7 +101,7 @@ export function drawSelectCup() {
       idx.forEach((ti, j) => {
         const t = TRACKS[ti], tx = tx0 + j * (tw + gap);
         R1(tx - 1, ty - 1, tw + 2, th + 2, '#1b120c');
-        ctx.drawImage(t.base, 0, 0, WW, WH, tx, ty, tw, th); ctx.drawImage(t.top, 0, 0, WW, WH, tx, ty, tw, th);
+        drawTrackPic(t, tx, ty, tw, th);
         if (sel && tw >= 56) text(t.name, tx + tw / 2, ty + th - 9, 8, '#fff3dc', 'center');
       });
     } else if (!ready) {

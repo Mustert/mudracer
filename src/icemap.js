@@ -17,8 +17,9 @@ const K = Object.fromEntries(Object.entries({
 const range = (N, a, b) => { const r = new Uint8Array(N); for (let i = a; ; i = (i + 1) % N) { r[i] = 1; if (i === b) break; } return r; };
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N }
-export function iceTerrain(S) {
+export function* iceTerrain(S) {
   const { def, ter, dist, near, path, N } = S, A = WW * WH, alt = new Uint8Array(A), lakeM = new Uint8Array(A);
+  yield;
   // the frozen lake: everything beside the road inside the ellipse is thin ice (a second way, the short cut)
   if (def.lake) {
     const [lx, ly, rx, ry] = def.lake;
@@ -28,10 +29,12 @@ export function iceTerrain(S) {
       ter[j] = 12; lakeM[j] = 1; alt[j] = 1;
     }
   }
+  yield;
   // the bob run and the landing slope of the ski jump: sheet ice on the road
   const seg = ([a, b]) => range(N, nearestIdx(path, a[0], a[1]), nearestIdx(path, b[0], b[1]));
   const bob = def.bob ? seg(def.bob) : new Uint8Array(N), land = def.landing ? seg(def.landing) : new Uint8Array(N);
   for (let j = 0; j < A; j++) if (dist[j] < HALF && (bob[near[j]] || land[near[j]]) && ter[j] === 1) ter[j] = 12;
+  yield;
   // the hot spring: steaming water that reaches onto the road (it washes the snow off and never freezes)
   if (def.spring) {
     const [sx, sy, rx, ry] = def.spring;
@@ -40,10 +43,12 @@ export function iceTerrain(S) {
       if (((x + .5 - sx) / rx) ** 2 + ((y + .5 - sy) / ry) ** 2 < .85 + .3 * vnoise(x * .2, y * .2, 72)) ter[y * WW + x] = 3;
     }
   }
+  yield;
   // the ski jump: one big ramp across the whole road; the slopes push the cars downhill
   const jumps = [];
   if (def.jump) { const [x, y, vz] = def.jump, i = nearestIdx(path, x, y), p = path[i], t = S.tan[i]; jumps.push({ x: p.x, y: p.y, tx: t.x, ty: t.y, lo: -HALF - 4, hi: HALF + 4, vz }); }
   const pushes = (def.slopes || []).map(([x0, y0, x1, y1, f]) => ({ i0: nearestIdx(path, x0, y0), i1: nearestIdx(path, x1, y1), f }));
+  yield;
   // the corners that freeze from lap 2: their road pixels, from the edge inwards (with a little noise, so it grows like ice flowers)
   const frost = (def.frost || []).map(([x, y]) => {
     const c = nearestIdx(path, x, y), R = range(N, (c - 44 + N) % N, (c + 44) % N), px = [];
@@ -56,7 +61,7 @@ export function iceTerrain(S) {
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, isBridge, sd, th, r, critters, darken, RT }
-export function paintIce(S) {
+export function* paintIce(S) {
   const { def, d, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, isBridge, sd, RT } = S, A = WW * WH;
   const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < WW && y < WH) set(y * WW + x, c); };
   const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= WW || y >= WH) return; const i = (y * WW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
@@ -68,8 +73,10 @@ export function paintIce(S) {
     return st > .9 ? K.iceL : st > .6 ? K.ice2 : v < .3 ? K.ice1 : h < .01 ? K.iceD : K.ice;
   };
 
+  yield;
   // ----- the ground -----
   for (let j = 0; j < A; j++) {
+    if (j % 40000 === 39999) yield;
     const x = j % WW, y = j / WW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 8, y / 8, sd + 41) * .55 + h * .45;
     if (bridgeMask[j] || shore[j]) continue;
     let c;
@@ -87,9 +94,11 @@ export function paintIce(S) {
     } else continue;
     set(j, c);
   }
+  yield;
   // start line (chequered)
   S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * WW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
 
+  yield;
   // ----- the ski jump: blue lines along the run-up, the take-off table with flags, a red line where the good jumps land -----
   for (const J of RT.jumps) {
     const i0 = nearestIdx(path, J.x, J.y);
@@ -105,27 +114,32 @@ export function paintIce(S) {
     for (let w = -HALF + 1; w <= HALF - 1; w++) { px(kp.x + nrm[kI].x * w, kp.y + nrm[kI].y * w, K.red); px(kp.x + nrm[kI].x * w + tan[kI].x, kp.y + nrm[kI].y * w + tan[kI].y, K.red); }
   }
 
+  yield;
   // ----- the bob run: high walls of blue ice on both sides; they are springy (see update.js) -----
   for (let i = 0; i < N; i += 2) {
     if (!RT.bob[i]) continue;
     for (const s of [-1, 1]) walls.push({ x: path[i].x + nrm[i].x * s * (HALF + 3), y: path[i].y + nrm[i].y * s * (HALF + 3), r: 3, bob: 1 });
   }
   for (let j = 0; j < A; j++) {
+    if (j % 40000 === 39999) yield;
     if (!RT.bob[near[j]] || dist[j] < HALF - .5 || dist[j] > HALF + 7) continue;
     const dd = dist[j] - HALF, x = j % WW, y = j / WW | 0;
     set(j, dd < 1 ? K.bobWL : dd < 4.5 ? ((x + y) % 9 === 0 ? K.bobWL : K.bobW) : dd < 6 ? K.bobWD : K.snowD);
     if (dd >= 6) wallMask[j] = 1;
   }
 
+  yield;
   // ----- the wooden bridge over the glacier stream: solid rails with icicles -----
   for (let i = 0; i < N; i += 3) if (isBridge[i]) for (const s of [-1, 1]) walls.push({ x: path[i].x + nrm[i].x * s * HALF, y: path[i].y + nrm[i].y * s * HALF, r: 3 });
   for (let j = 0; j < A; j++) {
+    if (j % 40000 === 39999) yield;
     if (!isBridge[near[j]] || dist[j] < HALF - 2.5 || dist[j] > HALF + 4) continue;
     const dd = dist[j] - HALF, i = near[j];
     if (dd > 1.5) { if (ter[j] === 5 && (i % 4 < 2) && dd < 4) set(j, [230, 246, 255]); continue; } // icicles hanging over the water
     set(j, i % 8 < 2 ? K.woodD : dd < -1 ? K.woodL : K.wood);
   }
 
+  yield;
   // ----- the hot spring: grey stones round it -----
   if (def.spring) {
     const [sx, sy, rx, ry] = def.spring;
@@ -136,6 +150,7 @@ export function paintIce(S) {
     }
   }
 
+  yield;
   // ----- the village at the start: a ski hut with warm windows (roof on the top layer), a snowman, a sledge at the fence -----
   const snowman = (x, y) => {
     walls.push({ x, y, r: 5 }); solid(x, y, 7);
@@ -162,10 +177,12 @@ export function paintIce(S) {
     for (let k = 0; k < 30; k++) { px(hx - 20 + k, hy + 26, K.woodD); if (k % 6 === 0) for (let q = -2; q <= 1; q++) px(hx - 20 + k, hy + 26 + q, K.wood); }
     for (let k = 0; k < 12; k++) { px(hx - 14 + k, hy + 29, K.red); px(hx - 14 + k, hy + 32, K.red); if (k % 4 === 0) for (let q = 29; q <= 32; q++) px(hx - 14 + k, hy + q, K.woodL); }
   }
+  yield;
   // more snowmen out in the snow
   const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= WW - 2 || Y >= WH - 2) return false; const j = Y * WW + X; if (ter[j] !== 0 || dist[j] < HALF + 10 || wallMask[j] || shore[j]) return false; } return true; };
   for (let k = 0, tries = 0; k < 4 && tries < 500; tries++) { const x = 8 + (S.r() * (WW - 16) | 0), y = 8 + (S.r() * (WH - 16) | 0); if (okOff(x, y, 9)) { snowman(x, y); k++; } }
 
+  yield;
   // ----- the penguin colony: an ice floe with rocks (the penguins are drawn while racing) -----
   let colony = null;
   if (def.colony) {
@@ -178,6 +195,7 @@ export function paintIce(S) {
     for (const [dx, dy] of [[-22, -10], [18, 8], [26, -12]]) for (let yy = -4; yy <= 4; yy++) for (let xx = -5; xx <= 5; xx++) if (xx * xx / 25 + yy * yy / 16 <= 1) px(cx + dx + xx, cy + dy + yy, yy < -1 ? K.rockL : yy > 1 ? K.rockD : K.rock);
     colony = { x: cx, y: cy };
   }
+  yield;
   // the ski lift along the left edge of the map: masts (the cable and the gondolas move while racing)
   const lift = { x: 18, y0: 14, y1: 436 };
   for (let y = lift.y0; y <= lift.y1; y += 70) { for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) px(lift.x + dx, y + dy, Math.abs(dx) === 2 || Math.abs(dy) === 2 ? K.rockD : [150, 156, 166]); walls.push({ x: lift.x, y, r: 3 }); for (let dx = 1; dx <= 6; dx++) dk(lift.x + 2 + dx, y + 3, .8); }

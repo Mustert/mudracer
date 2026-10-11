@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { CAR_DEFS, carSet, isLocked } from './cars.js';
-import { SS, TAU, VH, VW, WH, WW, ctx, hash } from './core.js';
+import { SS, TAU, VH, VW, WW, ctx, hash } from './core.js';
 import { cupLabel } from './cups.js';
 import { DIFFS } from './diff.js';
 import { R1, blink, disc, drawConfetti, drawTag, ell, medal, medalL, panel, star, text, tri } from './draw.js';
@@ -8,14 +8,21 @@ import { SFX } from './audio.js';
 import { standings } from './race.js';
 import { MODES } from './state.js';
 import { fmtTime, loadRecord } from './timetrial.js';
-import { TRACKS } from './tracks.js';
+import { TRACKS, trackPicture } from './tracks.js';
 import { drawMenuLogo } from './title.js';
 import { TRAIN } from './trainsprite.js';
 import { drawPokal, drawRibbon } from './trophy.js';
 
+// the menu picture of a track (screen size, see tracks.js trackPicture), or a part of it (sx..sh in picture pixels), shrunk smoothly
+export function drawTrackPic(t, dx, dy, dw, dh, sx = 0, sy = 0, sw = VW, sh = VH) {
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(trackPicture(t), sx, sy, sw, sh, dx, dy, dw, dh);
+  ctx.imageSmoothingEnabled = false;
+}
+
 export function drawMenuBg(t) {
   t = t || TRACKS[(G.state === 'options' ? G.optFrom : G.state) === 'select_track' ? G.selTrack : 0];
-  ctx.drawImage(t.base, 0, 0, t.W, t.H, 0, 0, VW, VH); ctx.drawImage(t.top, 0, 0, t.W, t.H, 0, 0, VW, VH);
+  ctx.drawImage(trackPicture(t), 0, 0);
   ctx.fillStyle = 'rgba(27,16,9,.62)'; ctx.fillRect(0, 0, VW, VH);
 }
 
@@ -69,8 +76,8 @@ export function drawMain() {
     ctx.fillStyle = sel ? '#ffd23f' : '#3a2a1c'; ctx.fillRect(x - 3, y - 3, cw + 6, chh + 6);
     ctx.fillStyle = '#1b120c'; ctx.fillRect(x - 1, y - 1, cw + 2, chh + 2);
     ctx.fillStyle = '#5a3a1f'; ctx.fillRect(x, y, cw, chh);
-    const t = TRACKS[[0, 2, 3, 1, 4][i]] || TRACKS[0], ih = 92, sw = Math.round(cw * 4.26);
-    ctx.drawImage(t.base, 350 - sw / 2, 60, sw, 330, x, y, cw, ih);
+    const t = TRACKS[[0, 2, 3, 1, 4][i]] || TRACKS[0], ih = 92, sw = Math.round(cw * 4.26), k = VW / WW;
+    drawTrackPic(t, x, y, cw, ih, (350 - sw / 2) * k, 60 * k, sw * k, 330 * k);
     const cx = x + cw / 2, cy = y + ih / 2;
     if (i === 0) { drawTrophy(cx, cy + 6, 1.6); }
     else if (i === 1) {
@@ -118,14 +125,14 @@ export function drawSelectTrack() {
   for (const off of [-1, 1]) {
     const t = TRACKS[(G.selTrack + off + n) % n], w = 96, h = 54, x = off < 0 ? 16 : VW - 16 - w, y = cy0 + 36;
     ctx.fillStyle = '#1b120c'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
-    ctx.drawImage(t.base, 0, 0, WW, WH, x, y, w, h); ctx.drawImage(t.top, 0, 0, WW, WH, x, y, w, h);
+    drawTrackPic(t, x, y, w, h);
     ctx.fillStyle = 'rgba(27,16,9,.55)'; ctx.fillRect(x, y, w, h);
   }
   const t = TRACKS[G.selTrack], pop = Math.round(Math.max(0, 1 - (G.time - G.selAnim) * 4) * 6), b = Math.round(Math.abs(Math.sin(G.time * 3)) * 2) + pop;
   ctx.fillStyle = '#ffd23f'; ctx.fillRect(cx0 - 4, cy0 - 4 - b, cw + 8, chh + 8);
   ctx.fillStyle = '#1b120c'; ctx.fillRect(cx0 - 1, cy0 - 1 - b, cw + 2, chh + 2);
-  ctx.drawImage(t.base, 0, 0, WW, WH, cx0, cy0 - b, cw, chh); ctx.drawImage(t.top, 0, 0, WW, WH, cx0, cy0 - b, cw, chh);
-  if (t.rail) ctx.drawImage(TRAIN.c, cx0 + Math.round(t.rail.x * cw / WW) - 5, cy0 - b + 30, 10, Math.round(TRAIN.LEN * chh / WH));
+  drawTrackPic(t, cx0, cy0 - b, cw, chh);
+  if (t.def.rail) ctx.drawImage(TRAIN.c, cx0 + Math.round(t.def.rail.x * cw / WW) - 5, cy0 - b + 30, 10, Math.round(TRAIN.LEN * chh / t.H));
   const wig = Math.round(Math.sin(G.time * 5) * 3);
   tri(cx0 - 12 - wig + 1, cy0 + chh / 2 + 1, 'left', 10, '#1b120c'); tri(cx0 - 12 - wig, cy0 + chh / 2, 'left', 10, '#ffd23f');
   tri(cx0 + cw + 12 + wig + 1, cy0 + chh / 2 + 1, 'right', 10, '#1b120c'); tri(cx0 + cw + 12 + wig, cy0 + chh / 2, 'right', 10, '#ffd23f');

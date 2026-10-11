@@ -1,15 +1,16 @@
 import { G } from './g.js';
 import { AU, SFX } from './audio.js';
-import { CAR_DEFS, GENERICS, carSet, isLocked } from './cars.js';
+import { CAR_DEFS, GENERICS, carSet, completeSet, isLocked, keepSets } from './cars.js';
 import { cupReward, cupTrackIdx, loadBestPlace, markCupWon, saveBestPlace } from './cups.js';
 import { aiSkill, curDiff, fxActive } from './diff.js';
 import { setupEvents } from './events.js';
+import { loadThen, raceSets } from './idle.js';
 import { VH, VW, clamp, rng } from './core.js';
 import { POINTS, setState } from './menus.js';
 import { score } from './physics.js';
 import { cam } from './state.js';
 import { loadRecord, saveRecord, ttLap, ttSample } from './timetrial.js';
-import { TRACKS, tctx, trail } from './tracks.js';
+import { TRACKS, tctx, trail, trimTracks, useTrack } from './tracks.js';
 
 // the Grand Prix field: your car, every other unlocked car, then plain cars up to eight (the custom cup: as many as chosen)
 // the difficulty is fixed for the whole cup when it starts
@@ -35,7 +36,9 @@ export function resetWorld() {
 
 
 export function makeCar(def, x, y, ang, ai, skill, entry) {
-  return { def, entry, F: carSet(def, G.T.th.goo), Fc: G.T.def.cement ? carSet(def, false, true) : null, cem: false, x, y, ang, vx: 0, vy: 0, dirt: 0, lap: 0, cp: 0, idx: 0, off: 0, ai, skill, seed: Math.random() * 100,
+  const F = carSet(def, G.T.th.goo), Fc = G.T.def.cement ? carSet(def, false, true) : null;
+  completeSet(F); if (Fc) completeSet(Fc); // usually built already (loading screen, idle.js)
+  return { def, entry, F, Fc, cem: false, x, y, ang, vx: 0, vy: 0, dirt: 0, lap: 0, cp: 0, idx: 0, off: 0, ai, skill, seed: Math.random() * 100,
     surf: 1, mudTrail: 0, wetTrail: 0, finished: false, place: 0, honk: 0, bump: 0, washing: false, boost: 0, stun: 0, spin: 0, brake: false, z: 0, vz: 0, wet: 0, fall: 0, ghost: 0, safe: 0,
     // race circuit: level at the bridge, slipstream, rocket start, oil just driven through, on a kerb, in the pit lane
     lvl: 0, draft: 0, rocket: 0, oilT: 0, kerb: false, pit: false };
@@ -43,10 +46,16 @@ export function makeCar(def, x, y, ang, ai, skill, entry) {
 
 
 export function startRace() {
-  let entries;
-  if (G.mode === 'gp') { G.T = TRACKS[G.gp.tracks[G.gp.race]]; entries = G.gp.entries; }
-  else if (G.mode === 'tt') { G.T = TRACKS[G.selTrack]; entries = [{ def: CAR_DEFS[G.selCar], me: true, skill: 1 }]; }
-  else { G.T = TRACKS[G.selTrack]; entries = singleField().map((def, i, all) => ({ def, me: i === 0, skill: i ? aiSkill(i, all.length - 1) : 1 })); }
+  let entries, T;
+  if (G.mode === 'gp') { T = TRACKS[G.gp.tracks[G.gp.race]]; entries = G.gp.entries; }
+  else if (G.mode === 'tt') { T = TRACKS[G.selTrack]; entries = [{ def: CAR_DEFS[G.selCar], me: true, skill: 1 }]; }
+  else { T = TRACKS[G.selTrack]; entries = singleField().map((def, i, all) => ({ def, me: i === 0, skill: i ? aiSkill(i, all.length - 1) : 1 })); }
+  // the track and the sprites of the whole field have to be there: whatever is still missing is built on the loading screen first
+  useTrack(T);
+  const sets = raceSets(T, entries.map(e => e.def));
+  if (!T.built || sets.some(s => !s.done)) { loadThen(T, sets, startRace); return; }
+  G.T = T;
+  trimTracks(); keepSets([...CAR_DEFS, ...GENERICS], sets);
   G.raceDiff = G.mode === 'gp' ? G.gp.diff : curDiff();
   G.fx = G.mode === 'gp' ? G.gp.diff > 0 && !G.kids : fxActive();
   resetWorld();

@@ -3,7 +3,7 @@
 Die eine Liste für alles, was am Spiel schwach, offen oder geplant ist. Enthält auch die früheren Verbesserungsideen (ehemals `VERBESSERUNGEN.md`, Abschnitt I).
 
 - Analyse am 2026-10-09 auf Stand `c5aed10` bis `42eb5ec`, am 2026-10-11 gegen `2d022f4` (Branch `map_pack`, 12 Strecken) nachgeprüft.
-- Zuletzt abgeglichen: 2026-10-11, Commit `b18d2d0` (Code unverändert seit `2d022f4`). (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
+- Zuletzt abgeglichen: 2026-10-12, Zwischenstand „Technik-Umbau T3–T14“ (Branch `map_pack`, Arbeit läuft, siehe „Arbeitsstand Technik“ unter der Technik-Tabelle). (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
 - Ausführliche Fassung der Analyse mit Begründungen (Stand 2026-10-09): https://claude.ai/code/artifact/5ecd1e70-685b-404d-b2e6-ed798433c1fb
 
 ## So wird diese Datei benutzt
@@ -26,18 +26,31 @@ Annahme der Analyse: Kinder sind die Hauptzielgruppe, SCHWER ist ein Bonus für 
 |---|---|---|---|---|---|
 | T1 | K | erledigt (3b58385) | Lackieren überschrieb `def.acc` (Beschleunigung) mit dem Akzent-Farbobjekt → `NaN`-Position, Rennen hing | `cars.js` `setPaint` | jetzt Feld `accent`; ein Test, der jedes Auto mit jeder Farbe kurz fährt, fehlt noch |
 | T2 | H | erledigt (3b58385) | Quad/Rally hatten den Schlüssel `acc` doppelt | `cars.js` `CAR_DEFS` | ESLint `no-dupe-keys` hätte es gemeldet |
-| T3 | H | offen | Alle Strecken werden synchron beim Import gebaut; bei 7 Strecken ~4 s blockierter Main-Thread (Dev-Server), mit 12 Strecken eher mehr | `tracks.js` `TRACKS = TRACK_DEFS.map(buildTrack)` | erst bei Bedarf bauen und cachen, Menüvorschauen klein vorrendern, evtl. Worker + OffscreenCanvas |
-| T4 | M | offen? | Sprite-Sätze (48 Drehungen × 6 Schmutzstufen) entstehen erst beim Rennstart, ~120 ms je Auto; Zement-Strecke baut je Auto einen zweiten Satz | `cars.js` `carSet`/`buildCar`, `race.js` `makeCar` | im Menü/Countdown per `requestIdleCallback` vorbauen |
-| T5 | M | offen | Variabler Zeitschritt (dt bis 0,05) mit Euler: unter 20 fps läuft das Spiel langsamer, Zeitfahr-Rekorde hängen leicht von der Bildrate ab | `main.js` `loop`, `physics.js` `physics` | fester Physikschritt (z. B. 120 Hz) mit Akkumulator, interpoliert zeichnen |
-| T6 | M | offen | Hauptschleife fängt jede Ausnahme und loggt nur; Fehler bleiben unsichtbar | `main.js` `loop` (`try/catch`) | im Dev-Modus Fehler einblenden; `NaN`-Wächter am Ende von `physics()` und vor Audio-Parametern |
+| T3 | H | erledigt (Technik-Umbau, Zwischenstand) | Alle Strecken wurden synchron beim Import gebaut (12 Strecken: ~8 s blockiert im Dev-Server). Jetzt: `TRACKS` sind leichte Einträge, `buildTrack` und die Kartenmodule sind Generatoren, gebaut in Häppchen im Leerlauf (`idle.js`) oder auf dem Ladebildschirm; Menüs zeigen eine geglättete Vorschau (480×270), vorher die Streckenform. Nur 2 Strecken behalten ihre schweren Daten. Ergebnis pixelgleich geprüft | `tracks.js` `TRACKS = TRACK_DEFS.map(buildTrack)` | erst bei Bedarf bauen und cachen, Menüvorschauen klein vorrendern, evtl. Worker + OffscreenCanvas |
+| T4 | M | erledigt (Technik-Umbau, Zwischenstand; Drehung 0 sofort, Rest in Häppchen, `keepSets`) | Sprite-Sätze (48 Drehungen × 6 Schmutzstufen) entstehen erst beim Rennstart, ~120 ms je Auto; Zement-Strecke baut je Auto einen zweiten Satz | `cars.js` `carSet`/`buildCar`, `race.js` `makeCar` | im Menü/Countdown per `requestIdleCallback` vorbauen |
+| T5 | M | erledigt (Technik-Umbau, Zwischenstand; `clock.js`, Schritt 1/60 s, Autos und Kamera dazwischen gezeichnet; Rundenzeit bei 30/60/144/240 Hz identisch geprüft) | Variabler Zeitschritt (dt bis 0,05) mit Euler: unter 20 fps läuft das Spiel langsamer, Zeitfahr-Rekorde hängen leicht von der Bildrate ab | `main.js` `loop`, `physics.js` `physics` | fester Physikschritt (z. B. 120 Hz) mit Akkumulator, interpoliert zeichnen |
+| T6 | M | erledigt (Technik-Umbau, Zwischenstand; `errors.js`, Fehlerleiste im Dev-Modus, `guardCar`, Audio-Wächter) | Hauptschleife fängt jede Ausnahme und loggt nur; Fehler bleiben unsichtbar | `main.js` `loop` (`try/catch`) | im Dev-Modus Fehler einblenden; `NaN`-Wächter am Ende von `physics()` und vor Audio-Parametern |
 | T7 | M | offen | Ein globales `G` mit ~60+ Feldern, Kreis-Importe (physics → menus → race → physics) | `g.js`, `state.js` | `G` in Bereiche teilen (`race`, `ui`, `save`), Felder per JSDoc beschreiben |
-| T8 | M | offen | Schrift von Google Fonts; offline oder vor dem Laden zeichnet der Canvas mit Monospace | `index.html`, `core.js` (`document.fonts.load` ohne Warten) | woff2 einbetten, vor dem ersten Frame auf `document.fonts.ready` warten |
+| T8 | M | erledigt (Technik-Umbau, Zwischenstand; `@fontsource/press-start-2p`, latin-woff2 eingebettet, erster Frame wartet max. 1 s) | Schrift von Google Fonts; offline oder vor dem Laden zeichnet der Canvas mit Monospace | `index.html`, `core.js` (`document.fonts.load` ohne Warten) | woff2 einbetten, vor dem ersten Frame auf `document.fonts.ready` warten |
 | T9 | M | offen | Keine Tests, kein Linter, kein Typcheck | `package.json` | Vitest für reine Funktionen (`convertRecord`, `cupTrackIdx`, `fmtTime`, `placeOf`), ESLint mit `no-dupe-keys`, `no-shadow` |
-| T10 | N | offen | Lokale Konstanten namens `G` überschatten den Spielzustand; in `drawTrophy` wird `G.time` dadurch `NaN`, das Funkeln am Pokal ist dauerhaft an | `screens.js` `drawTrophy`; auch `tracks.js` `buildTrack`, `run.js` `buildRun`, `junglemap.js` | umbenennen |
-| T11 | N | offen | Jedes Auto prüft jeden Frame alle Hindernisse (Baustelle: 573) | `update.js` `updateRace` (Schleife über `G.T.trees`) | Spatial Hash |
+| T10 | N | teilweise (in `run.js` umbenannt; `screens.js`, `tracks.js`, `junglemap.js` offen) | Lokale Konstanten namens `G` überschatten den Spielzustand; in `drawTrophy` wird `G.time` dadurch `NaN`, das Funkeln am Pokal ist dauerhaft an | `screens.js` `drawTrophy`; auch `tracks.js` `buildTrack`, `run.js` `buildRun`, `junglemap.js` | umbenennen |
+| T11 | N | erledigt (Technik-Umbau, Zwischenstand; `grid.js`, auch für rollende Reifen) | Jedes Auto prüft jeden Frame alle Hindernisse (Baustelle: 573) | `update.js` `updateRace` (Schleife über `G.T.trees`) | Spatial Hash |
 | T12 | N | offen? | Ereignis-Koordinaten fest verdrahtet (Löcher, Kois, Kühe, Lotus, Pier); geänderte Streckenlinie verschiebt sie stillschweigend | `events.js` `COWS`, `HOLES`, `KOIS` | relativ zur Streckenlinie oder beim Bau prüfen und warnen |
 | T13 | N | offen | Speicherstände in vielen Einzelschlüsseln, ohne Gesamtversion, ohne Export | `cars.js`, `cups.js`, `timetrial.js`, `diff.js` | ein Save-Modul mit Version, Export/Import als JSON |
-| T14 | N | offen? | Matschfahrt baut 480 × 6.400 px auf einmal, zeitweise ~50 MB Puffer (Mobilgeräte) | `run.js` `buildRun` | nur sichtbare Kacheln rendern |
+| T14 | N | erledigt (Technik-Umbau, Zwischenstand; Kacheln à 400 Zeilen, pixelgleich geprüft; die Reifenspur-Ebene `trail` ist noch 480×6400) | Matschfahrt baut 480 × 6.400 px auf einmal, zeitweise ~50 MB Puffer (Mobilgeräte) | `run.js` `buildRun` | nur sichtbare Kacheln rendern |
+| T15 | M | offen | Weltgröße 800×450 ist an ~300 Stellen als `WW`/`WH` fest verdrahtet (Kartenmodule, Ereignisse); größere Strecken brauchen `T.W`/`T.H` überall | alle `*map.js`, Ereignis-Module | schrittweise auf `T.W`/`T.H` umstellen |
+
+### Arbeitsstand Technik (Zwischenstand 2026-10-12, zum Weitermachen)
+
+Auftrag: alle T-Punkte umsetzen, nichts Schweres beim Start berechnen. Erledigt (siehe Tabelle): T3, T4, T5, T6, T8, T11, T14, dazu G4. Noch offen:
+- T9: ESLint + Vitest einrichten; reine Funktionen testen (`fmtTime`, `convertRecord`, `cupTrackIdx`, `score`/`placeOf`, `grid.js`, `clock.js`); dafür DOM-Zugriffe in `core.js`/`tracks.js` (`trail`) beim Import absichern.
+- T10: restliche lokale `G` umbenennen (`screens.js drawTrophy`, `tracks.js buildTrack`, `junglemap.js`).
+- T12: Ereignis-Koordinaten (`HOLES`, `KOIS`, Lotus) im Dev-Modus beim Bau prüfen und warnen.
+- T13: `save.js` mit Version, Export/Import als JSON (Schlüssel unverändert lassen!).
+- T7: G-Felder per JSDoc beschreiben, Kreis-Import physics → menus → race lösen.
+- Danach: Obsidian-Doku prüfen (Spielmodi: Ladebildschirm), ganzen Durchlauf im Browser per Tastatur testen, Feature-Abschluss fragen.
+
+Dev-Hilfe: im Dev-Server gibt es `window.mudracer` (G, race, tracks, cars, `frameAt(now)` für einzelne Frames, auch wenn das Vorschaufenster verborgen ist und rAF schläft).
 
 ## Spielmechanik (M)
 
@@ -75,7 +88,7 @@ Stark: einheitliche Lichtrichtung (Schatten nach rechts unten), durchgehend dunk
 | G1 | H | offen | Auto-Sprites werden per Nearest-Neighbour in 48 Schritten gedreht; schräg werden 1-px-Linien zu Treppen mit doppelten/fehlenden Pixeln, Räder verformen sich (im Spiel vergrößert geprüft) | `cars.js` `rotateImg` | RotSprite (3× Scale2x, drehen, verkleinern) oder 8-fach vergrößert drehen und per Mehrheitsfarbe verkleinern; Umriss danach wie bisher |
 | G2 | H | offen | Unter Faktor 3 nicht ganzzahlig skaliert (1280×720 → 2,67; Handy quer → ~1,44); Pixel und Schrift ungleich breit, Flimmern beim Scrollen | `core.js` `fit` | intern ganzzahlig vergrößert rendern und den Puffer glatt skalieren, oder ganzzahlig mit Rand |
 | G3 | M | offen | Volle Schmutzstufe macht Autos zu braunen Klecksen, eigenes Auto im Pulk kaum zu finden | `cars.js` `buildCar` (`amt = lv / 5 * 1.15`) | Schmutz auf ~70 % Fläche begrenzen, Dach/Umriss sauber lassen; Spielermarker dauerhaft (9817e89 zeigt jetzt ein 1P-Schild, prüfen ob das reicht) |
-| G4 | M | offen? | Menühintergründe und Modus-Karten verkleinern die 800×450-Strecke per Nearest-Neighbour (Faktor 1,67 bis 4,3) → Pixelrauschen | `screens.js` `drawMenuBg`, `drawMain` | Vorschauen einmal geglättet vorrendern und cachen |
+| G4 | M | erledigt (Technik-Umbau, mit T3: geglättete Vorschau, `drawTrackPic`) | Menühintergründe und Modus-Karten verkleinern die 800×450-Strecke per Nearest-Neighbour (Faktor 1,67 bis 4,3) → Pixelrauschen | `screens.js` `drawMenuBg`, `drawMain` | Vorschauen einmal geglättet vorrendern und cachen |
 | G5 | M | offen? | Gemischte Pixelraster: Kois mit `rotate`/`scale`, Abseitspfeil und Schattenellipsen als geglättete Pfade, fliegende Autos krumm skaliert | `events.js` `drawKoi`, `draw.js` `drawCritters`/`drawCar`/`drawRace` | Kois vorgedreht cachen, Pfeil als Sprite, Sprunggrößen in festen Stufen |
 | G6 | M | offen | Reifenspuren landen jedes Frame mit ~9 % Deckung auf einer dauerhaften Ebene und verblassen nie; Ideallinie wird ein dunkles Band | `update.js` `updateRace` (Spur auf `tctx`) | Spurebene langsam ausblenden oder Deckung begrenzen |
 | G7 | M | offen | Wald: Nachtschleier 64 %, Vignette, ab Runde 2 Regen; dunkler Matsch auf brauner Straße kaum lesbar | `events.js` `drawNight` | Matsch mit hellem Rand/Glanz, Schleier ~50 % |

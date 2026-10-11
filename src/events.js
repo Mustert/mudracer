@@ -41,12 +41,6 @@ export function snap(T, x, y, w, h) {
   if (!T.pix0) T.pix0 = { mud: T.mudPix, wat: T.watPix };
 }
 
-function redrawMini(T) {
-  if (!T.mini) return;
-  const g = T.mini.getContext('2d'); g.imageSmoothingEnabled = true; g.clearRect(0, 0, 120, 68);
-  g.drawImage(T.base, 0, 0, 120, 68); g.drawImage(T.top, 0, 0, 120, 68);
-}
-
 export function resetTrackEvents(T) {
   if (T.undo && T.undo.length) {
     const b = bctx(T);
@@ -54,7 +48,7 @@ export function resetTrackEvents(T) {
       b.putImageData(u.img, u.x, u.y);
       for (let r = 0; r < u.h; r++) T.ter.set(u.ter.subarray(r * u.w, (r + 1) * u.w), (u.y + r) * WW + u.x);
     }
-    T.undo = []; T.flooded = null; if (T.shoreY0) { T.shoreY.set(T.shoreY0); T.shoreY0 = null; } T.mudPix = T.pix0.mud; T.watPix = T.pix0.wat; redrawMini(T);
+    T.undo = []; T.flooded = null; if (T.shoreY0) { T.shoreY.set(T.shoreY0); T.shoreY0 = null; } T.mudPix = T.pix0.mud; T.watPix = T.pix0.wat;
   }
   T.ev = null;
 }
@@ -191,7 +185,6 @@ function initRain(T) {
     paintHole(T, h);
     return h;
   });
-  redrawMini(T);
 }
 
 // the rain sets in slowly and then lasts for the rest of the race (its sound is renewed every few seconds)
@@ -203,9 +196,7 @@ function updateRain(T, dt) {
   const r = ev.rain; if (!r) return;
   r.t += dt;
   if ((r.snd -= dt) <= 0) { r.snd = 7; SFX.rain(); }
-  let any = false;
-  ev.holes.forEach((h, k) => { if (!h.filled && r.t > 1.3 + k * .55) { h.filled = true; fillHole(T, h); any = true; } });
-  if (any) redrawMini(T);
+  ev.holes.forEach((h, k) => { if (!h.filled && r.t > 1.3 + k * .55) { h.filled = true; fillHole(T, h); } });
 }
 
 export function drawRain() {
@@ -282,7 +273,6 @@ function updateFlood(T, dt) {
   f.yf = FLOOD.y0 - (FLOOD.y0 - FLOOD.y1) * f.p;
   paintFloodRows(T, f, Math.max(0, Math.floor(f.yf - 8)), Math.min(WH - 1, Math.ceil(prev + 8 + 3)));
   for (let x = 0; x < WW; x++) T.shoreY[x] = Math.min(T.shoreY0[x], f.yf + WAVE(x)); // foam lines and waves follow the rising sea
-  redrawMini(T);
 }
 
 // ======================================================= Strand: beach showers (always on, not an event)
@@ -395,7 +385,6 @@ function paintPile(T, s, stage) {
     const lit = ((x - cx) + (y - cy)) / (rx + ry), n = hash(x, y, 71);
     return rel > .84 ? S4[0] : n < .1 ? S4[0] : lit < -.12 ? (n > .85 ? S4[3] : S4[2]) : lit > .22 ? S4[1] : S4[2];
   });
-  redrawMini(T);
 }
 
 function updateKipper(T, dt) {

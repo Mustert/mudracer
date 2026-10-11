@@ -6,7 +6,7 @@ import { coarse, held, honkBtn, touchBox } from './input.js';
 import { honk, setState } from './menus.js';
 import { Music } from './music.js';
 import { CONF, RAINBOW, WATC, addP, drop, mudBurst, splash } from './particles.js';
-import { aiTarget, physics, score, updateProgress } from './physics.js';
+import { aiTarget, guardCar, physics, score, updateProgress } from './physics.js';
 import { eventCollisions, updateEvents } from './events.js';
 import { ringCountdown, ringGo, ringGround, ringStackHit, ringUpdate } from './ring.js';
 import { airborne, groundFx, pushCars } from './trackfx.js';
@@ -16,6 +16,7 @@ import { volcanoGround } from './volcano.js';
 import { jungleGround, jungleStuck } from './jungle.js';
 import { moveCamera } from './race.js';
 import { updateJumps } from './run.js';
+import { nearObstacles } from './grid.js';
 import { cam } from './state.js';
 import { GHOST_DT, ttSample } from './timetrial.js';
 import { tctx } from './tracks.js';
@@ -95,6 +96,7 @@ function updateRace(dt) {
     }
     physics(c, dt, thr, tgt);
     if (G.T.run) updateJumps(c, dt); else if (G.T.jumps && (G.T.jumps.length || c.z > 0)) airborne(c, dt);
+    guardCar(c);
     c.honk = Math.max(0, c.honk - dt);
     c.boost = Math.max(0, c.boost - dt);
     if (c.ai && racing && Math.random() < dt * .03) honk(c);
@@ -102,7 +104,7 @@ function updateRace(dt) {
   // collisions: trees, world border, other cars
   for (const c of G.cars) {
     if (c.fall > 0) continue;
-    for (const o of G.T.trees) {
+    for (const o of nearObstacles(G.T.grid, c.x, c.y)) {
       // the bridge of the race circuit: its railings only stop the cars up on it, the walls under it only the cars below
       if ((o.up && c.lvl !== 1) || (o.down && c.lvl !== 2)) continue;
       if (o.ground && c.z > 0) continue; // the rocky edge in front of the lava ditch: the cars the geyser throws fly over it

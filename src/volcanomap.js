@@ -49,18 +49,21 @@ const streamX = (S, y) => S[0] + Math.sin(y / 17) * 4;
 const fordX = (F, y) => F.x + Math.sin(y / 21) * 5 - (y - 330) * .05;
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N, stampAt }
-export function volcanoTerrain(S) {
+export function* volcanoTerrain(S) {
   const { def, ter, dist, near, path, nrm, N } = S, A = WW * WH, alt = new Uint8Array(A), stoneM = new Uint8Array(A);
   const off = j => { const i = near[j], p = path[i]; return (j % WW + .5 - p.x) * nrm[i].x + ((j / WW | 0) + .5 - p.y) * nrm[i].y; };
+  yield;
   // the crater: a lake of lava in the middle of the map
   const [cx, cy, crx, cry] = def.crater;
   for (let y = cy - cry - 6; y <= cy + cry + 6; y++) for (let x = cx - crx - 6; x <= cx + crx + 6; x++) {
     const j = y * WW + x; if (ter[j] !== 0) continue;
     if (((x + .5 - cx) / crx) ** 2 + ((y + .5 - cy) / cry) ** 2 < .9 + .2 * vnoise(x * .06, y * .06, 91)) ter[j] = 15;
   }
+  yield;
   // the long way round the crust and the short cut over the geyser: narrow roads of their own
   const bypass = stampLine(def.bypass.pts, def.bypass.half, j => { if (ter[j] === 0) { ter[j] = 1; alt[j] = 1; } });
   const sc = stampLine(def.shortcut.pts, def.shortcut.half, j => { if (ter[j] === 0) { ter[j] = 1; alt[j] = 1; } });
+  yield;
   // the lava stream from the crater to the top edge: under the rim road it is covered by a crust, the long way crosses it on a stone bridge
   const crust = [];
   const [sx0, shw] = def.stream;
@@ -70,6 +73,7 @@ export function volcanoTerrain(S) {
     if (dist[j] < HALF) { ter[j] = 16; crust.push(j); continue; }
     ter[j] = 15;
   }
+  yield;
   // the lava ditch behind the geyser
   const [dx0, dy0, dx1, dy1] = def.ditch;
   for (let y = dy0; y <= dy1; y++) for (let x = dx0; x <= dx1; x++) {
@@ -77,6 +81,7 @@ export function volcanoTerrain(S) {
     const e = Math.min(y - dy0, dy1 - y, x - dx0); if (e < (vnoise(x * .2, y * .2, 93) - .3) * 4) continue;
     ter[j] = 15;
   }
+  yield;
   // the lava ford: a river from the crater to the bottom edge; the road crosses it on two stone bridges (lanes), one is always flooded
   const F = def.ford, lanes = F.lanes.map(o => ({ off: o, pix: [] }));
   for (let y = cy + cry - 12; y < WH; y++) for (let x = Math.floor(fordX(F, y) - F.hw - 2); x <= fordX(F, y) + F.hw + 2; x++) {
@@ -87,12 +92,14 @@ export function volcanoTerrain(S) {
     }
     if (ter[j] !== 3) ter[j] = 15;
   }
+  yield;
   // ash fields on the road, the waterfall's pool
   (def.ash || []).forEach(m => S.stampAt(m, 2));
   if (def.fall) {
     const [fx, fy] = def.fall;
     for (let y = fy - 14; y <= fy + 14; y++) for (let x = fx - 26; x <= fx + 26; x++) if (((x + .5 - fx) / 24) ** 2 + ((y + .5 - fy) / 12) ** 2 < .9 + .2 * vnoise(x * .2, y * .2, 95)) ter[y * WW + x] = 3;
   }
+  yield;
   // heat: a coarse grid (4px cells) of everything that is close to lava (up to about 36px)
   const GW = WW >> 2, GH = Math.ceil(WH / 4), hot = new Uint8Array(GW * GH), heat = new Uint8Array(GW * GH);
   for (let j = 0; j < A; j++) if (ter[j] === 15 || ter[j] === 16) hot[((j / WW | 0) >> 2) * GW + ((j % WW) >> 2)] = 1;
@@ -100,6 +107,7 @@ export function volcanoTerrain(S) {
     if (!hot[gy * GW + gx]) continue;
     for (let q = -9; q <= 9; q++) for (let p = -9; p <= 9; p++) { const X = gx + p, Y = gy + q; if (X >= 0 && Y >= 0 && X < GW && Y < GH && p * p + q * q <= 81) heat[Y * GW + X] = 1; }
   }
+  yield;
   // jumps: the geyser only throws you when it blows (see volcano.js); pushes: the serpentine goes uphill
   const [gx, gy] = def.geyser, jumps = [{ x: gx, y: gy + 14, tx: 0, ty: 1, lo: -def.shortcut.half - 2, hi: def.shortcut.half + 2, vz: 150, push: 118, off: true, geyser: true }];
   const pushes = [{ i0: nearestIdx(path, 60, 300), i1: nearestIdx(path, 120, 95), f: -36 }];
@@ -108,7 +116,7 @@ export function volcanoTerrain(S) {
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT }
-export function paintVolcano(S) {
+export function* paintVolcano(S) {
   const { def, d, set, setT, path, nrm, N, ter, dist, near, walls, wallMask, shore, sd, RT } = S, A = WW * WH;
   const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < WW && y < WH) set(y * WW + x, c); };
   const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= WW || y >= WH) return; const i = (y * WW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
@@ -120,8 +128,10 @@ export function paintVolcano(S) {
   };
   const lavaPix = [], glowPix = [];
 
+  yield;
   // ----- the ground -----
   for (let j = 0; j < A; j++) {
+    if (j % 40000 === 39999) yield;
     const x = j % WW, y = j / WW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 6, y / 6, sd + 41) * .55 + h * .45;
     if (shore[j]) continue;
     let c;
@@ -140,14 +150,17 @@ export function paintVolcano(S) {
     else continue;
     set(j, c);
   }
+  yield;
   // a glowing rim along every edge of the lava
   for (let j = WW; j < A - WW; j++) {
     if (ter[j] === 15) continue;
     if (ter[j - 1] === 15 || ter[j + 1] === 15 || ter[j - WW] === 15 || ter[j + WW] === 15) { if (!RT.stoneM[j] && ter[j] !== 16) set(j, hash(j, 1, sd) < .5 ? K.glow : K.lavaD); }
   }
+  yield;
   // start line (chequered)
   S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * WW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
 
+  yield;
   // ----- rock walls between the bends of the serpentine and beside the geyser: basalt boulders, solid -----
   const boulder = (x, y, rr) => {
     for (let dy = -rr - 2; dy <= rr + 3; dy++) for (let dx = -rr - 2; dx <= rr + 4; dx++) if (dx > 0 && dy > 0 && Math.hypot(dx - 2, dy - 2) < rr) dk(x + dx, y + dy, .7);
@@ -164,13 +177,16 @@ export function paintVolcano(S) {
       walls.push({ x, y, r: 5 }); boulder(x, y, 5 + (hash(x, y, 47) * 2 | 0)); solid(x, y, 8);
     }
   }
+  yield;
   // the rocky edge in front of the ditch on the short cut: it stops the cars that come without the geyser (not the flying ones)
   const [dx0, dy0, dx1] = def.ditch;
   for (let x = dx0 + 10; x <= dx1 - 30; x += 5) { walls.push({ x, y: dy0 - 3, r: 3, ground: 1 }); for (let k = -2; k <= 1; k++) px(x + k, dy0 - 3, K.stoneD); px(x, dy0 - 4, K.stoneL); }
+  yield;
   // the geyser: a crusty hole in the short cut
   const [gx, gy] = def.geyser;
   for (let dy = -8; dy <= 8; dy++) for (let dx = -10; dx <= 10; dx++) { const e = (dx / 10) ** 2 + (dy / 8) ** 2; if (e > 1) continue; px(gx + dx, gy + dy, e > .7 ? [214, 196, 140] : e > .4 ? [180, 160, 110] : [40, 30, 26]); }
 
+  yield;
   // ----- the lava tube: a roof of black rock over the road (a picture of its own, see-through from inside), walls along it -----
   const [ti0, ti1] = RT.tubeI, inTube = i => ti0 <= ti1 ? i >= ti0 && i <= ti1 : i >= ti0 || i <= ti1;
   let tube = null;
@@ -191,6 +207,7 @@ export function paintVolcano(S) {
     tube = { c: cv, x: x0, y: y0, W, H, i0: ti0, i1: ti1, cracks };
   }
 
+  yield;
   // ----- the waterfall: a cliff with water coming down into the pool (drawn while racing), wet rocks round the pool -----
   if (def.fall) {
     const [fx, fy] = def.fall;
@@ -202,6 +219,7 @@ export function paintVolcano(S) {
     for (let k = -18; k <= 18; k += 9) walls.push({ x: fx + k, y: fy - 22, r: 6 });
   }
 
+  yield;
   // ----- the research station: containers with antennas, a seismograph, a researcher in a helmet -----
   let station = null;
   if (def.station) {
@@ -217,6 +235,7 @@ export function paintVolcano(S) {
     station = { x: sx, y: sy, seis: { x: sx + 12, y: sy - 8 }, man: { x: sx - 40, y: sy - 2 } };
   }
 
+  yield;
   // ----- scenery: basalt columns along the edges, charred stumps, steam vents -----
   const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= WW - 2 || Y >= WH - 2) return false; const j = Y * WW + X; if (ter[j] !== 0 || dist[j] < HALF + 8 || wallMask[j] || RT.alt[j]) return false; } return true; };
   const column = (x, y) => { // a basalt column seen from above: a hexagon
@@ -238,6 +257,7 @@ export function paintVolcano(S) {
     for (let q = -4; q <= 4; q++) px(x + q, y + Math.round(Math.sin(q) * 1.2), [24, 20, 18]); vents.push({ x, y, k }); k++;
   }
 
+  yield;
   // ----- the crust when the stream breaks through, and the flooded stone bridge of the ford: pictures of lava to lay over the ground -----
   const lavaPic = pix => {
     if (!pix.length) return null;
@@ -249,8 +269,10 @@ export function paintVolcano(S) {
   };
   const crust = { pix: RT.crust, pic: lavaPic(RT.crust) };
   const lanes = RT.lanes.map(L => ({ off: L.off, pix: L.pix, pic: lavaPic(L.pix) }));
+  yield;
   // the signal stone at the ford: it shows which bridge opens next (drawn while racing)
   const F = def.ford, signal = { x: Math.round(F.x + F.hw + 22), y: 362 };
+  yield;
   // between the two bridges of the ford a solid stone pier (so nobody drives into the gap), sharp at both ends
   {
     const i = RT.fordI, p = path[i], tg = S.tan[i];
@@ -259,6 +281,7 @@ export function paintVolcano(S) {
       for (let q = -2; q <= 2; q++) px(x + nrm[i].x * q, y + nrm[i].y * q, Math.abs(q) === 2 ? K.stoneD : K.stoneL);
     }
   }
+  yield;
   // railings along the stone bridge of the long way round the crust
   for (const p of RT.bypass) {
     if (Math.abs(p.x - def.stream[0]) > def.stream[1] + 6 || p.y > 60) continue;

@@ -3,7 +3,7 @@ import { carSet } from './cars.js';
 import { FONT, HALF, LAPS, ROTS, SS, TAU, VH, VW, clamp, ctx, hash } from './core.js';
 import { drawEventsAbove, drawEventsGround, drawNight, drawRain } from './events.js';
 import { crossingAhead, placeOf } from './physics.js';
-import { drawRunFinish, drawRunHud } from './run.js';
+import { drawRunFinish, drawRunHud, drawRunLayer } from './run.js';
 import { drawRingAbove, drawRingGround, drawStartLights, ghostUp } from './ring.js';
 import { drawDesertAbove, drawDesertGround, drawStorm } from './desert.js';
 import { drawIceAbove, drawIceGround, drawIceSky } from './ice.js';
@@ -318,7 +318,7 @@ export function drawRace() {
   const P = G.player, kerb = P && P.kerb && G.state === 'race' && Math.hypot(P.vx, P.vy) > 40 ? Math.round(Math.random()) : 0;
   const shake = G.T.run && G.run && G.run.shake > 0 ? Math.round((Math.random() - .5) * 20 * G.run.shake) : G.jumpShake > 0 ? Math.round((Math.random() - .5) * 14 * G.jumpShake) : kerb;
   const cx = clamp(Math.round(cam.x) + shake, 0, G.T.W - VW), cy = clamp(Math.round(cam.y) + shake, 0, G.T.H - VH), R = G.T.rail;
-  ctx.drawImage(G.T.base, cx, cy, VW, VH, 0, 0, VW, VH);
+  if (G.T.run) drawRunLayer('base', cx, cy, 0, 0); else ctx.drawImage(G.T.base, cx, cy, VW, VH, 0, 0, VW, VH);
   ctx.drawImage(trail, cx, cy, VW, VH, 0, 0, VW, VH);
   ctx.save(); ctx.translate(-cx, -cy);
   const wp = G.T.watPix, k = Math.floor(G.time * 3);
@@ -346,7 +346,7 @@ export function drawRace() {
   if (R && R.train.phase === 'run') drawTrain(R);
   drawParticles();
   drawSmoke();
-  ctx.drawImage(G.T.top, cx, cy, VW, VH, cx, cy, VW, VH);
+  if (G.T.run) drawRunLayer('top', cx, cy, cx, cy); else ctx.drawImage(G.T.top, cx, cy, VW, VH, cx, cy, VW, VH);
   if (R) drawCrossings(R);
   drawWindmill();
   const dark = G.T.th.dark;

@@ -1,4 +1,6 @@
-import { HALF, TAU, WH, WW, angDiff, clamp, hash, hex, mk, outlineImg, rng, toCanvas, vnoise } from './core.js';
+import { G } from './g.js';
+import { HALF, TAU, VH, VW, WH, WW, angDiff, clamp, hash, hex, mk, outlineImg, rng, toCanvas, vnoise } from './core.js';
+import { obstacleGrid } from './grid.js';
 import { nearestIdx, paintSite, siteRing, siteYards } from './bau.js';
 import { paintRing, ringTerrain } from './ringmap.js';
 import { desertTerrain, paintDesert } from './desertmap.js';
@@ -231,9 +233,9 @@ function roundedPath(poly) {
 }
 
 
-function buildTrack(def, ti) {
-  const th = THEMES[def.theme], sd = (def.seed !== undefined ? def.seed : ti) * 131 + 17, r = rng(sd);
-  // centre line: closed Catmull-Rom, resampled every 2px
+// the centre line of a track: closed Catmull-Rom (pts) or rounded corners (poly), resampled every 2px, with tangents and normals.
+// Cheap, so the menus can show the shape of a track before it is built.
+export function centreLine(def) {
   const P = def.pts || [], n = P.length, raw = def.poly ? roundedPath(def.poly) : [];
   for (let i = 0; i < n; i++) {
     const a = P[(i - 1 + n) % n], b = P[i], c = P[(i + 1) % n], d = P[(i + 2) % n];
@@ -257,6 +259,16 @@ function buildTrack(def, ti) {
     const a = path[(i - 2 + N) % N], b = path[(i + 2) % N], dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
     tan.push({ x: dx / l, y: dy / l }); nrm.push({ x: -dy / l, y: dx / l });
   }
+  return { path, tan, nrm, N };
+}
+
+
+// Building a track takes a few hundred milliseconds, so it is a generator: every `yield` is a point where the work can pause
+// until the next frame (see idle.js). The yielded number is roughly how far the build is (0..1), for the loading bar.
+// The terrain and paint functions of the big maps (ringmap.js, desertmap.js ...) are generators as well (yield*).
+function* buildTrack(def, ti) {
+  const th = THEMES[def.theme], sd = (def.seed !== undefined ? def.seed : ti) * 131 + 17, r = rng(sd);
+  const { path, tan, nrm, N } = centreLine(def);
   // distance to centre line (and which centre point is nearest)
   const A = WW * WH, dist = new Float32Array(A).fill(1e8), near = new Int32Array(A), RR = HALF + 22;
   for (let pi = 0; pi < N; pi++) {
@@ -264,8 +276,10 @@ function buildTrack(def, ti) {
     const x0 = Math.max(0, Math.floor(p.x - RR)), x1 = Math.min(WW - 1, Math.ceil(p.x + RR));
     const y0 = Math.max(0, Math.floor(p.y - RR)), y1 = Math.min(WH - 1, Math.ceil(p.y + RR));
     for (let y = y0; y <= y1; y++) { const row = y * WW, dy = y + .5 - p.y, dy2 = dy * dy; for (let x = x0; x <= x1; x++) { const dx = x + .5 - p.x, dd = dx * dx + dy2; if (dd < dist[row + x]) { dist[row + x] = dd; near[row + x] = pi; } } }
+    if (pi % 25 === 24) yield .2 * pi / N;
   }
   for (let j = 0; j < A; j++) dist[j] = Math.sqrt(dist[j]);
+  yield .2;
   const band = (i, alongMax, fn) => {
     const p = path[i], tg = tan[i], nm = nrm[i], R = HALF + 16;
     for (let y = Math.max(0, Math.floor(p.y - R)); y <= Math.min(WH - 1, p.y + R); y++)
@@ -303,6 +317,7 @@ function buildTrack(def, ti) {
     }
   };
   (def.rivers || []).forEach(ch => { for (let k = 1; k < ch.length; k++) capsule(ch[k - 1], ch[k]); });
+  if (def.rivers) yield .25;
   for (let j = 0; j < A; j++) if (deep[j] && ter[j] === 0) ter[j] = 5;
   if (def.rivers) {
     const inW = path.map(p => deep[Math.round(clamp(p.y, 0, WH - 1)) * WW + Math.round(clamp(p.x, 0, WW - 1))]), s0 = inW.indexOf(0);
@@ -332,11 +347,13 @@ function buildTrack(def, ti) {
   });
   const boosts = (def.boost || []).concat((def.boostAt || []).map(([x, y]) => nearestIdx(path, x, y) / N));
   boosts.forEach(t => band(Math.floor(t * N) % N, 16, (x, y, a, c) => { if (Math.abs(c) < 18) ter[y * WW + x] = 4; }));
-  const ringT = def.ring ? ringTerrain({ def, ter, dist, near, path, tan, nrm, N, stampAt }) : null;
-  const deserT = def.desert ? desertTerrain({ def, ter, dist, near, path, tan, nrm, N, deep }) : null;
-  const iceT = def.ice ? iceTerrain({ def, ter, dist, near, path, tan, nrm, N, deep }) : null;
-  const volT = def.volcano ? volcanoTerrain({ def, ter, dist, near, path, tan, nrm, N, stampAt }) : null;
-  const junT = def.jungle ? jungleTerrain({ def, ter, dist, near, path, tan, nrm, N }) : null;
+  yield .3;
+  const ringT = def.ring ? yield* ringTerrain({ def, ter, dist, near, path, tan, nrm, N, stampAt }) : null;
+  const deserT = def.desert ? yield* desertTerrain({ def, ter, dist, near, path, tan, nrm, N, deep }) : null;
+  const iceT = def.ice ? yield* iceTerrain({ def, ter, dist, near, path, tan, nrm, N, deep }) : null;
+  const volT = def.volcano ? yield* volcanoTerrain({ def, ter, dist, near, path, tan, nrm, N, stampAt }) : null;
+  const junT = def.jungle ? yield* jungleTerrain({ def, ter, dist, near, path, tan, nrm, N }) : null;
+  yield .35;
   // railway: a straight vertical line through the whole world
   let rail = null;
   if (def.rail) {
@@ -348,14 +365,18 @@ function buildTrack(def, ti) {
   }
   const yard = siteYards(def, ter, dist), cemPix = [];
   const shore = new Uint8Array(A);
-  for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) {
-    const j = y * WW + x; if ((ter[j] !== 3 && ter[j] !== 5) || sea[j]) continue;
-    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
-      if (dx * dx + dy * dy > 10) continue;
-      const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue;
-      const k = yy * WW + xx; if (ter[k] !== 3 && ter[k] !== 5 && (ter[j] === 3 || ter[k] === 0)) shore[k] = 1;
+  for (let y = 0; y < WH; y++) {
+    if (y % 30 === 29) yield .35 + .05 * y / WH;
+    for (let x = 0; x < WW; x++) {
+      const j = y * WW + x; if ((ter[j] !== 3 && ter[j] !== 5) || sea[j]) continue;
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
+        if (dx * dx + dy * dy > 10) continue;
+        const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue;
+        const k = yy * WW + xx; if (ter[k] !== 3 && ter[k] !== 5 && (ter[j] === 3 || ter[k] === 0)) shore[k] = 1;
+      }
     }
   }
+  yield .4;
   const ed = (x, y, type, mr) => {
     for (let rr = 1; rr <= mr; rr++) for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) {
       if (Math.max(Math.abs(dx), Math.abs(dy)) !== rr) continue;
@@ -434,7 +455,9 @@ function buildTrack(def, ti) {
       }
     }
     set(j, col);
+    if (x === WW - 1 && y % 12 === 11) yield .4 + .3 * y / WH;
   }
+  yield .7;
   // the pier: planks across the track and piles on both sides (still normal ground for the cars)
   let pier = null;
   if (def.pier) {
@@ -492,6 +515,7 @@ function buildTrack(def, ti) {
     const steps = Math.max(1, Math.abs(hx - bx)); for (let k = 0; k <= steps; k++) setT(bx + (hx - bx) * k / steps, by - 13 + (hy - (by - 13)) * k / steps, hex('#d4dbe3'));
     for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const dd = dx * dx + dy * dy; if (dd <= 9) setT(hx + dx, hy + dy, dd <= 3 ? hex('#4fb3e6') : hex('#b8c4d0')); }
   }
+  yield .72;
   // central wall across the infield: nobody can cut across the middle. Its ends stop at the track edge, solid circles every 8px.
   const walls = [], wallTrees = [], wallMask = new Uint8Array(A), wsegs = [];
   const maskAt = (x, y) => { for (let dy = -20; dy <= 20; dy++) for (let dx = -20; dx <= 20; dx++) { const xx = Math.round(x + dx), yy = Math.round(y + dy); if (dx * dx + dy * dy <= 400 && xx >= 0 && yy >= 0 && xx < WW && yy < WH) wallMask[yy * WW + xx] = 1; } };
@@ -598,6 +622,7 @@ function buildTrack(def, ti) {
     for (let x = rail.x - 26; x <= rail.x + 26; x++) for (let b = -2; b <= 2; b++) px(x, gy + b, ((x >> 3) & 1) ? RD : WH2);
     for (const sx of [rail.x - 28, rail.x + 28]) { for (let dy = -4; dy <= 4; dy++) for (let dx = -3; dx <= 3; dx++) px(sx + dx, gy + dy, PO); px(sx, gy - 3, hex('#ff3b3b')); }
   }
+  yield .74;
   // fence along both sides of the track: rope (beach), white pickets (meadow), logs (forest)
   const FENCE = { rope: ['#f0dcaa', '#7a4f2a', '#a8743f', '#5a3a1c', 9], bamboo: ['#c9d49a', '#5f7d34', '#87a24b', '#364a1c', 9], picket: ['#e6e1d2', '#ffffff', '#f4f1e6', '#8a8472', 6], log: ['#8a6440', '#5a3a1c', '#7a5230', '#3b2512', 12], mesh: ['#e8872a', '#5a6068', '#7b838c', '#2c3036', 9] }[th.fence];
   if (FENCE) {
@@ -629,6 +654,7 @@ function buildTrack(def, ti) {
       else { px(x, y, RL); if (th.fence === 'log') px(x + Math.round(nrm[i].x * s), y + Math.round(nrm[i].y * s), RL2); }
     }
   }
+  yield .76;
   // tunnel hills: a rocky hill with a grassy top on the wall line, the train disappears into it (the hill lies on the top layer, so it covers the train). Solid for cars.
   for (const { x: hx, y: hy, hw, portals } of def.tunnels || []) {
     const hh = 33, rr = 12, inside = (x, y) => { const qx = Math.abs(x - hx) - (hw - rr), qy = Math.abs(y - hy) - (hh - rr); return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rr; };
@@ -663,6 +689,7 @@ function buildTrack(def, ti) {
       }
     }
   }
+  yield .78;
   if (th.decor === 'wiese') {
     const PET = ['#ff5a7a', '#ffe14d', '#ffffff', '#b36bff', '#5ab4ff'].map(hex);
     flowers(320, PET);
@@ -875,15 +902,15 @@ function buildTrack(def, ti) {
     const site = paintSite({ def, d, set, setT, px, darken, band, path, tan, nrm, yard, walls, scatter, rock, sd, washMask });
     lights = site.lights; mixer = site.mixer; hose = site.hose; tight = site.tight;
   } else if (th.decor === 'ring') {
-    ring = paintRing({ def, d, set, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, th, RT: ringT });
+    ring = yield* paintRing({ def, d, set, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, th, RT: ringT });
   } else if (th.decor === 'wueste') {
-    desert = paintDesert({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT: deserT });
+    desert = yield* paintDesert({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT: deserT });
   } else if (th.decor === 'eis') {
-    ice = paintIce({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, isBridge, sd, th, r, critters, darken, RT: iceT });
+    ice = yield* paintIce({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, isBridge, sd, th, r, critters, darken, RT: iceT });
   } else if (th.decor === 'vulkan') {
-    volcano = paintVolcano({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT: volT });
+    volcano = yield* paintVolcano({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT: volT });
   } else if (th.decor === 'dschungel') {
-    jungle = paintJungle({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, th, r, critters, darken, RT: junT });
+    jungle = yield* paintJungle({ def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, th, r, critters, darken, RT: junT });
   } else if (th.decor === 'farm') {
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
@@ -906,6 +933,7 @@ function buildTrack(def, ti) {
     scatter(5, 22, (x, y) => planet(x, y, 9 + (r() * 8 | 0), PL[(r() * 4) | 0], r() < .5));
     scatter(40, 3, (x, y) => { const c = r() < .5 ? hex('#ffffff') : hex('#ffe9a8'); px(x, y, c); px(x - 1, y, c); px(x + 1, y, c); px(x, y - 1, c); px(x, y + 1, c); starPix.push(y * WW + x); });
   }
+  yield .86;
   // trees: shadow on the ground, canopy on the top layer
   const forced = wallTrees.slice(), want = th.trees + forced.length;
   for (let tries = 0; (forced.length || trees.length < want) && tries < 12000; tries++) {
@@ -954,19 +982,84 @@ function buildTrack(def, ti) {
       }
       for (const [dx, dy] of [[-1, -1], [1, -1], [0, 1]]) { setT(x + dx, y + dy, [107, 68, 35]); setT(x + dx + 1, y + dy, [138, 90, 43]); }
     }
+    if (trees.length % 12 === 0) yield .86 + .08 * Math.min(1, trees.length / want);
   }
+  yield .94;
   const base = toCanvas(img);
+  yield .97;
   const top = toCanvas(outlineImg(new ImageData(tp, WW, WH), WW, WH, C[3]));
-  const mini = mk(120, 68), mg = mini.getContext('2d');
-  mg.imageSmoothingEnabled = true; mg.drawImage(base, 0, 0, 120, 68); mg.drawImage(top, 0, 0, 120, 68);
-  const wp = path[wi];
-  return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: trees.concat(walls), critters, windmill, shoreY, boat: { x: 60 }, base, top, mini, mudPix, watPix, starPix, rail,
+  const wp = path[wi], solid = trees.concat(walls);
+  return { W: WW, H: WH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: solid, grid: obstacleGrid(solid, WW, WH), critters, windmill, shoreY, boat: { x: 60 }, base, top, mudPix, watPix, starPix, rail,
     washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice, volcano, jungle,
     // Cup 3 building blocks (see trackfx.js): ramps to jump from, stretches that push the cars, where a second way runs beside the road
     jumps: (desert || ice || volcano || jungle || {}).jumps || [], pushes: (desert || ice || volcano || jungle || {}).pushes || [], alt: (desert || ice || volcano || jungle || {}).alt || null };
 }
 
 
-export const TRACKS = TRACK_DEFS.map(buildTrack);
+// ---------- the tracks: built when they are needed ----------
+// TRACKS holds one light entry per track from the start (name, def, theme). The heavy part (terrain, distance field, pictures,
+// obstacles) is built by buildTrack in slices while a menu is shown (idle.js), or at once when a race needs it, and is merged
+// into the same object, so G.T === TRACKS[i] keeps working. A built track leaves a small preview picture for the menus.
+// Only the KEEP most recently raced tracks keep their heavy data (several MB each, more on bigger maps); the others let it go
+// and are built again when they are raced next (the build is deterministic, the track comes out the same).
+
+const KEEP = 2, LIGHT = new Set(['def', 'ti', 'name', 'th', 'W', 'H', 'built', 'job', 'progress', 'used', 'preview', 'shape']);
+let clock = 0;
+
+export const TRACKS = TRACK_DEFS.map((def, ti) => ({ def, ti, name: def.name, th: THEMES[def.theme], W: WW, H: WH, built: false, job: null, progress: 0, used: 0, preview: null, shape: null }));
+
+// one more slice of the build, until the clock (performance.now()) reaches `until`; true when the track is built
+export function stepTrack(T, until) {
+  if (T.built) return true;
+  T.job = T.job || buildTrack(T.def, T.ti);
+  for (;;) {
+    const s = T.job.next();
+    if (s.done) { finishTrack(T, s.value); return true; }
+    if (s.value !== undefined) T.progress = s.value; // the map modules (ringmap.js ...) pause without a number
+    if (performance.now() >= until) return false;
+  }
+}
+
+// the track is needed now (a race): built at once if it is not, and it counts as just used
+export function ensureTrack(T) { useTrack(T); stepTrack(T, Infinity); return T; }
+
+// tracks that are used last are the ones that keep their data
+export function useTrack(T) { T.used = ++clock; }
+
+function finishTrack(T, data) {
+  Object.assign(T, data); T.built = true; T.job = null; T.progress = 1;
+  T.preview = makePreview(T); T.shape = null;
+  trimTracks();
+}
+
+// let go of the heavy data of all but the KEEP most recently used tracks; the track of the current race (G.T) always stays
+export function trimTracks() {
+  const cur = TRACKS.includes(G.T) && G.T.built, built = TRACKS.filter(T => T.built && T !== G.T).sort((a, b) => b.used - a.used);
+  for (const T of built.slice(cur ? KEEP - 1 : KEEP)) releaseTrack(T);
+}
+
+function releaseTrack(T) { for (const k of Object.keys(T)) if (!LIGHT.has(k)) delete T[k]; T.built = false; }
+
+// the menu picture of a track: the whole map at screen size (VW x VH), smoothed once (no pixel noise when it is shrunk)
+function makePreview(T) {
+  const c = mk(VW, VH), g = c.getContext('2d');
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  g.drawImage(T.base, 0, 0, T.W, T.H, 0, 0, VW, VH); g.drawImage(T.top, 0, 0, T.W, T.H, 0, 0, VW, VH);
+  return c;
+}
+
+// what the menus show of a track: its preview, or while it is not built yet its ground colour and the shape of the road
+export function trackPicture(T) {
+  if (T.preview) return T.preview;
+  if (!T.shape) {
+    const c = mk(VW, VH), g = c.getContext('2d'), th = T.th, { path } = centreLine(T.def), s = VW / WW;
+    g.fillStyle = th.grass[0]; g.fillRect(0, 0, VW, VH);
+    g.lineJoin = 'round'; g.beginPath(); path.forEach((p, i) => (i ? g.lineTo : g.moveTo).call(g, p.x * s, p.y * s)); g.closePath();
+    g.strokeStyle = th.trackEdge; g.lineWidth = (HALF + 2) * 2 * s; g.stroke();
+    g.strokeStyle = th.track[0]; g.lineWidth = (HALF - 2) * 2 * s; g.stroke();
+    T.shape = c;
+  }
+  return T.shape;
+}
 
 export const trail = mk(WW, WH), tctx = trail.getContext('2d');

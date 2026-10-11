@@ -32,8 +32,6 @@ addEventListener('resize', fit);
 fit();
 
 
-if (document.fonts && document.fonts.load) document.fonts.load('16px "Press Start 2P"').catch(() => {});
-
 
 // ---------- helpers ----------
 

@@ -219,7 +219,9 @@ function rotateImg(src, a) {
 }
 
 
-function buildCar(def, k, pal) {
+// A sprite set: frames[dirt level 0..5][turn 0..47] and shadow[turn]. Only turn 0 is made at once (that is all the menus show);
+// the other 47 turns are made by the generator below, in slices while the game is idle (idle.js) or at once when a race starts.
+function newSet(def, k, pal) {
   const base = mk(SS, SS), g = base.getContext('2d');
   const R = (col, x, y, w, h) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
   const wheel = (x, y, w, h) => { R('#1e1e1e', x, y, w, h); for (let i = x + 1; i < x + w; i += 2) R('#3a3a3a', i, y, 1, h); R('#505050', x, y, w, 1); };
@@ -234,7 +236,7 @@ function buildCar(def, k, pal) {
   const src = g.getImageData(0, 0, SS, SS);
   const r = rng(k * 977 + 13), blobs = [];
   for (let i = 0; i < 14; i++) blobs.push([5 + r() * 34, 10 + r() * 24, 2.5 + r() * 4]);
-  const frames = [], shadow = [];
+  const imgs = [];
   for (let lv = 0; lv < 6; lv++) {
     const img = new ImageData(new Uint8ClampedArray(src.data), SS, SS), d = img.data, amt = lv / 5 * 1.15;
     if (lv) for (let y = 0; y < SS; y++) for (let x = 0; x < SS; x++) {
@@ -242,19 +244,38 @@ function buildCar(def, k, pal) {
       let m = 9; for (const b of blobs) m = Math.min(m, Math.hypot(x - b[0], y - b[1]) / b[2]);
       if (Math.min(m, 2) * .42 + hash(x, y, k) * .35 < amt) { const dc = pal[(hash(x, y, k + 9) * 3) | 0]; d[i] = dc[0]; d[i + 1] = dc[1]; d[i + 2] = dc[2]; }
     }
-    const row = []; for (let ri = 0; ri < ROTS; ri++) row.push(toCanvas(outlineImg(rotateImg(img, ri / ROTS * TAU), SS, SS, OUT)));
-    frames.push(row);
+    imgs.push(img);
   }
-  for (let ri = 0; ri < ROTS; ri++) {
-    const im = outlineImg(rotateImg(src, ri / ROTS * TAU), SS, SS, OUT), d = im.data;
-    for (let i = 0; i < d.length; i += 4) d[i] = d[i + 1] = d[i + 2] = 0;
-    shadow.push(toCanvas(im));
-  }
-  return { frames, shadow };
+  const S = { frames: imgs.map(() => []), shadow: [], done: false, job: null, src, imgs };
+  turn(S, 0);
+  S.job = turns(S);
+  return S;
 }
 
+function turn(S, ri) {
+  const a = ri / ROTS * TAU;
+  S.imgs.forEach((img, lv) => { S.frames[lv][ri] = toCanvas(outlineImg(rotateImg(img, a), SS, SS, OUT)); });
+  const im = outlineImg(rotateImg(S.src, a), SS, SS, OUT), d = im.data;
+  for (let i = 0; i < d.length; i += 4) d[i] = d[i + 1] = d[i + 2] = 0;
+  S.shadow[ri] = toCanvas(im);
+}
+
+function* turns(S) { for (let ri = 1; ri < ROTS; ri++) { turn(S, ri); yield; } }
+
+// one more slice of a sprite set, until the clock (performance.now()) reaches `until`; true when all turns are there
+export function stepSet(S, until) {
+  while (!S.done) {
+    if (S.job.next().done) { S.done = true; S.job = S.src = S.imgs = null; break; }
+    if (performance.now() >= until) break;
+  }
+  return S.done;
+}
+
+// all turns now (a race starts)
+export const completeSet = S => stepSet(S, Infinity);
+
 // the rainbow track paints cars with purple glitter goo instead of mud; built the first time it is needed
-// sprites (48 turns x 6 dirt levels) are built the first time a car is shown
+// sprites (48 turns x 6 dirt levels): turn 0 the first time a car is shown, the rest in slices (see newSet)
 
 // cem: the grey set for cars that drove through cement; goo 'oil': the black set of the race circuit, 'sand' and 'snow' (desert, ice)
 const OIL = ['#17171b', '#26262c', '#0c0c0e'].map(hex);
@@ -266,7 +287,17 @@ const ASH = ['#55524e', '#77736d', '#34312e'].map(hex);
 const SWAMP = ['#4e6a26', '#6a8a34', '#34481a'].map(hex);
 export function carSet(def, goo, cem) {
   const kind = cem ? 'cem' : typeof goo === 'string' ? goo : goo ? 'goo' : 'mud', key = '_' + kind;
-  return def[key] || (def[key] = buildCar(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, ash: ASH, swamp: SWAMP, goo: GOO, mud: DIRT }[kind]));
+  return def[key] || (def[key] = newSet(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, ash: ASH, swamp: SWAMP, goo: GOO, mud: DIRT }[kind]));
+}
+
+const KINDS = ['_mud', '_goo', '_cem', '_oil', '_sand', '_snow', '_ash', '_swamp'];
+
+// the sprite sets of one car (a new paint makes them again)
+export function dropSets(def) { for (const k of KINDS) delete def[k]; }
+
+// a race only needs the sets of its own track: the full sets of other kinds are let go (2.6 MB each); the menus build their turn 0 again
+export function keepSets(defs, keep) {
+  for (const def of defs) for (const k of KINDS) if (def[k] && def[k].done && !keep.includes(def[k])) delete def[k];
 }
 
 
@@ -293,7 +324,7 @@ export function setPaint(def, i) {
   if (!def.own) def.own = { M: def.M, D: def.D, L: def.L, accent: def.accent }; // (not 'acc': that is the acceleration)
   const p = i > 0 && PAINTS[i] ? PAINTS[i] : def.own;
   def.M = p.M; def.D = p.D; def.L = p.L; def.accent = p.accent || def.own.accent; def.paint = PAINTS[i] && i > 0 ? i : 0;
-  delete def._mud; delete def._goo; delete def._cem; delete def._oil; delete def._sand; delete def._snow; delete def._ash; delete def._swamp; // the sprites are built again with the new colour
+  dropSets(def); // the sprites are built again with the new colour
 }
 
 export function savePaint(def, i) { setPaint(def, i); try { localStorage.setItem(paintKey(def), String(def.paint)); } catch (e) {} }

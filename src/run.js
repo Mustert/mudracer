@@ -1,24 +1,31 @@
 import { G } from './g.js';
 import { AU, SFX } from './audio.js';
 import { CAR_DEFS } from './cars.js';
-import { TAU, VH, VW, clamp, ctx, hash, hex, outlineImg, rng, toCanvas, vnoise } from './core.js';
+import { TAU, VH, VW, clamp, ctx, hash, hex, mk, outlineImg, rng, toCanvas, vnoise } from './core.js';
+import { obstacleGrid } from './grid.js';
 import { R1, blink, disc, drawConfetti, drawFlag, panel, text } from './draw.js';
 import { setState } from './menus.js';
 import { addP, mudBurst, splash } from './particles.js';
 import { makeCar, moveCamera, resetWorld } from './race.js';
+import { cam } from './state.js';
 import { THEMES } from './tracks.js';
 
 // ---------- Matschfahrt: one long off-road course driven upwards ----------
 
-const RUN_W = 480, RUN_H = 6400, RUN_HALF = 96;
+const RUN_W = 480, RUN_H = 6400, RUN_HALF = 96, TILE = 400, KEEP_TILES = 5;
 
-
+// The course is 480 x 6400 px. Its terrain and the places of all features are worked out at once (cheap), but the pictures
+// (ground and top layer) are painted in tiles of TILE rows only where the camera is (and the tile ahead, see runPrefetch),
+// so the course needs a few MB instead of about 50. A tile comes out exactly as the whole picture did before.
 function buildRun() {
   const W = RUN_W, H = RUN_H, A = W * H, sd = 4242, r = rng(sd), th = THEMES.gelaende;
   const roadX = y => 240 + Math.sin(y / 700) * 36 + Math.sin(y / 260) * 10;
   const startY = H - 300, finishY = 300;
-  const ter = new Uint8Array(A), dx0 = new Float32Array(A);
-  for (let y = 0; y < H; y++) { const cx = roadX(y); for (let x = 0; x < W; x++) { const j = y * W + x, dd = x + .5 - cx; dx0[j] = dd; ter[j] = Math.abs(dd) < RUN_HALF ? 1 : 0; } }
+  // dx(x, y): how far from the middle of the road (as a 32-bit float, like the table it replaces)
+  const rowX = new Float64Array(H); for (let y = 0; y < H; y++) rowX[y] = roadX(y);
+  const dx = (x, y) => Math.fround(x + .5 - rowX[y]);
+  const ter = new Uint8Array(A);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) ter[y * W + x] = Math.abs(dx(x, y)) < RUN_HALF ? 1 : 0;
   // obstacles: hills with a puddle to land in, big mud holes, big puddles, and side-by-side pairs
   const hills = [], feats = [];
   for (let y = startY - 260; y > finishY + 260;) {
@@ -34,7 +41,7 @@ function buildRun() {
   const blob = (f, type, noisy) => {
     const R = Math.ceil(Math.max(f.rx, f.ry) * 1.25) + 2;
     for (let y = Math.max(0, Math.floor(f.y - R)); y <= Math.min(H - 1, f.y + R); y++) for (let x = Math.max(0, Math.floor(f.x - R)); x <= Math.min(W - 1, f.x + R); x++) {
-      const j = y * W + x; if (Math.abs(dx0[j]) > RUN_HALF + 10) continue;
+      const j = y * W + x; if (Math.abs(dx(x, y)) > RUN_HALF + 10) continue;
       if (((x + .5 - f.x) / f.rx) ** 2 + ((y + .5 - f.y) / f.ry) ** 2 < (noisy ? .8 + .4 * vnoise(x * .1, y * .1, sd + type) : 1)) ter[j] = type;
     }
   };
@@ -43,88 +50,151 @@ function buildRun() {
   const shore = new Uint8Array(A);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     if (ter[y * W + x] !== 3) continue;
-    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
-      if (dx * dx + dy * dy > 10) continue; const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+    for (let dy = -3; dy <= 3; dy++) for (let dx2 = -3; dx2 <= 3; dx2++) {
+      if (dx2 * dx2 + dy * dy > 10) continue; const xx = x + dx2, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
       const k = yy * W + xx; if (ter[k] !== 3) shore[k] = 1;
     }
   }
   const ed = (x, y, type, mr) => {
-    for (let rr = 1; rr <= mr; rr++) for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) {
-      if (Math.max(Math.abs(dx), Math.abs(dy)) !== rr) continue; const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+    for (let rr = 1; rr <= mr; rr++) for (let dy = -rr; dy <= rr; dy++) for (let dx2 = -rr; dx2 <= rr; dx2++) {
+      if (Math.max(Math.abs(dx2), Math.abs(dy)) !== rr) continue; const xx = x + dx2, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
       if (ter[yy * W + xx] !== type) return rr;
     }
     return mr + 1;
   };
-  const img = new ImageData(W, H), d = img.data;
-  const set = (j, c) => { d[j * 4] = c[0]; d[j * 4 + 1] = c[1]; d[j * 4 + 2] = c[2]; d[j * 4 + 3] = 255; };
-  const G = th.grass.map(hex), TRK = th.track.map(hex), TE = hex(th.trackEdge), GE = hex(th.grassEdge), TU = hex(th.tuft);
-  const MUD = th.mud.map(hex), MUDE = hex(th.mudEdge), MUDH = hex(th.mudHi), WAT = th.water.map(hex), SHORE = th.shore.map(hex);
-  const RUT = hex('#8f6a44'), MID = [hex('#8a9a4a'), hex('#7a8a3e')], HILL = ['#f0d8a8', '#dcb885', '#c79d68', '#a07a4c'].map(hex), CHEV = hex('#ffe066');
-  const mudPix = [], watPix = [], hillOf = [];
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const j = y * W + x, t = ter[j], nv = vnoise(x / 9, y / 9, sd), h = hash(x, y, sd), ddx = dx0[j], ad = Math.abs(ddx);
-    let col;
-    if (t === 3) { watPix.push(j); const e = ed(x, y, 3, 4); col = e === 1 ? WAT[0] : e <= 3 ? WAT[1] : nv > .55 ? WAT[3] : WAT[2]; }
-    else if (shore[j]) col = SHORE[h < .5 ? 0 : 1];
-    else if (t === 2) { const e = ed(x, y, 2, 1); if (e === 1) col = MUDE; else { if (h < .3) mudPix.push(j); const v = nv * .6 + h * .4; col = v < .38 ? MUD[1] : v > .66 ? MUD[2] : MUD[0]; if (h < .025) col = MUDH; } }
-    else if (t === 5) {
-      let hh = null; for (const q of hills) if (Math.abs(y - q.y) <= q.ry + 1 && Math.abs(x - q.x) <= q.rx + 1) { hh = q; break; }
-      const v = (y + .5 - hh.y) / hh.ry, ax = Math.abs(x + .5 - hh.x);
-      col = Math.abs(v) < .1 ? HILL[0] : v < -.35 ? HILL[1] : v < .35 ? HILL[2] : HILL[3];
-      if (ax < 26 && v > -.1 && ((y - hh.y + ax * .7 + 200) % 12) < 3) col = CHEV;
-    } else if (t === 1) {
-      const v = nv * .6 + h * .4; col = v < .35 ? TRK[1] : v > .68 ? TRK[2] : TRK[0];
-      if (Math.abs(ad - 34) < 4 && h > .15) col = RUT;
-      if (ad < 7) col = hash(x, y, sd + 1) < .45 ? MID[0] : MID[1];
-      if (ad > RUN_HALF - 3) col = TE;
-    } else {
-      if (ad < RUN_HALF + 2.5) col = GE;
-      else { const v = nv * .7 + h * .3; col = v < .38 ? G[1] : v > .66 ? G[2] : G[0]; if (h < .025 || hash(x, y + 1, sd) < .025) col = TU; }
-    }
-    set(j, col);
+  // the water and mud pixels that sparkle and bubble while racing
+  const mudPix = [], watPix = [];
+  for (let j = 0; j < A; j++) {
+    const t = ter[j]; if (t !== 2 && t !== 3) continue;
+    const x = j % W, y = (j / W) | 0;
+    if (t === 3) watPix.push(j); else if (!shore[j] && ed(x, y, 2, 1) !== 1 && hash(x, y, sd) < .3) mudPix.push(j);
   }
-  // start line and a checkered finish banner
-  const checker = (yc, fnSet) => { for (let y = yc - 6; y < yc + 6; y++) { const cx = roadX(y); for (let x = Math.floor(cx - RUN_HALF); x < cx + RUN_HALF; x++) fnSet(x, y, ((Math.floor(x - cx + 200) >> 2) + (Math.floor(y - yc + 200) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); } };
-  checker(startY, (x, y, c) => set(y * W + x, c));
-  const tp = new Uint8ClampedArray(A * 4);
-  const setT = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= W || y >= H) return; const i = (y * W + x) * 4; tp[i] = c[0]; tp[i + 1] = c[1]; tp[i + 2] = c[2]; tp[i + 3] = 255; };
-  checker(finishY, setT);
-  for (const s of [-1, 1]) { const px0 = roadX(finishY) + s * (RUN_HALF + 8); for (let y = finishY - 8; y < finishY + 8; y++) for (let x = px0 - 3; x <= px0 + 3; x++) setT(x, y, Math.abs(x - px0) < 2 ? [217, 83, 79] : [140, 40, 40]); }
-  // warning signs beside every hill
-  for (const q of hills) for (const s of [-1, 1]) {
-    const sx = Math.round(q.x + s * (q.rx + 8)), sy = Math.round(q.y);
-    for (let k = 0; k < 7; k++) for (let w = -k; w <= k; w++) setT(sx + w, sy - 6 + k, k === 6 || Math.abs(w) === k ? [27, 18, 12] : [255, 210, 63]);
-    setT(sx, sy - 3, [27, 18, 12]); setT(sx, sy - 2, [27, 18, 12]); setT(sx, sy, [27, 18, 12]);
-  }
-  // trees, flowers and rocks on the verges
-  const C = th.treeCol.map(hex), trees = [];
-  const darken = (x, y, rad) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + 5, yy = y + dy + 7; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue; const i = (yy * W + xx) * 4; d[i] *= .7; d[i + 1] *= .7; d[i + 2] *= .72; } };
+  // trees, flowers and rocks on the verges: only their places here (same random numbers in the same order as always), painted per tile
+  const trees = [], looks = [];
   for (let y = 20; y < H - 20; y += 14) for (const s of [-1, 1]) {
     if (r() < .45) continue;
     const cx = roadX(y), x = Math.round(cx + s * (RUN_HALF + 26 + r() * (W / 2 - RUN_HALF - 30))), yy = y + Math.round((r() - .5) * 10);
     if (x < 10 || x > W - 10 || Math.abs(x - cx) < RUN_HALF + 22 || trees.some(o => Math.hypot(o.x - x, o.y - yy) < 24)) continue;
-    trees.push({ x, y: yy, r: 9 }); darken(x, yy, 11);
-    const pine = r() < .4, rot = r() * TAU;
-    for (let dy = -14; dy <= 14; dy++) for (let dx = -14; dx <= 14; dx++) {
-      const X = x + dx, Y = yy + dy;
-      if (pine) {
-        const dd = Math.hypot(dx, dy), an = Math.atan2(dy, dx), rad = 9 + 3 * Math.abs(Math.cos(an * 4 + rot)), inner = 5 + 2 * Math.abs(Math.cos(an * 4 + rot + Math.PI / 4));
-        if (dd <= rad) setT(X, Y, dd < 2 ? [61, 145, 96] : dd < inner ? ((dx + dy) < 0 ? [61, 145, 96] : [39, 112, 72]) : ((dx + dy) < -2 ? [39, 112, 72] : [27, 87, 58]));
+    trees.push({ x, y: yy, r: 9 });
+    looks.push({ pine: r() < .4, rot: r() * TAU });
+  }
+  const flowers = [], rocks = [];
+  for (let k = 0; k < 1400; k++) flowers.push([r() * W | 0, r() * H | 0, (r() * 5) | 0]);
+  for (let k = 0; k < 160; k++) rocks.push([r() * W | 0, r() * H | 0]);
+  const R = { W, H, run: true, def: { name: 'MATSCHFAHRT', song: 'train' }, name: 'MATSCHFAHRT', th, path: [], tan: [], nrm: [], N: 1, ter, washMask: new Uint8Array(A),
+    trees, grid: obstacleGrid(trees, W, H), critters: [], windmill: null, shoreY: null, mudPix, watPix, starPix: [], rail: null, washC: null,
+    hills, startY, finishY, roadX, tiles: new Map() };
+  R.paint = { sd, th, rowX, dx, shore, ed, looks, flowers, rocks };
+  return R;
+}
+
+// paints the rows y0..y1 (one tile): the ground picture and the top layer (tree tops, finish banner, warning signs), in slices
+function* paintTile(R, y0, y1) {
+  const { W, H, ter, hills, trees, startY, finishY, roadX } = R, { sd, th, rowX, dx, shore, ed, looks, flowers, rocks } = R.paint;
+  const h = y1 - y0, img = new ImageData(W, h), d = img.data;
+  const set = (x, y, c) => { if (y < y0 || y >= y1 || x < 0 || x >= W) return; const i = ((y - y0) * W + x) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; };
+  const G2 = th.grass.map(hex), TRK = th.track.map(hex), TE = hex(th.trackEdge), GE = hex(th.grassEdge), TU = hex(th.tuft);
+  const MUD = th.mud.map(hex), MUDE = hex(th.mudEdge), MUDH = hex(th.mudHi), WAT = th.water.map(hex), SHORE = th.shore.map(hex);
+  const RUT = hex('#8f6a44'), MID = [hex('#8a9a4a'), hex('#7a8a3e')], HILL = ['#f0d8a8', '#dcb885', '#c79d68', '#a07a4c'].map(hex), CHEV = hex('#ffe066');
+  for (let y = y0; y < y1; y++) {
+    if ((y - y0) % 50 === 49) yield;
+    for (let x = 0; x < W; x++) {
+      const j = y * W + x, t = ter[j], nv = vnoise(x / 9, y / 9, sd), hs = hash(x, y, sd), ddx = dx(x, y), ad = Math.abs(ddx);
+      let col;
+      if (t === 3) { const e = ed(x, y, 3, 4); col = e === 1 ? WAT[0] : e <= 3 ? WAT[1] : nv > .55 ? WAT[3] : WAT[2]; }
+      else if (shore[j]) col = SHORE[hs < .5 ? 0 : 1];
+      else if (t === 2) { const e = ed(x, y, 2, 1); if (e === 1) col = MUDE; else { const v = nv * .6 + hs * .4; col = v < .38 ? MUD[1] : v > .66 ? MUD[2] : MUD[0]; if (hs < .025) col = MUDH; } }
+      else if (t === 5) {
+        let hh = null; for (const q of hills) if (Math.abs(y - q.y) <= q.ry + 1 && Math.abs(x - q.x) <= q.rx + 1) { hh = q; break; }
+        const v = (y + .5 - hh.y) / hh.ry, ax = Math.abs(x + .5 - hh.x);
+        col = Math.abs(v) < .1 ? HILL[0] : v < -.35 ? HILL[1] : v < .35 ? HILL[2] : HILL[3];
+        if (ax < 26 && v > -.1 && ((y - hh.y + ax * .7 + 200) % 12) < 3) col = CHEV;
+      } else if (t === 1) {
+        const v = nv * .6 + hs * .4; col = v < .35 ? TRK[1] : v > .68 ? TRK[2] : TRK[0];
+        if (Math.abs(ad - 34) < 4 && hs > .15) col = RUT;
+        if (ad < 7) col = hash(x, y, sd + 1) < .45 ? MID[0] : MID[1];
+        if (ad > RUN_HALF - 3) col = TE;
       } else {
-        const dd = Math.hypot(dx, dy) + (vnoise(X * .45, Y * .45, 5) - .5) * 3.5; if (dd > 11.5) continue;
-        const s2 = (dx + dy) / 11 + (vnoise(X * .5, Y * .5, 6) - .5) * .9;
+        if (ad < RUN_HALF + 2.5) col = GE;
+        else { const v = nv * .7 + hs * .3; col = v < .38 ? G2[1] : v > .66 ? G2[2] : G2[0]; if (hs < .025 || hash(x, y + 1, sd) < .025) col = TU; }
+      }
+      set(x, y, col);
+    }
+  }
+  yield;
+  // start line and a checkered finish banner
+  const checker = (yc, fnSet) => { for (let y = yc - 6; y < yc + 6; y++) { const cx = roadX(y); for (let x = Math.floor(cx - RUN_HALF); x < cx + RUN_HALF; x++) fnSet(x, y, ((Math.floor(x - cx + 200) >> 2) + (Math.floor(y - yc + 200) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); } };
+  checker(startY, set);
+  // tree shadows (on the ground), then flowers and rocks
+  const darken = (x, y, rad) => { for (let dy = -rad; dy <= rad; dy++) for (let dx2 = -rad; dx2 <= rad; dx2++) { if (dx2 * dx2 + dy * dy > rad * rad) continue; const xx = x + dx2 + 5, yy = y + dy + 7; if (xx < 0 || yy < y0 || xx >= W || yy >= y1) continue; const i = ((yy - y0) * W + xx) * 4; d[i] *= .7; d[i + 1] *= .7; d[i + 2] *= .72; } };
+  for (const tr of trees) if (tr.y + 18 >= y0 && tr.y - 4 < y1) darken(tr.x, tr.y, 11);
+  const px = (x, y, c) => { if (x >= 0 && y >= y0 && x < W && y < y1 && ter[y * W + x] === 0 && Math.abs(dx(x, y)) > RUN_HALF + 4) set(x, y, c); };
+  const PET = ['#ff5a7a', '#ffe14d', '#ffffff', '#b36bff', '#5ab4ff'].map(hex), YEL = hex('#ffe14d');
+  for (const [x, y, p] of flowers) if (y >= y0 - 1 && y <= y1) { const pc = PET[p]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, YEL); }
+  const RK = ['#c4c4bb', '#9a9a92', '#6e6e68'].map(hex);
+  for (const [x, y] of rocks) if (y >= y0 - 1 && y <= y1) { px(x, y, RK[0]); px(x + 1, y, RK[1]); px(x, y + 1, RK[1]); px(x + 1, y + 1, RK[2]); }
+  yield;
+  // the top layer: one row more above and below, so the outline is right at the edges of the tile
+  const t0 = Math.max(0, y0 - 1), t1 = Math.min(H, y1 + 1), th2 = t1 - t0, tp = new Uint8ClampedArray(W * th2 * 4);
+  const setT = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < t0 || x >= W || y >= t1) return; const i = ((y - t0) * W + x) * 4; tp[i] = c[0]; tp[i + 1] = c[1]; tp[i + 2] = c[2]; tp[i + 3] = 255; };
+  if (finishY + 8 >= t0 && finishY - 8 < t1) {
+    checker(finishY, setT);
+    for (const s of [-1, 1]) { const px0 = roadX(finishY) + s * (RUN_HALF + 8); for (let y = finishY - 8; y < finishY + 8; y++) for (let x = px0 - 3; x <= px0 + 3; x++) setT(x, y, Math.abs(x - px0) < 2 ? [217, 83, 79] : [140, 40, 40]); }
+  }
+  // warning signs beside every hill
+  for (const q of hills) if (q.y + 2 >= t0 && q.y - 8 < t1) for (const s of [-1, 1]) {
+    const sx = Math.round(q.x + s * (q.rx + 8)), sy = Math.round(q.y);
+    for (let k = 0; k < 7; k++) for (let w = -k; w <= k; w++) setT(sx + w, sy - 6 + k, k === 6 || Math.abs(w) === k ? [27, 18, 12] : [255, 210, 63]);
+    setT(sx, sy - 3, [27, 18, 12]); setT(sx, sy - 2, [27, 18, 12]); setT(sx, sy, [27, 18, 12]);
+  }
+  const C = th.treeCol.map(hex);
+  trees.forEach(({ x, y: yy }, k) => {
+    if (yy + 14 < t0 || yy - 14 >= t1) return;
+    const { pine, rot } = looks[k];
+    for (let dy = -14; dy <= 14; dy++) for (let dx2 = -14; dx2 <= 14; dx2++) {
+      const X = x + dx2, Y = yy + dy;
+      if (pine) {
+        const dd = Math.hypot(dx2, dy), an = Math.atan2(dy, dx2), rad = 9 + 3 * Math.abs(Math.cos(an * 4 + rot)), inner = 5 + 2 * Math.abs(Math.cos(an * 4 + rot + Math.PI / 4));
+        if (dd <= rad) setT(X, Y, dd < 2 ? [61, 145, 96] : dd < inner ? ((dx2 + dy) < 0 ? [61, 145, 96] : [39, 112, 72]) : ((dx2 + dy) < -2 ? [39, 112, 72] : [27, 87, 58]));
+      } else {
+        const dd = Math.hypot(dx2, dy) + (vnoise(X * .45, Y * .45, 5) - .5) * 3.5; if (dd > 11.5) continue;
+        const s2 = (dx2 + dy) / 11 + (vnoise(X * .5, Y * .5, 6) - .5) * .9;
         setT(X, Y, s2 < -.55 ? C[2] : s2 > .45 ? C[0] : C[1]);
       }
     }
+  });
+  const out = outlineImg(new ImageData(tp, W, th2), W, th2, C[3]), top = mk(W, h);
+  top.getContext('2d').putImageData(out, 0, t0 - y0);
+  return { base: toCanvas(img), top };
+}
+
+// tile k (rows k * TILE ..): painted further until the clock reaches `until`; its pictures, or null while it is not done
+function tile(R, k, until = Infinity) {
+  let t = R.tiles.get(k);
+  if (!t) { t = { job: paintTile(R, k * TILE, Math.min(R.H, (k + 1) * TILE)), pic: null }; R.tiles.set(k, t); }
+  while (!t.pic) {
+    const s = t.job.next();
+    if (s.done) { t.pic = s.value; t.job = null; break; }
+    if (performance.now() >= until) break;
   }
-  const px = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H && ter[y * W + x] === 0 && Math.abs(dx0[y * W + x]) > RUN_HALF + 4) set(y * W + x, c); };
-  const PET = ['#ff5a7a', '#ffe14d', '#ffffff', '#b36bff', '#5ab4ff'].map(hex);
-  for (let k = 0; k < 1400; k++) { const x = r() * W | 0, y = r() * H | 0, pc = PET[(r() * 5) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, hex('#ffe14d')); }
-  for (let k = 0; k < 160; k++) { const x = r() * W | 0, y = r() * H | 0; px(x, y, hex('#c4c4bb')); px(x + 1, y, hex('#9a9a92')); px(x, y + 1, hex('#9a9a92')); px(x + 1, y + 1, hex('#6e6e68')); }
-  const top = toCanvas(outlineImg(new ImageData(tp, W, H), W, H, C[3]));
-  return { W, H, run: true, def: { name: 'MATSCHFAHRT', song: 'train' }, name: 'MATSCHFAHRT', th, path: [], tan: [], nrm: [], N: 1, ter, washMask: new Uint8Array(A),
-    trees, critters: [], windmill: null, shoreY: null, base: toCanvas(img), top, mini: null, mudPix, watPix, starPix: [], rail: null, washC: null,
-    hills, startY, finishY, roadX };
+  return t.pic;
+}
+
+// while driving: the tiles in view and then the one ahead (upwards), a little each frame (see idle.js)
+export function runPrefetch(until) {
+  const R = G.T; if (!R || !R.run) return;
+  const k0 = Math.floor(cam.y / TILE);
+  for (const k of [k0, k0 + 1, k0 - 1]) if (k >= 0 && k * TILE < R.H && !tile(R, k, until)) return;
+}
+
+// draws the window of the course at (cx, cy) to (dx, dy): which = 'base' (ground) or 'top' (tree tops ...); far tiles are let go
+export function drawRunLayer(which, cx, cy, dx, dy) {
+  const R = G.T;
+  for (let k = Math.floor(cy / TILE); k * TILE < cy + VH && k * TILE < R.H; k++) {
+    const p = tile(R, k), y0 = Math.max(cy, k * TILE), y1 = Math.min(cy + VH, (k + 1) * TILE);
+    ctx.drawImage(p[which], cx, y0 - k * TILE, VW, y1 - y0, dx, dy + y0 - cy, VW, y1 - y0);
+  }
+  if (R.tiles.size > KEEP_TILES) { const kc = Math.floor(cy / TILE); for (const k of [...R.tiles.keys()]) if (Math.abs(k - kc) > 2) R.tiles.delete(k); }
 }
 
 

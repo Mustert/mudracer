@@ -18,14 +18,16 @@ const TYRE = ['#f2f2ee', '#d83a2c', '#f2c230', '#2f6fd8'].map(hex);
 const TEAM = ['#d83a2c', '#2f6fd8', '#3aa845', '#f2c230', '#8e44ad', '#f07a1a', '#2ec4b6', '#eef3f8'].map(hex);
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N, stampAt }
-export function ringTerrain(S) {
+export function* ringTerrain(S) {
   const { def, ter, dist, near, path, tan, nrm, N } = S, A = WW * WH;
+  yield;
   // curvature of the centre line (turn per pixel), and the strongest one nearby, so the kerbs run through the whole corner
   const ang = tan.map(t => Math.atan2(t.y, t.x)), cv = new Float32Array(N), kc = new Float32Array(N);
   for (let i = 0; i < N; i++) cv[i] = angDiff(ang[(i + 5) % N], ang[(i - 5 + N) % N]) / 20;
   for (let i = 0; i < N; i++) { let m = 0; for (let k = -10; k <= 10; k++) { const v = cv[(i + k + N) % N]; if (Math.abs(v) > Math.abs(m)) m = v; } kc[i] = m; }
   const off = j => { const i = near[j], p = path[i]; return (j % WW + .5 - p.x) * nrm[i].x + ((j / WW | 0) + .5 - p.y) * nrm[i].y; };
 
+  yield;
   // the crossing: two points of the centre line that meet although they are far apart along the lap. The first one is the bridge.
   let cross = null, bd = 1e9;
   for (let i = 0; i < N; i += 2) for (let k = i + (N >> 2); k < Math.min(N, i + N - (N >> 2)); k += 2) {
@@ -39,12 +41,15 @@ export function ringTerrain(S) {
   } else cross = null;
 
   const kerb = new Uint8Array(A), pitMask = new Uint8Array(A), pitD = new Float32Array(A).fill(1e4), pitK = new Int32Array(A), hatch = new Uint8Array(A);
+  yield;
   // kerbs: on the inside of every corner, reaching a little beyond the edge of the road (that strip is road as well)
   for (let j = 0; j < A; j++) {
+    if (j % 40000 === 39999) yield;
     if (dist[j] >= HALF + 5) continue;
     const k = kc[near[j]]; if (Math.abs(k) < .008) continue;
     if (off(j) * Math.sign(k) > HALF - 7) { kerb[j] = 1; if (ter[j] === 0) ter[j] = 1; }
   }
+  yield;
   // gravel traps on the outside of the corners: [x, y, radius]
   for (const [gx, gy, gr] of def.gravel || []) {
     for (let y = Math.max(0, gy - gr); y < Math.min(WH, gy + gr); y++) for (let x = Math.max(0, gx - gr); x < Math.min(WW, gx + gr); x++) {
@@ -54,8 +59,10 @@ export function ringTerrain(S) {
       ter[j] = 7;
     }
   }
+  yield;
   // oil instead of mud
   (def.oilAt || []).forEach(m => S.stampAt(m, 8));
+  yield;
   // the pit lane: a narrow road of its own along the start straight. Its speed limit holds only outside the race track.
   let pit = null;
   if (def.pit) {
@@ -88,15 +95,17 @@ export function ringTerrain(S) {
 }
 
 // painting, after the ground: S: { def, d, set, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, th, RT }
-export function paintRing(S) {
+export function* paintRing(S) {
   const { def, d, set, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, th, RT } = S, A = WW * WH;
   const { kc, cross, kerb, pitD, pit } = RT, oilPix = [];
   const GR = th.grass.map(hex), GE = hex(th.grassEdge), TU = hex(th.tuft);
   const inPit = j => pit && pitD[j] < pit.half && dist[j] >= HALF - 1;
   const darken = (j, k) => { const i = j * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
 
+  yield;
   // ----- the ground: asphalt with white edge lines, red and white kerbs, gravel, shiny oil, mown grass in stripes -----
   for (let j = 0; j < A; j++) {
+    if (j % 40000 === 39999) yield;
     const x = j % WW, y = j / WW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 6, y / 6, sd + 41) * .55 + h * .45;
     let c;
     if (t === 8) {
@@ -121,6 +130,7 @@ export function paintRing(S) {
     set(j, c);
   }
 
+  yield;
   // ----- start line (chequered) and the grid: a white bracket for every place, open towards the back -----
   S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF - 2) set(y * WW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? K.kw : K.tyre); });
   for (let k = 0; k < 8; k++) {
@@ -128,6 +138,7 @@ export function paintRing(S) {
     S.band(i, 12, (x, y, a, c) => { const dc = c - side; if ((Math.abs(a - 10) < .8 && Math.abs(dc) < 9.2) || (a > 2 && a < 10.5 && Math.abs(Math.abs(dc) - 8.6) < .7)) set(y * WW + x, K.line); });
   }
 
+  yield;
   // ----- pit lane: the box (it washes the car), white lines where the speed limit starts and ends, the pit wall, the garages -----
   if (pit) {
     const across = (k, col) => {
@@ -167,10 +178,12 @@ export function paintRing(S) {
     }
   }
 
+  yield;
   // ----- barriers: everything that is far enough from the road is closed off (armco, tyre walls at the gravel traps) -----
   // near the crossing the barrier comes close to the road, so nobody can turn from one road onto the other
   const bar = new Uint8Array(A), stackAt = (x, y) => (def.gravel || []).some(([gx, gy, gr]) => Math.hypot(x - gx, y - gy) < gr + 10) || (def.stacks || []).some(([sx, sy, sr]) => Math.hypot(x - sx, y - sy) < sr);
   for (let j = 0; j < A; j++) {
+    if (j % 40000 === 39999) yield;
     if (ter[j] !== 0) continue;
     const x = j % WW, y = j / WW | 0;
     let L = HALF + 18;
@@ -181,6 +194,7 @@ export function paintRing(S) {
   }
   const edge = new Uint8Array(A), grid = new Map(), key = (x, y) => (x >> 3) * 1000 + (y >> 3);
   for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) {
+    if (x === 0 && y % 50 === 49) yield;
     const j = y * WW + x; if (!bar[j]) continue;
     if (!((x > 0 && !bar[j - 1]) || (x < WW - 1 && !bar[j + 1]) || (y > 0 && !bar[j - WW]) || (y < WH - 1 && !bar[j + WW]))) continue;
     edge[j] = 1;
@@ -192,6 +206,7 @@ export function paintRing(S) {
     const st = stackAt(x, y), w = { x: x + .5, y: y + .5, r: st ? 4 : 3.5, stack: st };
     walls.push(w); (grid.get(key(x, y)) || grid.set(key(x, y), []).get(key(x, y))).push(w);
   }
+  yield;
   // armco, clearly a wall: a dark outline towards the track, a bright steel rail, its shaded underside, a dark back, a shadow on the grass behind.
   // depth = how far a cell of the barrier lies behind its edge
   const depth = new Uint8Array(A).fill(9);
@@ -202,6 +217,7 @@ export function paintRing(S) {
   }
   const RAIL = [hex('#23262c'), K.steel, hex('#f6f8fb'), hex('#a3aab4'), hex('#4c525b')];
   for (let j = 0; j < A; j++) {
+    if (j % 40000 === 39999) yield;
     if (!bar[j]) continue;
     const x = j % WW, y = j / WW | 0, dp = depth[j]; if (stackAt(x, y)) continue;
     if (dp < RAIL.length) set(j, RAIL[dp]); else if (dp < 8) darken(j, .62 + dp * .03);
@@ -221,6 +237,7 @@ export function paintRing(S) {
   }
   for (let j = 0; j < A; j++) if (bar[j] && dist[j] < HALF + 45) wallMask[j] = 1;
 
+  yield;
   // ----- outside the barriers: grandstands full of fans, the paddock with the team trucks, a helipad, a big screen, a flag mown into the grass -----
   const put = (x, y, c, solid = true) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= WW || y >= WH) return; const j = y * WW + x; set(j, c); if (solid) wallMask[j] = 1; };
   const rect = (x0, y0, w, h, c) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) put(x0 + x, y0 + y, c); };
@@ -280,6 +297,7 @@ export function paintRing(S) {
     ring(tx + 7, ty + 7, 4, dd => dd > 3 ? K.parD : K.yel);
   }
 
+  yield;
   // ----- the bridge: baked into the ground picture, and once more as a picture of its own that is drawn over the cars below it -----
   let deck = null;
   if (cross) {

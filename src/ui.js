@@ -6,6 +6,7 @@ import { OPT, PAU } from './menus.js';
 import { drawSelectCar } from './carselect.js';
 import { drawSelectCup } from './cupselect.js';
 import { drawCustom } from './custom.js';
+import { drawLoading } from './idle.js';
 import { drawRaceOpts } from './raceopts.js';
 import { drawCeremony, drawMain, drawSelectTrack, drawStandings } from './screens.js';
 import { drawShop } from './shop.js';
@@ -73,5 +74,6 @@ export function drawState(s) {
   else if (s === 'shop') drawShop();
   else if (s === 'standings') drawStandings();
   else if (s === 'ceremony') drawCeremony();
+  else if (s === 'loading') drawLoading();
   else drawRace();
 }

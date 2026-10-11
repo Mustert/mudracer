@@ -1,12 +1,12 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { VW, WH, WW, clamp, ctx } from './core.js';
+import { VW, clamp } from './core.js';
 import { CUPS, CUSTOM_MAX, saveCustom } from './cups.js';
 import { DIFFS, setDiff, setFx } from './diff.js';
 import { R1, text, tri } from './draw.js';
 import { is } from './input.js';
 import { setState } from './menus.js';
-import { drawMenuBg } from './screens.js';
+import { drawMenuBg, drawTrackPic } from './screens.js';
 import { TRACKS } from './tracks.js';
 
 // ---------- custom cup: put together your own Grand Prix ----------
@@ -112,7 +112,7 @@ export function drawCustom() {
   // the track being picked, big, with arrows
   const pop = Math.round(Math.max(0, 1 - (G.time - G.selAnim) * 5) * 3), t = TRACKS[G.cuPick], wig = Math.round(Math.sin(G.time * 5) * 2);
   R1(PREV.x - 3, PREV.y - 3 - pop, PREV.w + 6, PREV.h + 6, G.cuRow === 0 ? '#ffd23f' : '#3a2a1c'); R1(PREV.x - 1, PREV.y - 1 - pop, PREV.w + 2, PREV.h + 2, '#1b120c');
-  ctx.drawImage(t.base, 0, 0, WW, WH, PREV.x, PREV.y - pop, PREV.w, PREV.h); ctx.drawImage(t.top, 0, 0, WW, WH, PREV.x, PREV.y - pop, PREV.w, PREV.h);
+  drawTrackPic(t, PREV.x, PREV.y - pop, PREV.w, PREV.h);
   tri(PREV.x - 9 - wig, PREV.y + PREV.h / 2, 'left', 7, '#ffd23f'); tri(PREV.x + PREV.w + 9 + wig, PREV.y + PREV.h / 2, 'right', 7, '#ffd23f');
   text(t.name, PREV.x + PREV.w / 2, PREV.y + PREV.h + 6, 8, '#ffd23f', 'center');
   // the chosen tracks in racing order
@@ -123,7 +123,7 @@ export function drawCustom() {
     R1(tx - 1, ty - 1, LIST.w + 2, LIST.h + 2, '#1b120c');
     if (j >= n) { R1(tx, ty, LIST.w, LIST.h, '#2a1d12'); continue; }
     const tt = TRACKS[G.custom.tracks[j]];
-    ctx.drawImage(tt.base, 0, 0, WW, WH, tx, ty, LIST.w, LIST.h); ctx.drawImage(tt.top, 0, 0, WW, WH, tx, ty, LIST.w, LIST.h);
+    drawTrackPic(tt, tx, ty, LIST.w, LIST.h);
     R1(tx, ty, j >= 9 ? 19 : 11, 10, '#1b120c'); text(String(j + 1), tx + 1, ty + 1, 8, '#ffd23f', 'left', null);
   }
   text('ENTER = HINZUFUEGEN   ESC = ZURUECK', VW / 2, 256, 8, '#d8c4a8', 'center');

@@ -20,8 +20,9 @@ const K = Object.fromEntries(Object.entries({
 export const canyonX = (C, y) => C.x + Math.sin(y / 23) * 5 * clamp((Math.abs(y - 390) - 40) / 40, 0, 1);
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N }
-export function desertTerrain(S) {
+export function* desertTerrain(S) {
   const { def, ter, dist, path, N } = S, A = WW * WH, alt = new Uint8Array(A);
+  yield;
   // the oasis: the shallow rim washes (also on the road), the deep middle lies beside the road
   if (def.oasis) {
     const [ox, oy, rx, ry] = def.oasis;
@@ -31,6 +32,7 @@ export function desertTerrain(S) {
       ter[j] = e < .42 && dist[j] > HALF + 6 ? 5 : 3;
     }
   }
+  yield;
   // the gorge: no ground; the rope bridge beside the ramp, with a short piece of road at both ends
   const C = def.canyon;
   if (C) for (let y = C.y0; y < WH; y++) {
@@ -41,10 +43,12 @@ export function desertTerrain(S) {
       if (dx < edge) ter[j] = 11;
     }
   }
+  yield;
   // quicksand: round patches beside and on the ideal line
   for (const [qx, qy, qr] of def.quick || []) for (let y = qy - qr - 2; y <= qy + qr + 2; y++) for (let x = qx - qr - 2; x <= qx + qr + 2; x++) {
     if (Math.hypot(x + .5 - qx, y + .5 - qy) < qr + (vnoise(x * .3, y * .3, 63) - .5) * 2) ter[y * WW + x] = 10;
   }
+  yield;
   // jumps: the crests of the dunes (the whole width of the road) and the ramp in front of the gorge (only its lane)
   const jumps = [];
   for (const dx of def.dunes || []) { const i = nearestIdx(path, dx, 70), p = path[i]; jumps.push({ x: p.x, y: p.y, tx: 1, ty: 0, lo: -HALF - 4, hi: HALF + 4, vz: 64 }); }
@@ -58,14 +62,16 @@ export function desertTerrain(S) {
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT }
-export function paintDesert(S) {
+export function* paintDesert(S) {
   const { def, d, set, setT, path, nrm, N, ter, dist, near, walls, wallMask, shore, sd, RT } = S, A = WW * WH, C = def.canyon;
   const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < WW && y < WH) set(y * WW + x, c); };
   const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= WW || y >= WH) return; const i = (y * WW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
   const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < WW && Y < WH) wallMask[Y * WW + X] = 1; } };
 
+  yield;
   // ----- the ground: dunes with ripples, the sand road (tyre tracks show well on it), quicksand, the gorge -----
   for (let j = 0; j < A; j++) {
+    if (j % 40000 === 39999) yield;
     const x = j % WW, y = j / WW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 7, y / 7, sd + 41) * .55 + h * .45;
     let c;
     if (t === 0) {
@@ -91,9 +97,11 @@ export function paintDesert(S) {
     } else continue;
     set(j, c);
   }
+  yield;
   // start line (chequered)
   S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * WW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
 
+  yield;
   // ----- the dunes across the road: bright where you drive up, the crest, a shadow behind it -----
   for (const J of RT.jumps) if (J.vz < 90) {
     for (let y = Math.round(J.y - HALF); y <= J.y + HALF; y++) for (let x = Math.round(J.x - 22); x <= J.x + 12; x++) {
@@ -104,6 +112,7 @@ export function paintDesert(S) {
     }
   }
 
+  yield;
   // ----- the ramp in front of the gorge: a wedge of rock, lighter towards the lip; the rope bridge gets posts and is drawn while racing -----
   if (C) {
     const [y0, y1] = C.lane;
@@ -120,6 +129,7 @@ export function paintDesert(S) {
     for (const ex of [cx - C.hw - 3, cx + C.hw + 3]) for (const s of [-1, 1]) { const X = Math.round(ex), Y = C.bridge + s * (C.bh + 1); for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) px(X + dx, Y + dy, dx * dx + dy * dy < 3 ? [138, 96, 52] : [74, 46, 22]); }
   }
 
+  yield;
   // ----- the big pyramid: the road goes through it. Solid around the road inside; its roof is a picture of its own (see-through from inside) -----
   let pyr = null;
   if (def.pyramid) {
@@ -173,6 +183,7 @@ export function paintDesert(S) {
     pyr = { c: cv, x: x0, y: y0, W, cx: qx, cy: qy, hs, torches };
   }
 
+  yield;
   // ----- small pyramids and the sphinx at the edge: solid scenery -----
   const stone = (x, y, c) => px(x, y, c);
   for (const [mx, my, mh] of def.minis || []) {
@@ -196,6 +207,7 @@ export function paintDesert(S) {
     walls.push({ x: sx, y: sy, r: 12 }); walls.push({ x: sx - 16, y: sy - 6, r: 5 }); walls.push({ x: sx - 16, y: sy + 6, r: 5 }); solid(sx - 6, sy, 30);
   }
 
+  yield;
   // ----- cacti: the ones on the road are obstacles of their own (see desert.js), more of them out on the dunes -----
   const cactus = (x, y, big) => {
     const r0 = big ? 6 : 4;
@@ -213,6 +225,7 @@ export function paintDesert(S) {
     cactus(x, y, true); walls.push({ x, y, r: 6 }); solid(x, y, 9); k++;
   }
 
+  yield;
   // ----- the oasis: palm trees round the water (their crowns on the top layer), camels resting in the shade -----
   if (def.oasis) {
     const [ox, oy, rx, ry] = def.oasis, PAL = ['#2a8a3c', '#3cac4e', '#74d66c'].map(hex);
@@ -245,6 +258,7 @@ export function paintDesert(S) {
     solid(ox, oy, 4);
   }
 
+  yield;
   // ----- scattered bits: stones, animal skulls -----
   for (let k = 0, tries = 0; k < 40 && tries < 900; tries++) {
     const x = 4 + (S.r() * (WW - 8) | 0), y = 4 + (S.r() * (WH - 8) | 0); if (!okOff(x, y, 3)) continue;
@@ -254,6 +268,7 @@ export function paintDesert(S) {
     k++;
   }
 
+  yield;
   // windsocks beside the road (they show the wind of the storm)
   const socks = [[34, 122], [735, 196], [404, 432], [350, 112]].map(([x, y]) => ({ x, y }));
   for (const s of socks) walls.push({ x: s.x, y: s.y, r: 2 });

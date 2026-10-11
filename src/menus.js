@@ -60,7 +60,7 @@ const toggleCtrl = () => { G.CTRL = G.CTRL === 'std' ? 'alt' : 'std'; try { loca
 export const gearVisible = () => ['main', 'select_cup', 'select_car', 'select_track', 'select_count', 'custom', 'shop'].includes(G.state);
 
 
-export const menuBtnVisible = () => G.state !== 'title' && G.state !== 'main' && G.state !== 'options' && G.state !== 'pause';
+export const menuBtnVisible = () => G.state !== 'title' && G.state !== 'main' && G.state !== 'options' && G.state !== 'pause' && G.state !== 'loading';
 
 
 function openOptions() { G.optFrom = G.state; G.optSel = 0; setState('options'); SFX.click(); }
