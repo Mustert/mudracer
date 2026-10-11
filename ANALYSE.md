@@ -1,0 +1,106 @@
+# Mudracer – Analyse (Schwachstellen und Verbesserungspotenzial)
+
+Analysiert am 2026-10-09 auf Stand `c5aed10` bis `42eb5ec`, am 2026-10-11 gegen `2d022f4` (Branch `map_pack`, 12 Strecken) nachgeprüft.
+Ausführliche Fassung mit Begründungen: https://claude.ai/code/artifact/5ecd1e70-685b-404d-b2e6-ed798433c1fb
+
+## So wird diese Datei benutzt
+
+- Jeder Befund hat eine feste ID (T = Technik, M = Mechanik, D = Design-Theorie, G = Grafik, B = Bedienung/Audio). In Commits und Gesprächen die ID nennen.
+- Fundstellen sind als Datei und Funktion angegeben, nicht als Zeilennummer, weil die sich ständig verschieben. Vor dem Ändern die Stelle per Grep suchen.
+- Wer einen Befund erledigt, setzt den Status auf `erledigt (<commit>)` und lässt die Zeile stehen. Neue Befunde unten in der passenden Tabelle anhängen.
+- Status: `offen` = am 2026-10-11 im Code noch so gesehen, `offen?` = seit 2026-10-09 nicht nachgeprüft, `teilweise`, `erledigt`.
+- Schwere: K = kritisch, H = hoch, M = mittel, N = niedrig.
+
+## Gesamturteil
+
+Liebevoll gebautes, komplett prozedurales Pixel-Rennspiel ohne ein einziges Asset (Strecken, Autos, Musik, Geräusche entstehen zur Laufzeit). Schmutz als Kernmechanik ist eigenständig und kindgerecht lesbar. Schwächen: kein Sicherheitsnetz (kein Linter, keine Tests, die Hauptschleife verschluckt Fehler), lange synchrone Ladezeit, KI ohne Biss, unsaubere Pixel beim Drehen und Skalieren.
+
+Annahme der Analyse: Kinder sind die Hauptzielgruppe, SCHWER ist ein Bonus für Ältere. Vom Nutzer noch nicht bestätigt.
+
+## Technik (T)
+
+| ID | S | Status | Befund | Fundstelle | Empfehlung |
+|---|---|---|---|---|---|
+| T1 | K | erledigt (3b58385) | Lackieren überschrieb `def.acc` (Beschleunigung) mit dem Akzent-Farbobjekt → `NaN`-Position, Rennen hing | `cars.js` `setPaint` | jetzt Feld `accent`; ein Test, der jedes Auto mit jeder Farbe kurz fährt, fehlt noch |
+| T2 | H | erledigt (3b58385) | Quad/Rally hatten den Schlüssel `acc` doppelt | `cars.js` `CAR_DEFS` | ESLint `no-dupe-keys` hätte es gemeldet |
+| T3 | H | offen | Alle Strecken werden synchron beim Import gebaut; bei 7 Strecken ~4 s blockierter Main-Thread (Dev-Server), mit 12 Strecken eher mehr | `tracks.js` `TRACKS = TRACK_DEFS.map(buildTrack)` | erst bei Bedarf bauen und cachen, Menüvorschauen klein vorrendern, evtl. Worker + OffscreenCanvas |
+| T4 | M | offen? | Sprite-Sätze (48 Drehungen × 6 Schmutzstufen) entstehen erst beim Rennstart, ~120 ms je Auto; Zement-Strecke baut je Auto einen zweiten Satz | `cars.js` `carSet`/`buildCar`, `race.js` `makeCar` | im Menü/Countdown per `requestIdleCallback` vorbauen |
+| T5 | M | offen | Variabler Zeitschritt (dt bis 0,05) mit Euler: unter 20 fps läuft das Spiel langsamer, Zeitfahr-Rekorde hängen leicht von der Bildrate ab | `main.js` `loop`, `physics.js` `physics` | fester Physikschritt (z. B. 120 Hz) mit Akkumulator, interpoliert zeichnen |
+| T6 | M | offen | Hauptschleife fängt jede Ausnahme und loggt nur; Fehler bleiben unsichtbar | `main.js` `loop` (`try/catch`) | im Dev-Modus Fehler einblenden; `NaN`-Wächter am Ende von `physics()` und vor Audio-Parametern |
+| T7 | M | offen | Ein globales `G` mit ~60+ Feldern, Kreis-Importe (physics → menus → race → physics) | `g.js`, `state.js` | `G` in Bereiche teilen (`race`, `ui`, `save`), Felder per JSDoc beschreiben |
+| T8 | M | offen | Schrift von Google Fonts; offline oder vor dem Laden zeichnet der Canvas mit Monospace | `index.html`, `core.js` (`document.fonts.load` ohne Warten) | woff2 einbetten, vor dem ersten Frame auf `document.fonts.ready` warten |
+| T9 | M | offen | Keine Tests, kein Linter, kein Typcheck | `package.json` | Vitest für reine Funktionen (`convertRecord`, `cupTrackIdx`, `fmtTime`, `placeOf`), ESLint mit `no-dupe-keys`, `no-shadow` |
+| T10 | N | offen | Lokale Konstanten namens `G` überschatten den Spielzustand; in `drawTrophy` wird `G.time` dadurch `NaN`, das Funkeln am Pokal ist dauerhaft an | `screens.js` `drawTrophy`; auch `tracks.js` `buildTrack`, `run.js` `buildRun`, `junglemap.js` | umbenennen |
+| T11 | N | offen | Jedes Auto prüft jeden Frame alle Hindernisse (Baustelle: 573) | `update.js` `updateRace` (Schleife über `G.T.trees`) | Spatial Hash |
+| T12 | N | offen? | Ereignis-Koordinaten fest verdrahtet (Löcher, Kois, Kühe, Lotus, Pier); geänderte Streckenlinie verschiebt sie stillschweigend | `events.js` `COWS`, `HOLES`, `KOIS` | relativ zur Streckenlinie oder beim Bau prüfen und warnen |
+| T13 | N | offen | Speicherstände in vielen Einzelschlüsseln, ohne Gesamtversion, ohne Export | `cars.js`, `cups.js`, `timetrial.js`, `diff.js` | ein Save-Modul mit Version, Export/Import als JSON |
+| T14 | N | offen? | Matschfahrt baut 480 × 6.400 px auf einmal, zeitweise ~50 MB Puffer (Mobilgeräte) | `run.js` `buildRun` | nur sichtbare Kacheln rendern |
+
+## Spielmechanik (M)
+
+| ID | S | Status | Befund | Fundstelle | Empfehlung |
+|---|---|---|---|---|---|
+| M1 | H | teilweise | Belohnungen an leere Cups gebunden. Seit `map_pack` haben Cup 3 und 4 Strecken (Quad, Rally, Supercup erreichbar). Cup 5 ist weiter leer: Batmobil und Superdupercup außerhalb des Kindermodus unerreichbar | `cups.js` `CUPS`, `cars.js` (`cup: 5`) | Cup 5 bauen oder Batmobil vorerst an ein erreichbares Ziel hängen |
+| M2 | H | offen | KI-Gas = Höchstgeschwindigkeit: 0,52–0,66 (LEICHT) bis 0,80–0,91 (SCHWER), mit Gummiband max. 1,0. Gegner nie schneller als ein fehlerfreier Spieler mit gleichem Auto | `diff.js` `DIFFS`, `update.js` (Gummiband) | auf SCHWER Ideallinie mit Kurvenbremsen statt Gasdrossel; ein Rivale pro Rennen leicht über 1,0 |
+| M3 | M | offen? | KI folgt Mittellinie mit Sinus-Versatz, weicht Kühen und (je Stufe) Matsch aus; überholt, blockt, rammt nicht gezielt; Hupe ohne Wirkung | `physics.js` `aiTarget` | Fahrstile pro Auto (Polizei sauber, Monster rammt, Traktor stur) |
+| M4 | M | offen? | Spieler startet immer in Reihe 1; mit gedrosselten Gegnern Führung ab Kurve 1 | `race.js` `startRace` | im GP nach Punktestand umgekehrt aufstellen |
+| M5 | N | offen? | Beim Zieldurchlauf des Spielers wird sofort gewertet, knappe Zieleinläufe gibt es nicht | `race.js` `finishRace` | Gegner 2–3 s weiterfahren lassen |
+| M6 | M | offen | Alle Autos gleicher Radius (9 px zu Hindernissen, 18 px untereinander) und gleiche Masse | `update.js` `updateRace` | Masse/Radius pro Auto aus der Sprite-Größe, evtl. zwei Kreise pro Auto (siehe G8) |
+| M7 | N | offen? | Gras bremst wie Matsch, macht aber nicht schmutzig; für Geländeautos (Traktor 64 % Spitze) lohnen Kurvenschnitte übers Gras | `physics.js` `surfOf` (case 0) | Gras etwas langsamer oder leicht schmutzig |
+| M8 | M | offen | Zement: 1/3,8 der Matschgeschwindigkeit (gewollt hart, 42eb5ec), Flitzer ~10 % Spitze | `physics.js` `surfOf` (case 6) | Strafe lassen, aber sichtbare saubere Umfahrung anbieten, damit es eine Entscheidung ist |
+| M9 | M | offen? | Kois springen ohne Vorwarnung (Kühe, Zug, Kipplaster sind angekündigt) | `events.js` `updateKois` | 0,5 s vorher Kreise im Wasser (passt zu Streckengrundsatz 9) |
+| M10 | M | offen? | Matschfahrt: eine feste Strecke (Seed 4242), keine Zeit, kein Rekord, Zähler ohne Wertung | `run.js` | Sterne-Ziele, Bestzeit, täglich wechselnder Seed |
+| M11 | N | offen? | Werkstatt rein kosmetisch, alle Farben sofort offen, kein Belohnungskreislauf | `shop.js`, `cars.js` `PAINTS` | Farben/Sticker für Trophäen und Rekorde freischalten |
+| M12 | N | offen | Fest 3 Runden für alle Modi | `core.js` `LAPS` | Runden pro Schwierigkeit (Kinder 2, SCHWER 4) |
+| M13 | N | offen | Feld wird mit `sort(() => Math.random() - .5)` verzerrt gemischt | `race.js` `startGP` | Fisher-Yates |
+
+## Design-Theorie (D)
+
+- **D1 Flow/Schwierigkeitskurve:** Kindermodus passt. Nach oben endet die Kurve früh, weil die KI nie schneller als ihr Auto fährt (M2); danach bleibt nur Zeitfahren.
+- **D2 Interessante Entscheidungen:** Die Kernidee „schnell durch Matsch oder sauber außen herum“ kommt auf den alten Strecken kaum vor: Matsch-/Wasserfelder reichen meist 32–36 px vom Mittelstrich nach außen, die Fahrbahn nur 30 px (`HALF`), Ausweichen ist unmöglich. Für neue Strecken: je 2–3 Stellen mit kurzer Matschlinie gegen längere saubere Linie, Waschstelle mit kleinem Umweg. Ergänzt die Streckengrundsätze 3 und 6 in `CLAUDE.md`.
+- **D3 Lernen ohne Text:** Sterne TEMPO/MATSCH und sichtbarer Schmutz erklären viel. Dass Schmutz bremst und Wasser hilft, muss das Kind selbst finden → einmaliger Bildhinweis beim ersten starken Verschmutzen.
+- **D4 Belohnungen:** Kern (Rennen → Platz → Pokal) und Sammelebene (Trophäen, Bestzeiten je Auto und Strecke) sind gut. Freischaltpfad siehe M1, Werkstatt siehe M11.
+- **D5 Fairness:** Gummiband mild und unsichtbar (richtig für Kinder). Ereignisse im Zeitfahren hängen nur an der Rennzeit, Rekorde bleiben vergleichbar (gut). Ausnahme ohne Ankündigung: Kois (M9).
+- **D6 Lesbarkeit:** Kamera schaut 0,35 s voraus, bei Spitze ~1,3 s (senkrecht) bis 2 s (waagrecht) Sicht. Ohne Minikarte im Rennen sieht man auf verwinkelten Strecken die nächste Kurve spät → Kurvenpfeile am Rand oder Richtungsanzeige am Bildrand.
+
+## Grafik (G)
+
+Stark: einheitliche Lichtrichtung (Schatten nach rechts unten), durchgehend dunkelbraune Umrisslinie (`OUT`), eigene Paletten je Thema, viele kleine Animationen. Die unsauberen Stellen entstehen fast alle beim Drehen, Skalieren und Verkleinern.
+
+| ID | S | Status | Befund | Fundstelle | Empfehlung |
+|---|---|---|---|---|---|
+| G1 | H | offen | Auto-Sprites werden per Nearest-Neighbour in 48 Schritten gedreht; schräg werden 1-px-Linien zu Treppen mit doppelten/fehlenden Pixeln, Räder verformen sich (im Spiel vergrößert geprüft) | `cars.js` `rotateImg` | RotSprite (3× Scale2x, drehen, verkleinern) oder 8-fach vergrößert drehen und per Mehrheitsfarbe verkleinern; Umriss danach wie bisher |
+| G2 | H | offen | Unter Faktor 3 nicht ganzzahlig skaliert (1280×720 → 2,67; Handy quer → ~1,44); Pixel und Schrift ungleich breit, Flimmern beim Scrollen | `core.js` `fit` | intern ganzzahlig vergrößert rendern und den Puffer glatt skalieren, oder ganzzahlig mit Rand |
+| G3 | M | offen | Volle Schmutzstufe macht Autos zu braunen Klecksen, eigenes Auto im Pulk kaum zu finden | `cars.js` `buildCar` (`amt = lv / 5 * 1.15`) | Schmutz auf ~70 % Fläche begrenzen, Dach/Umriss sauber lassen; Spielermarker dauerhaft (9817e89 zeigt jetzt ein 1P-Schild, prüfen ob das reicht) |
+| G4 | M | offen? | Menühintergründe und Modus-Karten verkleinern die 800×450-Strecke per Nearest-Neighbour (Faktor 1,67 bis 4,3) → Pixelrauschen | `screens.js` `drawMenuBg`, `drawMain` | Vorschauen einmal geglättet vorrendern und cachen |
+| G5 | M | offen? | Gemischte Pixelraster: Kois mit `rotate`/`scale`, Abseitspfeil und Schattenellipsen als geglättete Pfade, fliegende Autos krumm skaliert | `events.js` `drawKoi`, `draw.js` `drawCritters`/`drawCar`/`drawRace` | Kois vorgedreht cachen, Pfeil als Sprite, Sprunggrößen in festen Stufen |
+| G6 | M | offen | Reifenspuren landen jedes Frame mit ~9 % Deckung auf einer dauerhaften Ebene und verblassen nie; Ideallinie wird ein dunkles Band | `update.js` `updateRace` (Spur auf `tctx`) | Spurebene langsam ausblenden oder Deckung begrenzen |
+| G7 | M | offen | Wald: Nachtschleier 64 %, Vignette, ab Runde 2 Regen; dunkler Matsch auf brauner Straße kaum lesbar | `events.js` `drawNight` | Matsch mit hellem Rand/Glanz, Schleier ~50 % |
+| G8 | M | offen | Hitboxen passen nicht zum Bild (alle 9 px): Feuerwehr (39 px lang) ragt in Bäume, Quad prallt ohne Berührung ab | `update.js` `updateRace` | zwei Kreise pro Auto aus der Sprite-Länge |
+| G9 | N | offen? | Fliegende Autos werden nach y sortiert und liegen unter Baumkronen | `draw.js` `drawRace` | Autos mit `z > 0` nach der Kronen-Ebene zeichnen |
+| G10 | N | offen? | Schmale Menükarten füllen ZEITFAHREN und WERKSTATT randlos (80 von 82 px) | `screens.js` `CARD` | 2 px Innenabstand oder Kurzform |
+| G11 | N | offen | Pokal-Funkeln blinkt nicht (siehe T10) | `screens.js` `drawTrophy` | umbenennen |
+| G12 | N | offen? | HUD ohne Rundenzeit und Abstand zum Vordermann | `draw.js` `drawRace` | für Ältere ergänzen, Kindermodus schlank lassen |
+
+## Audio, Bedienung, Zugänglichkeit (B)
+
+| ID | S | Status | Befund | Fundstelle | Empfehlung |
+|---|---|---|---|---|---|
+| B1 | H | offen? | Touch im Standardmodus: Gas und Lenken liegen alle im Steuerkreuz unten links, Gas halten und lenken braucht zwei Finger einer Hand | `index.html` (`#touch`), `input.js` | eigener Gasknopf rechts oder Auto-Gas auf Touch |
+| B2 | M | offen? | Alternativer Touch-Modus kennt nur 4 Richtungen | `index.html`, `update.js` | virtueller Stick mit freiem Winkel |
+| B3 | N | offen? | Touch-Knöpfe nur bei `pointer: coarse`; Touch-Laptops bekommen sie nicht | `input.js` `coarse` | auch beim ersten Touch-Ereignis einblenden |
+| B4 | N | offen | Kein Gamepad, keine freie Tastenbelegung; `Backspace` als Zurück | `input.js` `KEYS` | Gamepad-API, Belegung im Optionsmenü |
+| B5 | M | offen? | Nur das Spielerauto hat einen Motor, ein Feld von 8 Autos klingt leer | `audio.js` `engineSound` | 2–3 leise Gegnermotoren in der Nähe |
+| B6 | N | offen? | Nur Musik an/aus und Stummtaste, keine getrennten Regler | `menus.js` Optionen, `audio.js` | Regler Musik/Effekte |
+| B7 | N | offen? | Blinken (Sirenen ~4 Hz, Warnschilder, Texte) ohne Option zum Reduzieren | `draw.js` | Option „weniger Blinken“ |
+| B8 | N | offen? | Matsch, Erde, Straße alles Brauntöne; bei Rot-Grün-Schwäche und im Dunkeln schwer zu trennen | Themen in `tracks.js` | Textur oder Glanzrand am Matsch |
+| B9 | N | offen | Nur Deutsch, Texte über die Module verteilt; kein Manifest/Offline | alle Bildschirme, `index.html` | Texttabelle; PWA mit lokal eingebetteter Schrift (T8) |
+
+## Priorität
+
+1. **Sofort (wenig Aufwand, viel Nutzen):** T9 (ESLint + erste Tests), M1 (Batmobil erreichbar), B1 (Gasknopf), G2 (ganzzahlig skalieren), T6 (NaN-Wächter, Fehler sichtbar), M9 (Koi-Ankündigung).
+2. **Planen (viel Aufwand, viel Nutzen):** T3/T4 (Strecken und Sprites bei Bedarf bauen), G1 (RotSprite), D2 (Ausweichlinien bei Matsch), M2/M3 (KI), T5 (fester Physikschritt), M10 (Ziele für die Matschfahrt).
+3. **Nebenbei:** G4, G6, T8, M13, T10.
+4. **Später:** B4, B9 (PWA), T14, T7.
+
+`VERBESSERUNGEN.md` beschreibt noch 5 Strecken und sollte auf den aktuellen Stand gebracht werden.

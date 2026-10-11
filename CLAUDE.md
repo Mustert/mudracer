@@ -11,6 +11,7 @@ Nur wenn der Nutzer im Prompt ausdrücklich sagt, dass es ohne Commit/Push erfol
 - Gemeinsamer veränderlicher Spielzustand liegt in `G` (`src/g.js`), alles andere sind normale Exporte.
 - `npm run dev` startet den Dev-Server (Port 5177), `npm run build` erzeugt **eine** Datei `dist/index.html` (vite-plugin-singlefile).
 - `dist/` und `node_modules/` sind nicht im Repo. Nach dem Klonen `npm install`.
+- `ANALYSE.md`: Schwachstellen und Verbesserungen mit IDs (T, M, D, G, B), Schwere und Status. Vor Arbeiten an einem betroffenen Bereich hineinschauen; wer einen Befund erledigt, setzt dort den Status auf `erledigt (<commit>)`.
 
 ## Preview
 
