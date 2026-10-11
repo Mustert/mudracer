@@ -11,7 +11,31 @@ Nur wenn der Nutzer im Prompt ausdrücklich sagt, dass es ohne Commit/Push erfol
 - Gemeinsamer veränderlicher Spielzustand liegt in `G` (`src/g.js`), alles andere sind normale Exporte.
 - `npm run dev` startet den Dev-Server (Port 5177), `npm run build` erzeugt **eine** Datei `dist/index.html` (vite-plugin-singlefile).
 - `dist/` und `node_modules/` sind nicht im Repo. Nach dem Klonen `npm install`.
-- `ANALYSE.md`: Schwachstellen und Verbesserungen mit IDs (T, M, D, G, B), Schwere und Status. Vor Arbeiten an einem betroffenen Bereich hineinschauen; wer einen Befund erledigt, setzt dort den Status auf `erledigt (<commit>)`.
+
+## Doku und Analyse aktuell halten (Pflicht bei jeder Änderung)
+
+Jede Änderung am Spiel wird vor dem Commit mit `ANALYSE.md` und der Obsidian-Doku abgeglichen. Das ist Teil der Änderung, nicht optional, und gehört in denselben Commit.
+
+**`ANALYSE.md`** (Repo-Wurzel) ist die eine Liste aller Schwachstellen, offenen Punkte und Ideen, mit IDs (T, M, D, G, B, I), Schwere und Status. Eine eigene `VERBESSERUNGEN.md` gibt es nicht mehr, sie steckt dort im Abschnitt I.
+1. Vor der Arbeit: in `ANALYSE.md` nachsehen, welche Punkte den Bereich betreffen, und sie beim Umsetzen berücksichtigen.
+2. Vor dem Commit:
+   - erledigte Punkte auf `erledigt (<commit oder Kurzbeschreibung>)` setzen, teilweise erledigte auf `teilweise` mit kurzer Bemerkung;
+   - neu entdeckte Schwächen oder neue Ideen mit der nächsten freien ID anhängen;
+   - Befunde, die durch die Änderung falsch geworden sind (Zahlen, Fundstellen, Stand), korrigieren;
+   - die Zeile „Zuletzt abgeglichen“ oben auf Datum und Commit nachziehen.
+3. Die Grundregel „Spielstände bleiben gültig“ in `ANALYSE.md` gilt für jede Änderung.
+
+**Obsidian-Doku** unter `Obsidian/Mudracer/` (Obsidian-Vault des Nutzers, zurzeit nicht im Git):
+- `Strecken.md`: Plan aller Strecken und Cups (Cup 1 bis 5, Strecken 1 bis 15) mit Thema, Ereignis und Ideen; Grundlage für neue Strecken, zusammen mit den Streckendesign-Grundsätzen unten.
+- `Autos.md`: alle Autos mit Freischaltung, Sternen, Feinwerten (`speed`, `mud`, `acc`, `turn`, `engine`), Hupe und Änderungswünschen; dazu die Füllautos.
+- `Spielmodi.md`: Menüfluss und Bildschirme (Hauptmenü, Autowahl, Cup-Wahl, Einzelstrecke, Zeitfahren, Matschfahrt) mit Mockups.
+- `VERBESSERUNGEN.md`, `VERBESSERUNGEN 1.md`, `Unbenannt.md`: alte Kopien der Ideenliste, ersetzt durch `ANALYSE.md`.
+- Bilder liegen in `Bilder/` und direkt im Vault; nicht anfassen.
+
+Regeln für die Obsidian-Doku:
+- Ändert sich etwas, das dort beschrieben ist (Werte, Freischaltungen, Strecken, Cups, Menüs), wird die passende Datei im selben Arbeitsschritt angepasst.
+- Fakten (Ist-Stand, Werte, Status) werden aktualisiert. Wünsche und Pläne des Nutzers (z. B. Spalte „Änderungswunsch“, geplante Strecken) werden nicht umgeschrieben oder gelöscht, sondern als umgesetzt markiert (`✅ umgesetzt (<commit>)`).
+- Obsidian-Syntax beibehalten (`![[Bild.png]]`, `[[Strecken]]`).
 
 ## Preview
 

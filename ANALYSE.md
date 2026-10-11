@@ -1,11 +1,14 @@
-# Mudracer – Analyse (Schwachstellen und Verbesserungspotenzial)
+# Mudracer – Analyse, Ideen und offene Punkte
 
-Analysiert am 2026-10-09 auf Stand `c5aed10` bis `42eb5ec`, am 2026-10-11 gegen `2d022f4` (Branch `map_pack`, 12 Strecken) nachgeprüft.
-Ausführliche Fassung mit Begründungen: https://claude.ai/code/artifact/5ecd1e70-685b-404d-b2e6-ed798433c1fb
+Die eine Liste für alles, was am Spiel schwach, offen oder geplant ist. Enthält auch die früheren Verbesserungsideen (ehemals `VERBESSERUNGEN.md`, Abschnitt I).
+
+- Analyse am 2026-10-09 auf Stand `c5aed10` bis `42eb5ec`, am 2026-10-11 gegen `2d022f4` (Branch `map_pack`, 12 Strecken) nachgeprüft.
+- Zuletzt abgeglichen: 2026-10-11, Commit `6dafaa6`. (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
+- Ausführliche Fassung der Analyse mit Begründungen (Stand 2026-10-09): https://claude.ai/code/artifact/5ecd1e70-685b-404d-b2e6-ed798433c1fb
 
 ## So wird diese Datei benutzt
 
-- Jeder Befund hat eine feste ID (T = Technik, M = Mechanik, D = Design-Theorie, G = Grafik, B = Bedienung/Audio). In Commits und Gesprächen die ID nennen.
+- Jeder Punkt hat eine feste ID (T = Technik, M = Mechanik, D = Design-Theorie, G = Grafik, B = Bedienung/Audio, I = Ideen und Wünsche). In Commits und Gesprächen die ID nennen.
 - Fundstellen sind als Datei und Funktion angegeben, nicht als Zeilennummer, weil die sich ständig verschieben. Vor dem Ändern die Stelle per Grep suchen.
 - Wer einen Befund erledigt, setzt den Status auf `erledigt (<commit>)` und lässt die Zeile stehen. Neue Befunde unten in der passenden Tabelle anhängen.
 - Status: `offen` = am 2026-10-11 im Code noch so gesehen, `offen?` = seit 2026-10-09 nicht nachgeprüft, `teilweise`, `erledigt`.
@@ -96,11 +99,47 @@ Stark: einheitliche Lichtrichtung (Schatten nach rechts unten), durchgehend dunk
 | B8 | N | offen? | Matsch, Erde, Straße alles Brauntöne; bei Rot-Grün-Schwäche und im Dunkeln schwer zu trennen | Themen in `tracks.js` | Textur oder Glanzrand am Matsch |
 | B9 | N | offen | Nur Deutsch, Texte über die Module verteilt; kein Manifest/Offline | alle Bildschirme, `index.html` | Texttabelle; PWA mit lokal eingebetteter Schrift (T8) |
 
+## Ideen und Wünsche (I)
+
+Übernommen aus `VERBESSERUNGEN.md` (Stand 2026-10-07) und am 2026-10-11 gegen den Code abgeglichen.
+
+| ID | Status | Idee | Stand / Bemerkung |
+|---|---|---|---|
+| I1 | erledigt | Autos spürbar unterscheiden | Feinwerte `speed`, `mud`, `acc`, `turn`, `soil` in `cars.js`, Sterne TEMPO/MATSCH daraus abgeleitet; alle Autos brauchen etwa gleich lang (±3 %), fühlen sich aber verschieden an |
+| I2 | erledigt | Bestzeiten, Geist, Zeitfahren | Rekord pro Strecke und Auto (`mudracer-tt-<STRECKE>-<auto-id>`), Geist schaltbar (`mudracer-ghost`) |
+| I3 | teilweise | Einstellungen und Pause | Zahnrad (Musik, Steuerung), Pause (`Esc`, `P`, Menüknopf) da; offen: getrennte Regler (B6), freie Tastenbelegung (B4) |
+| I4 | offen | Items / Power-ups: Matschbombe, Schlammschild, Nitro | bisher nur Boost-Felder auf Regenbogen; würde das Rennen am stärksten verändern |
+| I5 | offen | KI mit Charakter | siehe M2, M3 |
+| I6 | offen | Drift / Handbremse mit Mini-Boost, besonders für Quad und Flitzer | gäbe Älteren eine Technik zum Meistern (D1) |
+| I7 | teilweise | Mehr Freischaltziele | Cups schalten Autos frei, Trophäen nach Platz und Stufe; offen: Ziele wie Matschfahrt unter X s, alle Strecken sauber beenden, 3× Waschanlage (passt zu M10, M11) |
+| I8 | anders umgesetzt | Schwierigkeitsgrad / Advanced-Modus | umgesetzt als Kindermodus-Schalter, LEICHT/MITTEL/SCHWER und Schalter Streckeneffekte (`diff.js`). Aus dem Konzept offen: Runden pro Stufe (M12), Matsch/Wasser-Menge pro Strecke. Umsetzungshinweise siehe unten |
+| I9 | teilweise | Werkstatt | Variante B (kosmetisch): Lack in 11 Farben umgesetzt; offen Aufkleber, Felgen, Spoiler, Hupe, Freischalten der Teile (M11). Variante A (Upgrades für Motor, Reifen, Getriebe, Stoßstange als Multiplikatoren auf `CAR_DEFS`) offen; Risiko Balance, im GP und Zeitfahren begrenzen oder neutralisieren |
+| I10 | weitgehend | Neue Strecken, Wetter, Tageszeit | 12 Strecken, Regen und Dämmerung im Wald; Plan für 15 Strecken und Cup 5 in `Obsidian/Mudracer/Strecken.md` |
+| I11 | erledigt | Streckenereignisse | jede Strecke hat mindestens eins, einzeln über `G.events` (`state.js`), im Menü ein Schalter pro Rennen |
+| I12 | offen | Lokaler Zwei-Spieler-Modus (Splitscreen oder geteilte Tastatur) | für ein Familienspiel wohl das stärkste Einzelfeature |
+| I13 | offen | Gamepad | siehe B4 |
+| I14 | offen | Automatisierte Tests (Rundenzählung, Checkpoints, `score()`, Zug- und Kollisionsfälle) | siehe T9 |
+| I15 | offen | PWA / Offline | siehe T8, B9 |
+| I16 | offen | Barrierefreiheit (weniger Flackern, Farbschwäche) | siehe B7, B8 |
+| I17 | erledigt | Logo im Hauptmenü wie auf dem Titelbild | `title.js` `makeArt`, im Menü 32 px |
+
+### Umsetzungshinweise aus dem Advanced-Konzept (für I8, M12)
+
+- Matsch, Wasser und Boost-Felder sind ins Streckenbild eingebrannt (`buildTrack`). Andere Mengen brauchen eine eigene Streckenvariante, beim ersten Bedarf gebaut und zwischengespeichert. Ereignisse wie der Zug lassen sich dagegen zur Laufzeit abschalten.
+- Rundenzahl: `LAPS` wird eine Variable pro Rennen.
+- Rekorde unter abweichenden Regeln bekommen ein Suffix am Schlüssel; Standardregeln behalten den alten Schlüssel (siehe Grundregel unten).
+- Ein Prototyp (Advanced-Checkbox, Optionsbildschirm pro Strecke, `mudracer-adv`, `mudracer-opt-<STRECKE>`) wurde getestet und bewusst nicht übernommen.
+
+## Grundregel: Spielstände bleiben gültig
+
+Gespeicherte Daten (`mudracer-car`, `mudracer-unlock`, `mudracer-cups`, `mudracer-tt-*`, `mudracer-gp-*`, `mudracer-paint-*` …) dürfen nie unbrauchbar werden und werden nie überschrieben, um sie umzudeuten.
+- Änderungen an Fahrwerten bekommen eine neue Balance-Version (`BAL` in `timetrial.js`); alte Rekorde werden beim Laden umgerechnet (`BAL_OLD`).
+- Geänderte Strecken bekommen eine Revision (`rev` in `TRACK_DEFS`), ihre Rekorde beginnen dann neu, die alten bleiben im Speicher.
+
 ## Priorität
 
 1. **Sofort (wenig Aufwand, viel Nutzen):** T9 (ESLint + erste Tests), M1 (Batmobil erreichbar), B1 (Gasknopf), G2 (ganzzahlig skalieren), T6 (NaN-Wächter, Fehler sichtbar), M9 (Koi-Ankündigung).
 2. **Planen (viel Aufwand, viel Nutzen):** T3/T4 (Strecken und Sprites bei Bedarf bauen), G1 (RotSprite), D2 (Ausweichlinien bei Matsch), M2/M3 (KI), T5 (fester Physikschritt), M10 (Ziele für die Matschfahrt).
 3. **Nebenbei:** G4, G6, T8, M13, T10.
 4. **Später:** B4, B9 (PWA), T14, T7.
-
-`VERBESSERUNGEN.md` beschreibt noch 5 Strecken und sollte auf den aktuellen Stand gebracht werden.
+5. **Große Features (aus den Ideen):** I4 Items, I12 Zwei-Spieler-Modus, I6 Drift, I9 Werkstatt-Ausbau. Reihenfolge laut alter Ideenliste: erst Items, dann Zwei-Spieler, dann Werkstatt.
