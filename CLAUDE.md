@@ -17,6 +17,21 @@ Nur wenn der Nutzer im Prompt ausdrücklich sagt, dass es ohne Commit/Push erfol
 - Die Preview immer stumm öffnen: direkt nach dem Start per JavaScript `localStorage.setItem('mudracer-music', '0')` setzen und neu laden. Die Musik des Spiels darf nie hörbar sein.
 - Die Preview nach jedem Test wieder schließen: Server mit `preview_stop` beenden und den Tab mit `tabs_close` schließen.
 
+## Streckendesign-Grundsätze
+
+Gelten für jede neue Strecke und jede Überarbeitung. Vor dem Abschluss einer Strecke alle Punkte prüfen.
+
+1. **Steigerung:** Je höher die Nummer der Strecke, desto anspruchsvoller darf sie sein. Eine Strecke soll nicht schwerer sein als spätere.
+2. **Nichts Unlogisches oder Halbfertiges:** Ein Fluss endet nicht im Nichts (er kommt vom Kartenrand oder aus einer Quelle und fließt in einen See oder zum Rand), eine Schlucht hört nicht plötzlich auf, Brücken führen über etwas, Tunnel durch etwas. Keine harten Rechtecke, wo Natur sein soll.
+3. **Schlamm und Pfützen fügen sich ein:** Matsch, Pfützen und ihre Entsprechungen (Sand, Sumpf, Asche, Schnee …) gehen natürlich in die Umgebung über und liegen dort, wo sie Sinn ergeben (Senken, Ufer, Fahrspuren). Nicht einfach als Fleck auf die Strecke geklatscht.
+4. **Elegante Streckenführung:** Man kann nicht durch die Mitte abkürzen, und man muss nie raten, welchen Weg man nehmen muss, damit die Runde zählt. Begrenzungen ergeben sich aus dem Thema (Felsen, Wasser, Hecken, Lava …), nicht aus unsichtbaren Wänden. Die Form der Strecke passt zum Thema der Karte.
+5. **Startaufstellung:** Bis zu 10 Autos (5 Reihen à 2, siehe `startRace` in `src/race.js`) stehen komplett auf einer Geraden, nie in einer Kurve.
+6. **Mehr als ein Kreis ab Strecke 5:** Ab Nummer 5 bietet jede Strecke mehr als einen einfachen Rundkurs (Ausbuchtungen, Wege zur Wahl, Ebenen, Kreuzungen, Abkürzungen mit Risiko …).
+7. **Streckenereignis:** Jede Strecke hat mindestens ein thematisch passendes Ereignis, das über `G.events` ausschaltbar ist und eine witzige Schwierigkeit, gern auch Chaos, hineinbringt.
+8. **Eigenes Lied:** Jede Strecke hat ihr eigenes Lied, passend zum Thema, zu Mudracer und zu einem Autorennen.
+9. **Nicht zu viel auf einmal:** Mehrere Dinge auf einer Strecke sind gut, aber nicht gleichzeitig und nicht zu dicht hintereinander. Gefahren kündigen sich an (Schatten, Blinken, Ton, Text), sodass man reagieren kann.
+10. **Wege sind sichtbar:** Was durchfahrbar ist, sieht deutlich anders aus als das, was ein Auto aufhält (z. B. Deko-Zäune flach und blass, feste Zäune und Wände kräftig mit Schatten). Hindernisse auf der Fahrbahn unterscheiden sich klar von gleichartiger Deko daneben.
+
 ## Feature-Abschluss und Publish
 
 Nach jeder Umsetzung (neues Feature, größere Änderung) fragt Claude den Nutzer:
