@@ -29,7 +29,7 @@ Jede Änderung am Spiel wird vor dem Commit mit `ANALYSE.md` und der Obsidian-Do
 - `Strecken.md`: Plan aller Strecken und Cups (Cup 1 bis 5, Strecken 1 bis 15) mit Thema, Ereignis und Ideen; Grundlage für neue Strecken, zusammen mit den Streckendesign-Grundsätzen unten.
 - `Autos.md`: alle Autos mit Freischaltung, Sternen, Feinwerten (`speed`, `mud`, `acc`, `turn`, `engine`), Hupe und Änderungswünschen; dazu die Füllautos.
 - `Spielmodi.md`: Menüfluss und Bildschirme (Hauptmenü, Autowahl, Cup-Wahl, Einzelstrecke, Zeitfahren, Matschfahrt) mit Mockups.
-- `VERBESSERUNGEN.md`, `VERBESSERUNGEN 1.md`, `Unbenannt.md`: alte Kopien der Ideenliste, ersetzt durch `ANALYSE.md`.
+- Ideen und offene Punkte gehören nicht in den Vault, sondern in `ANALYSE.md`.
 - Bilder liegen in `Bilder/` und direkt im Vault; nicht anfassen.
 
 Regeln für die Obsidian-Doku:
