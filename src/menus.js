@@ -1,60 +1,36 @@
 import { G } from './g.js';
-import { AU, HONK_LEN, SFX } from './audio.js';
+import { downloadSave, getItem, pickSave, setItem } from './save.js';
+import { AU, SFX, honk } from './audio.js';
 import { CAR_DEFS, isLocked } from './cars.js';
-import { carSlotAt } from './carselect.js';
+import { carSlotAt, pickCar } from './carselect.js';
 import { CUPS, cupLocked, cupReady } from './cups.js';
 import { DIFF_BOX, cupRowAt } from './cupselect.js';
 import { customClick, customKey, openCustom } from './custom.js';
 import { setDiff, setFx, toggleKids } from './diff.js';
-import { resetAllEvents } from './events.js';
 import { VW, clamp } from './core.js';
-import { is } from './input.js';
+import { is, setInputHandlers } from './input.js';
 import { beginCeremony, startGP, startRace } from './race.js';
 import { openRaceOpts, raceOptsClick, raceOptsKey } from './raceopts.js';
 import { startRun } from './run.js';
 import { KIDS_BTN, mainCardAt } from './screens.js';
 import { openShop, shopClick, shopKey } from './shop.js';
-import { MODES } from './state.js';
+import { MODES, setState } from './state.js';
 import { TRACKS } from './tracks.js';
 
-export const POINTS = [10, 8, 6, 5, 4, 3, 2, 1];
-
-
-try { G.selCar = clamp(parseInt(localStorage.getItem('mudracer-car') || '0', 10) || 0, 0, CAR_DEFS.length - 1); } catch (e) {}
+try { G.selCar = clamp(parseInt(getItem('mudracer-car') || '0', 10) || 0, 0, CAR_DEFS.length - 1); } catch (e) {}
 
 
 if (isLocked(CAR_DEFS[G.selCar])) G.selCar = 0;
 
 
 
-// in the menus every track looks as it was built (events change the map during a race)
-const CLEAN = ['title', 'main', 'select_cup', 'select_car', 'select_track', 'select_count', 'custom', 'shop'];
-
-
-export function setState(s) { G.state = s; G.stateTime = 0; if (CLEAN.includes(s)) resetAllEvents(); }
-
-
-// a car in the selection strip gets focus (arrow keys and taps alike): locked ones are silent and are not remembered
-export function pickCar(i) {
-  G.selCar = i; G.selAnim = G.time;
-  if (isLocked(CAR_DEFS[i])) SFX.click(); else { SFX.honk[CAR_DEFS[i].honk](); try { localStorage.setItem('mudracer-car', i); } catch (e) {} }
-}
-
-
-export function honk(c) {
-  if (c.honk > 0) return;
-  c.honk = HONK_LEN[c.def.honk];
-  SFX.honk[c.def.honk]();
-}
-
-
 const step = (v, k, n) => (v + (is(k, 'left') ? n - 1 : 1)) % n;
 
 
-const toggleMusic = () => { AU.music = !AU.music; try { localStorage.setItem('mudracer-music', AU.music ? '1' : '0'); } catch (e) {} };
+const toggleMusic = () => { AU.music = !AU.music; try { setItem('mudracer-music', AU.music ? '1' : '0'); } catch (e) {} };
 
 
-const toggleCtrl = () => { G.CTRL = G.CTRL === 'std' ? 'alt' : 'std'; try { localStorage.setItem('mudracer-ctrl', G.CTRL); } catch (e) {} };
+const toggleCtrl = () => { G.CTRL = G.CTRL === 'std' ? 'alt' : 'std'; try { setItem('mudracer-ctrl', G.CTRL); } catch (e) {} };
 
 
 export const gearVisible = () => ['main', 'select_cup', 'select_car', 'select_track', 'select_count', 'custom', 'shop'].includes(G.state);
@@ -69,12 +45,36 @@ function openOptions() { G.optFrom = G.state; G.optSel = 0; setState('options');
 function closeOptions() { setState(G.optFrom); SFX.click(); }
 
 
-function optAct(i) { if (i === 0) { toggleMusic(); SFX.click(); } else if (i === 1) { toggleCtrl(); SFX.click(); } else closeOptions(); }
+// the rows of the options menu: music, steering, save to a file, load from a file, back
+export const OPT_ROWS = 5;
+
+// a short message in the options menu (saved, loaded, error)
+const optMsg = (s, ok) => { G.optMsg = { s, ok, t: G.time }; };
+
+function saveToFile() {
+  try { downloadSave(); optMsg('SPIELSTAND GESICHERT', true); SFX.select(); } catch (e) { optMsg('SICHERN GEHT NICHT', false); }
+}
+
+// a loaded save takes effect after a fresh start of the page (every module reads its values when it loads)
+function loadFromFile() {
+  try {
+    pickSave(r => {
+      if (!r.ok) { optMsg(r.error, false); SFX.click(); return; }
+      optMsg('GELADEN - STARTE NEU', true); SFX.select();
+      setTimeout(() => location.reload(), 900);
+    });
+  } catch (e) { optMsg('LADEN GEHT NICHT', false); }
+}
+
+function optAct(i) {
+  if (i === 0) { toggleMusic(); SFX.click(); } else if (i === 1) { toggleCtrl(); SFX.click(); }
+  else if (i === 2) saveToFile(); else if (i === 3) loadFromFile(); else closeOptions();
+}
 
 
 function optionsKey(k) {
-  if (is(k, 'up')) { G.optSel = (G.optSel + 2) % 3; SFX.click(); }
-  else if (is(k, 'down')) { G.optSel = (G.optSel + 1) % 3; SFX.click(); }
+  if (is(k, 'up')) { G.optSel = (G.optSel + OPT_ROWS - 1) % OPT_ROWS; SFX.click(); }
+  else if (is(k, 'down')) { G.optSel = (G.optSel + 1) % OPT_ROWS; SFX.click(); }
   else if (is(k, 'left') || is(k, 'right')) { if (G.optSel < 2) optAct(G.optSel); }
   else if (is(k, 'ok')) optAct(G.optSel);
   else if (is(k, 'back')) closeOptions();
@@ -167,7 +167,7 @@ export function onPress(k) {
 
 // panel geometry shared by drawing and clicking
 
-export const OPT = { x: VW - 214, y: 32, w: 206, row: 18, r0: 28 };
+export const OPT = { x: VW - 214, y: 32, w: 206, row: 18, r0: 28, h: 28 + 5 * 18 + 28 };
 
 
 export const PAU = { x: VW / 2 - 100, y: 64, w: 200, h: 130, r0: 48, row: 30, rh: 22 };
@@ -175,11 +175,11 @@ export const PAU = { x: VW / 2 - 100, y: 64, w: 200, h: 130, r0: 48, row: 30, rh
 
 function optionsClick(x, y) {
   if (x > VW - 34 && y < 30) { closeOptions(); return; }
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < OPT_ROWS; i++) {
     const ry = OPT.y + OPT.r0 + i * OPT.row;
     if (x >= OPT.x + 6 && x < OPT.x + OPT.w - 6 && y >= ry && y < ry + OPT.row - 2) { G.optSel = i; optAct(i); return; }
   }
-  if (x < OPT.x || x > OPT.x + OPT.w || y > OPT.y + 120) closeOptions();
+  if (x < OPT.x || x > OPT.x + OPT.w || y > OPT.y + OPT.h) closeOptions();
 }
 
 
@@ -224,3 +224,6 @@ export function onClick(x, y) {
   else if (G.state === 'finish' && G.mode === 'tt' && x < 60 && y < 40) onPress('Escape');
   else onPress('Enter');
 }
+
+
+setInputHandlers({ press: onPress, click: onClick });

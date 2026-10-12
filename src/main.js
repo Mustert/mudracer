@@ -5,6 +5,8 @@ import { FONT, VH, VW, angDiff, ctx } from './core.js';
 import { drawRace } from './draw.js';
 import { ERR, reportError } from './errors.js';
 import { idleWork } from './idle.js';
+import { setInputHandlers } from './input.js';
+import { runPrefetch } from './run.js';
 import { gearVisible, menuBtnVisible } from './menus.js';
 import { cam } from './state.js';
 import { drawGear, drawMenuBtn, drawOptions, drawPause, drawState } from './ui.js';
@@ -65,7 +67,8 @@ function frameAt(now) {
   try {
     const a = clock.advance(frame, tick);
     drawBetween(a, drawFrame);
-    idleWork();
+    // leftover time: the Matschfahrt paints the tiles ahead of the car, everywhere else the background builds (idle.js)
+    if (G.T && G.T.run && MOVING.has(G.state)) runPrefetch(performance.now() + 3); else idleWork();
   } catch (e) { reportError(e, 'Hauptschleife'); }
   if (import.meta.env.DEV && ERR.n) drawError();
 }
@@ -92,6 +95,7 @@ audioInit();
 
 
 addEventListener('pointerup', audioInit);
+setInputHandlers({ touch: audioInit });
 
 // dev server only: a handle for the browser console and for checks (the module instances the game really uses)
 if (import.meta.env.DEV) Promise.all([import('./race.js'), import('./tracks.js'), import('./cars.js'), import('./clock.js')]).then(([race, tracks, cars, clockM]) => { window.mudracer = { G, cam, race, tracks, cars, clock: clockM, frameAt }; });

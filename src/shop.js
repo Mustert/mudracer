@@ -3,9 +3,10 @@ import { SFX } from './audio.js';
 import { CAR_DEFS, PAINTS, carSet, isLocked, savePaint } from './cars.js';
 import { SS, VW, clamp, ctx, hash } from './core.js';
 import { carSlotAt, drawRack } from './carselect.js';
-import { R1, ell, star, text, tri } from './draw.js';
+import { R1, ell, star, text, tri } from './gfx.js';
 import { is } from './input.js';
-import { pickCar, setState } from './menus.js';
+import { pickCar } from './carselect.js';
+import { setState } from './state.js';
 import { drawLock, drawMenuBg } from './screens.js';
 import { TRACKS } from './tracks.js';
 

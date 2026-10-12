@@ -1,4 +1,4 @@
-import { HALF, TAU, WH, WW, clamp, hash, hex, mk, vnoise } from './core.js';
+import { HALF, WH, WW, hash, hex, mk, vnoise } from './core.js';
 import { nearestIdx } from './bau.js';
 
 // ---------- Vulkan: the serpentine, the crater with its lava lake, the crust over the lava stream and the long way round it, the steam geyser
@@ -50,7 +50,7 @@ const fordX = (F, y) => F.x + Math.sin(y / 21) * 5 - (y - 330) * .05;
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N, stampAt }
 export function* volcanoTerrain(S) {
-  const { def, ter, dist, near, path, nrm, N } = S, A = WW * WH, alt = new Uint8Array(A), stoneM = new Uint8Array(A);
+  const { def, ter, dist, near, path, nrm } = S, A = WW * WH, alt = new Uint8Array(A), stoneM = new Uint8Array(A);
   const off = j => { const i = near[j], p = path[i]; return (j % WW + .5 - p.x) * nrm[i].x + ((j / WW | 0) + .5 - p.y) * nrm[i].y; };
   yield;
   // the crater: a lake of lava in the middle of the map
@@ -87,7 +87,7 @@ export function* volcanoTerrain(S) {
   for (let y = cy + cry - 12; y < WH; y++) for (let x = Math.floor(fordX(F, y) - F.hw - 2); x <= fordX(F, y) + F.hw + 2; x++) {
     const j = y * WW + x; if (Math.abs(x + .5 - fordX(F, y)) >= F.hw + (vnoise(x * .2, y * .2, 94) - .5) * 3) continue;
     if (dist[j] < HALF + 2) {
-      const o = off(j), L = lanes.find(L => Math.abs(o - L.off) <= F.half);
+      const o = off(j), L = lanes.find(ln => Math.abs(o - ln.off) <= F.half);
       if (L) { ter[j] = 1; stoneM[j] = 1; L.pix.push(j); continue; }
     }
     if (ter[j] !== 3) ter[j] = 15;
@@ -189,7 +189,7 @@ export function* paintVolcano(S) {
   yield;
   // ----- the lava tube: a roof of black rock over the road (a picture of its own, see-through from inside), walls along it -----
   const [ti0, ti1] = RT.tubeI, inTube = i => ti0 <= ti1 ? i >= ti0 && i <= ti1 : i >= ti0 || i <= ti1;
-  let tube = null;
+  let tube;
   {
     let x0 = WW, y0 = WH, x1 = 0, y1 = 0;
     for (let j = 0; j < A; j++) if (dist[j] < HALF + 9 && inTube(near[j])) { const x = j % WW, y = j / WW | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }

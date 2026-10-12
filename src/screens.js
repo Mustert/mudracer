@@ -1,11 +1,11 @@
 import { G } from './g.js';
 import { CAR_DEFS, carSet, isLocked } from './cars.js';
-import { SS, TAU, VH, VW, WW, ctx, hash } from './core.js';
+import { TAU, VH, VW, WW, ctx, hash } from './core.js';
 import { cupLabel } from './cups.js';
 import { DIFFS } from './diff.js';
-import { R1, blink, disc, drawConfetti, drawTag, ell, medal, medalL, panel, star, text, tri } from './draw.js';
+import { R1, blink, disc, drawConfetti, drawTag, ell, medal, medalL, panel, star, text, tri } from './gfx.js';
 import { SFX } from './audio.js';
-import { standings } from './race.js';
+import { standings } from './rank.js';
 import { MODES } from './state.js';
 import { fmtTime, loadRecord } from './timetrial.js';
 import { TRACKS, trackPicture } from './tracks.js';
@@ -28,11 +28,11 @@ export function drawMenuBg(t) {
 
 
 export function drawTrophy(cx, cy, s = 1) {
-  const G = '#ffd23f', GL = '#fff08a', GD = '#c79a06', O = '#1b120c', P = (x, y, w, h, c) => R1(Math.round(cx + x * s), Math.round(cy + y * s), Math.ceil(w * s), Math.ceil(h * s), c);
-  P(-10, -14, 20, 2, O); for (let r = 0; r < 12; r++) { const w = 18 - r; P(-w / 2 - 1, -12 + r, w + 2, 1, O); P(-w / 2, -12 + r, w, 1, r < 3 ? GL : G); P(w / 2 - 3, -12 + r, 3, 1, GD); }
+  const GO = '#ffd23f', GL = '#fff08a', GD = '#c79a06', O = '#1b120c', P = (x, y, w, h, c) => R1(Math.round(cx + x * s), Math.round(cy + y * s), Math.ceil(w * s), Math.ceil(h * s), c);
+  P(-10, -14, 20, 2, O); for (let r = 0; r < 12; r++) { const w = 18 - r; P(-w / 2 - 1, -12 + r, w + 2, 1, O); P(-w / 2, -12 + r, w, 1, r < 3 ? GL : GO); P(w / 2 - 3, -12 + r, 3, 1, GD); }
   P(-15, -11, 5, 2, O); P(-16, -9, 2, 5, O); P(-15, -4, 5, 2, O); P(10, -11, 5, 2, O); P(14, -9, 2, 5, O); P(10, -4, 5, 2, O);
-  P(-15, -10, 4, 1, G); P(-15, -9, 1, 4, G); P(11, -10, 4, 1, G); P(14, -9, 1, 4, G);
-  P(-2, 0, 4, 5, O); P(-1, 0, 2, 5, G); P(-7, 5, 14, 5, O); P(-6, 6, 12, 3, GD); P(-6, 6, 12, 1, G);
+  P(-15, -10, 4, 1, GO); P(-15, -9, 1, 4, GO); P(11, -10, 4, 1, GO); P(14, -9, 1, 4, GO);
+  P(-2, 0, 4, 5, O); P(-1, 0, 2, 5, GO); P(-7, 5, 14, 5, O); P(-6, 6, 12, 3, GD); P(-6, 6, 12, 1, GO);
   P(-6, -10, 2, 3, '#ffffff');
   if (((G.time * 3) | 0) % 3 === 0) { P(8, -16, 1, 5, '#ffffff'); P(6, -14, 5, 1, '#ffffff'); }
 }

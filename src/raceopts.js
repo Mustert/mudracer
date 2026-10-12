@@ -1,11 +1,12 @@
 import { G } from './g.js';
+import { setItem } from './save.js';
 import { SFX } from './audio.js';
 import { CAR_DEFS, carSet } from './cars.js';
 import { VW, clamp, ctx } from './core.js';
 import { DIFFS, setDiff, setFx } from './diff.js';
-import { R1, text, tri } from './draw.js';
+import { R1, text, tri } from './gfx.js';
 import { is } from './input.js';
-import { setState } from './menus.js';
+import { setState } from './state.js';
 import { singleField, startRace } from './race.js';
 import { drawMenuBg } from './screens.js';
 import { fmtTime, loadRecord } from './timetrial.js';
@@ -39,7 +40,7 @@ function label(r) {
 function change(r, dir) {
   if (r === 'count') G.selCount = clamp(G.selCount + dir, 1, 7);
   else if (r === 'diff') { setDiff(G.diff + dir); setFx(G.diff > 0); } // LEICHT means no effects, from MITTEL on they are on (the switch below can still change it)
-  else if (r === 'ghost') { G.selGhost = !G.selGhost; try { localStorage.setItem('mudracer-ghost', G.selGhost ? '1' : '0'); } catch (e) {} }
+  else if (r === 'ghost') { G.selGhost = !G.selGhost; try { setItem('mudracer-ghost', G.selGhost ? '1' : '0'); } catch (e) {} }
   else if (r === 'fx') { if (!trackFx().length) { SFX.bump(); return; } setFx(!G.selFx); }
   else return;
   G.selAnim = G.time; SFX.click();

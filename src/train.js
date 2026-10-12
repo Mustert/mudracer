@@ -2,7 +2,7 @@ import { G } from './g.js';
 import { SFX } from './audio.js';
 import { TRAIN_SPEED, VH, VW, WH, clamp } from './core.js';
 import { addP, mudBurst } from './particles.js';
-import { eventOn } from './events.js';
+import { eventOn } from './undo.js';
 import { cam } from './state.js';
 import { TRAIN } from './trainsprite.js';
 

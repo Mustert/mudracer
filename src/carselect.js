@@ -3,9 +3,11 @@ import { CAR_DEFS, carSet, isLocked } from './cars.js';
 import { SS, VW, ctx } from './core.js';
 import { CUPS, cupLabel, cupTrackIdx, loadBestPlace, places } from './cups.js';
 import { DIFFS, curDiff } from './diff.js';
-import { R1, ell, star, text, tri } from './draw.js';
+import { R1, ell, star, text, tri } from './gfx.js';
 import { drawLock, drawMenuBg } from './screens.js';
 import { MODES } from './state.js';
+import { SFX } from './audio.js';
+import { setItem } from './save.js';
 import { fmtTime, loadRecord } from './timetrial.js';
 import { TRACKS } from './tracks.js';
 import { drawPokal, miniPokal } from './trophy.js';
@@ -20,6 +22,12 @@ const PANEL = { y: 28 }, WIN_Y = 46, WIN_H = 34, INFO_Y = 83, INFO_H = 12, CAR_Y
 const hasInfo = () => G.state !== 'shop' && ((G.mode === 'gp' && !!G.cup && !G.cup.custom) || G.mode === 'tt');
 const gpInfo = () => G.mode === 'gp' && G.cup && !G.cup.custom;
 const panelH = () => hasInfo() ? 70 : 56;
+
+// a car in the selection strip gets focus (arrow keys and taps alike): locked ones are silent and are not remembered
+export function pickCar(i) {
+  G.selCar = i; G.selAnim = G.time;
+  if (isLocked(CAR_DEFS[i])) SFX.click(); else { SFX.honk[CAR_DEFS[i].honk](); setItem('mudracer-car', i); }
+}
 
 // which portrait (or -1) lies under a tap
 export function carSlotAt(x, y) {

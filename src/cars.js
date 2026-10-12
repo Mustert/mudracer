@@ -1,4 +1,5 @@
 import { G } from './g.js';
+import { getItem, setItem } from './save.js';
 import { ROTS, SOIL_HI, SOIL_LO, SS, TAU, clamp, hash, hex, mk, outlineImg, rng, toCanvas } from './core.js';
 
 // ---------- cars (44x44 sprites, facing right, centre 22/22) ----------
@@ -187,9 +188,9 @@ GENERICS.forEach((d, i) => { d.k = 20 + i; });
 // 'mudracer-unlock' (0 to 3 Grand Prix wins): that count becomes cups 1..n, so cars unlocked back then stay unlocked.
 G.cupsWon = [];
 try {
-  const saved = JSON.parse(localStorage.getItem('mudracer-cups') || 'null');
+  const saved = JSON.parse(getItem('mudracer-cups') || 'null');
   if (Array.isArray(saved)) G.cupsWon = saved.filter(n => Number.isInteger(n));
-  else G.cupsWon = Array.from({ length: clamp(parseInt(localStorage.getItem('mudracer-unlock') || '0', 10) || 0, 0, 3) }, (_, i) => i + 1);
+  else G.cupsWon = Array.from({ length: clamp(parseInt(getItem('mudracer-unlock') || '0', 10) || 0, 0, 3) }, (_, i) => i + 1);
 } catch (e) {}
 
 // the kids mode opens every car
@@ -327,6 +328,6 @@ export function setPaint(def, i) {
   dropSets(def); // the sprites are built again with the new colour
 }
 
-export function savePaint(def, i) { setPaint(def, i); try { localStorage.setItem(paintKey(def), String(def.paint)); } catch (e) {} }
+export function savePaint(def, i) { setPaint(def, i); try { setItem(paintKey(def), String(def.paint)); } catch (e) {} }
 
-CAR_DEFS.forEach(def => { let i = 0; try { i = parseInt(localStorage.getItem(paintKey(def)) || '0', 10) || 0; } catch (e) {} setPaint(def, i); });
+CAR_DEFS.forEach(def => { let i = 0; try { i = parseInt(getItem(paintKey(def)) || '0', 10) || 0; } catch (e) {} setPaint(def, i); });

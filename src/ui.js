@@ -1,8 +1,9 @@
 import { G } from './g.js';
 import { AU } from './audio.js';
 import { VH, VW, ctx } from './core.js';
-import { R1, drawRace, panel, text } from './draw.js';
-import { OPT, PAU } from './menus.js';
+import { drawRace } from './draw.js';
+import { R1, panel, text } from './gfx.js';
+import { OPT, OPT_ROWS, PAU } from './menus.js';
 import { drawSelectCar } from './carselect.js';
 import { drawSelectCup } from './cupselect.js';
 import { drawCustom } from './custom.js';
@@ -40,12 +41,14 @@ function drawChoiceRow(x, y, w, h, sel, label, value) {
 
 export function drawOptions() {
   ctx.fillStyle = 'rgba(27,18,12,.5)'; ctx.fillRect(0, 0, VW, VH);
-  const h = 112; panel(OPT.x, OPT.y, OPT.w, h);
+  panel(OPT.x, OPT.y, OPT.w, OPT.h);
   text('OPTIONEN', OPT.x + OPT.w / 2, OPT.y + 9, 8, '#ffd23f', 'center');
-  const rows = [['MUSIK', AU.music ? 'AN' : 'AUS'], ['STEUERUNG', G.CTRL === 'std' ? 'STANDARD' : 'ALTERNATIV'], ['ZURUECK', '']];
+  const rows = [['MUSIK', AU.music ? 'AN' : 'AUS'], ['STEUERUNG', G.CTRL === 'std' ? 'STANDARD' : 'ALTERNATIV'], ['SPIELSTAND', 'SICHERN'], ['SPIELSTAND', 'LADEN'], ['ZURUECK', '']];
   rows.forEach(([a, b], i) => drawChoiceRow(OPT.x + 6, OPT.y + OPT.r0 + i * OPT.row, OPT.w - 12, OPT.row - 2, G.optSel === i, a, b));
-  const hint = G.CTRL === 'std' ? ['HOCH=GAS RUNTER=BREMSE', 'LINKS/RECHTS = LENKEN'] : ['PFEIL = RICHTUNG AUF', 'DEM BILDSCHIRM'];
-  hint.forEach((s, i) => text(s, OPT.x + OPT.w / 2, OPT.y + OPT.r0 + 3 * OPT.row + 2 + i * 11, 8, '#d8c4a8', 'center'));
+  // under the rows: a message after saving or loading (a few seconds), otherwise what the steering does
+  const msg = G.optMsg && G.time - G.optMsg.t < 4 ? G.optMsg : null;
+  const hint = msg ? [msg.s] : G.CTRL === 'std' ? ['HOCH=GAS RUNTER=BREMSE', 'LINKS/RECHTS = LENKEN'] : ['PFEIL = RICHTUNG AUF', 'DEM BILDSCHIRM'];
+  hint.forEach((s, i) => text(s, OPT.x + OPT.w / 2, OPT.y + OPT.r0 + OPT_ROWS * OPT.row + 2 + i * 11, 8, msg ? (msg.ok ? '#7bd37b' : '#ff6b6b') : '#d8c4a8', 'center'));
   drawGear(true);
 }
 

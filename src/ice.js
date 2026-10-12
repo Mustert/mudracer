@@ -1,10 +1,10 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
 import { LAPS, TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, vnoise } from './core.js';
-import { R1, disc, ell, text } from './draw.js';
+import { R1, disc, ell, text } from './gfx.js';
 import { held } from './input.js';
-import { snap } from './events.js';
-import { addP, splash } from './particles.js';
+import { snap } from './undo.js';
+import { addP } from './particles.js';
 import { cam } from './state.js';
 import { nearestIdx } from './bau.js';
 import { near } from './trackfx.js';

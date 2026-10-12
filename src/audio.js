@@ -1,4 +1,5 @@
 import { G } from './g.js';
+import { getItem } from './save.js';
 import { MAXS, VH, VW, clamp } from './core.js';
 import { reportError } from './errors.js';
 import { held } from './input.js';
@@ -11,7 +12,7 @@ import { TRAIN } from './trainsprite.js';
 export const AU = { a: null, muted: false, music: true, rev: 0, wave: 2 };
 
 
-try { AU.music = localStorage.getItem('mudracer-music') !== '0'; } catch (e) {}
+try { AU.music = getItem('mudracer-music') !== '0'; } catch (e) {}
 
 
 function makeCurve(k) { const n = 1024, c = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); } return c; }
@@ -274,6 +275,13 @@ function buildSurface() {
 
 const driving = () => G.player && (G.state === 'race' || G.state === 'countdown' || G.state === 'finish');
 
+
+// a car honks (its own horn), not again before the last one is over
+export function honk(c) {
+  if (c.honk > 0) return;
+  c.honk = HONK_LEN[c.def.honk];
+  SFX.honk[c.def.honk]();
+}
 
 // an audio parameter only takes finite numbers: a NaN (a broken car value) would throw every frame, so it is left out and reported once
 let nanSaid = false;

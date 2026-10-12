@@ -1,7 +1,7 @@
 import { G } from './g.js';
-import { ROTS, TAU, clamp } from './core.js';
+import { getItem, setItem } from './save.js';
+import { ROTS, TAU, clamp, rotIndex } from './core.js';
 import { fxActive } from './diff.js';
-import { rotIndex } from './draw.js';
 
 // ---------- Zeitfahren: lap times, best time per track and car, ghost of the best run ----------
 
@@ -28,7 +28,7 @@ const BAL_OLD = {
 };
 
 
-function convertRecord(r, f) {
+export function convertRecord(r, f) {
   const n = r.g.length / 4, m = Math.max(2, Math.round((n - 1) * f) + 1), g = [];
   for (let k = 0; k < m; k++) {
     const u = Math.min(n - 1, k / f), i = Math.min(n - 2, Math.floor(u)), w = u - i, a = i * 4, b = a + 4;
@@ -42,7 +42,7 @@ function convertRecord(r, f) {
 
 export function loadRecord(t, def) {
   try {
-    const r = JSON.parse(localStorage.getItem(ttKey(t, def)));
+    const r = JSON.parse(getItem(ttKey(t, def)));
     if (r && r.t > 0 && Array.isArray(r.laps) && Array.isArray(r.g) && r.g.length >= 8 && r.g.length % 4 === 0) {
       const f = r.v === BAL ? 1 : BAL_OLD[t.name] && BAL_OLD[t.name][def.k];
       return f && f !== 1 ? convertRecord(r, f) : r;
@@ -52,7 +52,7 @@ export function loadRecord(t, def) {
 }
 
 
-export function saveRecord(t, def, r) { try { localStorage.setItem(ttKey(t, def), JSON.stringify({ ...r, v: BAL })); } catch (e) {} }
+export function saveRecord(t, def, r) { try { setItem(ttKey(t, def), JSON.stringify({ ...r, v: BAL })); } catch (e) {} }
 
 
 export function fmtTime(s) {

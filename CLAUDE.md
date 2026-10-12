@@ -11,6 +11,8 @@ Nur wenn der Nutzer im Prompt ausdrücklich sagt, dass es ohne Commit/Push erfol
 - Gemeinsamer veränderlicher Spielzustand liegt in `G` (`src/g.js`), alles andere sind normale Exporte.
 - `npm run dev` startet den Dev-Server (Port 5177), `npm run build` erzeugt **eine** Datei `dist/index.html` (vite-plugin-singlefile).
 - `dist/` und `node_modules/` sind nicht im Repo. Nach dem Klonen `npm install`.
+- `npm run lint` (ESLint) und `npm test` (Vitest, Tests in `test/`) laufen vor jedem Commit und müssen sauber sein.
+- Nichts Schweres beim Start berechnen: Strecken und Auto-Sprites entstehen in Häppchen (`src/idle.js`), die Spielphysik läuft in festen Schritten (`src/clock.js`). Im Dev-Server gibt es `window.mudracer` mit `frameAt(now)`, um Frames ohne sichtbares Vorschaufenster zu rechnen.
 
 ## Doku und Analyse aktuell halten (Pflicht bei jeder Änderung)
 

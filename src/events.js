@@ -1,9 +1,11 @@
 import { G } from './g.js';
+import { reportError } from './errors.js';
 import { SFX } from './audio.js';
 import { HALF, TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, mk, pick, vnoise } from './core.js';
-import { R1, disc, text } from './draw.js';
+import { R1, disc, text } from './gfx.js';
 import { addP, drop, mudBurst, splash, WATC } from './particles.js';
-import { cam } from './state.js';
+import { cam, onState } from './state.js';
+import { bctx, eventOn, snap } from './undo.js';
 import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
 import { drawMarshals, drawTyres, initReifen, tyreCollisions, updateReifen } from './ring.js';
 import { desertCollisions, desertUpdate, initDesert, initStorm } from './desert.js';
@@ -27,19 +29,9 @@ import { initCrocs, initJungle, initTrees, jungleCollisions, jungleUpdate } from
 // Every event can be switched off with G.events (see state.js); G.fx switches all of them for the current race (difficulty,
 // options, kids mode, see diff.js). A track is changed in place; setupEvents/resetTrackEvents put it back.
 
-export const eventOn = key => !!G.fx && G.events[key] !== false;
-
-// ----- undo: the base picture and the terrain of every changed area are saved first -----
-
-const bctx = T => T.bctx || (T.bctx = T.base.getContext('2d'));
-
-export function snap(T, x, y, w, h) {
-  x = clamp(x | 0, 0, WW - 1); y = clamp(y | 0, 0, WH - 1); w = Math.min(w, WW - x); h = Math.min(h, WH - y);
-  const ter = new Uint8Array(w * h);
-  for (let r = 0; r < h; r++) ter.set(T.ter.subarray((y + r) * WW + x, (y + r) * WW + x + w), r * w);
-  (T.undo = T.undo || []).push({ x, y, w, h, ter, img: bctx(T).getImageData(x, y, w, h) });
-  if (!T.pix0) T.pix0 = { mud: T.mudPix, wat: T.watPix };
-}
+// in the menus every track looks as it was built (events change the map during a race)
+const CLEAN = new Set(['title', 'main', 'select_cup', 'select_car', 'select_track', 'select_count', 'custom', 'shop']);
+onState(s => { if (CLEAN.has(s)) resetAllEvents(); });
 
 export function resetTrackEvents(T) {
   if (T.undo && T.undo.length) {
@@ -503,7 +495,25 @@ function drawLights(T) {
 
 const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {}, sandsturm: initStorm, frost: initFrost, pinguine: initPenguins, ausbruch: initEruption, baeume: initTrees, kroko: initCrocs };
 
+// dev server only (ANALYSE.md T12): some events have fixed places on the map (holes, koi leaps, rolling tyres, falling trees,
+// dump trucks). They are checked against the built track, so a changed course line that moves the road away is noticed at once.
+function checkSpots(T) {
+  const at = (x, y) => clamp(Math.round(y), 0, WH - 1) * WW + clamp(Math.round(x), 0, WW - 1), bad = [];
+  const road = (x, y, slack, what) => { if (T.dist[at(x, y)] > HALF + slack) bad.push(what + ' ' + Math.round(x) + ',' + Math.round(y) + ' nicht auf der Strasse'); };
+  if ((T.def.events || []).includes('regen')) for (const [x, y] of HOLES) road(x, y, 10, 'Loch');
+  if ((T.def.events || []).includes('kois')) for (const [x, y, ang, half] of KOIS) for (const s of [-1, 1]) {
+    // the ends of a leap in the water (a few px on the bank are fine: the splash covers them)
+    const ex = x + Math.cos(ang) * half * s, ey = y + Math.sin(ang) * half * s, wet = (dx, dy) => { const t = T.ter[at(ex + dx, ey + dy)]; return t === 5 || t === 3; };
+    if (![[0, 0], [4, 0], [-4, 0], [0, 4], [0, -4]].some(([dx, dy]) => wet(dx, dy))) bad.push('Koi-Sprung ' + Math.round(ex) + ',' + Math.round(ey) + ' nicht im Wasser');
+  }
+  for (const [x, y] of T.def.rollers || []) road(x, y, 0, 'Reifen');
+  for (const [x, y] of T.def.trees || []) road(x, y, 5, 'Baum');
+  for (const [x, y] of T.def.kipper || []) if (T.dist[at(x, y)] > HALF + 40) bad.push('Kipper ' + x + ',' + y + ' weit weg von der Strasse');
+  if (bad.length) reportError(new Error(T.name + ': ' + bad.join('; ')), 'Ereignis-Orte');
+}
+
 export function setupEvents(T) {
+  if (import.meta.env.DEV) checkSpots(T);
   resetAllEvents();
   T.ev = { t: 0, cows: [], holes: [], rain: null, flood: null, pier: false, kois: [], kipper: [] };
   // the desert and the ice have things that are always there (cacti, cracking lake ice) besides their events

@@ -1,12 +1,13 @@
 import { G } from './g.js';
-import { SFX, ambience, engineSound } from './audio.js';
+import { SFX, ambience, engineSound, honk } from './audio.js';
 import { HALF, VH, VW, WW, angDiff, clamp, pick } from './core.js';
 import { DIFFS } from './diff.js';
 import { coarse, held, honkBtn, touchBox } from './input.js';
-import { honk, setState } from './menus.js';
+import { setState } from './state.js';
 import { Music } from './music.js';
 import { CONF, RAINBOW, WATC, addP, drop, mudBurst, splash } from './particles.js';
-import { aiTarget, guardCar, physics, score, updateProgress } from './physics.js';
+import { aiTarget, guardCar, physics, updateProgress } from './physics.js';
+import { score } from './rank.js';
 import { eventCollisions, updateEvents } from './events.js';
 import { ringCountdown, ringGo, ringGround, ringStackHit, ringUpdate } from './ring.js';
 import { airborne, groundFx, pushCars } from './trackfx.js';

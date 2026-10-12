@@ -1,11 +1,12 @@
 
-> **Stand im Spiel (2026-10-11, Branch `map_pack`):** Das Hauptmenü hat fünf Karten: GRAND PRIX, EINZELSTRECKE, ZEITFAHREN, MATSCHFAHRT, WERKSTATT (`MODES` in `src/state.js`), oben links den Schalter NORMAL/KINDER (Kindermodus: immer LEICHT, keine Streckeneffekte, alle Autos und Cups offen) und oben rechts das Zahnrad (Musik, Steuerung). Abläufe im Code:
+> **Stand im Spiel (2026-10-12, Branch `map_pack`):** Das Hauptmenü hat fünf Karten: GRAND PRIX, EINZELSTRECKE, ZEITFAHREN, MATSCHFAHRT, WERKSTATT (`MODES` in `src/state.js`), oben links den Schalter NORMAL/KINDER (Kindermodus: immer LEICHT, keine Streckeneffekte, alle Autos und Cups offen) und oben rechts das Zahnrad (Musik, Steuerung, Spielstand als Datei sichern, Spielstand aus Datei laden). Abläufe im Code:
 > - Grand Prix: Cup-Wahl (mit Schwierigkeit oben rechts) → Autowahl → Rennen. Custom Cup: eigene Streckenfolge (bis 12 Strecken) und 2 bis 7 Gegner.
 > - Einzelstrecke: Streckenwahl → Autowahl → Optionen (Gegner 1 bis 7, Schwierigkeit, Streckeneffekte an/aus) → Rennen.
 > - Zeitfahren: Streckenwahl → Autowahl → Optionen (Geist, Streckeneffekte) → Zeitfahrt.
 > - Matschfahrt: Autowahl → Matschfahrt.
 > - Werkstatt: Auto wählen, Lackfarbe wählen (11 Farben).
 > - Rundenzahl ist überall fest 3 (`LAPS`), eine Rundenwahl gibt es noch nicht (`ANALYSE.md` M12).
+> - Ladebildschirm: Die Strecken werden nicht beim Start gebaut, sondern im Hintergrund, während ein Menü zu sehen ist; bis dahin zeigen die Menüs nur die Form der Strecke. Ist eine Strecke beim Rennstart noch nicht fertig, erscheint kurz „STRECKE WIRD GEBAUT“ mit Balken.
 
 **Hauptmenü** => kann so bleiben
 

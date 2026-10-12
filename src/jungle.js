@@ -1,10 +1,9 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { HALF, LAPS, TAU, VH, VW, WH, WW, clamp, ctx, hash, mk } from './core.js';
-import { R1, disc, ell, text } from './draw.js';
+import { HALF, TAU, VH, VW, WH, WW, clamp, ctx, hash, mk } from './core.js';
+import { R1, disc, ell, text } from './gfx.js';
 import { addP } from './particles.js';
 import { cam } from './state.js';
-import { nearestIdx } from './bau.js';
 import { near } from './trackfx.js';
 
 // ---------- Dschungel while racing ----------

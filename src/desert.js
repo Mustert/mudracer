@@ -1,9 +1,8 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { HALF, TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, mk, vnoise } from './core.js';
-import { DIFFS } from './diff.js';
-import { R1, disc, text, tri } from './draw.js';
-import { snap } from './events.js';
+import { TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, mk, vnoise } from './core.js';
+import { R1, disc, text, tri } from './gfx.js';
+import { snap } from './undo.js';
 import { addP, drop } from './particles.js';
 import { cam } from './state.js';
 import { canyonX } from './desertmap.js';

@@ -3,9 +3,9 @@ import { SFX } from './audio.js';
 import { VW, clamp } from './core.js';
 import { CUPS, CUSTOM_MAX, saveCustom } from './cups.js';
 import { DIFFS, setDiff, setFx } from './diff.js';
-import { R1, text, tri } from './draw.js';
+import { R1, text, tri } from './gfx.js';
 import { is } from './input.js';
-import { setState } from './menus.js';
+import { setState } from './state.js';
 import { drawMenuBg, drawTrackPic } from './screens.js';
 import { TRACKS } from './tracks.js';
 
@@ -102,10 +102,10 @@ export function drawCustom() {
   text('CUSTOM CUP', VW / 2, 8, 16, '#ffd23f', 'center');
   const R = rows(), n = G.custom.tracks.length;
   R.forEach((r, i) => {
-    const sel = i === G.cuRow, y = ROWS.y0 + i * ROWS.pitch, [a, b, col] = label(r), go = r === 'go', off = (go && !n) || (r === 'remove' && !n);
+    const sel = i === G.cuRow, y = ROWS.y0 + i * ROWS.pitch, [a, b, col] = label(r), isGo = r === 'go', off = (isGo && !n) || (r === 'remove' && !n);
     R1(ROWS.x - 1, y - 1, ROWS.w + 2, ROWS.h + 2, sel ? '#ffd23f' : '#1b120c');
-    R1(ROWS.x, y, ROWS.w, ROWS.h, go ? (sel ? '#7bd37b' : '#3f6b35') : sel ? '#5a3a1f' : '#3a2a1c');
-    if (go) { text(a, ROWS.x + ROWS.w / 2, y + 5, 8, off ? '#6b8a60' : sel ? '#1b120c' : '#fff3dc', 'center', null); return; }
+    R1(ROWS.x, y, ROWS.w, ROWS.h, isGo ? (sel ? '#7bd37b' : '#3f6b35') : sel ? '#5a3a1f' : '#3a2a1c');
+    if (isGo) { text(a, ROWS.x + ROWS.w / 2, y + 5, 8, off ? '#6b8a60' : sel ? '#1b120c' : '#fff3dc', 'center', null); return; }
     text(a, ROWS.x + 6, y + 5, 8, off ? '#6b5a48' : sel ? '#ffd23f' : '#fff3dc');
     if (b) text(b, ROWS.x + ROWS.w - 8, y + 5, 8, col, 'right');
   });

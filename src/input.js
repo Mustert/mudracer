@@ -1,8 +1,11 @@
-import { audioInit } from './audio.js';
 import { VH, VW, cv } from './core.js';
-import { onClick, onPress } from './menus.js';
 
 // ---------- input ----------
+// The menus (menus.js) and the sound (main.js: audio may only start after a touch or key) register what happens on a key
+// press, a tap and any first contact; input.js itself depends on nothing, so the game logic can ask held() without import circles.
+
+const H = { press: () => {}, click: () => {}, touch: () => {} };
+export function setInputHandlers(h) { Object.assign(H, h); }
 
 const keys = {};
 
@@ -18,8 +21,8 @@ export const held = g => KEYS[g].some(k => keys[k]);
 
 addEventListener('keydown', e => {
   if (e.key.startsWith('Arrow') || e.key === ' ' || e.key === 'Backspace') e.preventDefault();
-  audioInit();
-  if (!keys[e.key]) onPress(e.key);
+  H.touch();
+  if (!keys[e.key]) H.press(e.key);
   keys[e.key] = true;
 });
 
@@ -31,9 +34,9 @@ addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 
 
 cv.addEventListener('pointerdown', e => {
-  audioInit();
+  H.touch();
   const r = cv.getBoundingClientRect();
-  onClick((e.clientX - r.left) / r.width * VW, (e.clientY - r.top) / r.height * VH);
+  H.click((e.clientX - r.left) / r.width * VW, (e.clientY - r.top) / r.height * VH);
 });
 
 
@@ -48,7 +51,7 @@ touchBox.hidden = !coarse;
 
 touchBox.querySelectorAll('[data-k]').forEach(b => {
   const k = b.dataset.k;
-  const on = e => { e.preventDefault(); audioInit(); if (!keys[k]) onPress(k); keys[k] = true; b.classList.add('on'); };
+  const on = e => { e.preventDefault(); H.touch(); if (!keys[k]) H.press(k); keys[k] = true; b.classList.add('on'); };
   const off = () => { keys[k] = false; b.classList.remove('on'); };
   b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off);
   b.addEventListener('pointerleave', off); b.addEventListener('pointercancel', off);

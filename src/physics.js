@@ -8,7 +8,7 @@ import { desertLane } from './desert.js';
 import { iceTarget } from './ice.js';
 import { volcanoLane, volcanoTarget } from './volcano.js';
 import { jungleLane, jungleTarget } from './jungle.js';
-import { setState } from './menus.js';
+import { setState } from './state.js';
 import { finishRace } from './race.js';
 import { ttLap } from './timetrial.js';
 import { reportError } from './errors.js';
@@ -119,13 +119,6 @@ export function crossingAhead(c) {
   let best = Infinity; for (const cr of R.cross) if (cr.x === R.x) best = Math.min(best, (cr.i - c.idx + G.T.N) % G.T.N);
   return best;
 }
-
-
-export const score = c => c.finished ? 1e6 - c.place * 1000 : (c.lap - 1) * G.T.N + c.idx;
-
-
-export const placeOf = c => 1 + G.cars.filter(o => o !== c && score(o) > score(c)).length;
-
 
 
 export function updateProgress(c) {

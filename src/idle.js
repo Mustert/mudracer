@@ -2,18 +2,17 @@ import { G } from './g.js';
 import { CAR_DEFS, GENERICS, carSet, isLocked, stepSet } from './cars.js';
 import { cupReady, cupTrackIdx } from './cups.js';
 import { VW, ctx } from './core.js';
-import { R1, text } from './draw.js';
-import { setState } from './menus.js';
-import { runPrefetch } from './run.js';
+import { R1, text } from './gfx.js';
+import { setState } from './state.js';
 import { drawMenuBg } from './screens.js';
 import { TRACKS, stepTrack, trackPicture, useTrack } from './tracks.js';
 
 // ---------- work in the background: nothing heavy is built at the start ----------
 // Tracks (tracks.js) and the turns of the car sprites (cars.js) are built by generators that can stop after every slice.
 // After each frame idleWork() runs slices for a few milliseconds while a menu is on screen, most urgent first: the track the
-// menu points at, then the menu pictures of all tracks, then the sprites of the cars for the next race. During a race only the
-// Matschfahrt paints the tiles ahead of the car (run.js). A race that needs something unfinished first waits on the loading
-// screen, which works with a bigger budget.
+// menu points at, then the menu pictures of all tracks, then the sprites of the cars for the next race. During a race nothing runs
+// here (main.js lets the Matschfahrt paint its tiles ahead, run.js). A race that needs something unfinished first waits on the
+// loading screen, which works with a bigger budget.
 
 const MENU_MS = 6, LOAD_MS = 40;
 const BUSY = new Set(['countdown', 'race', 'finish', 'pause']);
@@ -58,7 +57,7 @@ function nextJob() {
 
 export function idleWork() {
   if (G.state === 'loading') { runLoading(performance.now() + LOAD_MS); return; }
-  if (BUSY.has(G.state)) { if (G.T && G.T.run) runPrefetch(performance.now() + 3); return; } // the Matschfahrt paints its tiles ahead
+  if (BUSY.has(G.state)) return;
   const until = performance.now() + MENU_MS;
   while (performance.now() < until) { const job = nextJob(); if (!job) return; job(until); }
 }

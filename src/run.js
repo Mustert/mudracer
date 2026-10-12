@@ -3,8 +3,8 @@ import { AU, SFX } from './audio.js';
 import { CAR_DEFS } from './cars.js';
 import { TAU, VH, VW, clamp, ctx, hash, hex, mk, outlineImg, rng, toCanvas, vnoise } from './core.js';
 import { obstacleGrid } from './grid.js';
-import { R1, blink, disc, drawConfetti, drawFlag, panel, text } from './draw.js';
-import { setState } from './menus.js';
+import { R1, blink, disc, drawConfetti, drawFlag, panel, text } from './gfx.js';
+import { setState } from './state.js';
 import { addP, mudBurst, splash } from './particles.js';
 import { makeCar, moveCamera, resetWorld } from './race.js';
 import { cam } from './state.js';
@@ -84,13 +84,13 @@ function buildRun() {
   const R = { W, H, run: true, def: { name: 'MATSCHFAHRT', song: 'train' }, name: 'MATSCHFAHRT', th, path: [], tan: [], nrm: [], N: 1, ter, washMask: new Uint8Array(A),
     trees, grid: obstacleGrid(trees, W, H), critters: [], windmill: null, shoreY: null, mudPix, watPix, starPix: [], rail: null, washC: null,
     hills, startY, finishY, roadX, tiles: new Map() };
-  R.paint = { sd, th, rowX, dx, shore, ed, looks, flowers, rocks };
+  R.paint = { sd, th, dx, shore, ed, looks, flowers, rocks };
   return R;
 }
 
 // paints the rows y0..y1 (one tile): the ground picture and the top layer (tree tops, finish banner, warning signs), in slices
 function* paintTile(R, y0, y1) {
-  const { W, H, ter, hills, trees, startY, finishY, roadX } = R, { sd, th, rowX, dx, shore, ed, looks, flowers, rocks } = R.paint;
+  const { W, H, ter, hills, trees, startY, finishY, roadX } = R, { sd, th, dx, shore, ed, looks, flowers, rocks } = R.paint;
   const h = y1 - y0, img = new ImageData(W, h), d = img.data;
   const set = (x, y, c) => { if (y < y0 || y >= y1 || x < 0 || x >= W) return; const i = ((y - y0) * W + x) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; };
   const G2 = th.grass.map(hex), TRK = th.track.map(hex), TE = hex(th.trackEdge), GE = hex(th.grassEdge), TU = hex(th.tuft);

@@ -310,10 +310,10 @@ function* buildTrack(def, ti) {
   const capsule = (c0, c1) => {
     const st = Math.max(1, Math.ceil(Math.hypot(c1[0] - c0[0], c1[1] - c0[1]) / 2));
     for (let s = 0; s <= st; s++) {
-      const f = s / st, cx = c0[0] + (c1[0] - c0[0]) * f, cy = c0[1] + (c1[1] - c0[1]) * f, r = c0[2] + (c1[2] - c0[2]) * f, R = Math.ceil(r + 4);
+      const f = s / st, cx = c0[0] + (c1[0] - c0[0]) * f, cy = c0[1] + (c1[1] - c0[1]) * f, rad = c0[2] + (c1[2] - c0[2]) * f, R = Math.ceil(rad + 4);
       for (let y = Math.max(0, Math.floor(cy - R)); y <= Math.min(WH - 1, Math.ceil(cy + R)); y++)
         for (let x = Math.max(0, Math.floor(cx - R)); x <= Math.min(WW - 1, Math.ceil(cx + R)); x++)
-          if (Math.hypot(x + .5 - cx, y + .5 - cy) < r + (vnoise(x * .12, y * .12, sd + 9) - .5) * 4) deep[y * WW + x] = 1;
+          if (Math.hypot(x + .5 - cx, y + .5 - cy) < rad + (vnoise(x * .12, y * .12, sd + 9) - .5) * 4) deep[y * WW + x] = 1;
     }
   };
   (def.rivers || []).forEach(ch => { for (let k = 1; k < ch.length; k++) capsule(ch[k - 1], ch[k]); });
@@ -388,7 +388,7 @@ function* buildTrack(def, ti) {
   // paint ground
   const img = new ImageData(WW, WH), d = img.data;
   const set = (j, c) => { d[j * 4] = c[0]; d[j * 4 + 1] = c[1]; d[j * 4 + 2] = c[2]; d[j * 4 + 3] = 255; };
-  const G = th.grass.map(hex), TRK = th.track.map(hex), TE = hex(th.trackEdge), GE = hex(th.grassEdge), TU = hex(th.tuft);
+  const GRS = th.grass.map(hex), TRK = th.track.map(hex), TE = hex(th.trackEdge), GE = hex(th.grassEdge), TU = hex(th.tuft);
   const MUD = th.mud.map(hex), MUDE = hex(th.mudEdge), MUDH = hex(th.mudHi);
   const WAT = th.water.map(hex), SHORE = th.shore.map(hex);
   const SEA = ['#f4fbff', '#9df0e6', '#4fd0d8', '#2fa6d6', '#2285c4'].map(hex), WET = [hex('#c9a060'), hex('#d8b66e'), hex('#e2c47e')];
@@ -436,7 +436,7 @@ function* buildTrack(def, ti) {
       }
     } else if (th.space) {
       const neb = vnoise(x / 45, y / 45, sd + 3);
-      col = neb > .62 ? G[2] : neb > .45 ? G[1] : G[0];
+      col = neb > .62 ? GRS[2] : neb > .45 ? GRS[1] : GRS[0];
       if (h < .0015) { col = [255, 255, 255]; starPix.push(j); } else if (h < .004) col = [255, 233, 168]; else if (h < .0055) col = [159, 214, 255];
       if (dist[j] < HALF + 3) col = GE;
     } else if (th.sea && y > shoreY[x] - 14 && dist[j] >= HALF + 2.5) {
@@ -444,7 +444,7 @@ function* buildTrack(def, ti) {
       col = dd < 5 ? WET[0] : dd < 10 ? WET[1] : WET[2];
     } else {
       if (dist[j] < HALF + 2.5) col = GE;
-      else { const v = nv * .7 + h * .3; col = v < .38 ? G[1] : v > .66 ? G[2] : G[0]; if (h < .025 || hash(x, y + 1, sd) < .025 || hash(x, y + 2, sd) < .012) col = TU; }
+      else { const v = nv * .7 + h * .3; col = v < .38 ? GRS[1] : v > .66 ? GRS[2] : GRS[0]; if (h < .025 || hash(x, y + 1, sd) < .025 || hash(x, y + 2, sd) < .012) col = TU; }
     }
     if (rail) for (const RX of rail.lines) {
       const dx = x - RX, ax = Math.abs(dx);
@@ -591,9 +591,9 @@ function* buildTrack(def, ti) {
       for (let a = -20; a <= 20; a += 10) for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (dx * dx + dy * dy <= 5) { const [qx, qy] = at(sg, mx, my, a + dx, dy); px(qx, qy, a % 20 ? hex('#ffffff') : hex('#e84a5f')); }
       const TH = [[224, 184, 90], [201, 160, 64], [236, 206, 120]], BUN = ['#ff5a7a', '#ffd93d', '#4d96ff', '#6bcb77', '#ffffff'].map(hex);
       for (let a = -29; a <= 29; a++) for (let b = -17; b <= 14; b++) {
-        const ed = Math.max(Math.abs(a) / 29, Math.abs(b + 1.5) / 15.5); if (ed > 1) continue;
+        const e = Math.max(Math.abs(a) / 29, Math.abs(b + 1.5) / 15.5); if (e > 1) continue;
         const [qx, qy] = at(sg, mx, my, a, b), v = hash(qx, qy, 3);
-        setT(qx, qy, ed > .92 ? [150, 110, 40] : (Math.abs(b) + (a >> 1)) % 4 === 0 ? TH[1] : v < .15 ? TH[2] : TH[0]);
+        setT(qx, qy, e > .92 ? [150, 110, 40] : (Math.abs(b) + (a >> 1)) % 4 === 0 ? TH[1] : v < .15 ? TH[2] : TH[0]);
       }
       for (let a = -26; a <= 26; a += 4) { const bc = BUN[(a / 4 + 7) % 5 | 0]; for (const bb of [15, 16]) { const [qx, qy] = at(sg, mx, my, a, bb); setT(qx, qy, bc); } }
       frac(sg, [.18, .3, .7, .82]);
@@ -660,8 +660,8 @@ function* buildTrack(def, ti) {
     const hh = 33, rr = 12, inside = (x, y) => { const qx = Math.abs(x - hx) - (hw - rr), qy = Math.abs(y - hy) - (hh - rr); return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - rr; };
     for (let q = hx - hw + 20; q <= hx + hw - 20; q += 20) darken(q, hy, 40, 6, 8);
     for (let y = hy - hh - 1; y <= hy + hh + 1; y++) for (let x = hx - hw - 1; x <= hx + hw + 1; x++) {
-      const d = inside(x + .5, y + .5); if (d > 0) continue;
-      const dep = -d, n = vnoise(x * .22, y * .22, sd + 11), lit = ((hx - x) + (hy - y)) / (hw + hh) * 18;
+      const out = inside(x + .5, y + .5); if (out > 0) continue;
+      const dep = -out, lit = ((hx - x) + (hy - y)) / (hw + hh) * 18;
       let c;
       if (dep < 2) c = [52, 52, 58];
       else {
@@ -681,7 +681,7 @@ function* buildTrack(def, ti) {
     for (const sy of [-1, 1]) {
       const ye = hy + sy * hh;
       for (const px0 of portals) for (let k = -3; k <= 14; k++) for (let dx = -19; dx <= 19; dx++) {
-        const ad = Math.abs(dx), y = ye - sy * k; let c = null;
+        const ad = Math.abs(dx), y = ye - sy * k; let c;
         if (k < 0) c = k === -3 ? [112, 108, 98] : [188, 184, 170];
         else if (ad <= 14) c = k < 3 && ad >= 12 ? [96, 94, 100] : [Math.max(62, 118 - k * 4), Math.max(62, 118 - k * 4), Math.max(66, 124 - k * 4)];
         else c = ad === 19 ? [112, 108, 98] : [176, 172, 160];
@@ -729,8 +729,8 @@ function* buildTrack(def, ti) {
       windmill = { x, y }; trees.push({ x, y, r: 12 }); darken(x, y, 12, 7, 9);
       for (let dy = -11; dy <= 11; dy++) for (let dx = -11; dx <= 11; dx++) {
         const dd = Math.hypot(dx, dy); if (dd > 11) continue;
-        const ring = Math.floor(dd / 2.5) % 2, lit = dx + dy < 0;
-        setT(x + dx, y + dy, dd > 10 ? [120, 70, 40] : ring ? (lit ? [196, 120, 70] : [160, 90, 50]) : (lit ? [222, 146, 92] : [182, 106, 62]));
+        const band2 = Math.floor(dd / 2.5) % 2, lit = dx + dy < 0;
+        setT(x + dx, y + dy, dd > 10 ? [120, 70, 40] : band2 ? (lit ? [196, 120, 70] : [160, 90, 50]) : (lit ? [222, 146, 92] : [182, 106, 62]));
       }
     });
     scatter(7, 8, (x, y) => critters.push({ type: 'bunny', x, y, ph: r() * TAU, range: 10 + r() * 18, brown: r() < .5 }));
@@ -884,10 +884,10 @@ function* buildTrack(def, ti) {
     });
     // stone lanterns
     scatter(8, 6, (x, y) => {
-      const S0 = hex('#b9b7ac'), S1 = hex('#8f8d82'), S2 = hex('#6d6b62');
+      const L0 = hex('#b9b7ac'), L1 = hex('#8f8d82'), L2 = hex('#6d6b62');
       walls.push({ x, y, r: 4 }); darken(x, y, 4, 2, 3);
-      rc(x - 4, y, 9, 2, S1); rc(x - 1, y - 6, 3, 6, S0); rc(x - 4, y - 11, 9, 5, S1); rc(x - 3, y - 10, 7, 3, S0); rc(x - 1, y - 10, 3, 3, hex('#ffd36a'));
-      rc(x - 5, y - 13, 11, 2, S2); rc(x - 3, y - 15, 7, 2, S1); rc(x - 1, y - 17, 3, 2, S0);
+      rc(x - 4, y, 9, 2, L1); rc(x - 1, y - 6, 3, 6, L0); rc(x - 4, y - 11, 9, 5, L1); rc(x - 3, y - 10, 7, 3, L0); rc(x - 1, y - 10, 3, 3, hex('#ffd36a'));
+      rc(x - 5, y - 13, 11, 2, L2); rc(x - 3, y - 15, 7, 2, L1); rc(x - 1, y - 17, 3, 2, L0);
     });
     scatter(18, 3, rock);
     // lotus pads on the ponds
@@ -917,14 +917,14 @@ function* buildTrack(def, ti) {
     scatter(14, 7, (x, y) => { for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const dd = Math.hypot(dx, dy); if (dd > 6) continue; px(x + dx, y + dy, dd > 5.2 ? hex('#a8863a') : (Math.round(dd) % 2 ? hex('#e3c16f') : hex('#cfa84f'))); } });
     scatter(20, 3, rock);
   } else if (th.decor === 'space') {
-    const planet = (x, y, rad, cols, ring) => {
+    const planet = (x, y, rad, cols, rings) => {
       for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) {
         if (dx * dx + dy * dy > rad * rad) continue;
         const s = (dx + dy) / rad; let col = s < -.5 ? cols[2] : s > .45 ? cols[0] : cols[1];
         if (((y + dy) >> 2) % 3 === 0 && s > -.5) col = cols[3];
         px(x + dx, y + dy, col);
       }
-      if (ring) for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad * 2; dx <= rad * 2; dx++) {
+      if (rings) for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad * 2; dx <= rad * 2; dx++) {
         const e = (dx / (rad * 1.8)) ** 2 + (dy / (rad * .45)) ** 2;
         if (Math.abs(e - 1) < .12 && !(dy < 0 && dx * dx + dy * dy < rad * rad)) px(x + dx, y + dy, hex('#ffe9a8'));
       }
@@ -1062,4 +1062,5 @@ export function trackPicture(T) {
   return T.shape;
 }
 
-export const trail = mk(WW, WH), tctx = trail.getContext('2d');
+// the tyre tracks of the race (resized for the Matschfahrt, see race.js resetWorld); none without a page (tests)
+export const trail = globalThis.document ? mk(WW, WH) : null, tctx = trail ? trail.getContext('2d') : null;

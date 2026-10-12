@@ -64,7 +64,7 @@ export function paintSite(S) {
   const pipeH = (x0, cy, len, dia) => {
     const hr = dia / 2; shade(x0 + 3, cy - hr + 4, len, dia, .68);
     for (let xx = 0; xx < len; xx++) for (let yy = -hr; yy <= hr; yy++) {
-      const v = yy / hr, sock = xx < 4 ? 1 : 0;
+      const v = yy / hr;
       let k = Math.abs(v) > .86 ? 4 : v < -.45 ? 0 : v < .2 ? 1 : v < .6 ? 2 : 3;
       if (xx < 2 || xx === 4) k = Math.min(4, k + 1);
       py(x0 + xx, cy + yy, PIPE[k]);

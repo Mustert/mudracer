@@ -1,8 +1,9 @@
 import { G } from './g.js';
 import { carSet } from './cars.js';
-import { FONT, HALF, LAPS, ROTS, SS, TAU, VH, VW, clamp, ctx, hash } from './core.js';
+import { HALF, LAPS, SS, TAU, VH, VW, clamp, ctx, hash, rotIndex } from './core.js';
 import { drawEventsAbove, drawEventsGround, drawNight, drawRain } from './events.js';
-import { crossingAhead, placeOf } from './physics.js';
+import { crossingAhead } from './physics.js';
+import { placeOf } from './rank.js';
 import { drawRunFinish, drawRunHud, drawRunLayer } from './run.js';
 import { drawRingAbove, drawRingGround, drawStartLights, ghostUp } from './ring.js';
 import { drawDesertAbove, drawDesertGround, drawStorm } from './desert.js';
@@ -12,40 +13,10 @@ import { drawJungleAbove, drawJungleGround, drawJungleSky } from './jungle.js';
 import { cam } from './state.js';
 import { GHOST_DT, fmtDelta, fmtTime, ghostAt } from './timetrial.js';
 import { trail } from './tracks.js';
+import { blink, disc, drawConfetti, drawFlag, drawTag, ell, medal, medalL, panel, R1, star, text } from './gfx.js';
 import { TRAIN } from './trainsprite.js';
 
 // ---------- drawing ----------
-
-export function text(s, x, y, size, col, align = 'left', sh = '#1b120c') {
-  ctx.font = size + 'px ' + FONT; ctx.textAlign = align; ctx.textBaseline = 'top';
-  if (sh) { ctx.fillStyle = sh; ctx.fillText(s, Math.round(x) + 1, Math.round(y) + 1); }
-  ctx.fillStyle = col; ctx.fillText(s, Math.round(x), Math.round(y));
-}
-
-
-export function disc(cx, cy, r, col) { ctx.fillStyle = col; for (let dy = -r; dy <= r; dy++) { const w = Math.floor(Math.sqrt(r * r - dy * dy + r * .8)); ctx.fillRect(cx - w, cy + dy, w * 2 + 1, 1); } }
-
-
-export function ell(cx, cy, rx, ry, col) { ctx.fillStyle = col; for (let dy = -ry; dy <= ry; dy++) { const w = Math.round(rx * Math.sqrt(1 - (dy / ry) ** 2)); ctx.fillRect(cx - w, cy + dy, w * 2 + 1, 1); } }
-
-
-const STAR = ['...#...', '..###..', '#######', '.#####.', '..###..', '.##.##.', '##...##'];
-
-
-export function star(x, y, on, col) { ctx.fillStyle = col || (on ? '#ffd23f' : '#4a3a2a'); for (let r = 0; r < 7; r++) for (let c = 0; c < 7; c++) if (STAR[r][c] === '#') ctx.fillRect(x + c, y + r, 1, 1); }
-
-
-export function tri(x, y, dir, size, col) {
-  ctx.fillStyle = col;
-  for (let i = 0; i < size; i++) {
-    if (dir === 'left') ctx.fillRect(x + i, y - i, 1, 2 * i + 1);
-    else if (dir === 'right') ctx.fillRect(x - i, y - i, 1, 2 * i + 1);
-    else ctx.fillRect(x - i, y - i, 2 * i + 1, 1); // pointing down, tip at y
-  }
-}
-
-
-export function rotIndex(a) { return (((Math.round(a / TAU * ROTS) % ROTS) + ROTS) % ROTS) || 0; }
 
 
 function drawCar(c) {
@@ -132,8 +103,6 @@ function drawBeach(cx) {
 }
 
 // little animals on the ground: crabs, bunnies, a duck family, squirrels, hedgehogs
-
-export function R1(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
 
 function drawCritters() {
@@ -255,17 +224,8 @@ function drawMood() {
 }
 
 
-export function drawConfetti() { for (const p of G.parts) if (p.t === 'conf') { ctx.fillStyle = p.col; ctx.fillRect(Math.round(p.x), Math.round(p.y), 3, ((G.time * 8 + p.ph) | 0) % 2 ? 3 : 1); } }
-
-
-export function drawFlag(x, y) {
-  ctx.fillStyle = '#d8c4a8'; ctx.fillRect(x, y, 1, 10);
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) { ctx.fillStyle = (r + c) & 1 ? '#222' : '#fff'; ctx.fillRect(x + 1 + c * 2, y + r * 2, 2, 2); }
-}
-
-
 function drawCrossings(R) {
-  const blink = ((G.time * 3) | 0) % 2;
+  const flash = ((G.time * 3) | 0) % 2;
   for (const cr of R.cross) {
     const p = G.T.path[cr.i], tg = G.T.tan[cr.i], nm = G.T.nrm[cr.i];
     for (const s of [-1, 1]) {
@@ -279,9 +239,9 @@ function drawCrossings(R) {
       const px = Math.round(bx), py = Math.round(by);
       ctx.fillStyle = '#1b120c'; ctx.fillRect(px - 4, py - 4, 9, 9);
       ctx.fillStyle = '#555555'; ctx.fillRect(px - 3, py - 3, 7, 7);
-      ctx.fillStyle = sig && blink ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px - 3, py - 3, 3, 3);
-      ctx.fillStyle = sig && !blink ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px + 1, py + 1, 3, 3);
-      if (sig) { ctx.globalAlpha = .35; disc(px + (blink ? -2 : 2), py + (blink ? -2 : 2), 5, '#ff4040'); ctx.globalAlpha = 1; }
+      ctx.fillStyle = sig && flash ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px - 3, py - 3, 3, 3);
+      ctx.fillStyle = sig && !flash ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px + 1, py + 1, 3, 3);
+      if (sig) { ctx.globalAlpha = .35; disc(px + (flash ? -2 : 2), py + (flash ? -2 : 2), 5, '#ff4040'); ctx.globalAlpha = 1; }
     }
   }  // the switch stand (Weiche) between the two lines: the lever points to the line the next train will take, the lamp over it is green
   if (R.lines.length > 1) {
@@ -299,9 +259,6 @@ function drawTrain(R) {
   if (tr.dir > 0) ctx.drawImage(TRAIN.c, x, y);
   else { ctx.save(); ctx.translate(x, y + TRAIN.LEN); ctx.scale(1, -1); ctx.drawImage(TRAIN.c, 0, 0); ctx.restore(); }
 }
-
-
-const MEDAL = ['#ffd23f', '#d9dde3', '#d98a4a', '#6fb3ff'], MEDAL_L = ['#fff08a', '#f4f6f8', '#f0b27a', '#a9d4ff'];
 
 
 // the ghost of the best run (only when switched on); it waits on the grid during the countdown and parks at the line once it is done
@@ -400,10 +357,10 @@ export function drawRace() {
     if (G.tt.deltaT > 0 && G.tt.delta !== null) text(fmtDelta(G.tt.delta), VW / 2 - 20, 19, 8, G.tt.delta <= 0 ? '#7bd37b' : '#ff6b6b', 'center');
   } else {
     // place in the middle (word and medal as one group), the cup and race number on the right
-    const px = VW / 2 - 29;
-    text('PLATZ', px, 4, 8, '#fff3dc');
-    disc(px + 52, 7, 6, '#1b120c'); disc(px + 52, 7, 5, medal(pl));
-    text(String(pl), px + 53, 4, 8, '#1b120c', 'center', null);
+    const hx = VW / 2 - 29;
+    text('PLATZ', hx, 4, 8, '#fff3dc');
+    disc(hx + 52, 7, 6, '#1b120c'); disc(hx + 52, 7, 5, medal(pl));
+    text(String(pl), hx + 53, 4, 8, '#1b120c', 'center', null);
     if (G.mode === 'gp') text((G.gp.cup.label || G.gp.cup.name + ' CUP') + ' ' + (G.gp.race + 1) + '/' + G.gp.tracks.length, VW - 6, 4, 8, '#ffd23f', 'right');
   }
   }
@@ -430,28 +387,6 @@ export function drawRace() {
   }
   if (G.state === 'finish') { if (G.T.run) drawRunFinish(); else drawFinish(); }
 }
-
-
-// the 1P sign: an orange tag with a little arrow, its tip at (x, y)
-export function drawTag(x, y) {
-  x = Math.round(x); y = Math.round(y);
-  tri(x, y + 1, 'down', 5, '#1b120c'); tri(x, y, 'down', 4, '#f07a1a');
-  R1(x - 12, y - 16, 24, 13, '#1b120c'); R1(x - 11, y - 15, 22, 11, '#f07a1a'); R1(x - 11, y - 15, 22, 1, '#ffb45e');
-  text('1P', x + 1, y - 13, 8, '#ffffff', 'center', null);
-}
-
-
-export const medal = pl => MEDAL[Math.min(pl, 4) - 1], medalL = pl => MEDAL_L[Math.min(pl, 4) - 1];
-
-
-export function panel(x, y, w, h) {
-  ctx.fillStyle = '#1b120c'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
-  ctx.fillStyle = '#e8a860'; ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = '#5a3a1f'; ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
-}
-
-
-export const blink = (rate = 2.5) => ((G.time * rate) | 0) % 2 === 0;
 
 
 function drawFinish() {

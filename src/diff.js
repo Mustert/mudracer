@@ -1,4 +1,5 @@
 import { G } from './g.js';
+import { getItem, setItem } from './save.js';
 
 // ---------- difficulty, kids mode and track effects ----------
 // LEICHT is the game as it always was (calm opponents), but without track effects. From MITTEL on the effects are on.
@@ -16,9 +17,9 @@ G.diff = 0;
 G.kids = false;
 G.selFx = false;
 try {
-  G.diff = Math.min(2, Math.max(0, parseInt(localStorage.getItem('mudracer-diff') || '0', 10) || 0));
-  G.kids = localStorage.getItem('mudracer-kids') === '1';
-  const fx = localStorage.getItem('mudracer-fx');
+  G.diff = Math.min(2, Math.max(0, parseInt(getItem('mudracer-diff') || '0', 10) || 0));
+  G.kids = getItem('mudracer-kids') === '1';
+  const fx = getItem('mudracer-fx');
   G.selFx = fx === null ? G.diff > 0 : fx === '1';
 } catch (e) {}
 
@@ -27,17 +28,17 @@ export const curDiff = () => G.kids ? 0 : G.diff;
 
 export function setDiff(d) {
   G.diff = (d + 3) % 3;
-  try { localStorage.setItem('mudracer-diff', String(G.diff)); } catch (e) {}
+  try { setItem('mudracer-diff', String(G.diff)); } catch (e) {}
 }
 
 export function setFx(on) {
   G.selFx = on;
-  try { localStorage.setItem('mudracer-fx', on ? '1' : '0'); } catch (e) {}
+  try { setItem('mudracer-fx', on ? '1' : '0'); } catch (e) {}
 }
 
 export function toggleKids() {
   G.kids = !G.kids;
-  try { localStorage.setItem('mudracer-kids', G.kids ? '1' : '0'); } catch (e) {}
+  try { setItem('mudracer-kids', G.kids ? '1' : '0'); } catch (e) {}
 }
 
 // are the track effects on? Grand Prix: from MITTEL. Single race and time trial: the switch in the options. Kids mode: never.

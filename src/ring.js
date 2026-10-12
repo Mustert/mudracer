@@ -1,11 +1,11 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { HALF, TAU, VH, VW, WH, WW, angDiff, clamp, ctx, hash } from './core.js';
-import { R1, disc, text } from './draw.js';
-import { eventOn, snap } from './events.js';
+import { HALF, VH, VW, WH, WW, angDiff, clamp, ctx, hash } from './core.js';
+import { R1, disc, text } from './gfx.js';
+import { eventOn, snap } from './undo.js';
 import { held } from './input.js';
 import { WATC, addP, drop } from './particles.js';
-import { placeOf } from './physics.js';
+import { placeOf } from './rank.js';
 import { cam } from './state.js';
 import { nearestIdx } from './bau.js';
 import { nearObstacles } from './grid.js';
@@ -299,22 +299,22 @@ function updateCrew(R, dt) {
   // side: towards the garages
   const fx = Math.cos(B.ang), fy = Math.sin(B.ang), nx = -fy, ny = fx, side = R.pit.garage && (R.pit.garage[0] - B.x) * nx < 0 ? -1 : 1;
   if (!R.crew) R.crew = CREW.map((m, k) => { const hf = -25 + k * 10, hl = (R.pit.half + 9) * side; return { ...m, k, l: m.l * (m.r === 'hose' ? side : 1), hx: B.x + fx * hf + nx * hl, hy: B.y + fy * hf + ny * hl, x: B.x + fx * hf + nx * hl, y: B.y + fy * hf + ny * hl, run: 0 }; });
-  const held = G.cars.find(c => c.boxT > 0), coming = held || G.cars.find(c => c.pit && !c.boxDone && Math.hypot(c.x - B.x, c.y - B.y) < 80);
-  R.crewCar = held || null;
+  const boxed = G.cars.find(c => c.boxT > 0), coming = boxed || G.cars.find(c => c.pit && !c.boxDone && Math.hypot(c.x - B.x, c.y - B.y) < 80);
+  R.crewCar = boxed || null;
   for (const m of R.crew) {
     const tx = coming ? B.x + fx * m.f + nx * m.l : m.hx, ty = coming ? B.y + fy * m.f + ny * m.l : m.hy, ox = m.x, oy = m.y;
     m.x += (tx - m.x) * Math.min(1, dt * 11); m.y += (ty - m.y) * Math.min(1, dt * 11);
     m.run = Math.hypot(m.x - ox, m.y - oy) / dt > 15;
-    if (!held) continue;
+    if (!boxed) continue;
     // at work: the wheel guns smoke and spark, the hose sprays water onto the car
-    if (m.r === 'gun' && Math.random() < dt * 14) { addP({ t: 'smoke', x: m.x + (held.x - m.x) * .4, y: m.y + (held.y - m.y) * .4, vx: (Math.random() - .5) * 16, vy: -10 - Math.random() * 10, life: .5, ml: .5 }); if (Math.random() < .4) addP({ t: 'd', x: m.x + (held.x - m.x) * .5, y: m.y + (held.y - m.y) * .5, z: 4, vx: (Math.random() - .5) * 60, vy: (Math.random() - .5) * 60, vz: 40, col: '#ffd23f', s: 1, life: .3, ml: .3 }); }
-    if (m.r === 'hose') for (let q = 0; q < 2; q++) addP({ t: 'd', x: m.x, y: m.y - 4, z: 6, vx: (held.x - m.x) * 2.4 + (Math.random() - .5) * 30, vy: (held.y - m.y) * 2.4 + (Math.random() - .5) * 30, vz: 25, col: WATC[(Math.random() * 4) | 0], s: Math.random() < .3 ? 2 : 1, life: .45, ml: .45 });
+    if (m.r === 'gun' && Math.random() < dt * 14) { addP({ t: 'smoke', x: m.x + (boxed.x - m.x) * .4, y: m.y + (boxed.y - m.y) * .4, vx: (Math.random() - .5) * 16, vy: -10 - Math.random() * 10, life: .5, ml: .5 }); if (Math.random() < .4) addP({ t: 'd', x: m.x + (boxed.x - m.x) * .5, y: m.y + (boxed.y - m.y) * .5, z: 4, vx: (Math.random() - .5) * 60, vy: (Math.random() - .5) * 60, vz: 40, col: '#ffd23f', s: 1, life: .3, ml: .3 }); }
+    if (m.r === 'hose') for (let q = 0; q < 2; q++) addP({ t: 'd', x: m.x, y: m.y - 4, z: 6, vx: (boxed.x - m.x) * 2.4 + (Math.random() - .5) * 30, vy: (boxed.y - m.y) * 2.4 + (Math.random() - .5) * 30, vz: 25, col: WATC[(Math.random() * 4) | 0], s: Math.random() < .3 ? 2 : 1, life: .45, ml: .45 });
   }
 }
 
 function drawCrew(R) {
   if (!R.crew) return;
-  const B = boxPose(R), c = R.crewCar;
+  const c = R.crewCar;
   // the hose: from the garage to the man who holds it
   const h = R.crew.find(m => m.r === 'hose');
   if (h && near(h.x, h.y) < 320) { ctx.fillStyle = '#2f6fd8'; const n = 12; for (let q = 0; q <= n; q++) { const t = q / n, sag = Math.sin(t * Math.PI) * 4; ctx.fillRect(Math.round(h.hx + (h.x - h.hx) * t + 3), Math.round(h.hy + (h.y - h.hy) * t + sag), 2, 2); } }

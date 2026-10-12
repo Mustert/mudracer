@@ -1,5 +1,5 @@
 import { G } from './g.js';
-import { R1, text } from './draw.js';
+import { R1, text } from './gfx.js';
 
 // ---------- Grand Prix trophies: one per cup, car and difficulty. The shape shows the difficulty, the metal the best place ----------
 // LEICHT: a small cup. MITTEL: a cup with handles on a two-step foot. SCHWER: a big cup with curled handles, a ruby, a star on the lid, on a wooden plinth.

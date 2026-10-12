@@ -12,10 +12,12 @@ export const MAXS = 135, ACC = 230, TRAIN_SPEED = 230, SOIL_LO = .04, SOIL_HI = 
 export const FONT = '"Press Start 2P", monospace';
 
 
-export const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+// the game canvas. The tests (npm test) load the modules without a page: there cv and ctx stay null and nothing is drawn.
+const doc = globalThis.document;
+export const cv = doc ? doc.getElementById('game') : null, ctx = cv ? cv.getContext('2d') : null;
 
 
-ctx.imageSmoothingEnabled = false;
+if (ctx) ctx.imageSmoothingEnabled = false;
 
 
 
@@ -27,9 +29,7 @@ function fit() {
 }
 
 
-addEventListener('resize', fit);
- 
-fit();
+if (cv) { addEventListener('resize', fit); fit(); }
 
 
 
@@ -63,6 +63,10 @@ export const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16
 
 
 export function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+
+
+// the sprite turn (0..ROTS-1) closest to an angle
+export function rotIndex(a) { return (((Math.round(a / TAU * ROTS) % ROTS) + ROTS) % ROTS) || 0; }
 
 
 export function angDiff(a, b) { let d = (a - b) % TAU; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; return d; }

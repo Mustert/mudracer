@@ -1,4 +1,5 @@
 import { G } from './g.js';
+import { getItem, setItem } from './save.js';
 import { CAR_DEFS } from './cars.js';
 import { TRACKS } from './tracks.js';
 
@@ -33,7 +34,7 @@ export const cupWon = cup => G.cupsWon.includes(cup.n);
 export function markCupWon(cup) {
   if (cupWon(cup)) return false;
   G.cupsWon.push(cup.n);
-  try { localStorage.setItem('mudracer-cups', JSON.stringify(G.cupsWon)); } catch (e) {}
+  try { setItem('mudracer-cups', JSON.stringify(G.cupsWon)); } catch (e) {}
   return true;
 }
 
@@ -42,12 +43,12 @@ export function markCupWon(cup) {
 export const CUSTOM_MAX = 12;
 G.custom = { tracks: [0, 1, 2], count: 5 };
 try {
-  const c = JSON.parse(localStorage.getItem('mudracer-custom') || 'null');
+  const c = JSON.parse(getItem('mudracer-custom') || 'null');
   if (c && Array.isArray(c.tracks)) G.custom.tracks = c.tracks.filter(i => Number.isInteger(i) && i >= 0 && i < TRACKS.length).slice(0, CUSTOM_MAX);
   if (c && c.count >= 2 && c.count <= 7) G.custom.count = c.count;
 } catch (e) {}
 
-export function saveCustom() { try { localStorage.setItem('mudracer-custom', JSON.stringify(G.custom)); } catch (e) {} }
+export function saveCustom() { try { setItem('mudracer-custom', JSON.stringify(G.custom)); } catch (e) {} }
 
 // ----- best final place and trophies of one car in one cup, per difficulty (0 LEICHT, 1 MITTEL, 2 SCHWER) -----
 // Saves from before the difficulties have no level in the key: those races were LEICHT (same opponents), a win there is the LEICHT trophy.
@@ -55,12 +56,12 @@ export function saveCustom() { try { localStorage.setItem('mudracer-custom', JSO
 const placeKey = (cup, def, d) => 'mudracer-gp-' + cup.n + (d ? '-d' + d : '') + '-' + def.id;
 
 export function loadBestPlace(cup, def, d) {
-  try { const v = parseInt(localStorage.getItem(placeKey(cup, def, d)), 10); return v >= 1 ? v : 0; } catch (e) { return 0; }
+  try { const v = parseInt(getItem(placeKey(cup, def, d)), 10); return v >= 1 ? v : 0; } catch (e) { return 0; }
 }
 
 export function saveBestPlace(cup, def, place, d) {
   const old = loadBestPlace(cup, def, d);
-  if (!old || place < old) try { localStorage.setItem(placeKey(cup, def, d), String(place)); } catch (e) {}
+  if (!old || place < old) try { setItem(placeKey(cup, def, d), String(place)); } catch (e) {}
 }
 
 // a trophy is the cup won (first place in the final standings) on that difficulty

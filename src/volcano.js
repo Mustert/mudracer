@@ -1,8 +1,8 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
 import { HALF, LAPS, TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, mk, vnoise } from './core.js';
-import { R1, disc, ell, text } from './draw.js';
-import { snap } from './events.js';
+import { R1, disc, ell, text } from './gfx.js';
+import { snap } from './undo.js';
 import { addP } from './particles.js';
 import { cam } from './state.js';
 import { near } from './trackfx.js';
@@ -31,7 +31,7 @@ export function initVolcano(T) {
 // ======================================================= always: crust, geyser, ford, rumbling
 
 export function volcanoUpdate(T, dt) {
-  const ev = T.ev, V = T.volcano, t = ev.t, P = G.player;
+  const ev = T.ev, V = T.volcano, t = ev.t;
   // the crust
   const per = ev.erupt ? CRUST.perErupt : CRUST.per, u = phase(t, per, 5), hotAt = per - CRUST.hot, warnAt = hotAt - CRUST.warn;
   const was = V.hot;
@@ -128,7 +128,7 @@ export function volcanoLane(c, i, lane) {
 export function initEruption(T) { T.ev.eruptOn = true; }
 
 function updateEruption(T, dt) {
-  const ev = T.ev, V = T.volcano;
+  const ev = T.ev;
   if (!ev.erupt) {
     if (!G.player || G.player.lap < 2) return;
     ev.erupt = { t: 0, next: 1.5, n: 0 };
@@ -268,7 +268,7 @@ let tubeDark = null;
 export function drawVolcanoAbove() {
   const T = G.T, V = T.volcano, ev = T.ev, P = G.player, tb = V.tube;
   if (tb) {
-    const N = T.N, inT = i => tb.i0 <= tb.i1 ? i >= tb.i0 && i <= tb.i1 : i >= tb.i0 || i <= tb.i1;
+    const inT = i => tb.i0 <= tb.i1 ? i >= tb.i0 && i <= tb.i1 : i >= tb.i0 || i <= tb.i1;
     if (P && inT(P.idx) && P.off < HALF + 6) {
       const g = (tubeDark && tubeDark.width === tb.W && tubeDark.height === tb.H ? tubeDark : (tubeDark = mk(tb.W, tb.H))).getContext('2d');
       g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, tb.W, tb.H); g.globalAlpha = 1; g.drawImage(tb.c, 0, 0);

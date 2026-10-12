@@ -1,4 +1,5 @@
 import { G } from './g.js';
+import { getItem } from './save.js';
 import { TRACKS } from './tracks.js';
 
 // ---------- game state ----------
@@ -29,7 +30,7 @@ G.pauseSel = 0;
 G.CTRL = 'std';
 
 
-try { G.CTRL = localStorage.getItem('mudracer-ctrl') === 'alt' ? 'alt' : 'std'; } catch (e) {}
+try { G.CTRL = getItem('mudracer-ctrl') === 'alt' ? 'alt' : 'std'; } catch (e) {}
 
 
 G.T = TRACKS[0];
@@ -50,6 +51,12 @@ G.selGhost = true;
 
 export const cam = { x: 0, y: 0 };
 
+// a new screen (state): its clock starts at 0. Modules that have to act on a change register with onState (events.js puts
+// the tracks back when a menu opens). This lives here and not in menus.js, so the game logic does not import the menus.
+const watchers = [];
+export function onState(fn) { watchers.push(fn); }
+export function setState(s) { G.state = s; G.stateTime = 0; for (const fn of watchers) fn(s); }
+
 
 // short: the name on a narrow (not focused) card of the main menu
 export const MODES = [{ id: 'gp', name: 'GRAND PRIX', short: 'GRAND PRIX', sub: 'CUPS' }, { id: 'single', name: 'EINZELSTRECKE', short: 'EINZEL', sub: 'FREIE WAHL' }, { id: 'tt', name: 'ZEITFAHREN', short: 'ZEITFAHREN', sub: 'BESTZEITEN' },
@@ -59,4 +66,4 @@ export const MODES = [{ id: 'gp', name: 'GRAND PRIX', short: 'GRAND PRIX', sub: 
 G.mainRow = 0;
 
 
-try { G.selGhost = localStorage.getItem('mudracer-ghost') !== '0'; } catch (e) {}
+try { G.selGhost = getItem('mudracer-ghost') !== '0'; } catch (e) {}

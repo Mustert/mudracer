@@ -1,4 +1,4 @@
-import { HALF, TAU, WH, WW, clamp, hash, hex, mk, vnoise } from './core.js';
+import { HALF, TAU, WH, WW, hash, hex, mk, vnoise } from './core.js';
 import { nearestIdx } from './bau.js';
 import { stampLine } from './volcanomap.js';
 
@@ -19,19 +19,19 @@ const K = Object.fromEntries(Object.entries({
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N }
 export function* jungleTerrain(S) {
-  const { def, ter, dist, near, path, nrm, N } = S, A = WW * WH, alt = new Uint8Array(A), plankM = new Uint8Array(A), logM = new Uint8Array(A);
+  const { def, ter, dist, near, path, nrm } = S, A = WW * WH, alt = new Uint8Array(A), plankM = new Uint8Array(A), logM = new Uint8Array(A);
   const off = j => { const i = near[j], p = path[i]; return (j % WW + .5 - p.x) * nrm[i].x + ((j / WW | 0) + .5 - p.y) * nrm[i].y; };
   yield;
   // the dry detour under the canopy: a narrow road of its own
   const detour = stampLine(def.detour.pts, def.detour.half, j => { if (ter[j] === 0 || ter[j] === 2) { ter[j] = 1; alt[j] = 1; } });
   yield;
   // the river: deep everywhere, shallow in the box of the ford; where it crosses the road at the gorge only the log bridge stays
-  const G = def.gorge, F = def.ford.rect, inFord = (x, y) => x >= F[0] && x <= F[2] && y >= F[1] && y <= F[3];
+  const GO = def.gorge, F = def.ford.rect, inFord = (x, y) => x >= F[0] && x <= F[2] && y >= F[1] && y <= F[3];
   const water = (x, y) => {
     if (x < 0 || y < 0 || x >= WW || y >= WH) return;
     const j = y * WW + x;
     if (inFord(x, y)) { ter[j] = 3; return; }
-    if (dist[j] < HALF + 2 && Math.abs(y - G.log) <= G.lh && Math.abs(x - G.x) < G.hw + 8) { ter[j] = 1; logM[j] = 1; return; }
+    if (dist[j] < HALF + 2 && Math.abs(y - GO.log) <= GO.lh && Math.abs(x - GO.x) < GO.hw + 8) { ter[j] = 1; logM[j] = 1; return; }
     ter[j] = 5;
   };
   for (const ch of def.river) for (let k = 1; k < ch.length; k++) {
@@ -57,11 +57,11 @@ export function* jungleTerrain(S) {
     if (Math.hypot(x + .5 - qx, y + .5 - qy) < qr + (vnoise(x * .3, y * .3, 112) - .5) * 2) ter[y * WW + x] = 10;
   yield;
   // the liana: it throws you over the gorge when it hangs on your side (see jungle.js); the current in the ford pushes towards the deep water
-  const [l0, l1] = G.lane, lip = nearestIdx(path, G.x - G.hw - 4, 70), p = path[lip];
-  const jumps = [{ x: G.x - G.hw - 4, y: p.y, tx: 1, ty: 0, lo: l0 - p.y, hi: l1 - p.y, vz: 95, push: 128, off: true, liana: true, sfx: 'tarzan' }];
+  const [l0, l1] = GO.lane, lip = nearestIdx(path, GO.x - GO.hw - 4, 70), p = path[lip];
+  const jumps = [{ x: GO.x - GO.hw - 4, y: p.y, tx: 1, ty: 0, lo: l0 - p.y, hi: l1 - p.y, vz: 95, push: 128, off: true, liana: true, sfx: 'tarzan' }];
   const pushes = [{ rect: F, fx: 0, fy: def.ford.push }];
   const T = def.temple.map(([x, y]) => nearestIdx(path, x, y));
-  return { alt, plankM, logM, detour, jumps, pushes, templeI: T, quick: def.quick || [], gorgeI: nearestIdx(path, G.x, 70), detourI: nearestIdx(path, def.detour.pts[0][0], def.detour.pts[0][1]), boardI: [bi0, bi1], fordI: nearestIdx(path, (F[0] + F[2]) / 2, 400) };
+  return { alt, plankM, logM, detour, jumps, pushes, templeI: T, quick: def.quick || [], gorgeI: nearestIdx(path, GO.x, 70), detourI: nearestIdx(path, def.detour.pts[0][0], def.detour.pts[0][1]), boardI: [bi0, bi1], fordI: nearestIdx(path, (F[0] + F[2]) / 2, 400) };
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, th, r, critters, darken, RT }
@@ -102,9 +102,9 @@ export function* paintJungle(S) {
 
   yield;
   // ----- the gorge: rocky banks where the river cuts through the road -----
-  const G = def.gorge;
+  const GO = def.gorge;
   for (let y = 30; y <= 110; y++) for (const s of [-1, 1]) for (let k = 0; k < 3; k++) {
-    const x = Math.round(G.x + s * (G.hw + k)), j = y * WW + x; if (ter[j] === 5 || RT.logM[j]) continue;
+    const x = Math.round(GO.x + s * (GO.hw + k)), j = y * WW + x; if (ter[j] === 5 || RT.logM[j]) continue;
     px(x, y, k === 0 ? K.stD : K.st1);
   }
 
@@ -119,7 +119,7 @@ export function* paintJungle(S) {
   // ----- the temple: a roof of mossy stone blocks over the road (see-through and dark from inside), walls along it, statues at the doors,
   // a waterfall falling through a hole in the hall (it washes) -----
   const [ti0, ti1] = RT.templeI, inT = i => ti0 <= ti1 ? i >= ti0 && i <= ti1 : i >= ti0 || i <= ti1;
-  let temple = null;
+  let temple;
   {
     let x0 = WW, y0 = WH, x1 = 0, y1 = 0;
     for (let j = 0; j < A; j++) if (dist[j] < HALF + 12 && inT(near[j])) { const x = j % WW, y = j / WW | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }

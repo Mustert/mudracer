@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { FONT, TAU, VW, clamp, ctx, hash, mk, rng, vnoise } from './core.js';
-import { R1, blink, disc, ell, text } from './draw.js';
+import { R1, blink, disc, ell, text } from './gfx.js';
 
 // ---------- title screen: a big race car splashing through mud puddles, forever ----------
 

@@ -3,7 +3,7 @@ import { isLocked } from './cars.js';
 import { VW, ctx } from './core.js';
 import { CUPS, cupLabel, cupLocked, cupReady, cupReward, cupTrackIdx, cupWon } from './cups.js';
 import { DIFFS, curDiff } from './diff.js';
-import { R1, disc, text, tri } from './draw.js';
+import { R1, disc, text, tri } from './gfx.js';
 import { drawLock, drawMenuBg, drawTrackPic, drawTrophy } from './screens.js';
 import { TRACKS } from './tracks.js';
 

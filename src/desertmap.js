@@ -21,7 +21,7 @@ export const canyonX = (C, y) => C.x + Math.sin(y / 23) * 5 * clamp((Math.abs(y 
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N }
 export function* desertTerrain(S) {
-  const { def, ter, dist, path, N } = S, A = WW * WH, alt = new Uint8Array(A);
+  const { def, ter, dist, path } = S, A = WW * WH, alt = new Uint8Array(A);
   yield;
   // the oasis: the shallow rim washes (also on the road), the deep middle lies beside the road
   if (def.oasis) {
@@ -63,7 +63,7 @@ export function* desertTerrain(S) {
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT }
 export function* paintDesert(S) {
-  const { def, d, set, setT, path, nrm, N, ter, dist, near, walls, wallMask, shore, sd, RT } = S, A = WW * WH, C = def.canyon;
+  const { def, d, set, setT, path, nrm, N, ter, dist, walls, wallMask, shore, sd, RT } = S, A = WW * WH, C = def.canyon;
   const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < WW && y < WH) set(y * WW + x, c); };
   const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= WW || y >= WH) return; const i = (y * WW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
   const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < WW && Y < WH) wallMask[Y * WW + X] = 1; } };

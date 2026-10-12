@@ -6,8 +6,8 @@ import { aiSkill, curDiff, fxActive } from './diff.js';
 import { setupEvents } from './events.js';
 import { loadThen, raceSets } from './idle.js';
 import { VH, VW, clamp, rng } from './core.js';
-import { POINTS, setState } from './menus.js';
-import { score } from './physics.js';
+import { setState } from './state.js';
+import { POINTS, score, standings } from './rank.js';
 import { cam } from './state.js';
 import { loadRecord, saveRecord, ttLap, ttSample } from './timetrial.js';
 import { TRACKS, tctx, trail, trimTracks, useTrack } from './tracks.js';
@@ -90,9 +90,6 @@ export function finishRace() {
     if (!prev || G.tt.t < prev.t) { G.tt.newBest = true; saveRecord(G.T, G.player.def, { t: G.tt.t, laps: G.tt.laps, g: G.tt.rec }); }
   }
 }
-
-
-export function standings() { return [...G.gp.entries].sort((a, b) => b.pts - a.pts); }
 
 
 export function beginCeremony() {
