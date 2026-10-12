@@ -37,13 +37,13 @@ Annahme der Analyse: Kinder sind die Hauptzielgruppe, SCHWER ist ein Bonus für 
 | T11 | N | erledigt (Technik-Umbau; `grid.js`, auch für rollende Reifen) | Jedes Auto prüft jeden Frame alle Hindernisse (Baustelle: 573) | `update.js` `updateRace` (Schleife über `G.T.trees`) | Spatial Hash |
 | T12 | N | erledigt (Technik-Umbau: `checkSpots` in `events.js` prüft im Dev-Modus Löcher, Koi-Sprünge, rollende Reifen, Dschungelbäume und Kipper gegen die gebaute Strecke und zeigt Abweichungen in der Fehlerleiste. Dabei gefunden: ein Koi im Garten springt 3 px vom Ufer ab, wird toleriert) | Ereignis-Koordinaten fest verdrahtet (Löcher, Kois, Kühe, Lotus, Pier); geänderte Streckenlinie verschiebt sie stillschweigend | `events.js` `COWS`, `HOLES`, `KOIS` | relativ zur Streckenlinie oder beim Bau prüfen und warnen |
 | T13 | N | erledigt (Technik-Umbau: `save.js`, alle Zugriffe laufen darüber, Version in `mudracer-save`, Schlüssel unverändert; Optionsmenü: SPIELSTAND SICHERN (Datei) und LADEN; im claude.ai-Artifact kann der Download vom Browser gesperrt sein, das Menü meldet es dann) | Speicherstände in vielen Einzelschlüsseln, ohne Gesamtversion, ohne Export | `cars.js`, `cups.js`, `timetrial.js`, `diff.js` | ein Save-Modul mit Version, Export/Import als JSON |
-| T14 | N | erledigt (Technik-Umbau; Kacheln à 400 Zeilen, pixelgleich geprüft; die Reifenspur-Ebene `trail` ist noch 480×6400) | Matschfahrt baut 480 × 6.400 px auf einmal, zeitweise ~50 MB Puffer (Mobilgeräte) | `run.js` `buildRun` | nur sichtbare Kacheln rendern |
-| T15 | M | offen | Weltgröße 800×450 ist an ~300 Stellen als `WW`/`WH` fest verdrahtet (Kartenmodule, Ereignisse); größere Strecken brauchen `T.W`/`T.H` überall | alle `*map.js`, Ereignis-Module | schrittweise auf `T.W`/`T.H` umstellen |
+| T14 | N | erledigt (Technik-Umbau; Kacheln à 400 Zeilen, pixelgleich geprüft; die Reifenspur-Ebene ist seit dem Folge-Umbau ebenfalls gekachelt, `layer.js`, Kacheln nur wo gefahren wird, in der Matschfahrt höchstens 24) | Matschfahrt baut 480 × 6.400 px auf einmal, zeitweise ~50 MB Puffer (Mobilgeräte) | `run.js` `buildRun` | nur sichtbare Kacheln rendern |
+| T15 | M | erledigt (Folge-Umbau 2026-10-12: jede Strecke kann `W`/`H` in ihrer Definition mitbringen, Standard bleibt 800×450; Bau- und Laufzeitmodule rechnen mit `T.W`/`T.H` bzw. `MW`/`MH`, nur `core.js` und `tracks.js` kennen den Standard. Geprüft: alle Strecken pixelgleich, eine doppelt so große Testkarte 1600×900 baut in ~0,4 s und lässt sich ohne Fehler zu Ende fahren) | Weltgröße 800×450 ist an ~300 Stellen als `WW`/`WH` fest verdrahtet (Kartenmodule, Ereignisse); größere Strecken brauchen `T.W`/`T.H` überall | alle `*map.js`, Ereignis-Module | schrittweise auf `T.W`/`T.H` umstellen |
 
 ### Stand Technik (2026-10-12)
 
 Technik-Umbau abgeschlossen: T1–T14 erledigt außer T7 (teilweise), dazu G4 und G11. Geprüft: alle 12 Strecken und die Matschfahrt pixelgleich zu vorher (Prüfsummen), alle Strecken als Rennen bis ins Ziel, ein ganzer Grand Prix, jedes Auto mit jeder Farbe, gleiche Rundenzeit bei 30 bis 240 Hz.
-Technisch noch offen: T15 (Weltgröße), der Rest von T7 (`G` in Bereiche teilen), die Reifenspur-Ebene der Matschfahrt (480×6400), ein Typcheck.
+Folge-Umbau (2026-10-12): T15 (Weltgröße pro Strecke) und die gekachelte Reifenspur-Ebene erledigt. Neue große Strecken geben in `TRACK_DEFS` einfach `W` und `H` an; Ereignis-Konstanten mit festen Koordinaten (`FLOOD`, `PIER`, Strand-Ufer bei y 412) gelten nur für ihre Strecke.
 
 Arbeitsweise: `npm run lint` und `npm test` vor jedem Commit. Dev-Hilfe: im Dev-Server gibt es `window.mudracer` (G, race, tracks, cars, `frameAt(now)` für einzelne Frames, auch wenn das Vorschaufenster verborgen ist und rAF schläft).
 
@@ -147,7 +147,7 @@ Gespeicherte Daten (`mudracer-car`, `mudracer-unlock`, `mudracer-cups`, `mudrace
 ## Priorität
 
 1. **Sofort (wenig Aufwand, viel Nutzen):** M1 (Batmobil erreichbar), B1 (Gasknopf), G2 (ganzzahlig skalieren), M9 (Koi-Ankündigung). (T9 und T6 erledigt.)
-2. **Planen (viel Aufwand, viel Nutzen):** G1 (RotSprite), D2 (Ausweichlinien bei Matsch), M2/M3 (KI), M10 (Ziele für die Matschfahrt), T15 (Weltgröße, für größere Strecken). (T3, T4, T5 erledigt.)
+2. **Planen (viel Aufwand, viel Nutzen):** G1 (RotSprite), D2 (Ausweichlinien bei Matsch), M2/M3 (KI), M10 (Ziele für die Matschfahrt), G8/M6 (Hitboxen). (T3, T4, T5, T15 erledigt.)
 3. **Nebenbei:** G6, M13. (G4, T8, T10 erledigt.)
 4. **Später:** B4, B9 (PWA), Rest von T7. (T14 erledigt.)
 5. **Große Features (aus den Ideen):** I4 Items, I12 Zwei-Spieler-Modus, I6 Drift, I9 Werkstatt-Ausbau. Reihenfolge laut alter Ideenliste: erst Items, dann Zwei-Spieler, dann Werkstatt.

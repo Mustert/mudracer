@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { HALF, LAPS, TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, mk, vnoise } from './core.js';
+import { HALF, LAPS, TAU, VH, VW, clamp, ctx, hash, hex, mk, vnoise } from './core.js';
 import { R1, disc, ell, text } from './gfx.js';
 import { snap } from './undo.js';
 import { addP } from './particles.js';
@@ -64,7 +64,7 @@ export function volcanoUpdate(T, dt) {
 
 // the ground under a car: heat (close to lava it gets hot, water cools), ash dust; a hot car smokes and is slower
 export function volcanoGround(c, sp, dt) {
-  const V = G.T.volcano, gi = ((clamp(c.y | 0, 0, WH - 1)) >> 2) * V.GW + (clamp(c.x | 0, 0, WW - 1) >> 2), fire = c.def.id === 'feuerwehr';
+  const V = G.T.volcano, gi = ((clamp(c.y | 0, 0, G.T.H - 1)) >> 2) * V.GW + (clamp(c.x | 0, 0, G.T.W - 1) >> 2), fire = c.def.id === 'feuerwehr';
   c.heat = c.heat || 0;
   if (V.heat[gi] || c.surf === 16) c.heat = Math.min(1, c.heat + dt * (fire ? .15 : .3)); else c.heat = Math.max(0, c.heat - dt * .06);
   if (c.surf === 3) { c.heat = 0; c.hot = false; }
@@ -132,16 +132,16 @@ function updateEruption(T, dt) {
   if (!ev.erupt) {
     if (!G.player || G.player.lap < 2) return;
     ev.erupt = { t: 0, next: 1.5, n: 0 };
-    snap(T, 0, 0, WW, WH); // lava spots turn to ash on the ground; this puts it back after the race
+    snap(T, 0, 0, T.W, T.H); // lava spots turn to ash on the ground; this puts it back after the race
     SFX.bang(); G.jumpShake = .9; ev.quake = 2;
     // the two places of the lava tongue: the road pixels on one half, over the whole width of the stream
     ev.tongues = (T.def.tongue || []).map(([x, y]) => {
-      const pix = [], i = T.near[y * WW + x], p = T.path[i], nm = T.nrm[i];
+      const pix = [], i = T.near[y * T.W + x], p = T.path[i], nm = T.nrm[i];
       for (let yy = y - 40; yy <= y + 40; yy++) for (let xx = x - 14; xx <= x + 14; xx++) {
-        const j = yy * WW + xx; if (T.dist[j] >= HALF + 1 || T.ter[j] !== 1) continue;
+        const j = yy * T.W + xx; if (T.dist[j] >= HALF + 1 || T.ter[j] !== 1) continue;
         if ((xx + .5 - p.x) * nm.x + (yy + .5 - p.y) * nm.y > -1) pix.push(j);
       }
-      return { x, y, pix, pic: lavaPic(pix) };
+      return { x, y, pix, pic: lavaPic(T, pix) };
     });
   }
   const e = ev.erupt; e.t += dt;
@@ -168,16 +168,16 @@ function updateEruption(T, dt) {
     if (near(b.x, b.y) < 380) SFX.boom(clamp(1 - near(b.x, b.y) / 380, .2, 1));
     const pix = [], old = [];
     for (let y = Math.round(b.y - BOMB.sr); y <= b.y + BOMB.sr; y++) for (let x = Math.round(b.x - BOMB.sr); x <= b.x + BOMB.sr; x++) {
-      if (x < 0 || y < 0 || x >= WW || y >= WH || Math.hypot(x + .5 - b.x, y + .5 - b.y) > BOMB.sr - .5 + (vnoise(x * .3, y * .3, 99) - .5) * 2) continue;
-      const j = y * WW + x; if (T.ter[j] === 15 || T.ter[j] === 16 || T.ter[j] === 3) continue; pix.push(j); old.push(T.ter[j]); T.ter[j] = 15;
+      if (x < 0 || y < 0 || x >= T.W || y >= T.H || Math.hypot(x + .5 - b.x, y + .5 - b.y) > BOMB.sr - .5 + (vnoise(x * .3, y * .3, 99) - .5) * 2) continue;
+      const j = y * T.W + x; if (T.ter[j] === 15 || T.ter[j] === 16 || T.ter[j] === 3) continue; pix.push(j); old.push(T.ter[j]); T.ter[j] = 15;
     }
-    ev.spots.push({ x: b.x, y: b.y, t: 0, pix, pic: lavaPic(pix) });
+    ev.spots.push({ x: b.x, y: b.y, t: 0, pix, pic: lavaPic(T, pix) });
   }
   for (let q = ev.spots.length - 1; q >= 0; q--) {
     const s = ev.spots[q]; s.t += dt; if (s.t < BOMB.spot) continue;
     // it cools down to a patch of ash
     const b = T.base.getContext('2d'), MUD = T.th.mud.map(hex), x0 = Math.round(s.x - 10), y0 = Math.round(s.y - 10), img = b.getImageData(x0, y0, 21, 21), d = img.data;
-    for (const j of s.pix) { T.ter[j] = 2; const x = j % WW, y = j / WW | 0, c = MUD[(hash(x, y, 100) * 3) | 0], k = ((y - y0) * 21 + x - x0) * 4; if (k >= 0 && k < d.length) { d[k] = c[0]; d[k + 1] = c[1]; d[k + 2] = c[2]; } }
+    for (const j of s.pix) { T.ter[j] = 2; const x = j % T.W, y = j / T.W | 0, c = MUD[(hash(x, y, 100) * 3) | 0], k = ((y - y0) * 21 + x - x0) * 4; if (k >= 0 && k < d.length) { d[k] = c[0]; d[k + 1] = c[1]; d[k + 2] = c[2]; } }
     b.putImageData(img, x0, y0); ev.spots.splice(q, 1);
   }
   // the lava tongue over the serpentine: it glows, then it covers one half of the road for a while, then the other place
@@ -191,12 +191,12 @@ function updateEruption(T, dt) {
 }
 
 // a picture of lava over some pixels (lava spots, the tongue)
-function lavaPic(pix) {
+function lavaPic(T, pix) {
   if (!pix.length) return null;
-  let x0 = WW, y0 = WH, x1 = 0, y1 = 0; for (const j of pix) { const x = j % WW, y = j / WW | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  let x0 = T.W, y0 = T.H, x1 = 0, y1 = 0; for (const j of pix) { const x = j % T.W, y = j / T.W | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
   const W = x1 - x0 + 1, H = y1 - y0 + 1, cv = mk(W, H), g = cv.getContext('2d'), img = g.createImageData(W, H), q = img.data;
   for (const j of pix) {
-    const x = j % WW, y = j / WW | 0, v = vnoise(x / 6, y / 6, 101), c = v > .7 ? [255, 208, 74] : v > .4 ? [255, 162, 31] : [255, 122, 26], k = ((y - y0) * W + x - x0) * 4;
+    const x = j % T.W, y = j / T.W | 0, v = vnoise(x / 6, y / 6, 101), c = v > .7 ? [255, 208, 74] : v > .4 ? [255, 162, 31] : [255, 122, 26], k = ((y - y0) * W + x - x0) * 4;
     q[k] = c[0]; q[k + 1] = c[1]; q[k + 2] = c[2]; q[k + 3] = 255;
   }
   g.putImageData(img, 0, 0);
@@ -210,8 +210,8 @@ const inView = (x, y, m = 40) => x > cam.x - m && x < cam.x + VW + m && y > cam.
 export function drawVolcanoGround() {
   const T = G.T, V = T.volcano, ev = T.ev, k = Math.floor(G.time * 4);
   // the lava shimmers, the cracks in the road glow on and off
-  for (let q = 0; q < 50 && V.lavaPix.length; q++) { const p = V.lavaPix[(hash(q, k, 102) * V.lavaPix.length) | 0]; R1(p % WW, (p / WW) | 0, 2, 1, q % 3 ? '#ffe27a' : '#fff4c0'); }
-  for (let q = 0; q < 14 && V.glowPix.length; q++) { const p = V.glowPix[(hash(q, Math.floor(G.time * 2), 103) * V.glowPix.length) | 0]; R1(p % WW, (p / WW) | 0, 1, 1, '#ff9a4a'); }
+  for (let q = 0; q < 50 && V.lavaPix.length; q++) { const p = V.lavaPix[(hash(q, k, 102) * V.lavaPix.length) | 0]; R1(p % T.W, (p / T.W) | 0, 2, 1, q % 3 ? '#ffe27a' : '#fff4c0'); }
+  for (let q = 0; q < 14 && V.glowPix.length; q++) { const p = V.glowPix[(hash(q, Math.floor(G.time * 2), 103) * V.glowPix.length) | 0]; R1(p % T.W, (p / T.W) | 0, 1, 1, '#ff9a4a'); }
   // bubbles burst on the crater lake
   const [cx, cy, crx, cry] = V.crater;
   if (inView(cx, cy, 120)) for (let q = 0; q < 6; q++) {

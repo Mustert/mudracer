@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { HALF, VH, VW, WH, WW, angDiff, clamp, ctx, hash } from './core.js';
+import { HALF, VH, VW, angDiff, clamp, ctx, hash } from './core.js';
 import { R1, disc, text } from './gfx.js';
 import { eventOn, snap } from './undo.js';
 import { held } from './input.js';
@@ -137,12 +137,12 @@ export function initReifen(T) {
   ev.rollers = (T.def.rollers || []).map(([x, y, per, t0], k) => {
     const i = nearestIdx(T.path, x, y), p = T.path[i], n = T.nrm[i], tg = T.tan[i];
     // from the side that lies further out
-    const s = Math.hypot(p.x + n.x * 40 - WW / 2, p.y + n.y * 40 - WH / 2) > Math.hypot(p.x - n.x * 40 - WW / 2, p.y - n.y * 40 - WH / 2) ? 1 : -1;
+    const s = Math.hypot(p.x + n.x * 40 - T.W / 2, p.y + n.y * 40 - T.H / 2) > Math.hypot(p.x - n.x * 40 - T.W / 2, p.y - n.y * 40 - T.H / 2) ? 1 : -1;
     const o = HALF + 14;
     return { k, per, t0, sx: p.x + n.x * s * o, sy: p.y + n.y * s * o, ex: p.x - n.x * s * o, ey: p.y - n.y * s * o, tx: tg.x, ty: tg.y,
       mx: p.x + n.x * s * (HALF + 27) - tg.x * 26, my: p.y + n.y * s * (HALF + 27) - tg.y * 26, flag: false, cyc: -1, second: 0 };
   });
-  snap(T, 0, 0, WW, WH); // the smeared oil changes the ground; this puts it back after the race
+  snap(T, 0, 0, T.W, T.H); // the smeared oil changes the ground; this puts it back after the race
 }
 
 function addTyre(ev, t) {
@@ -164,7 +164,7 @@ export function updateReifen(T, dt) {
   for (let q = ev.tyres.length - 1; q >= 0; q--) {
     const ty = ev.tyres[q];
     ty.x += ty.vx * dt; ty.y += ty.vy * dt; ty.hitT -= dt; ty.ownT -= dt;
-    const sp = Math.hypot(ty.vx, ty.vy), t = T.ter[clamp(ty.y | 0, 0, WH - 1) * WW + clamp(ty.x | 0, 0, WW - 1)], road = t === 1 || t === 9 || t === 8;
+    const sp = Math.hypot(ty.vx, ty.vy), t = T.ter[clamp(ty.y | 0, 0, T.H - 1) * T.W + clamp(ty.x | 0, 0, T.W - 1)], road = t === 1 || t === 9 || t === 8;
     // a rolling tyre keeps going on the road, grass and gravel stop it
     const f = road ? (ty.roll ? .25 : 3) : t === 7 ? 4 : 1.8;
     ty.vx *= Math.exp(-f * dt); ty.vy *= Math.exp(-f * dt);
@@ -174,7 +174,7 @@ export function updateReifen(T, dt) {
       const dx = ty.x - o.x, dy = ty.y - o.y, d = Math.hypot(dx, dy), mn = o.r + 7;
       if (d < mn && d > 0) { const nx = dx / d, ny = dy / d, vn = ty.vx * nx + ty.vy * ny; ty.x = o.x + nx * mn; ty.y = o.y + ny * mn; if (vn < 0) { ty.vx -= 1.4 * vn * nx; ty.vy -= 1.4 * vn * ny; } }
     }
-    ty.x = clamp(ty.x, 4, WW - 4); ty.y = clamp(ty.y, 4, WH - 4);
+    ty.x = clamp(ty.x, 4, T.W - 4); ty.y = clamp(ty.y, 4, T.H - 4);
     ty.idle = !ty.roll ? ty.idle + dt * (road ? .4 : 1) : 0;
     if (ty.idle > 5) ev.tyres.splice(q, 1); // tyres that lie still are cleared away (on the road after a while longer)
   }
@@ -185,8 +185,8 @@ export function updateReifen(T, dt) {
     for (const s of [-8, 8]) {
       const wx = Math.round(c.x - fx * 11 - fy * s), wy = Math.round(c.y - fy * 11 + fx * s);
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-        const x = wx + dx, y = wy + dy; if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
-        const j = y * WW + x; if (T.ter[j] === 1 && !T.ring.pitMask[j]) T.ter[j] = 9;
+        const x = wx + dx, y = wy + dy; if (x < 0 || y < 0 || x >= T.W || y >= T.H) continue;
+        const j = y * T.W + x; if (T.ter[j] === 1 && !T.ring.pitMask[j]) T.ter[j] = 9;
       }
       tctx.globalAlpha = .16 * c.oilT; tctx.fillStyle = '#0a0a0c'; tctx.fillRect(wx - 1, wy - 1, 3, 3); tctx.globalAlpha = 1;
     }
@@ -274,7 +274,7 @@ export function drawMarshals(ev) {
 export function drawRingGround() {
   const R = G.T.ring; if (!R) return;
   const k = Math.floor(G.time * 4);
-  for (let q = 0; q < 10 && R.oilPix.length; q++) { const p = R.oilPix[(hash(q, k, 79) * R.oilPix.length) | 0]; R1(p % WW, (p / WW) | 0, 1, 1, ['#7a5ab8', '#3fa0aa', '#b08a4a'][q % 3]); }
+  for (let q = 0; q < 10 && R.oilPix.length; q++) { const p = R.oilPix[(hash(q, k, 79) * R.oilPix.length) | 0]; R1(p % G.T.W, (p / G.T.W) | 0, 1, 1, ['#7a5ab8', '#3fa0aa', '#b08a4a'][q % 3]); }
   // fans in the grandstands wave their flags
   for (const f of R.fans) {
     if (near(f.x, f.y) > 300) continue;

@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { LAPS, TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, vnoise } from './core.js';
+import { LAPS, TAU, VH, VW, clamp, ctx, hash, hex, vnoise } from './core.js';
 import { R1, disc, ell, text } from './gfx.js';
 import { held } from './input.js';
 import { snap } from './undo.js';
@@ -31,8 +31,8 @@ function cell(ev, k) { let c = ev.cells.get(k); if (!c) { c = { n: 0, hole: null
 function paintHole(T, h, open) {
   const b = T.base.getContext('2d'), r = 11, x0 = Math.round(h.x - r - 2), y0 = Math.round(h.y - r - 2), w = r * 2 + 5, img = b.getImageData(x0, y0, w, w), d = img.data;
   for (let y = y0; y < y0 + w; y++) for (let x = x0; x < x0 + w; x++) {
-    if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
-    const j = y * WW + x; if (!T.ice.lakeM[j]) continue;
+    if (x < 0 || y < 0 || x >= T.W || y >= T.H) continue;
+    const j = y * T.W + x; if (!T.ice.lakeM[j]) continue;
     const dd = Math.hypot(x + .5 - h.x, y + .5 - h.y) + (vnoise(x * .3, y * .3, 76) - .5) * 4; if (dd > r) continue;
     T.ter[j] = open ? 5 : 12;
     const c = open ? (dd > r - 2 ? [230, 246, 255] : dd > r - 4 ? [44, 110, 150] : [22, 64, 102]) : (dd > r - 1.5 ? [160, 210, 236] : hash(x, y, 77) < .1 ? [238, 250, 255] : [196, 234, 250]);
@@ -132,7 +132,7 @@ function updateFrost(T, dt) {
   if (!ev.frost) {
     if (!G.player || G.player.lap < 2) return;
     ev.frost = { t: 0, done: I.frost.map(() => 0) };
-    snap(T, 0, 0, WW, WH); // icy corners and snow piles change the ground; this puts it back after the race
+    snap(T, 0, 0, T.W, T.H); // icy corners and snow piles change the ground; this puts it back after the race
     SFX.frost();
   }
   const f = ev.frost; f.t += dt;
@@ -140,11 +140,11 @@ function updateFrost(T, dt) {
   const b = T.base.getContext('2d');
   I.frost.forEach((F, k) => {
     const p = clamp((f.t - 1 - k * 2.5) / 2.2, 0, 1), n = Math.floor(F.px.length * p); if (n <= f.done[k]) return;
-    let x0 = WW, y0 = WH, x1 = 0, y1 = 0;
-    for (let q = f.done[k]; q < n; q++) { const j = F.px[q], x = j % WW, y = j / WW | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    let x0 = T.W, y0 = T.H, x1 = 0, y1 = 0;
+    for (let q = f.done[k]; q < n; q++) { const j = F.px[q], x = j % T.W, y = j / T.W | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
     const img = b.getImageData(x0, y0, x1 - x0 + 1, y1 - y0 + 1), d = img.data, w = x1 - x0 + 1;
     for (let q = f.done[k]; q < n; q++) {
-      const j = F.px[q], x = j % WW, y = j / WW | 0; if (T.ter[j] !== 1) continue;
+      const j = F.px[q], x = j % T.W, y = j / T.W | 0; if (T.ter[j] !== 1) continue;
       T.ter[j] = 12;
       const fern = Math.abs(Math.sin(x * .7 + Math.sin(y * .5) * 2)) > .86 || Math.abs(Math.sin(y * .7 + Math.sin(x * .45) * 2)) > .9;
       const c = fern ? [250, 254, 255] : hash(x, y, 78) < .5 ? [190, 228, 244] : [174, 216, 238];
@@ -171,7 +171,7 @@ function updateAvalanche(T, dt) {
     const b = T.base.getContext('2d'), R = 22, x0 = Math.round(ex - R), y0 = Math.round(ey - R), img = b.getImageData(x0, y0, R * 2, R * 2), d = img.data, MUD = T.th.mud.map(hex), E = hex(T.th.mudEdge);
     for (let y = y0; y < y0 + R * 2; y++) for (let x = x0; x < x0 + R * 2; x++) {
       const e = ((x + .5 - ex) / R) ** 2 + ((y + .5 - ey) / (R * .7)) ** 2, lim = .8 + .4 * vnoise(x * .2, y * .2, 80 + k); if (e >= lim) continue;
-      const j = y * WW + x; if (T.ter[j] === 5) continue; T.ter[j] = 2;
+      const j = y * T.W + x; if (T.ter[j] === 5) continue; T.ter[j] = 2;
       const c = e > lim * .8 ? E : hash(x, y, 81) < .3 ? MUD[2] : MUD[0], i = ((y - y0) * R * 2 + x - x0) * 4; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2];
     }
     b.putImageData(img, x0, y0);
@@ -245,7 +245,7 @@ export function drawIceGround() {
     for (let q = 0; q < Math.min(6, C.n); q++) {
       let x = cx + (hash(k, q, 82) - .5) * 6, y = cy + (hash(k, q, 83) - .5) * 6, a = hash(k, q, 84) * TAU;
       const len = 4 + C.n * 1.3;
-      for (let s = 0; s < len; s++) { if (s % 3 === 0) a += (hash(k, q * 9 + s, 85) - .5) * 1.4; x += Math.cos(a); y += Math.sin(a); if (I.lakeM[clamp(Math.round(y), 0, WH - 1) * WW + clamp(Math.round(x), 0, WW - 1)]) ctx.fillRect(Math.round(x), Math.round(y), 1, 1); }
+      for (let s = 0; s < len; s++) { if (s % 3 === 0) a += (hash(k, q * 9 + s, 85) - .5) * 1.4; x += Math.cos(a); y += Math.sin(a); if (I.lakeM[clamp(Math.round(y), 0, T.H - 1) * T.W + clamp(Math.round(x), 0, T.W - 1)]) ctx.fillRect(Math.round(x), Math.round(y), 1, 1); }
     }
   }
   if (I.colony && near(I.colony.x, I.colony.y) < 340) for (let k = 0; k < 6; k++) {

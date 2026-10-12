@@ -1,4 +1,4 @@
-import { HALF, WH, WW, hash, hex, mk, vnoise } from './core.js';
+import { HALF, hash, hex, mk, vnoise } from './core.js';
 import { nearestIdx } from './bau.js';
 
 // ---------- Vulkan: the serpentine, the crater with its lava lake, the crust over the lava stream and the long way round it, the steam geyser
@@ -35,11 +35,11 @@ function polyPts(P) {
 }
 
 // a narrow road of its own (the long way round the crust, the short cut over the geyser): every pixel within `half` of the line
-export function stampLine(P, half, fn) {
+export function stampLine(P, half, fn, MW, MH) {
   const pts = polyPts(P), R = Math.ceil(half + 1), D = new Map();
-  for (const p of pts) for (let y = Math.max(0, Math.floor(p.y - R)); y <= Math.min(WH - 1, p.y + R); y++) for (let x = Math.max(0, Math.floor(p.x - R)); x <= Math.min(WW - 1, p.x + R); x++) {
+  for (const p of pts) for (let y = Math.max(0, Math.floor(p.y - R)); y <= Math.min(MH - 1, p.y + R); y++) for (let x = Math.max(0, Math.floor(p.x - R)); x <= Math.min(MW - 1, p.x + R); x++) {
     const dd = Math.hypot(x + .5 - p.x, y + .5 - p.y); if (dd >= half) continue;
-    const j = y * WW + x, o = D.get(j); if (o === undefined || dd < o) D.set(j, dd);
+    const j = y * MW + x, o = D.get(j); if (o === undefined || dd < o) D.set(j, dd);
   }
   for (const [j, dd] of D) fn(j, dd);
   return pts;
@@ -50,25 +50,25 @@ const fordX = (F, y) => F.x + Math.sin(y / 21) * 5 - (y - 330) * .05;
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N, stampAt }
 export function* volcanoTerrain(S) {
-  const { def, ter, dist, near, path, nrm } = S, A = WW * WH, alt = new Uint8Array(A), stoneM = new Uint8Array(A);
-  const off = j => { const i = near[j], p = path[i]; return (j % WW + .5 - p.x) * nrm[i].x + ((j / WW | 0) + .5 - p.y) * nrm[i].y; };
+  const { MW, MH, def, ter, dist, near, path, nrm } = S, A = MW * MH, alt = new Uint8Array(A), stoneM = new Uint8Array(A);
+  const off = j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; };
   yield;
   // the crater: a lake of lava in the middle of the map
   const [cx, cy, crx, cry] = def.crater;
   for (let y = cy - cry - 6; y <= cy + cry + 6; y++) for (let x = cx - crx - 6; x <= cx + crx + 6; x++) {
-    const j = y * WW + x; if (ter[j] !== 0) continue;
+    const j = y * MW + x; if (ter[j] !== 0) continue;
     if (((x + .5 - cx) / crx) ** 2 + ((y + .5 - cy) / cry) ** 2 < .9 + .2 * vnoise(x * .06, y * .06, 91)) ter[j] = 15;
   }
   yield;
   // the long way round the crust and the short cut over the geyser: narrow roads of their own
-  const bypass = stampLine(def.bypass.pts, def.bypass.half, j => { if (ter[j] === 0) { ter[j] = 1; alt[j] = 1; } });
-  const sc = stampLine(def.shortcut.pts, def.shortcut.half, j => { if (ter[j] === 0) { ter[j] = 1; alt[j] = 1; } });
+  const bypass = stampLine(def.bypass.pts, def.bypass.half, j => { if (ter[j] === 0) { ter[j] = 1; alt[j] = 1; } }, MW, MH);
+  const sc = stampLine(def.shortcut.pts, def.shortcut.half, j => { if (ter[j] === 0) { ter[j] = 1; alt[j] = 1; } }, MW, MH);
   yield;
   // the lava stream from the crater to the top edge: under the rim road it is covered by a crust, the long way crosses it on a stone bridge
   const crust = [];
   const [sx0, shw] = def.stream;
   for (let y = 0; y < cy - cry + 10; y++) for (let x = Math.floor(streamX(def.stream, y) - shw - 2); x <= streamX(def.stream, y) + shw + 2; x++) {
-    const j = y * WW + x, dd = Math.abs(x + .5 - streamX(def.stream, y)); if (dd >= shw + (vnoise(x * .2, y * .2, 92) - .5) * 3) continue;
+    const j = y * MW + x, dd = Math.abs(x + .5 - streamX(def.stream, y)); if (dd >= shw + (vnoise(x * .2, y * .2, 92) - .5) * 3) continue;
     if (alt[j]) { stoneM[j] = 1; continue; }
     if (dist[j] < HALF) { ter[j] = 16; crust.push(j); continue; }
     ter[j] = 15;
@@ -77,15 +77,15 @@ export function* volcanoTerrain(S) {
   // the lava ditch behind the geyser
   const [dx0, dy0, dx1, dy1] = def.ditch;
   for (let y = dy0; y <= dy1; y++) for (let x = dx0; x <= dx1; x++) {
-    const j = y * WW + x; if (dist[j] < HALF) continue;
+    const j = y * MW + x; if (dist[j] < HALF) continue;
     const e = Math.min(y - dy0, dy1 - y, x - dx0); if (e < (vnoise(x * .2, y * .2, 93) - .3) * 4) continue;
     ter[j] = 15;
   }
   yield;
   // the lava ford: a river from the crater to the bottom edge; the road crosses it on two stone bridges (lanes), one is always flooded
   const F = def.ford, lanes = F.lanes.map(o => ({ off: o, pix: [] }));
-  for (let y = cy + cry - 12; y < WH; y++) for (let x = Math.floor(fordX(F, y) - F.hw - 2); x <= fordX(F, y) + F.hw + 2; x++) {
-    const j = y * WW + x; if (Math.abs(x + .5 - fordX(F, y)) >= F.hw + (vnoise(x * .2, y * .2, 94) - .5) * 3) continue;
+  for (let y = cy + cry - 12; y < MH; y++) for (let x = Math.floor(fordX(F, y) - F.hw - 2); x <= fordX(F, y) + F.hw + 2; x++) {
+    const j = y * MW + x; if (Math.abs(x + .5 - fordX(F, y)) >= F.hw + (vnoise(x * .2, y * .2, 94) - .5) * 3) continue;
     if (dist[j] < HALF + 2) {
       const o = off(j), L = lanes.find(ln => Math.abs(o - ln.off) <= F.half);
       if (L) { ter[j] = 1; stoneM[j] = 1; L.pix.push(j); continue; }
@@ -97,12 +97,12 @@ export function* volcanoTerrain(S) {
   (def.ash || []).forEach(m => S.stampAt(m, 2));
   if (def.fall) {
     const [fx, fy] = def.fall;
-    for (let y = fy - 14; y <= fy + 14; y++) for (let x = fx - 26; x <= fx + 26; x++) if (((x + .5 - fx) / 24) ** 2 + ((y + .5 - fy) / 12) ** 2 < .9 + .2 * vnoise(x * .2, y * .2, 95)) ter[y * WW + x] = 3;
+    for (let y = fy - 14; y <= fy + 14; y++) for (let x = fx - 26; x <= fx + 26; x++) if (((x + .5 - fx) / 24) ** 2 + ((y + .5 - fy) / 12) ** 2 < .9 + .2 * vnoise(x * .2, y * .2, 95)) ter[y * MW + x] = 3;
   }
   yield;
   // heat: a coarse grid (4px cells) of everything that is close to lava (up to about 36px)
-  const GW = WW >> 2, GH = Math.ceil(WH / 4), hot = new Uint8Array(GW * GH), heat = new Uint8Array(GW * GH);
-  for (let j = 0; j < A; j++) if (ter[j] === 15 || ter[j] === 16) hot[((j / WW | 0) >> 2) * GW + ((j % WW) >> 2)] = 1;
+  const GW = MW >> 2, GH = Math.ceil(MH / 4), hot = new Uint8Array(GW * GH), heat = new Uint8Array(GW * GH);
+  for (let j = 0; j < A; j++) if (ter[j] === 15 || ter[j] === 16) hot[((j / MW | 0) >> 2) * GW + ((j % MW) >> 2)] = 1;
   for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) {
     if (!hot[gy * GW + gx]) continue;
     for (let q = -9; q <= 9; q++) for (let p = -9; p <= 9; p++) { const X = gx + p, Y = gy + q; if (X >= 0 && Y >= 0 && X < GW && Y < GH && p * p + q * q <= 81) heat[Y * GW + X] = 1; }
@@ -117,10 +117,10 @@ export function* volcanoTerrain(S) {
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT }
 export function* paintVolcano(S) {
-  const { def, d, set, setT, path, nrm, N, ter, dist, near, walls, wallMask, shore, sd, RT } = S, A = WW * WH;
-  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < WW && y < WH) set(y * WW + x, c); };
-  const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= WW || y >= WH) return; const i = (y * WW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
-  const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < WW && Y < WH) wallMask[Y * WW + X] = 1; } };
+  const { MW, MH, def, d, set, setT, path, nrm, N, ter, dist, near, walls, wallMask, shore, sd, RT } = S, A = MW * MH;
+  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); };
+  const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= MW || y >= MH) return; const i = (y * MW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
+  const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < MW && Y < MH) wallMask[Y * MW + X] = 1; } };
   const lavaCol = (x, y, h) => {
     // glowing lava with dark plates of crust drifting on it
     const v = vnoise(x / 7, y / 7, sd + 60), pl = vnoise(x / 13 + 3, y / 13, sd + 61);
@@ -132,7 +132,7 @@ export function* paintVolcano(S) {
   // ----- the ground -----
   for (let j = 0; j < A; j++) {
     if (j % 40000 === 39999) yield;
-    const x = j % WW, y = j / WW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 6, y / 6, sd + 41) * .55 + h * .45;
+    const x = j % MW, y = j / MW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 6, y / 6, sd + 41) * .55 + h * .45;
     if (shore[j]) continue;
     let c;
     if (t === 0) {
@@ -152,13 +152,13 @@ export function* paintVolcano(S) {
   }
   yield;
   // a glowing rim along every edge of the lava
-  for (let j = WW; j < A - WW; j++) {
+  for (let j = MW; j < A - MW; j++) {
     if (ter[j] === 15) continue;
-    if (ter[j - 1] === 15 || ter[j + 1] === 15 || ter[j - WW] === 15 || ter[j + WW] === 15) { if (!RT.stoneM[j] && ter[j] !== 16) set(j, hash(j, 1, sd) < .5 ? K.glow : K.lavaD); }
+    if (ter[j - 1] === 15 || ter[j + 1] === 15 || ter[j - MW] === 15 || ter[j + MW] === 15) { if (!RT.stoneM[j] && ter[j] !== 16) set(j, hash(j, 1, sd) < .5 ? K.glow : K.lavaD); }
   }
   yield;
   // start line (chequered)
-  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * WW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
+  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * MW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
 
   yield;
   // ----- rock walls between the bends of the serpentine and beside the geyser: basalt boulders, solid -----
@@ -172,7 +172,7 @@ export function* paintVolcano(S) {
   for (const [x1, y1, x2, y2] of def.walls || []) {
     const L = Math.hypot(x2 - x1, y2 - y1);
     for (let t = 0; t <= L; t += 7) {
-      const x = Math.round(x1 + (x2 - x1) * t / L), y = Math.round(y1 + (y2 - y1) * t / L), j = y * WW + x;
+      const x = Math.round(x1 + (x2 - x1) * t / L), y = Math.round(y1 + (y2 - y1) * t / L), j = y * MW + x;
       if (dist[j] < HALF + 1 || RT.alt[j]) continue;
       walls.push({ x, y, r: 5 }); boulder(x, y, 5 + (hash(x, y, 47) * 2 | 0)); solid(x, y, 8);
     }
@@ -191,11 +191,11 @@ export function* paintVolcano(S) {
   const [ti0, ti1] = RT.tubeI, inTube = i => ti0 <= ti1 ? i >= ti0 && i <= ti1 : i >= ti0 || i <= ti1;
   let tube;
   {
-    let x0 = WW, y0 = WH, x1 = 0, y1 = 0;
-    for (let j = 0; j < A; j++) if (dist[j] < HALF + 9 && inTube(near[j])) { const x = j % WW, y = j / WW | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    let x0 = MW, y0 = MH, x1 = 0, y1 = 0;
+    for (let j = 0; j < A; j++) if (dist[j] < HALF + 9 && inTube(near[j])) { const x = j % MW, y = j / MW | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
     const W = x1 - x0 + 1, H = y1 - y0 + 1, cv = mk(W, H), g = cv.getContext('2d'), img = g.createImageData(W, H), q = img.data, cracks = [];
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-      const j = y * WW + x; if (!(dist[j] < HALF + 9 && inTube(near[j]))) continue;
+      const j = y * MW + x; if (!(dist[j] < HALF + 9 && inTube(near[j]))) continue;
       const dd = dist[j], h = hash(x, y, sd + 48), v = vnoise(x / 6, y / 6, sd + 49);
       let c = dd > HALF + 6 ? K.basD : v < .35 ? K.basD : v > .7 ? K.basL : K.bas;
       const cr = Math.abs(vnoise(x / 9, y / 9, sd + 50) - .5) < .03; if (cr) { c = h < .5 ? K.glowL : K.glow; if (h < .1) cracks.push({ x, y }); }
@@ -212,7 +212,7 @@ export function* paintVolcano(S) {
   if (def.fall) {
     const [fx, fy] = def.fall;
     for (let y = fy - 44; y <= fy - 12; y++) for (let x = fx - 22; x <= fx + 22; x++) {
-      const j = y * WW + x; if (ter[j] !== 0) continue;
+      const j = y * MW + x; if (ter[j] !== 0) continue;
       const e = Math.abs(x - fx) / 22 + (fy - 12 - y) / 40; if (e > 1.1) continue;
       px(x, y, hash(x, y, 51) < .3 ? K.basL : (x + y) % 7 === 0 ? K.basD : K.bas); wallMask[j] = 1;
     }
@@ -227,7 +227,7 @@ export function* paintVolcano(S) {
     for (let y = 0; y < 26; y++) for (let x = 0; x < 64; x++) dk(sx - 28 + x, sy - 8 + y, .72);
     for (const [x, col] of [[-32, K.cont], [2, K.contO]]) {
       R(x, -12, 30, 18, [30, 26, 24]); R(x + 1, -11, 28, 16, col); for (let k = 3; k < 28; k += 4) R(x + 1 + k, -11, 1, 16, col === K.cont ? K.contD : [180, 90, 30]);
-      for (let yy = -12; yy < 6; yy++) for (let xx = x; xx < x + 30; xx++) wallMask[(sy + yy) * WW + sx + xx] = 1;
+      for (let yy = -12; yy < 6; yy++) for (let xx = x; xx < x + 30; xx++) wallMask[(sy + yy) * MW + sx + xx] = 1;
       walls.push({ x: sx + x + 8, y: sy - 3, r: 8 }); walls.push({ x: sx + x + 22, y: sy - 3, r: 8 });
     }
     R(-24, -22, 1, 10, K.ant); R(-27, -24, 7, 1, K.ant); R(-24, -25, 1, 1, [255, 60, 60]); // antenna with a red lamp
@@ -237,23 +237,23 @@ export function* paintVolcano(S) {
 
   yield;
   // ----- scenery: basalt columns along the edges, charred stumps, steam vents -----
-  const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= WW - 2 || Y >= WH - 2) return false; const j = Y * WW + X; if (ter[j] !== 0 || dist[j] < HALF + 8 || wallMask[j] || RT.alt[j]) return false; } return true; };
+  const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= MW - 2 || Y >= MH - 2) return false; const j = Y * MW + X; if (ter[j] !== 0 || dist[j] < HALF + 8 || wallMask[j] || RT.alt[j]) return false; } return true; };
   const column = (x, y) => { // a basalt column seen from above: a hexagon
     for (let dy = -5; dy <= 5; dy++) for (let dx = -5; dx <= 5; dx++) { const ax = Math.abs(dx), ay = Math.abs(dy); if (ax * .5 + ay * .87 > 4.4 || ax > 4.6) continue; setT(x + dx, y + dy, ax * .5 + ay * .87 > 3.6 || ax > 3.8 ? K.basD : dy < -1 ? K.basL : K.bas); }
   };
   for (let k = 0, tries = 0; k < 70 && tries < 3000; tries++) {
-    const x = 4 + (S.r() * (WW - 8) | 0), y = 4 + (S.r() * (WH - 8) | 0);
-    const edge = x < 30 || y < 20 || x > WW - 40 || y > WH - 14; if (!edge || !okOff(x, y, 5)) continue;
+    const x = 4 + (S.r() * (MW - 8) | 0), y = 4 + (S.r() * (MH - 8) | 0);
+    const edge = x < 30 || y < 20 || x > MW - 40 || y > MH - 14; if (!edge || !okOff(x, y, 5)) continue;
     column(x, y); walls.push({ x, y, r: 4 }); solid(x, y, 5); k++;
   }
   for (let k = 0, tries = 0; k < 10 && tries < 600; tries++) {
-    const x = 6 + (S.r() * (WW - 12) | 0), y = 6 + (S.r() * (WH - 12) | 0); if (!okOff(x, y, 6)) continue;
+    const x = 6 + (S.r() * (MW - 12) | 0), y = 6 + (S.r() * (MH - 12) | 0); if (!okOff(x, y, 6)) continue;
     for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (dx * dx + dy * dy <= 10) px(x + dx, y + dy, dx * dx + dy * dy > 6 ? [20, 16, 14] : (Math.round(Math.hypot(dx, dy)) % 2 ? [60, 40, 30] : [34, 26, 22]));
     walls.push({ x, y, r: 3 }); k++;
   }
   const vents = [];
   for (let k = 0, tries = 0; k < 7 && tries < 600; tries++) {
-    const x = 6 + (S.r() * (WW - 12) | 0), y = 6 + (S.r() * (WH - 12) | 0); if (!okOff(x, y, 4)) continue;
+    const x = 6 + (S.r() * (MW - 12) | 0), y = 6 + (S.r() * (MH - 12) | 0); if (!okOff(x, y, 4)) continue;
     for (let q = -4; q <= 4; q++) px(x + q, y + Math.round(Math.sin(q) * 1.2), [24, 20, 18]); vents.push({ x, y, k }); k++;
   }
 
@@ -261,9 +261,9 @@ export function* paintVolcano(S) {
   // ----- the crust when the stream breaks through, and the flooded stone bridge of the ford: pictures of lava to lay over the ground -----
   const lavaPic = pix => {
     if (!pix.length) return null;
-    let x0 = WW, y0 = WH, x1 = 0, y1 = 0; for (const j of pix) { const x = j % WW, y = j / WW | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    let x0 = MW, y0 = MH, x1 = 0, y1 = 0; for (const j of pix) { const x = j % MW, y = j / MW | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
     const W = x1 - x0 + 1, H = y1 - y0 + 1, cv = mk(W, H), g = cv.getContext('2d'), img = g.createImageData(W, H), q = img.data;
-    for (const j of pix) { const x = j % WW, y = j / WW | 0, c = lavaCol(x, y, hash(x, y, 52)), k = ((y - y0) * W + x - x0) * 4; q[k] = c[0]; q[k + 1] = c[1]; q[k + 2] = c[2]; q[k + 3] = 255; }
+    for (const j of pix) { const x = j % MW, y = j / MW | 0, c = lavaCol(x, y, hash(x, y, 52)), k = ((y - y0) * W + x - x0) * 4; q[k] = c[0]; q[k + 1] = c[1]; q[k + 2] = c[2]; q[k + 3] = 255; }
     g.putImageData(img, 0, 0);
     return { c: cv, x: x0, y: y0, W, H };
   };

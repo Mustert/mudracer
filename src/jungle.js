@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { HALF, TAU, VH, VW, WH, WW, clamp, ctx, hash, mk } from './core.js';
+import { HALF, TAU, VH, VW, clamp, ctx, hash, mk } from './core.js';
 import { R1, disc, ell, text } from './gfx.js';
 import { addP } from './particles.js';
 import { cam } from './state.js';
@@ -110,7 +110,7 @@ export function jungleLane(c, i, lane) {
   const [b0, b1] = J.boardI, onB = b0 <= b1 ? i >= b0 && i <= b1 : i >= b0 || i <= b1;
   if (onB && c.def.mud < 1.15) return T.def.boardwalk[2];
   // deep swamp: never towards its middle
-  const bad = l => { const x = (p.x + n.x * l) | 0, y = (p.y + n.y * l) | 0; return x >= 0 && y >= 0 && x < WW && y < WH && T.ter[y * WW + x] === 10; };
+  const bad = l => { const x = (p.x + n.x * l) | 0, y = (p.y + n.y * l) | 0; return x >= 0 && y >= 0 && x < T.W && y < T.H && T.ter[y * T.W + x] === 10; };
   if (bad(lane)) for (const l of [lane + 14, lane - 14, lane + 24, lane - 24]) if (Math.abs(l) < 28 && !bad(l)) return l;
   return lane;
 }
@@ -209,7 +209,7 @@ function drawCroc(x, y, f, open, up) {
 // on the ground: the swamp bubbles, crocodiles, fallen trunks, standing rotten trees (their shadow first), the camp fire, the water in the temple hall
 export function drawJungleGround() {
   const T = G.T, J = T.jungle, ev = T.ev, k = Math.floor(G.time * 3);
-  for (let q = 0; q < 8 && J.swampPix.length; q++) { const p = J.swampPix[(hash(q, k, 114) * J.swampPix.length) | 0]; R1(p % WW, (p / WW) | 0, 2, 2, '#8aa83a'); }
+  for (let q = 0; q < 8 && J.swampPix.length; q++) { const p = J.swampPix[(hash(q, k, 114) * J.swampPix.length) | 0]; R1(p % T.W, (p / T.W) | 0, 2, 2, '#8aa83a'); }
   for (const [qx, qy, qr] of J.quick) if (inView(qx, qy)) { const ph = (G.time * 1.3 + qx) % 1; ctx.globalAlpha = 1 - ph; disc(Math.round(qx + Math.sin(qx + Math.floor(G.time * 1.3)) * qr * .5), Math.round(qy), Math.round(1 + ph * 3), '#6a8a3a'); ctx.globalAlpha = 1; }
   // the ford: lines of the current running downstream
   const F = J.ford.rect;

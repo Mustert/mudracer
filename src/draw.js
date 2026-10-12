@@ -12,7 +12,7 @@ import { drawVolcanoAbove, drawVolcanoGround, drawVolcanoSky } from './volcano.j
 import { drawJungleAbove, drawJungleGround, drawJungleSky } from './jungle.js';
 import { cam } from './state.js';
 import { GHOST_DT, fmtDelta, fmtTime, ghostAt } from './timetrial.js';
-import { trail } from './tracks.js';
+import { tctx } from './tracks.js';
 import { blink, disc, drawConfetti, drawFlag, drawTag, ell, medal, medalL, panel, R1, star, text } from './gfx.js';
 import { TRAIN } from './trainsprite.js';
 
@@ -276,7 +276,7 @@ export function drawRace() {
   const shake = G.T.run && G.run && G.run.shake > 0 ? Math.round((Math.random() - .5) * 20 * G.run.shake) : G.jumpShake > 0 ? Math.round((Math.random() - .5) * 14 * G.jumpShake) : kerb;
   const cx = clamp(Math.round(cam.x) + shake, 0, G.T.W - VW), cy = clamp(Math.round(cam.y) + shake, 0, G.T.H - VH), R = G.T.rail;
   if (G.T.run) drawRunLayer('base', cx, cy, 0, 0); else ctx.drawImage(G.T.base, cx, cy, VW, VH, 0, 0, VW, VH);
-  ctx.drawImage(trail, cx, cy, VW, VH, 0, 0, VW, VH);
+  tctx.draw(ctx, cx, cy, VW, VH, 0, 0);
   ctx.save(); ctx.translate(-cx, -cy);
   const wp = G.T.watPix, k = Math.floor(G.time * 3);
   if (wp.length) for (let j = 0; j < 40; j++) { const p = wp[(hash(j, k, 77) * wp.length) | 0]; ctx.fillStyle = j % 2 ? '#e8f7ff' : '#9fd6ff'; ctx.fillRect(p % G.T.W, (p / G.T.W) | 0, 1, 1); }

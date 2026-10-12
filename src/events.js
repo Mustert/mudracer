@@ -1,7 +1,7 @@
 import { G } from './g.js';
 import { reportError } from './errors.js';
 import { SFX } from './audio.js';
-import { HALF, TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, mk, pick, vnoise } from './core.js';
+import { HALF, TAU, VH, VW, clamp, ctx, hash, hex, mk, pick, vnoise } from './core.js';
 import { R1, disc, text } from './gfx.js';
 import { addP, drop, mudBurst, splash, WATC } from './particles.js';
 import { cam, onState } from './state.js';
@@ -38,7 +38,7 @@ export function resetTrackEvents(T) {
     const b = bctx(T);
     for (const u of T.undo.reverse()) {
       b.putImageData(u.img, u.x, u.y);
-      for (let r = 0; r < u.h; r++) T.ter.set(u.ter.subarray(r * u.w, (r + 1) * u.w), (u.y + r) * WW + u.x);
+      for (let r = 0; r < u.h; r++) T.ter.set(u.ter.subarray(r * u.w, (r + 1) * u.w), (u.y + r) * T.W + u.x);
     }
     T.undo = []; T.flooded = null; if (T.shoreY0) { T.shoreY.set(T.shoreY0); T.shoreY0 = null; } T.mudPix = T.pix0.mud; T.watPix = T.pix0.wat;
   }
@@ -51,16 +51,16 @@ export function resetAllEvents() { for (const T of TRACKS) if (T.ev || (T.undo &
 
 // an irregular blob: paint(rel, x, y) gets the distance from the middle (0..1) and returns a colour; ter (optional) is written, the indices are returned
 function blob(T, cx, cy, rx, ry, seed, paint, ter) {
-  const R = Math.ceil(Math.max(rx, ry) * 1.3) + 2, x0 = clamp(Math.floor(cx - R), 0, WW - 1), y0 = clamp(Math.floor(cy - R), 0, WH - 1);
-  const x1 = clamp(Math.ceil(cx + R), 0, WW - 1), y1 = clamp(Math.ceil(cy + R), 0, WH - 1), w = x1 - x0 + 1, h = y1 - y0 + 1;
+  const R = Math.ceil(Math.max(rx, ry) * 1.3) + 2, x0 = clamp(Math.floor(cx - R), 0, T.W - 1), y0 = clamp(Math.floor(cy - R), 0, T.H - 1);
+  const x1 = clamp(Math.ceil(cx + R), 0, T.W - 1), y1 = clamp(Math.ceil(cy + R), 0, T.H - 1), w = x1 - x0 + 1, h = y1 - y0 + 1;
   const b = bctx(T), img = b.getImageData(x0, y0, w, h), d = img.data, hit = [];
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const dx = x + .5 - cx, dy = y + .5 - cy, e = (dx / rx) ** 2 + (dy / ry) ** 2, lim = .8 + .4 * vnoise(x * .14, y * .14, seed);
     if (e >= lim) continue;
     const c = paint(Math.sqrt(e / lim), x, y), k = ((y - y0) * w + (x - x0)) * 4;
     d[k] = c[0]; d[k + 1] = c[1]; d[k + 2] = c[2]; d[k + 3] = 255;
-    if (ter !== undefined) T.ter[y * WW + x] = ter;
-    hit.push(y * WW + x);
+    if (ter !== undefined) T.ter[y * T.W + x] = ter;
+    hit.push(y * T.W + x);
   }
   b.putImageData(img, x0, y0);
   return hit;
@@ -167,7 +167,7 @@ function initRain(T) {
   ev.holes = HOLES.map(([x, y, r0]) => {
     const r = Math.round(r0 * 1.3);
     // onto the road: pull a hole that lies outside towards the centre line
-    let j = clamp(y | 0, 0, WH - 1) * WW + clamp(x | 0, 0, WW - 1);
+    let j = clamp(y | 0, 0, T.H - 1) * T.W + clamp(x | 0, 0, T.W - 1);
     if (T.dist[j] > HALF - 10) {
       const i = T.near[j], p = T.path[i], dx = x - p.x, dy = y - p.y, l = Math.hypot(dx, dy) || 1, k = (HALF - 12) / l;
       x = p.x + dx * Math.min(1, k); y = p.y + dy * Math.min(1, k);
@@ -213,8 +213,8 @@ const WAVE = PIER_WAVE; // the same wavy line as the original shore
 function initFlood(T) { T.ev.flood = null; }
 
 function startFlood(T) {
-  snap(T, 0, FLOOD.y1 - 12, WW, WH - (FLOOD.y1 - 12));
-  T.watPix = T.pix0.wat.slice(); T.flooded = new Uint8Array(WW * WH);
+  snap(T, 0, FLOOD.y1 - 12, T.W, T.H - (FLOOD.y1 - 12));
+  T.watPix = T.pix0.wat.slice(); T.flooded = new Uint8Array(T.W * T.H);
   T.shoreY0 = Float32Array.from(T.shoreY);
   T.ev.flood = { p: 0, yf: FLOOD.y0 };
   T.ev.pier = true;
@@ -222,11 +222,11 @@ function startFlood(T) {
 }
 
 function paintFloodRows(T, f, yTop, yBot) {
-  const WAT = T.th.water.map(hex), b = bctx(T), h = yBot - yTop + 1, img = b.getImageData(0, yTop, WW, h), d = img.data, sd = 53;
+  const WAT = T.th.water.map(hex), b = bctx(T), h = yBot - yTop + 1, img = b.getImageData(0, yTop, T.W, h), d = img.data, sd = 53;
   for (let y = yTop; y <= yBot; y++) {
-    for (let x = 0; x < WW; x++) {
+    for (let x = 0; x < T.W; x++) {
       const fc = f.yf + WAVE(x); if (y < fc) continue;
-      const j = y * WW + x, k = ((y - yTop) * WW + x) * 4, sy0 = T.shoreY0[x], land = y < sy0;
+      const j = y * T.W + x, k = ((y - yTop) * T.W + x) * 4, sy0 = T.shoreY0[x], land = y < sy0;
       if (y - sy0 >= 24) continue;                       // the deep sea stays as it is
       let c;
       if (land && T.dist[j] < FLOOD.pier && T.near[j] >= T.pier[0] && T.near[j] <= T.pier[1]) {
@@ -253,7 +253,7 @@ function paintFloodRows(T, f, yTop, yBot) {
       b.fillStyle = '#3b2512'; b.fillRect(x - 1, y - 1, 3, 3); b.fillStyle = '#8a6440'; b.fillRect(x, y - 1, 1, 1);
     }
   }
-  tctx.clearRect(0, yTop, WW, h); // tyre tracks and mud splashes are washed away
+  tctx.clearRect(0, yTop, T.W, h); // tyre tracks and mud splashes are washed away
 }
 
 function updateFlood(T, dt) {
@@ -263,8 +263,8 @@ function updateFlood(T, dt) {
   const prev = f.yf;
   f.p = Math.min(1, f.p + dt / FLOOD.dur);
   f.yf = FLOOD.y0 - (FLOOD.y0 - FLOOD.y1) * f.p;
-  paintFloodRows(T, f, Math.max(0, Math.floor(f.yf - 8)), Math.min(WH - 1, Math.ceil(prev + 8 + 3)));
-  for (let x = 0; x < WW; x++) T.shoreY[x] = Math.min(T.shoreY0[x], f.yf + WAVE(x)); // foam lines and waves follow the rising sea
+  paintFloodRows(T, f, Math.max(0, Math.floor(f.yf - 8)), Math.min(T.H - 1, Math.ceil(prev + 8 + 3)));
+  for (let x = 0; x < T.W; x++) T.shoreY[x] = Math.min(T.shoreY0[x], f.yf + WAVE(x)); // foam lines and waves follow the rising sea
 }
 
 // ======================================================= Strand: beach showers (always on, not an event)
@@ -359,7 +359,7 @@ function initKipper(T) {
     let bi = 0, bd = 1e12; for (let i = 0; i < T.N; i++) { const dd = (T.path[i].x - x) ** 2 + (T.path[i].y - y) ** 2; if (dd < bd) { bd = dd; bi = i; } }
     const p = T.path[bi], n = T.nrm[bi], tg = T.tan[bi], ox = n.x * side, oy = n.y * side, cx = p.x + ox * (HALF + 3 + DT.len / 2), cy = p.y + oy * (HALF + 3 + DT.len / 2);
     // the truck starts outside of the world, so it drives in from the edge
-    let far = 40; while (far < 170) { const qx = cx + ox * far, qy = cy + oy * far; if (qx < -26 || qy < -26 || qx > WW + 26 || qy > WH + 26) break; far += 6; }
+    let far = 40; while (far < 170) { const qx = cx + ox * far, qy = cy + oy * far; if (qx < -26 || qy < -26 || qx > T.W + 26 || qy > T.H + 26) break; far += 6; }
     let ang = Math.atan2(oy, ox); const q = Math.round(ang / (Math.PI / 2)) * Math.PI / 2; if (Math.abs(ang - q) < .25) ang = q;
     return { k, per, t0, p, tg, ox, oy, cx, cy, far, ang, last: -1, dist: far, tilt: 0, rem: 1, show: false, cloud: null, piles: 0, beepN: -1 };
   });
@@ -498,7 +498,7 @@ const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois
 // dev server only (ANALYSE.md T12): some events have fixed places on the map (holes, koi leaps, rolling tyres, falling trees,
 // dump trucks). They are checked against the built track, so a changed course line that moves the road away is noticed at once.
 function checkSpots(T) {
-  const at = (x, y) => clamp(Math.round(y), 0, WH - 1) * WW + clamp(Math.round(x), 0, WW - 1), bad = [];
+  const at = (x, y) => clamp(Math.round(y), 0, T.H - 1) * T.W + clamp(Math.round(x), 0, T.W - 1), bad = [];
   const road = (x, y, slack, what) => { if (T.dist[at(x, y)] > HALF + slack) bad.push(what + ' ' + Math.round(x) + ',' + Math.round(y) + ' nicht auf der Strasse'); };
   if ((T.def.events || []).includes('regen')) for (const [x, y] of HOLES) road(x, y, 10, 'Loch');
   if ((T.def.events || []).includes('kois')) for (const [x, y, ang, half] of KOIS) for (const s of [-1, 1]) {

@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { SFX, ambience, engineSound, honk } from './audio.js';
-import { HALF, VH, VW, WW, angDiff, clamp, pick } from './core.js';
+import { HALF, VH, VW, angDiff, clamp, pick } from './core.js';
 import { DIFFS } from './diff.js';
 import { coarse, held, honkBtn, touchBox } from './input.js';
 import { setState } from './state.js';
@@ -278,7 +278,7 @@ export function update(dt) {
       addP({ t: 'd', x: h.nx, y: h.ny, z: 9, vx: (tx - h.nx) / ft, vy: (ty - h.ny) / ft, vz: 300 * ft / 2 - 9 / ft, col: pick(WATC), s: 1, life: 1, ml: 1 });
     }
     if (G.T.shoreY) {
-      G.T.boat.x += 9 * dt; if (G.T.boat.x > WW + 30) G.T.boat.x = -30;
+      G.T.boat.x += 9 * dt; if (G.T.boat.x > G.T.W + 30) G.T.boat.x = -30;
     }
     spawnAmbient(dt);
     if (G.T.th.space && Math.random() < dt * .5) addP({ t: 'shoot', x: cam.x + Math.random() * VW, y: cam.y - 5, vx: 160 + Math.random() * 80, vy: 90 + Math.random() * 40, life: 1.4, ml: 1.4 });

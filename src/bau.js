@@ -1,4 +1,4 @@
-import { HALF, WH, WW, hash, hex } from './core.js';
+import { HALF, hash, hex } from './core.js';
 
 // ---------- Baustelle: closed building yards, barriers that narrow the road, the crane with its hanging pipe, the leaking cement mixer ----------
 // The whole infield is "yard": solid ground that nobody can enter (a ring of solid circles along its edge), so there are no short cuts. The yards are
@@ -19,22 +19,22 @@ const CONT = [['#2d6aa8', '#1d4a7c', '#4a8cd0'], ['#b8392e', '#862419', '#d85a4c
 export const nearestIdx = (path, x, y) => { let bi = 0, bd = 1e12; for (let i = 0; i < path.length; i++) { const dx = path[i].x - x, dy = path[i].y - y, dd = dx * dx + dy * dy; if (dd < bd) { bd = dd; bi = i; } } return bi; };
 
 // the yards: every free cell inside one of the rectangles that is further than 6px from the road edge
-export function siteYards(def, ter, dist) {
-  const yard = new Uint8Array(WW * WH);
+export function siteYards(def, ter, dist, MW, MH) {
+  const yard = new Uint8Array(MW * MH);
   (def.yards || []).forEach(([x, y, w, h], k) => {
-    for (let yy = Math.max(0, y); yy < Math.min(WH, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(WW, x + w); xx++) {
-      const j = yy * WW + xx; if (ter[j] === 0 && dist[j] >= HALF + 6 && !yard[j]) yard[j] = k + 1;
+    for (let yy = Math.max(0, y); yy < Math.min(MH, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(MW, x + w); xx++) {
+      const j = yy * MW + xx; if (ter[j] === 0 && dist[j] >= HALF + 6 && !yard[j]) yard[j] = k + 1;
     }
   });
   return yard;
 }
 
 // solid circles along the edge of the yards (cells on the edge of the world do not count as an edge)
-export function siteRing(yard, walls) {
+export function siteRing(yard, walls, MW, MH) {
   const placed = [];
-  for (let y = 0; y < WH; y++) for (let x = 0; x < WW; x++) {
-    const j = y * WW + x; if (!yard[j]) continue;
-    const edge = (x > 0 && !yard[j - 1]) || (x < WW - 1 && !yard[j + 1]) || (y > 0 && !yard[j - WW]) || (y < WH - 1 && !yard[j + WW]);
+  for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
+    const j = y * MW + x; if (!yard[j]) continue;
+    const edge = (x > 0 && !yard[j - 1]) || (x < MW - 1 && !yard[j + 1]) || (y > 0 && !yard[j - MW]) || (y < MH - 1 && !yard[j + MW]);
     if (!edge) continue;
     const cx = x + .5, cy = y + .5;
     if (placed.some(p => (p[0] - cx) ** 2 + (p[1] - cy) ** 2 < 30)) continue;
@@ -44,14 +44,14 @@ export function siteRing(yard, walls) {
 
 // S: { def, d, set, setT, px, darken, band, path, tan, nrm, yard, walls, scatter, rock, sd }
 export function paintSite(S) {
-  const { def, d, path, tan, nrm, yard, walls } = S, lights = [];
-  const inY = (x, y) => x >= 0 && y >= 0 && x < WW && y < WH && yard[y * WW + x] > 0;
-  const py = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (inY(x, y)) S.set(y * WW + x, c); };
+  const { MW, MH, def, d, path, tan, nrm, yard, walls } = S, lights = [];
+  const inY = (x, y) => x >= 0 && y >= 0 && x < MW && y < MH && yard[y * MW + x] > 0;
+  const py = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (inY(x, y)) S.set(y * MW + x, c); };
   const rect = (x0, y0, w, h, c) => { for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) py(x0 + xx, y0 + yy, c); };
   const shade = (x0, y0, w, h, k = .7, any = false) => {
     for (let yy = y0; yy < y0 + h; yy++) for (let xx = x0; xx < x0 + w; xx++) {
-      if (xx < 0 || yy < 0 || xx >= WW || yy >= WH || (!any && !yard[yy * WW + xx])) continue;
-      const i = (yy * WW + xx) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k;
+      if (xx < 0 || yy < 0 || xx >= MW || yy >= MH || (!any && !yard[yy * MW + xx])) continue;
+      const i = (yy * MW + xx) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k;
     }
   };
   const ell = (cx, cy, rx, ry, f) => { for (let dy = -ry; dy <= ry; dy++) for (let dx = -rx; dx <= rx; dx++) { const e = (dx / rx) ** 2 + (dy / ry) ** 2; if (e <= 1) { const c = f(dx, dy, e); if (c) py(cx + dx, cy + dy, c); } } };
@@ -123,7 +123,7 @@ export function paintSite(S) {
     const i = nearestIdx(path, x, y), p = path[i], tg = tan[i], nm = nrm[i];
     S.band(i, 15, (xx, yy, a, c) => {
       const cs = c * side; if (cs < 15 || cs > 24 || Math.abs(a) > 13) return;
-      S.set(yy * WW + xx, (cs > 22.6 || cs < 16.4 || Math.abs(a) > 11.6) ? K.bOut : (((a + 13) / 6.5 | 0) & 1) ? K.bOr : K.bWh);
+      S.set(yy * MW + xx, (cs > 22.6 || cs < 16.4 || Math.abs(a) > 11.6) ? K.bOut : (((a + 13) / 6.5 | 0) & 1) ? K.bOr : K.bWh);
     });
     for (const a of [-8, 0, 8]) walls.push({ x: p.x + tg.x * a + nm.x * side * 19.5, y: p.y + tg.y * a + nm.y * side * 19.5, r: 4.5 });
     for (const [a, l] of [[-54, 34], [-42, 30], [-30, 26], [-18, 22], [22, 23], [34, 28]]) {
@@ -148,8 +148,8 @@ export function paintSite(S) {
   if (def.hose) {
     const { x: hx, y: hy, r: hr, rx, ry } = def.hose, wet = [hex('#4f6e78'), hex('#5d7f86'), hex('#a9cdd3')];
     for (let yy = Math.floor(hy - hr - 2); yy <= hy + hr + 2; yy++) for (let xx = Math.floor(hx - hr - 2); xx <= hx + hr + 2; xx++) {
-      if (xx < 0 || yy < 0 || xx >= WW || yy >= WH) continue;
-      const dd = Math.hypot(xx + .5 - hx, yy + .5 - hy) + (hash(xx, yy, S.sd + 31) - .5) * 2.5, j = yy * WW + xx;
+      if (xx < 0 || yy < 0 || xx >= MW || yy >= MH) continue;
+      const dd = Math.hypot(xx + .5 - hx, yy + .5 - hy) + (hash(xx, yy, S.sd + 31) - .5) * 2.5, j = yy * MW + xx;
       if (dd > hr + 1.5) continue;
       if (dd <= hr) S.washMask[j] = 1;
       // wet ground: mixed with the colour of water, darker at the rim

@@ -1,4 +1,4 @@
-import { HALF, TAU, WH, WW, clamp, hash, hex, vnoise } from './core.js';
+import { HALF, TAU, clamp, hash, hex, vnoise } from './core.js';
 import { nearestIdx } from './bau.js';
 
 // ---------- Eis: the ski jump, the bob run, the frozen lake with the short cut, the hot spring, the village ----------
@@ -18,13 +18,13 @@ const range = (N, a, b) => { const r = new Uint8Array(N); for (let i = a; ; i = 
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N }
 export function* iceTerrain(S) {
-  const { def, ter, dist, near, path, N } = S, A = WW * WH, alt = new Uint8Array(A), lakeM = new Uint8Array(A);
+  const { MW, MH, def, ter, dist, near, path, N } = S, A = MW * MH, alt = new Uint8Array(A), lakeM = new Uint8Array(A);
   yield;
   // the frozen lake: everything beside the road inside the ellipse is thin ice (a second way, the short cut)
   if (def.lake) {
     const [lx, ly, rx, ry] = def.lake;
-    for (let y = Math.max(0, ly - ry - 6); y < Math.min(WH, ly + ry + 6); y++) for (let x = Math.max(0, lx - rx - 6); x < Math.min(WW, lx + rx + 6); x++) {
-      const j = y * WW + x, e = ((x + .5 - lx) / rx) ** 2 + ((y + .5 - ly) / ry) ** 2;
+    for (let y = Math.max(0, ly - ry - 6); y < Math.min(MH, ly + ry + 6); y++) for (let x = Math.max(0, lx - rx - 6); x < Math.min(MW, lx + rx + 6); x++) {
+      const j = y * MW + x, e = ((x + .5 - lx) / rx) ** 2 + ((y + .5 - ly) / ry) ** 2;
       if (e >= .85 + .3 * vnoise(x * .08, y * .08, 71) || ter[j] !== 0) continue;
       ter[j] = 12; lakeM[j] = 1; alt[j] = 1;
     }
@@ -39,8 +39,8 @@ export function* iceTerrain(S) {
   if (def.spring) {
     const [sx, sy, rx, ry] = def.spring;
     for (let y = sy - ry - 3; y <= sy + ry + 3; y++) for (let x = sx - rx - 3; x <= sx + rx + 3; x++) {
-      if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
-      if (((x + .5 - sx) / rx) ** 2 + ((y + .5 - sy) / ry) ** 2 < .85 + .3 * vnoise(x * .2, y * .2, 72)) ter[y * WW + x] = 3;
+      if (x < 0 || y < 0 || x >= MW || y >= MH) continue;
+      if (((x + .5 - sx) / rx) ** 2 + ((y + .5 - sy) / ry) ** 2 < .85 + .3 * vnoise(x * .2, y * .2, 72)) ter[y * MW + x] = 3;
     }
   }
   yield;
@@ -53,7 +53,7 @@ export function* iceTerrain(S) {
   const frost = (def.frost || []).map(([x, y]) => {
     const c = nearestIdx(path, x, y), R = range(N, (c - 44 + N) % N, (c + 44) % N), px = [];
     for (let j = 0; j < A; j++) if (dist[j] < HALF && R[near[j]] && ter[j] === 1) px.push(j);
-    const key = j => HALF - dist[j] + vnoise(j % WW * .25, (j / WW | 0) * .25, 73) * 9;
+    const key = j => HALF - dist[j] + vnoise(j % MW * .25, (j / MW | 0) * .25, 73) * 9;
     px.sort((a, b) => key(a) - key(b));
     return { px, x, y };
   });
@@ -62,10 +62,10 @@ export function* iceTerrain(S) {
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, isBridge, sd, th, r, critters, darken, RT }
 export function* paintIce(S) {
-  const { def, d, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, isBridge, sd, RT } = S, A = WW * WH;
-  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < WW && y < WH) set(y * WW + x, c); };
-  const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= WW || y >= WH) return; const i = (y * WW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
-  const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < WW && Y < WH) wallMask[Y * WW + X] = 1; } };
+  const { MW, MH, def, d, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, isBridge, sd, RT } = S, A = MW * MH;
+  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); };
+  const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= MW || y >= MH) return; const i = (y * MW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
+  const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < MW && Y < MH) wallMask[Y * MW + X] = 1; } };
   const iceCol = (x, y, h, lake) => {
     // glossy streaks running diagonally, a few cracks and air bubbles
     const st = Math.sin((x - y) * .09 + vnoise(x / 30, y / 30, sd + 50) * 4), v = vnoise(x / 9, y / 9, sd + 51);
@@ -77,7 +77,7 @@ export function* paintIce(S) {
   // ----- the ground -----
   for (let j = 0; j < A; j++) {
     if (j % 40000 === 39999) yield;
-    const x = j % WW, y = j / WW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 8, y / 8, sd + 41) * .55 + h * .45;
+    const x = j % MW, y = j / MW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 8, y / 8, sd + 41) * .55 + h * .45;
     if (bridgeMask[j] || shore[j]) continue;
     let c;
     if (t === 0) {
@@ -89,14 +89,14 @@ export function* paintIce(S) {
       if (dist[j] > HALF - 3) c = K.roadE; else if (Math.abs(dist[j] - 13) < 1.5 && h > .3) c = K.rut;
     } else if (t === 12) {
       const lake = RT.lakeM[j];
-      if (lake) { let e = false; for (const q of [j - 1, j + 1, j - WW, j + WW]) if (q >= 0 && q < A && ter[q] !== 12) e = true; c = e ? K.lakeE : iceCol(x, y, h, true); }
+      if (lake) { let e = false; for (const q of [j - 1, j + 1, j - MW, j + MW]) if (q >= 0 && q < A && ter[q] !== 12) e = true; c = e ? K.lakeE : iceCol(x, y, h, true); }
       else c = dist[j] > HALF - 2 ? K.iceD : iceCol(x, y, h, false);
     } else continue;
     set(j, c);
   }
   yield;
   // start line (chequered)
-  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * WW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
+  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * MW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
 
   yield;
   // ----- the ski jump: blue lines along the run-up, the take-off table with flags, a red line where the good jumps land -----
@@ -123,7 +123,7 @@ export function* paintIce(S) {
   for (let j = 0; j < A; j++) {
     if (j % 40000 === 39999) yield;
     if (!RT.bob[near[j]] || dist[j] < HALF - .5 || dist[j] > HALF + 7) continue;
-    const dd = dist[j] - HALF, x = j % WW, y = j / WW | 0;
+    const dd = dist[j] - HALF, x = j % MW, y = j / MW | 0;
     set(j, dd < 1 ? K.bobWL : dd < 4.5 ? ((x + y) % 9 === 0 ? K.bobWL : K.bobW) : dd < 6 ? K.bobWD : K.snowD);
     if (dd >= 6) wallMask[j] = 1;
   }
@@ -144,7 +144,7 @@ export function* paintIce(S) {
   if (def.spring) {
     const [sx, sy, rx, ry] = def.spring;
     for (let k = 0; k < 22; k++) {
-      const a = k / 22 * TAU, x = Math.round(sx + Math.cos(a) * (rx + 3)), y = Math.round(sy + Math.sin(a) * (ry + 3)), j = clamp(y, 0, WH - 1) * WW + clamp(x, 0, WW - 1);
+      const a = k / 22 * TAU, x = Math.round(sx + Math.cos(a) * (rx + 3)), y = Math.round(sy + Math.sin(a) * (ry + 3)), j = clamp(y, 0, MH - 1) * MW + clamp(x, 0, MW - 1);
       if (dist[j] < HALF + 2 || ter[j] === 3) continue;
       for (let dy = -2; dy <= 2; dy++) for (let dx = -3; dx <= 3; dx++) if (dx * dx / 9 + dy * dy / 4 <= 1) px(x + dx, y + dy, dy < 0 ? K.rockL : dy > 0 ? K.rockD : K.rock);
     }
@@ -167,7 +167,7 @@ export function* paintIce(S) {
       const dy = y - y0, dx = x - x0, ridge = Math.abs(dy - h / 2);
       // a snowy gable roof seen from above, the ridge along the middle, beams at the eaves
       setT(x, y, dx === 0 || dx === w - 1 || dy === 0 || dy === h - 1 ? K.woodD : ridge < 1 ? K.roofD : dy < h / 2 ? K.roofS : (dx % 6 === 0 ? K.roofD : [228, 236, 244]));
-      wallMask[y * WW + x] = 1;
+      wallMask[y * MW + x] = 1;
     }
     for (let x = x0 + 4; x < x0 + w - 4; x += 8) for (let k = 0; k < 3; k++) setT(x + k, y0 + h, K.win), setT(x + k, y0 + h + 1, K.winD);
     for (let yy = -4; yy <= 0; yy++) for (let xx = 0; xx < 5; xx++) setT(x0 + w - 10 + xx, y0 + 6 + yy, xx === 0 || xx === 4 ? [90, 60, 40] : [140, 90, 60]); // chimney
@@ -179,8 +179,8 @@ export function* paintIce(S) {
   }
   yield;
   // more snowmen out in the snow
-  const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= WW - 2 || Y >= WH - 2) return false; const j = Y * WW + X; if (ter[j] !== 0 || dist[j] < HALF + 10 || wallMask[j] || shore[j]) return false; } return true; };
-  for (let k = 0, tries = 0; k < 4 && tries < 500; tries++) { const x = 8 + (S.r() * (WW - 16) | 0), y = 8 + (S.r() * (WH - 16) | 0); if (okOff(x, y, 9)) { snowman(x, y); k++; } }
+  const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= MW - 2 || Y >= MH - 2) return false; const j = Y * MW + X; if (ter[j] !== 0 || dist[j] < HALF + 10 || wallMask[j] || shore[j]) return false; } return true; };
+  for (let k = 0, tries = 0; k < 4 && tries < 500; tries++) { const x = 8 + (S.r() * (MW - 16) | 0), y = 8 + (S.r() * (MH - 16) | 0); if (okOff(x, y, 9)) { snowman(x, y); k++; } }
 
   yield;
   // ----- the penguin colony: an ice floe with rocks (the penguins are drawn while racing) -----
@@ -188,7 +188,7 @@ export function* paintIce(S) {
   if (def.colony) {
     const [cx, cy] = def.colony;
     for (let y = cy - 22; y <= cy + 22; y++) for (let x = cx - 34; x <= cx + 34; x++) {
-      const j = y * WW + x; if (x < 0 || y < 0 || x >= WW || y >= WH || ter[j] !== 0 || dist[j] < HALF + 6) continue;
+      const j = y * MW + x; if (x < 0 || y < 0 || x >= MW || y >= MH || ter[j] !== 0 || dist[j] < HALF + 6) continue;
       const e = ((x - cx) / 34) ** 2 + ((y - cy) / 22) ** 2; if (e > .9 + .2 * vnoise(x * .2, y * .2, 74)) continue;
       set(j, e > .8 ? K.iceD : iceCol(x, y, hash(x, y, 75), false)); wallMask[j] = 1;
     }

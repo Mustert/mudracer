@@ -1,4 +1,4 @@
-import { HALF, TAU, WH, WW, hash, hex, mk, vnoise } from './core.js';
+import { HALF, TAU, hash, hex, mk, vnoise } from './core.js';
 import { nearestIdx } from './bau.js';
 import { stampLine } from './volcanomap.js';
 
@@ -19,17 +19,17 @@ const K = Object.fromEntries(Object.entries({
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N }
 export function* jungleTerrain(S) {
-  const { def, ter, dist, near, path, nrm } = S, A = WW * WH, alt = new Uint8Array(A), plankM = new Uint8Array(A), logM = new Uint8Array(A);
-  const off = j => { const i = near[j], p = path[i]; return (j % WW + .5 - p.x) * nrm[i].x + ((j / WW | 0) + .5 - p.y) * nrm[i].y; };
+  const { MW, MH, def, ter, dist, near, path, nrm } = S, A = MW * MH, alt = new Uint8Array(A), plankM = new Uint8Array(A), logM = new Uint8Array(A);
+  const off = j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; };
   yield;
   // the dry detour under the canopy: a narrow road of its own
-  const detour = stampLine(def.detour.pts, def.detour.half, j => { if (ter[j] === 0 || ter[j] === 2) { ter[j] = 1; alt[j] = 1; } });
+  const detour = stampLine(def.detour.pts, def.detour.half, j => { if (ter[j] === 0 || ter[j] === 2) { ter[j] = 1; alt[j] = 1; } }, MW, MH);
   yield;
   // the river: deep everywhere, shallow in the box of the ford; where it crosses the road at the gorge only the log bridge stays
   const GO = def.gorge, F = def.ford.rect, inFord = (x, y) => x >= F[0] && x <= F[2] && y >= F[1] && y <= F[3];
   const water = (x, y) => {
-    if (x < 0 || y < 0 || x >= WW || y >= WH) return;
-    const j = y * WW + x;
+    if (x < 0 || y < 0 || x >= MW || y >= MH) return;
+    const j = y * MW + x;
     if (inFord(x, y)) { ter[j] = 3; return; }
     if (dist[j] < HALF + 2 && Math.abs(y - GO.log) <= GO.lh && Math.abs(x - GO.x) < GO.hw + 8) { ter[j] = 1; logM[j] = 1; return; }
     ter[j] = 5;
@@ -42,7 +42,7 @@ export function* jungleTerrain(S) {
         if (Math.hypot(x + .5 - cx, y + .5 - cy) < r + (vnoise(x * .12, y * .12, 111) - .5) * 4) water(x, y);
     }
   }
-  for (let y = F[1]; y <= F[3]; y++) for (let x = F[0]; x <= F[2]; x++) ter[y * WW + x] = 3;
+  for (let y = F[1]; y <= F[3]; y++) for (let x = F[0]; x <= F[2]; x++) ter[y * MW + x] = 3;
   yield;
   // the boardwalk through the swamp: a narrow way of planks along one side of the road
   const [bx0, bx1, bo, bh] = def.boardwalk, bi0 = nearestIdx(path, bx0, 400), bi1 = nearestIdx(path, bx1, 400), onB = i => bi0 <= bi1 ? i >= bi0 && i <= bi1 : i >= bi0 || i <= bi1;
@@ -54,7 +54,7 @@ export function* jungleTerrain(S) {
   yield;
   // deep swamp: like quicksand, only softer
   for (const [qx, qy, qr] of def.quick || []) for (let y = qy - qr - 2; y <= qy + qr + 2; y++) for (let x = qx - qr - 2; x <= qx + qr + 2; x++)
-    if (Math.hypot(x + .5 - qx, y + .5 - qy) < qr + (vnoise(x * .3, y * .3, 112) - .5) * 2) ter[y * WW + x] = 10;
+    if (Math.hypot(x + .5 - qx, y + .5 - qy) < qr + (vnoise(x * .3, y * .3, 112) - .5) * 2) ter[y * MW + x] = 10;
   yield;
   // the liana: it throws you over the gorge when it hangs on your side (see jungle.js); the current in the ford pushes towards the deep water
   const [l0, l1] = GO.lane, lip = nearestIdx(path, GO.x - GO.hw - 4, 70), p = path[lip];
@@ -66,17 +66,17 @@ export function* jungleTerrain(S) {
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, th, r, critters, darken, RT }
 export function* paintJungle(S) {
-  const { def, d, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, RT } = S, A = WW * WH;
-  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < WW && y < WH) set(y * WW + x, c); };
-  const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= WW || y >= WH) return; const i = (y * WW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
-  const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < WW && Y < WH) wallMask[Y * WW + X] = 1; } };
+  const { MW, MH, def, d, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, RT } = S, A = MW * MH;
+  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); };
+  const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= MW || y >= MH) return; const i = (y * MW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
+  const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < MW && Y < MH) wallMask[Y * MW + X] = 1; } };
   const swampPix = [];
 
   yield;
   // ----- the ground: jungle floor with leaf litter, a wet earth road with puddles, planks, the log bridge, duckweed on the swamp, deep swamp -----
   for (let j = 0; j < A; j++) {
     if (j % 40000 === 39999) yield;
-    const x = j % WW, y = j / WW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 6, y / 6, sd + 41) * .55 + h * .45;
+    const x = j % MW, y = j / MW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 6, y / 6, sd + 41) * .55 + h * .45;
     if (shore[j]) continue;
     let c;
     if (t === 0) {
@@ -98,13 +98,13 @@ export function* paintJungle(S) {
   }
   yield;
   // start line (chequered)
-  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * WW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
+  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * MW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
 
   yield;
   // ----- the gorge: rocky banks where the river cuts through the road -----
   const GO = def.gorge;
   for (let y = 30; y <= 110; y++) for (const s of [-1, 1]) for (let k = 0; k < 3; k++) {
-    const x = Math.round(GO.x + s * (GO.hw + k)), j = y * WW + x; if (ter[j] === 5 || RT.logM[j]) continue;
+    const x = Math.round(GO.x + s * (GO.hw + k)), j = y * MW + x; if (ter[j] === 5 || RT.logM[j]) continue;
     px(x, y, k === 0 ? K.stD : K.st1);
   }
 
@@ -121,11 +121,11 @@ export function* paintJungle(S) {
   const [ti0, ti1] = RT.templeI, inT = i => ti0 <= ti1 ? i >= ti0 && i <= ti1 : i >= ti0 || i <= ti1;
   let temple;
   {
-    let x0 = WW, y0 = WH, x1 = 0, y1 = 0;
-    for (let j = 0; j < A; j++) if (dist[j] < HALF + 12 && inT(near[j])) { const x = j % WW, y = j / WW | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    let x0 = MW, y0 = MH, x1 = 0, y1 = 0;
+    for (let j = 0; j < A; j++) if (dist[j] < HALF + 12 && inT(near[j])) { const x = j % MW, y = j / MW | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
     const W = x1 - x0 + 1, H = y1 - y0 + 1, cv = mk(W, H), g = cv.getContext('2d'), img = g.createImageData(W, H), q = img.data, [hx, hy, hr] = def.hall;
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-      const j = y * WW + x; if (!(dist[j] < HALF + 12 && inT(near[j]))) continue;
+      const j = y * MW + x; if (!(dist[j] < HALF + 12 && inT(near[j]))) continue;
       const h = hash(x, y, sd + 43), bx = Math.floor((x + ((y >> 3) & 1) * 6) / 12), by = y >> 3, joint = (x + ((y >> 3) & 1) * 6) % 12 === 0 || y % 8 === 0;
       let c = joint ? K.stD : [K.st, K.st1, K.st2][(hash(bx, by, sd + 44) * 3) | 0];
       if (vnoise(x / 10, y / 10, sd + 45) > .64) c = h < .5 ? K.moss : [62, 106, 40];
@@ -136,7 +136,7 @@ export function* paintJungle(S) {
     }
     g.putImageData(img, 0, 0);
     for (let i = 0; i < N; i += 3) if (inT(i)) for (const s of [-1, 1]) walls.push({ x: path[i].x + nrm[i].x * s * (HALF + 4), y: path[i].y + nrm[i].y * s * (HALF + 4), r: 4 });
-    for (let y = hy - hr; y <= hy + hr; y++) for (let x = hx - hr; x <= hx + hr; x++) { const j = y * WW + x; if (Math.hypot(x - hx, y - hy) < hr && dist[j] < HALF) { washMask[j] = 1; set(j, (x + y) % 5 ? [96, 140, 150] : [150, 200, 210]); } }
+    for (let y = hy - hr; y <= hy + hr; y++) for (let x = hx - hr; x <= hx + hr; x++) { const j = y * MW + x; if (Math.hypot(x - hx, y - hy) < hr && dist[j] < HALF) { washMask[j] = 1; set(j, (x + y) % 5 ? [96, 140, 150] : [150, 200, 210]); } }
     const torches = [];
     for (let i = ti0; inT(i); i = (i + 16) % N) { for (const s of [-1, 1]) torches.push({ x: path[i].x + nrm[i].x * s * (HALF + 3), y: path[i].y + nrm[i].y * s * (HALF + 3), k: torches.length }); if (torches.length > 30) break; }
     // stone statues beside both doors
@@ -163,7 +163,7 @@ export function* paintJungle(S) {
   cg.putImageData(cimg, 0, 0);
   yield;
   // the trunks of the giant trees stand beside the road (solid)
-  for (const [x, y] of [[110, 120], [250, 112], [470, 120], [300, 18], [150, 18], [430, 196]]) { const j = y * WW + x; if (dist[j] < HALF + 6 || RT.alt[j] || ter[j] !== 0) continue; walls.push({ x, y, r: 7 }); solid(x, y, 9); for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) if (dx * dx + dy * dy <= 36) px(x + dx, y + dy, dx * dx + dy * dy > 25 ? K.logD : K.log); }
+  for (const [x, y] of [[110, 120], [250, 112], [470, 120], [300, 18], [150, 18], [430, 196]]) { const j = y * MW + x; if (dist[j] < HALF + 6 || RT.alt[j] || ter[j] !== 0) continue; walls.push({ x, y, r: 7 }); solid(x, y, 9); for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) if (dx * dx + dy * dy <= 36) px(x + dx, y + dy, dx * dx + dy * dy > 25 ? K.logD : K.log); }
 
   yield;
   // ----- the camp: two tents, the jeep, crates, the camp fire (its flames are drawn while racing) -----
@@ -187,15 +187,15 @@ export function* paintJungle(S) {
   }
   yield;
   // ferns and big blossoms on the jungle floor
-  const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= WW - 2 || Y >= WH - 2) return false; const j = Y * WW + X; if (ter[j] !== 0 || dist[j] < HALF + 5 || wallMask[j] || RT.alt[j]) return false; } return true; };
+  const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= MW - 2 || Y >= MH - 2) return false; const j = Y * MW + X; if (ter[j] !== 0 || dist[j] < HALF + 5 || wallMask[j] || RT.alt[j]) return false; } return true; };
   for (let k = 0, tries = 0; k < 60 && tries < 2000; tries++) {
-    const x = 4 + (S.r() * (WW - 8) | 0), y = 4 + (S.r() * (WH - 8) | 0); if (!okOff(x, y, 6)) continue;
+    const x = 4 + (S.r() * (MW - 8) | 0), y = 4 + (S.r() * (MH - 8) | 0); if (!okOff(x, y, 6)) continue;
     const off0 = S.r() * TAU;
     for (let q = 0; q < 6; q++) { const a = off0 + q * TAU / 6; for (let s = 1; s <= 7; s++) { px(x + Math.cos(a) * s, y + Math.sin(a) * s, s < 3 ? K.leaf : K.leaf2); if (s > 2 && s < 7) px(x + Math.cos(a) * s - Math.sin(a), y + Math.sin(a) * s + Math.cos(a), K.leaf3); } }
     k++;
   }
   for (let k = 0, tries = 0; k < 40 && tries < 1200; tries++) {
-    const x = 4 + (S.r() * (WW - 8) | 0), y = 4 + (S.r() * (WH - 8) | 0); if (!okOff(x, y, 2)) continue;
+    const x = 4 + (S.r() * (MW - 8) | 0), y = 4 + (S.r() * (MH - 8) | 0); if (!okOff(x, y, 2)) continue;
     const c = [[240, 60, 90], [255, 170, 40], [200, 80, 230], [255, 240, 90]][(S.r() * 4) | 0].map(v => v);
     px(x - 1, y, c); px(x + 1, y, c); px(x, y - 1, c); px(x, y + 1, c); px(x, y, [255, 230, 120]); k++;
   }

@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { TRAIN_SPEED, VH, VW, WH, clamp } from './core.js';
+import { TRAIN_SPEED, VH, VW, clamp } from './core.js';
 import { addP, mudBurst } from './particles.js';
 import { eventOn } from './undo.js';
 import { cam } from './state.js';
@@ -18,7 +18,7 @@ export function updateTrain(dt) {
     if (R.lines.length > 1) R.x = R.lines[(G.ttRand || Math.random)() < .5 ? 0 : 1];
     tr.phase = 'warn'; tr.t = 2.5; SFX.whistle(vol() * .6);
   }
-  else if (tr.phase === 'warn' && tr.t <= 0) { tr.phase = 'run'; tr.y = tr.dir > 0 ? -TRAIN.LEN - 40 : WH + 40; SFX.whistle(vol()); }
+  else if (tr.phase === 'warn' && tr.t <= 0) { tr.phase = 'run'; tr.y = tr.dir > 0 ? -TRAIN.LEN - 40 : G.T.H + 40; SFX.whistle(vol()); }
   else if (tr.phase === 'run') {
     tr.y += tr.dir * TRAIN_SPEED * dt;
     if ((R.smokeT -= dt) <= 0) {
@@ -35,7 +35,7 @@ export function updateTrain(dt) {
         mudBurst(c, 10);
       }
     }
-    if ((tr.dir > 0 && tr.y > WH + 40) || (tr.dir < 0 && tr.y + TRAIN.LEN < -40)) { tr.phase = 'clear'; tr.t = .8; }
+    if ((tr.dir > 0 && tr.y > G.T.H + 40) || (tr.dir < 0 && tr.y + TRAIN.LEN < -40)) { tr.phase = 'clear'; tr.t = .8; }
   } else if (tr.phase === 'clear' && tr.t <= 0) { tr.phase = 'wait'; tr.t = 7 + (G.ttRand || Math.random)() * 5; tr.dir *= -1; }
   R.sw += ((R.x === R.lines[0] ? -1 : 1) - R.sw) * Math.min(1, dt * 7);
   R.signal = tr.phase === 'warn' || tr.phase === 'run';

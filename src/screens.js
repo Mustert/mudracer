@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { CAR_DEFS, carSet, isLocked } from './cars.js';
-import { TAU, VH, VW, WW, ctx, hash } from './core.js';
+import { TAU, VH, VW, ctx, hash } from './core.js';
 import { cupLabel } from './cups.js';
 import { DIFFS } from './diff.js';
 import { R1, blink, disc, drawConfetti, drawTag, ell, medal, medalL, panel, star, text, tri } from './gfx.js';
@@ -76,8 +76,8 @@ export function drawMain() {
     ctx.fillStyle = sel ? '#ffd23f' : '#3a2a1c'; ctx.fillRect(x - 3, y - 3, cw + 6, chh + 6);
     ctx.fillStyle = '#1b120c'; ctx.fillRect(x - 1, y - 1, cw + 2, chh + 2);
     ctx.fillStyle = '#5a3a1f'; ctx.fillRect(x, y, cw, chh);
-    const t = TRACKS[[0, 2, 3, 1, 4][i]] || TRACKS[0], ih = 92, sw = Math.round(cw * 4.26), k = VW / WW;
-    drawTrackPic(t, x, y, cw, ih, (350 - sw / 2) * k, 60 * k, sw * k, 330 * k);
+    const t = TRACKS[[0, 2, 3, 1, 4][i]] || TRACKS[0], ih = 92, sw = Math.round(cw * 4.26), kx = VW / t.W, ky = VH / t.H;
+    drawTrackPic(t, x, y, cw, ih, (350 - sw / 2) * kx, 60 * ky, sw * kx, 330 * ky);
     const cx = x + cw / 2, cy = y + ih / 2;
     if (i === 0) { drawTrophy(cx, cy + 6, 1.6); }
     else if (i === 1) {
@@ -132,7 +132,7 @@ export function drawSelectTrack() {
   ctx.fillStyle = '#ffd23f'; ctx.fillRect(cx0 - 4, cy0 - 4 - b, cw + 8, chh + 8);
   ctx.fillStyle = '#1b120c'; ctx.fillRect(cx0 - 1, cy0 - 1 - b, cw + 2, chh + 2);
   drawTrackPic(t, cx0, cy0 - b, cw, chh);
-  if (t.def.rail) ctx.drawImage(TRAIN.c, cx0 + Math.round(t.def.rail.x * cw / WW) - 5, cy0 - b + 30, 10, Math.round(TRAIN.LEN * chh / t.H));
+  if (t.def.rail) ctx.drawImage(TRAIN.c, cx0 + Math.round(t.def.rail.x * cw / t.W) - 5, cy0 - b + 30, 10, Math.round(TRAIN.LEN * chh / t.H));
   const wig = Math.round(Math.sin(G.time * 5) * 3);
   tri(cx0 - 12 - wig + 1, cy0 + chh / 2 + 1, 'left', 10, '#1b120c'); tri(cx0 - 12 - wig, cy0 + chh / 2, 'left', 10, '#ffd23f');
   tri(cx0 + cw + 12 + wig + 1, cy0 + chh / 2 + 1, 'right', 10, '#1b120c'); tri(cx0 + cw + 12 + wig, cy0 + chh / 2, 'right', 10, '#ffd23f');

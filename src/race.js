@@ -10,7 +10,7 @@ import { setState } from './state.js';
 import { POINTS, score, standings } from './rank.js';
 import { cam } from './state.js';
 import { loadRecord, saveRecord, ttLap, ttSample } from './timetrial.js';
-import { TRACKS, tctx, trail, trimTracks, useTrack } from './tracks.js';
+import { TRACKS, tctx, trimTracks, useTrack } from './tracks.js';
 
 // the Grand Prix field: your car, every other unlocked car, then plain cars up to eight (the custom cup: as many as chosen)
 // the difficulty is fixed for the whole cup when it starts
@@ -30,8 +30,9 @@ export function singleField() {
 
 
 export function resetWorld() {
-  if (trail.width !== G.T.W || trail.height !== G.T.H) { trail.width = G.T.W; trail.height = G.T.H; }
-  tctx.clearRect(0, 0, G.T.W, G.T.H); G.parts = []; G.finCount = 0; G.lastCount = -1;
+  if (tctx.w !== G.T.W || tctx.h !== G.T.H) tctx.resize(G.T.W, G.T.H);
+  tctx.clearRect(0, 0, G.T.W, G.T.H);
+  tctx.keep = G.T.run ? 24 : Infinity; // the Matschfahrt forgets the tracks far below the car G.parts = []; G.finCount = 0; G.lastCount = -1;
 }
 
 

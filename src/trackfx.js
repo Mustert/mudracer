@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { VH, VW, WH, WW, clamp } from './core.js';
+import { VH, VW, clamp } from './core.js';
 import { addP, drop, splash } from './particles.js';
 import { cam } from './state.js';
 
@@ -41,7 +41,7 @@ export function airborne(c, dt) {
 
 // touching down: into the gorge, a splash, a cloud of sand or powder snow; a crooked landing on a big jump makes the car spin
 function land(c) {
-  const T = G.T, j = clamp(c.y | 0, 0, WH - 1) * WW + clamp(c.x | 0, 0, WW - 1), t = T.ter[j], v = loud(c, c.x, c.y), big = c.air > .7;
+  const T = G.T, j = clamp(c.y | 0, 0, T.H - 1) * T.W + clamp(c.x | 0, 0, T.W - 1), t = T.ter[j], v = loud(c, c.x, c.y), big = c.air > .7;
   c.z = 0; c.vz = 0;
   if (t === 11) { fallCar(c, 'abyss', T.desert && T.desert.landI); return; }
   if (t === 15 || (t === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }

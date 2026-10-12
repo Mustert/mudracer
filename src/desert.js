@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { TAU, VH, VW, WH, WW, clamp, ctx, hash, hex, mk, vnoise } from './core.js';
+import { TAU, VH, VW, clamp, ctx, hash, hex, mk, vnoise } from './core.js';
 import { R1, disc, text, tri } from './gfx.js';
 import { snap } from './undo.js';
 import { addP, drop } from './particles.js';
@@ -85,7 +85,7 @@ export function desertLane(c, i, lane) {
     return clamp((ym - p.y) / (n.y || 1), -40, 40);
   }
   // quicksand: never towards its middle
-  const qs = l => { const x = (p.x + n.x * l) | 0, y = (p.y + n.y * l) | 0; return x >= 0 && y >= 0 && x < WW && y < WH && T.ter[y * WW + x] === 10; };
+  const qs = l => { const x = (p.x + n.x * l) | 0, y = (p.y + n.y * l) | 0; return x >= 0 && y >= 0 && x < T.W && y < T.H && T.ter[y * T.W + x] === 10; };
   if (qs(lane)) for (const l of [lane + 14, lane - 14, lane + 24, lane - 24, 26, -26]) if (Math.abs(l) < 28 && !qs(l)) return l;
   return lane;
 }
@@ -99,7 +99,7 @@ function updateStorm(T, dt) {
   if (!ev.storm) {
     if (!G.player || G.player.lap < 2) return;
     ev.storm = { t: 0, drift: 0, snd: 0, nextT: 3, gustN: 0 };
-    snap(T, 0, 0, WW, WH); // drifts change the ground; this puts it back after the race
+    snap(T, 0, 0, T.W, T.H); // drifts change the ground; this puts it back after the race
     SFX.storm();
   }
   const s = ev.storm; s.t += dt;
@@ -119,7 +119,7 @@ function updateStorm(T, dt) {
   // tumbleweeds roll with the wind across the road
   if (p >= 1 && Math.random() < dt * .6 && ev.tumble.length < 6) {
     const y = cam.y + 20 + Math.random() * (VH - 40);
-    ev.tumble.push({ x: Math.min(WW + 10, cam.x + VW + 20), y, vx: -(70 + Math.random() * 50), vy: 0, rot: 0, hop: 0, z: 0 });
+    ev.tumble.push({ x: Math.min(T.W + 10, cam.x + VW + 20), y, vx: -(70 + Math.random() * 50), vy: 0, rot: 0, hop: 0, z: 0 });
   }
   for (let q = ev.tumble.length - 1; q >= 0; q--) {
     const w = ev.tumble[q];
@@ -128,16 +128,16 @@ function updateStorm(T, dt) {
     if (w.x < -20) ev.tumble.splice(q, 1);
   }
   // the storm blows the tyre tracks away
-  tctx.globalCompositeOperation = 'destination-out'; tctx.globalAlpha = Math.min(1, dt * .5 * p); tctx.fillStyle = '#000'; tctx.fillRect(0, 0, WW, WH);
+  tctx.globalCompositeOperation = 'destination-out'; tctx.globalAlpha = Math.min(1, dt * .5 * p); tctx.fillStyle = '#000'; tctx.fillRect(0, 0, T.W, T.H);
   tctx.globalCompositeOperation = 'source-over'; tctx.globalAlpha = 1;
 }
 
 // a drift of sand on the road: soft like mud, it makes the car sandy
 function paintDrift(T, [cx, cy, r]) {
-  const b = T.base.getContext('2d'), x0 = Math.max(0, cx - r * 2), y0 = Math.max(0, cy - r * 2), w = Math.min(WW - x0, r * 4), h = Math.min(WH - y0, r * 4), img = b.getImageData(x0, y0, w, h), d = img.data;
+  const b = T.base.getContext('2d'), x0 = Math.max(0, cx - r * 2), y0 = Math.max(0, cy - r * 2), w = Math.min(T.W - x0, r * 4), h = Math.min(T.H - y0, r * 4), img = b.getImageData(x0, y0, w, h), d = img.data;
   const MUD = T.th.mud.map(hex), E = hex(T.th.mudEdge), hit = [];
   for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
-    const j = y * WW + x, t = T.ter[j]; if (t !== 1 && t !== 0) continue;
+    const j = y * T.W + x, t = T.ter[j]; if (t !== 1 && t !== 0) continue;
     const dx = (x + .5 - cx) / (r * 1.5), dy = (y + .5 - cy) / r, e = dx * dx + dy * dy, lim = .8 + .4 * vnoise(x * .15, y * .15, 83);
     if (e >= lim) continue;
     T.ter[j] = 2; hit.push(j);
@@ -240,7 +240,7 @@ export function drawDesertAbove(cx, cy) {
 const fog = mk(VW, VH), fctx = fog.getContext('2d');
 export function drawStorm(cx, cy) {
   const ev = G.T.ev, s = ev && ev.storm; if (!s) return;
-  const p = Math.min(1, s.t / STORM.wall), wx = Math.round(WW + 40 - p * (WW + 80) - cx);
+  const p = Math.min(1, s.t / STORM.wall), wx = Math.round(G.T.W + 40 - p * (G.T.W + 80) - cx);
   if (wx >= VW) return;
   fctx.globalCompositeOperation = 'source-over'; fctx.clearRect(0, 0, VW, VH);
   fctx.fillStyle = 'rgba(184,138,74,.74)'; fctx.fillRect(Math.max(0, wx), 0, VW, VH);
