@@ -2,7 +2,7 @@ import { G } from './g.js';
 import { SFX, ambience, engineSound } from './audio.js';
 import { HALF, VH, VW, WW, clamp, pick } from './core.js';
 import { DIFFS } from './diff.js';
-import { coarse, held, honkBtn, touchBox } from './input.js';
+import { held, honkBtn, setTouchMode, stickDir, touchBox, touchShown } from './input.js';
 import { honk, setState } from './menus.js';
 import { Music } from './music.js';
 import { CONF, RAINBOW, WATC, addP, drop, mudBurst, splash } from './particles.js';
@@ -46,8 +46,10 @@ function updateRace(dt) {
       if (!c.ai && !c.finished) {
         if (G.state === 'race') {
           if (G.CTRL === 'alt') {
-            const ix = (held('right') ? 1 : 0) - (held('left') ? 1 : 0), iy = (held('down') ? 1 : 0) - (held('up') ? 1 : 0);
-            if (ix || iy) { tgt = Math.atan2(iy, ix); thr = 1; }
+            // the touch stick points at any angle, the keys in 8 directions
+            const ix = (held('right') ? 1 : 0) - (held('left') ? 1 : 0), iy = (held('down') ? 1 : 0) - (held('up') ? 1 : 0), sa = stickDir();
+            if (sa !== null) { tgt = sa; thr = 1; }
+            else if (ix || iy) { tgt = Math.atan2(iy, ix); thr = 1; }
           } else {
             // car's point of view: up = gas, down = brake and then reverse, left/right = steer
             const st = (held('right') ? 1 : 0) - (held('left') ? 1 : 0), fwd = c.vx * Math.cos(c.ang) + c.vy * Math.sin(c.ang);
@@ -202,7 +204,8 @@ function updateParticles(dt) {
 
 
 export function update(dt) {
-  touchBox.hidden = !coarse || G.state === 'title';
+  touchBox.hidden = !touchShown() || G.state === 'title';
+  setTouchMode(G.state === 'race' || G.state === 'countdown' ? G.CTRL === 'alt' ? 'stick' : 'std' : 'menu');
   if (G.state === 'pause') { engineSound(dt); Music.level(); honkBtn.textContent = 'OK'; return; } // the race stands still
   if (G.state === 'countdown') {
     const n = Math.floor(G.stateTime);

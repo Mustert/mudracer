@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { MAXS, VH, VW, clamp } from './core.js';
-import { held } from './input.js';
+import { dirHeld } from './input.js';
 import { Music } from './music.js';
 import { cam } from './state.js';
 import { TRAIN } from './trainsprite.js';
@@ -225,7 +225,7 @@ export function engineSound(dt) {
   if (!AU.a) return;
   const E = AU.E, t = AU.a.currentTime;
   let g = 0, rpm = 0;
-  const throttle = driving() && G.state !== 'finish' && !G.player.stun && ['left', 'right', 'up', 'down'].some(held);
+  const throttle = driving() && G.state !== 'finish' && !G.player.stun && dirHeld();
   AU.rev += ((throttle ? 1 : 0) - AU.rev) * Math.min(1, dt * 6);
   if (driving()) {
     const sp = Math.hypot(G.player.vx, G.player.vy);
