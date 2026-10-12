@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, PREFS, UI } from './g.js';
 import { audioInit } from './audio.js';
 import { makeClock } from './clock.js';
 import { FONT, VH, VW, angDiff, ctx } from './core.js';
@@ -40,7 +40,7 @@ function drawBetween(a, draw) {
 
 function drawFrame() {
   ctx.imageSmoothingEnabled = false;
-  if (G.state === 'options') { drawState(G.optFrom); drawOptions(); }
+  if (G.state === 'options') { drawState(UI.optFrom); drawOptions(); }
   else if (G.state === 'pause') { drawRace(); drawPause(); }
   else {
     drawState(G.state);
@@ -98,4 +98,4 @@ addEventListener('pointerup', audioInit);
 setInputHandlers({ touch: audioInit });
 
 // dev server only: a handle for the browser console and for checks (the module instances the game really uses)
-if (import.meta.env.DEV) Promise.all([import('./race.js'), import('./tracks.js'), import('./cars.js'), import('./clock.js')]).then(([race, tracks, cars, clockM]) => { window.mudracer = { G, cam, race, tracks, cars, clock: clockM, frameAt }; });
+if (import.meta.env.DEV) Promise.all([import('./race.js'), import('./tracks.js'), import('./cars.js'), import('./clock.js')]).then(([race, tracks, cars, clockM]) => { /** @type {any} */ (window).mudracer = { G, UI, PREFS, cam, race, tracks, cars, clock: clockM, frameAt }; });

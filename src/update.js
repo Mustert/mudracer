@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, PREFS } from './g.js';
 import { SFX, ambience, engineSound, honk } from './audio.js';
 import { HALF, VH, VW, angDiff, clamp, pick } from './core.js';
 import { DIFFS } from './diff.js';
@@ -66,7 +66,7 @@ function updateRace(dt) {
     } else if (racing && !(G.T.run && c.finished)) {
       if (!c.ai && !c.finished) {
         if (G.state === 'race') {
-          if (G.CTRL === 'alt') {
+          if (PREFS.CTRL === 'alt') {
             const ix = (held('right') ? 1 : 0) - (held('left') ? 1 : 0), iy = (held('down') ? 1 : 0) - (held('up') ? 1 : 0);
             if (ix || iy) { tgt = Math.atan2(iy, ix); thr = 1; }
           } else {

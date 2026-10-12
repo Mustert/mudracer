@@ -20,7 +20,7 @@ function makeCurve(k) { const n = 1024, c = new Float32Array(n); for (let i = 0;
 
 export function audioInit() {
   if (AU.a) { if (AU.a.state === 'suspended') AU.a.resume(); return; }
-  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+  const AC = window.AudioContext || /** @type {any} */ (window).webkitAudioContext; if (!AC) return;
   try {
     const a = new AC(); AU.a = a;
     const comp = a.createDynamicsCompressor();

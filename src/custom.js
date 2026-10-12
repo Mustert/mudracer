@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, UI, PREFS } from './g.js';
 import { SFX } from './audio.js';
 import { VW, clamp } from './core.js';
 import { CUPS, CUSTOM_MAX, saveCustom } from './cups.js';
@@ -18,47 +18,47 @@ const PREV = { x: 252, y: 36, w: 212, h: 119 };
 const LIST = { y: 184, w: 52, h: 29, gap: 4, per: 6 };
 const listX0 = () => Math.round(VW / 2 - (LIST.per * (LIST.w + LIST.gap) - LIST.gap) / 2);
 
-G.cuRow = 0;
-G.cuPick = 0;
+UI.cuRow = 0;
+UI.cuPick = 0;
 
-const rows = () => G.kids ? ['track', 'remove', 'count', 'go'] : ['track', 'remove', 'count', 'diff', 'go'];
+const rows = () => PREFS.kids ? ['track', 'remove', 'count', 'go'] : ['track', 'remove', 'count', 'diff', 'go'];
 
-export function openCustom() { G.cuRow = 0; G.cup = CUPS.find(c => c.custom); setState('custom'); }
+export function openCustom() { UI.cuRow = 0; PREFS.cup = CUPS.find(c => c.custom); setState('custom'); }
 
 function add() {
-  if (G.custom.tracks.length >= CUSTOM_MAX) { SFX.bump(); return; }
-  G.custom.tracks.push(G.cuPick); saveCustom(); G.selAnim = G.time; SFX.select();
+  if (PREFS.custom.tracks.length >= CUSTOM_MAX) { SFX.bump(); return; }
+  PREFS.custom.tracks.push(UI.cuPick); saveCustom(); UI.selAnim = G.time; SFX.select();
 }
 
 function removeAt(i) {
-  if (!G.custom.tracks.length) { SFX.bump(); return; }
-  G.custom.tracks.splice(i, 1); saveCustom(); SFX.click();
+  if (!PREFS.custom.tracks.length) { SFX.bump(); return; }
+  PREFS.custom.tracks.splice(i, 1); saveCustom(); SFX.click();
 }
 
 function go() {
-  if (!G.custom.tracks.length) { SFX.bump(); G.cuRow = 0; return; }
+  if (!PREFS.custom.tracks.length) { SFX.bump(); UI.cuRow = 0; return; }
   SFX.select(); setState('select_car');
 }
 
 function change(r, dir) {
-  if (r === 'track') { G.cuPick = (G.cuPick + dir + TRACKS.length) % TRACKS.length; G.selAnim = G.time; }
-  else if (r === 'count') { G.custom.count = clamp(G.custom.count + dir, 2, 7); saveCustom(); }
-  else if (r === 'diff') { setDiff(G.diff + dir); setFx(G.diff > 0); }
+  if (r === 'track') { UI.cuPick = (UI.cuPick + dir + TRACKS.length) % TRACKS.length; UI.selAnim = G.time; }
+  else if (r === 'count') { PREFS.custom.count = clamp(PREFS.custom.count + dir, 2, 7); saveCustom(); }
+  else if (r === 'diff') { setDiff(PREFS.diff + dir); setFx(PREFS.diff > 0); }
   else return;
   SFX.click();
 }
 
 function act(r) {
   if (r === 'track') add();
-  else if (r === 'remove') removeAt(G.custom.tracks.length - 1);
+  else if (r === 'remove') removeAt(PREFS.custom.tracks.length - 1);
   else if (r === 'go') go();
   else change(r, 1);
 }
 
 export function customKey(k) {
-  const R = rows(), r = R[G.cuRow] || 'go';
-  if (is(k, 'up')) { G.cuRow = (G.cuRow + R.length - 1) % R.length; SFX.click(); }
-  else if (is(k, 'down')) { G.cuRow = (G.cuRow + 1) % R.length; SFX.click(); }
+  const R = rows(), r = R[UI.cuRow] || 'go';
+  if (is(k, 'up')) { UI.cuRow = (UI.cuRow + R.length - 1) % R.length; SFX.click(); }
+  else if (is(k, 'down')) { UI.cuRow = (UI.cuRow + 1) % R.length; SFX.click(); }
   else if (is(k, 'left') || is(k, 'right')) change(r, is(k, 'left') ? -1 : 1);
   else if (is(k, 'ok')) act(r);
   else if (is(k, 'back')) { SFX.click(); setState('select_cup'); }
@@ -69,40 +69,40 @@ export function customClick(x, y) {
   for (let i = 0; i < R.length; i++) {
     const ry = ROWS.y0 + i * ROWS.pitch;
     if (x < ROWS.x || x > ROWS.x + ROWS.w || y < ry || y >= ry + ROWS.h) continue;
-    if (i !== G.cuRow && R[i] !== 'remove' && R[i] !== 'go') { G.cuRow = i; SFX.click(); return; }
-    G.cuRow = i;
+    if (i !== UI.cuRow && R[i] !== 'remove' && R[i] !== 'go') { UI.cuRow = i; SFX.click(); return; }
+    UI.cuRow = i;
     if (R[i] === 'track' || R[i] === 'count' || R[i] === 'diff') { if (x < ROWS.x + ROWS.w * .55) change(R[i], -1); else change(R[i], 1); }
     else act(R[i]);
     return;
   }
   // the picture of the track being picked: a tap adds it; left and right of it page through the tracks
   if (y >= PREV.y && y < PREV.y + PREV.h + 16) {
-    if (x >= PREV.x + 30 && x < PREV.x + PREV.w - 30) { G.cuRow = 0; add(); }
+    if (x >= PREV.x + 30 && x < PREV.x + PREV.w - 30) { UI.cuRow = 0; add(); }
     else if (x >= PREV.x - 12 && x < PREV.x + 30) change('track', -1);
     else if (x >= PREV.x + PREV.w - 30) change('track', 1);
     return;
   }
   const x0 = listX0();
-  G.custom.tracks.forEach((ti, j) => {
+  PREFS.custom.tracks.forEach((ti, j) => {
     const tx = x0 + (j % LIST.per) * (LIST.w + LIST.gap), ty = LIST.y + Math.floor(j / LIST.per) * (LIST.h + LIST.gap);
     if (x >= tx && x < tx + LIST.w && y >= ty && y < ty + LIST.h) removeAt(j);
   });
 }
 
 function label(r) {
-  if (r === 'track') return ['STRECKE +', TRACKS[G.cuPick].name, '#fff3dc'];
+  if (r === 'track') return ['STRECKE +', TRACKS[UI.cuPick].name, '#fff3dc'];
   if (r === 'remove') return ['LETZTE WEG', '', ''];
-  if (r === 'count') return ['GEGNER', String(G.custom.count), '#ffd23f'];
-  if (r === 'diff') return ['STUFE', DIFFS[G.diff].name, DIFFS[G.diff].col];
+  if (r === 'count') return ['GEGNER', String(PREFS.custom.count), '#ffd23f'];
+  if (r === 'diff') return ['STUFE', DIFFS[PREFS.diff].name, DIFFS[PREFS.diff].col];
   return ['WEITER', '', ''];
 }
 
 export function drawCustom() {
-  drawMenuBg(TRACKS[G.cuPick]);
+  drawMenuBg(TRACKS[UI.cuPick]);
   text('CUSTOM CUP', VW / 2, 8, 16, '#ffd23f', 'center');
-  const R = rows(), n = G.custom.tracks.length;
+  const R = rows(), n = PREFS.custom.tracks.length;
   R.forEach((r, i) => {
-    const sel = i === G.cuRow, y = ROWS.y0 + i * ROWS.pitch, [a, b, col] = label(r), isGo = r === 'go', off = (isGo && !n) || (r === 'remove' && !n);
+    const sel = i === UI.cuRow, y = ROWS.y0 + i * ROWS.pitch, [a, b, col] = label(r), isGo = r === 'go', off = (isGo && !n) || (r === 'remove' && !n);
     R1(ROWS.x - 1, y - 1, ROWS.w + 2, ROWS.h + 2, sel ? '#ffd23f' : '#1b120c');
     R1(ROWS.x, y, ROWS.w, ROWS.h, isGo ? (sel ? '#7bd37b' : '#3f6b35') : sel ? '#5a3a1f' : '#3a2a1c');
     if (isGo) { text(a, ROWS.x + ROWS.w / 2, y + 5, 8, off ? '#6b8a60' : sel ? '#1b120c' : '#fff3dc', 'center', null); return; }
@@ -110,8 +110,8 @@ export function drawCustom() {
     if (b) text(b, ROWS.x + ROWS.w - 8, y + 5, 8, col, 'right');
   });
   // the track being picked, big, with arrows
-  const pop = Math.round(Math.max(0, 1 - (G.time - G.selAnim) * 5) * 3), t = TRACKS[G.cuPick], wig = Math.round(Math.sin(G.time * 5) * 2);
-  R1(PREV.x - 3, PREV.y - 3 - pop, PREV.w + 6, PREV.h + 6, G.cuRow === 0 ? '#ffd23f' : '#3a2a1c'); R1(PREV.x - 1, PREV.y - 1 - pop, PREV.w + 2, PREV.h + 2, '#1b120c');
+  const pop = Math.round(Math.max(0, 1 - (G.time - UI.selAnim) * 5) * 3), t = TRACKS[UI.cuPick], wig = Math.round(Math.sin(G.time * 5) * 2);
+  R1(PREV.x - 3, PREV.y - 3 - pop, PREV.w + 6, PREV.h + 6, UI.cuRow === 0 ? '#ffd23f' : '#3a2a1c'); R1(PREV.x - 1, PREV.y - 1 - pop, PREV.w + 2, PREV.h + 2, '#1b120c');
   drawTrackPic(t, PREV.x, PREV.y - pop, PREV.w, PREV.h);
   tri(PREV.x - 9 - wig, PREV.y + PREV.h / 2, 'left', 7, '#ffd23f'); tri(PREV.x + PREV.w + 9 + wig, PREV.y + PREV.h / 2, 'right', 7, '#ffd23f');
   text(t.name, PREV.x + PREV.w / 2, PREV.y + PREV.h + 6, 8, '#ffd23f', 'center');
@@ -122,7 +122,7 @@ export function drawCustom() {
     const tx = x0 + (j % LIST.per) * (LIST.w + LIST.gap), ty = LIST.y + Math.floor(j / LIST.per) * (LIST.h + LIST.gap);
     R1(tx - 1, ty - 1, LIST.w + 2, LIST.h + 2, '#1b120c');
     if (j >= n) { R1(tx, ty, LIST.w, LIST.h, '#2a1d12'); continue; }
-    const tt = TRACKS[G.custom.tracks[j]];
+    const tt = TRACKS[PREFS.custom.tracks[j]];
     drawTrackPic(tt, tx, ty, LIST.w, LIST.h);
     R1(tx, ty, j >= 9 ? 19 : 11, 10, '#1b120c'); text(String(j + 1), tx + 1, ty + 1, 8, '#ffd23f', 'left', null);
   }

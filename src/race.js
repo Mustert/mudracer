@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, PREFS } from './g.js';
 import { AU, SFX } from './audio.js';
 import { CAR_DEFS, GENERICS, carSet, completeSet, isLocked, keepSets } from './cars.js';
 import { cupReward, cupTrackIdx, loadBestPlace, markCupWon, saveBestPlace } from './cups.js';
@@ -16,16 +16,16 @@ import { TRACKS, tctx, trimTracks, useTrack } from './tracks.js';
 // the difficulty is fixed for the whole cup when it starts
 
 export function startGP() {
-  const me = CAR_DEFS[G.selCar], n = G.cup.custom ? G.custom.count + 1 : 8;
+  const me = CAR_DEFS[PREFS.selCar], n = PREFS.cup.custom ? PREFS.custom.count + 1 : 8;
   const field = [me, ...CAR_DEFS.filter(d => d !== me && !isLocked(d)).sort(() => Math.random() - .5), ...GENERICS].slice(0, n);
-  G.gp = { cup: G.cup, diff: curDiff(), tracks: cupTrackIdx(G.cup), race: 0, entries: field.map((def, i) => ({ def, pts: 0, last: 0, me: i === 0, skill: i ? aiSkill(i, field.length - 1) : 1 })) };
+  G.gp = { cup: PREFS.cup, diff: curDiff(), tracks: cupTrackIdx(PREFS.cup), race: 0, entries: field.map((def, i) => ({ def, pts: 0, last: 0, me: i === 0, skill: i ? aiSkill(i, field.length - 1) : 1 })) };
   startRace();
 }
 
 
 export function singleField() {
-  const me = CAR_DEFS[G.selCar];
-  return [me, ...CAR_DEFS.filter(d => d !== me && !isLocked(d)), ...GENERICS].slice(0, G.selCount + 1);
+  const me = CAR_DEFS[PREFS.selCar];
+  return [me, ...CAR_DEFS.filter(d => d !== me && !isLocked(d)), ...GENERICS].slice(0, PREFS.selCount + 1);
 }
 
 
@@ -49,8 +49,8 @@ export function makeCar(def, x, y, ang, ai, skill, entry) {
 export function startRace() {
   let entries, T;
   if (G.mode === 'gp') { T = TRACKS[G.gp.tracks[G.gp.race]]; entries = G.gp.entries; }
-  else if (G.mode === 'tt') { T = TRACKS[G.selTrack]; entries = [{ def: CAR_DEFS[G.selCar], me: true, skill: 1 }]; }
-  else { T = TRACKS[G.selTrack]; entries = singleField().map((def, i, all) => ({ def, me: i === 0, skill: i ? aiSkill(i, all.length - 1) : 1 })); }
+  else if (G.mode === 'tt') { T = TRACKS[PREFS.selTrack]; entries = [{ def: CAR_DEFS[PREFS.selCar], me: true, skill: 1 }]; }
+  else { T = TRACKS[PREFS.selTrack]; entries = singleField().map((def, i, all) => ({ def, me: i === 0, skill: i ? aiSkill(i, all.length - 1) : 1 })); }
   // the track and the sprites of the whole field have to be there: whatever is still missing is built on the loading screen first
   useTrack(T);
   const sets = raceSets(T, entries.map(e => e.def));
@@ -58,7 +58,7 @@ export function startRace() {
   G.T = T;
   trimTracks(); keepSets([...CAR_DEFS, ...GENERICS], sets);
   G.raceDiff = G.mode === 'gp' ? G.gp.diff : curDiff();
-  G.fx = G.mode === 'gp' ? G.gp.diff > 0 && !G.kids : fxActive();
+  G.fx = G.mode === 'gp' ? G.gp.diff > 0 && !PREFS.kids : fxActive();
   resetWorld();
   setupEvents(G.T);
   // two cars per row behind the start line; you start in the front row
@@ -103,7 +103,7 @@ export function beginCeremony() {
     const old = loadBestPlace(cup, mine.def, d);
     if (!old || place < old) trophy = d;
     saveBestPlace(cup, mine.def, place, d);
-    if (won && !G.kids && markCupWon(cup)) newCar = cupReward(cup) || null;
+    if (won && !PREFS.kids && markCupWon(cup)) newCar = cupReward(cup) || null;
   }
   G.ceremony = { sorted, won, newCar, trophy, diff: d, place, def: mine.def };
   G.parts = [];

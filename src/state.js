@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, UI, PREFS } from './g.js';
 import { getItem } from './save.js';
 import { TRACKS } from './tracks.js';
 
@@ -7,30 +7,30 @@ import { TRACKS } from './tracks.js';
 G.state = 'title';
 G.stateTime = 0;
 G.time = 0;
-G.selCar = 0;
-G.selTrack = 0;
-G.selAnim = -1;
-G.selMode = 0;
-G.selCount = 3;
-G.selCup = 0;
+PREFS.selCar = 0;
+PREFS.selTrack = 0;
+UI.selAnim = -1;
+UI.selMode = 0;
+PREFS.selCount = 3;
+PREFS.selCup = 0;
 // track events (cows, rain, flood, koi, dump trucks, train, tyres, sandstorm, frost, penguins), one switch each; G.fx turns all of them on or off for a race (diff.js)
-G.events = { kuehe: true, regen: true, flut: true, kois: true, kipper: true, zug: true, reifen: true, sandsturm: true, frost: true, pinguine: true, ausbruch: true, baeume: true, kroko: true };
+PREFS.events = { kuehe: true, regen: true, flut: true, kois: true, kipper: true, zug: true, reifen: true, sandsturm: true, frost: true, pinguine: true, ausbruch: true, baeume: true, kroko: true };
 G.fx = true;
-G.cup = null;
+PREFS.cup = null;
 G.mode = 'single';
 
 // options menu (gear) and pause menu; both remember where they were opened from
 // CTRL: 'std' = steering from the car's point of view (up = straight ahead), 'alt' = arrows point where the car should go on screen
 
-G.optFrom = 'main';
-G.optSel = 0;
-G.pauseFrom = 'race';
-G.pauseT = 0;
-G.pauseSel = 0;
-G.CTRL = 'std';
+UI.optFrom = 'main';
+UI.optSel = 0;
+UI.pauseFrom = 'race';
+UI.pauseT = 0;
+UI.pauseSel = 0;
+PREFS.CTRL = 'std';
 
 
-try { G.CTRL = getItem('mudracer-ctrl') === 'alt' ? 'alt' : 'std'; } catch (e) {}
+try { PREFS.CTRL = getItem('mudracer-ctrl') === 'alt' ? 'alt' : 'std'; } catch (e) {}
 
 
 G.T = TRACKS[0];
@@ -46,7 +46,7 @@ G.ceremony = null;
 G.run = null;
 G.tt = null;
 G.ttRand = null;
-G.selGhost = true;
+PREFS.selGhost = true;
 
 
 export const cam = { x: 0, y: 0 };
@@ -63,7 +63,7 @@ export const MODES = [{ id: 'gp', name: 'GRAND PRIX', short: 'GRAND PRIX', sub: 
   { id: 'run', name: 'MATSCHFAHRT', short: 'MATSCH', sub: 'GELAENDE' }, { id: 'shop', name: 'WERKSTATT', short: 'WERKSTATT', sub: 'LACKIEREN' }];
 
 // main menu: 0 = the cards, 1 = the kids mode switch (top left)
-G.mainRow = 0;
+UI.mainRow = 0;
 
 
-try { G.selGhost = getItem('mudracer-ghost') !== '0'; } catch (e) {}
+try { PREFS.selGhost = getItem('mudracer-ghost') !== '0'; } catch (e) {}

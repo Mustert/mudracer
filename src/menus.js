@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, UI, PREFS } from './g.js';
 import { downloadSave, getItem, pickSave, setItem } from './save.js';
 import { AU, SFX, honk } from './audio.js';
 import { CAR_DEFS, isLocked } from './cars.js';
@@ -17,10 +17,10 @@ import { openShop, shopClick, shopKey } from './shop.js';
 import { MODES, setState } from './state.js';
 import { TRACKS } from './tracks.js';
 
-try { G.selCar = clamp(parseInt(getItem('mudracer-car') || '0', 10) || 0, 0, CAR_DEFS.length - 1); } catch (e) {}
+try { PREFS.selCar = clamp(parseInt(getItem('mudracer-car') || '0', 10) || 0, 0, CAR_DEFS.length - 1); } catch (e) {}
 
 
-if (isLocked(CAR_DEFS[G.selCar])) G.selCar = 0;
+if (isLocked(CAR_DEFS[PREFS.selCar])) PREFS.selCar = 0;
 
 
 
@@ -30,7 +30,7 @@ const step = (v, k, n) => (v + (is(k, 'left') ? n - 1 : 1)) % n;
 const toggleMusic = () => { AU.music = !AU.music; try { setItem('mudracer-music', AU.music ? '1' : '0'); } catch (e) {} };
 
 
-const toggleCtrl = () => { G.CTRL = G.CTRL === 'std' ? 'alt' : 'std'; try { setItem('mudracer-ctrl', G.CTRL); } catch (e) {} };
+const toggleCtrl = () => { PREFS.CTRL = PREFS.CTRL === 'std' ? 'alt' : 'std'; try { setItem('mudracer-ctrl', PREFS.CTRL); } catch (e) {} };
 
 
 export const gearVisible = () => ['main', 'select_cup', 'select_car', 'select_track', 'select_count', 'custom', 'shop'].includes(G.state);
@@ -39,17 +39,17 @@ export const gearVisible = () => ['main', 'select_cup', 'select_car', 'select_tr
 export const menuBtnVisible = () => G.state !== 'title' && G.state !== 'main' && G.state !== 'options' && G.state !== 'pause' && G.state !== 'loading';
 
 
-function openOptions() { G.optFrom = G.state; G.optSel = 0; setState('options'); SFX.click(); }
+function openOptions() { UI.optFrom = G.state; UI.optSel = 0; setState('options'); SFX.click(); }
 
 
-function closeOptions() { setState(G.optFrom); SFX.click(); }
+function closeOptions() { setState(UI.optFrom); SFX.click(); }
 
 
 // the rows of the options menu: music, steering, save to a file, load from a file, back
 export const OPT_ROWS = 5;
 
 // a short message in the options menu (saved, loaded, error)
-const optMsg = (s, ok) => { G.optMsg = { s, ok, t: G.time }; };
+const optMsg = (s, ok) => { UI.optMsg = { s, ok, t: G.time }; };
 
 function saveToFile() {
   try { downloadSave(); optMsg('SPIELSTAND GESICHERT', true); SFX.select(); } catch (e) { optMsg('SICHERN GEHT NICHT', false); }
@@ -73,23 +73,23 @@ function optAct(i) {
 
 
 function optionsKey(k) {
-  if (is(k, 'up')) { G.optSel = (G.optSel + OPT_ROWS - 1) % OPT_ROWS; SFX.click(); }
-  else if (is(k, 'down')) { G.optSel = (G.optSel + 1) % OPT_ROWS; SFX.click(); }
-  else if (is(k, 'left') || is(k, 'right')) { if (G.optSel < 2) optAct(G.optSel); }
-  else if (is(k, 'ok')) optAct(G.optSel);
+  if (is(k, 'up')) { UI.optSel = (UI.optSel + OPT_ROWS - 1) % OPT_ROWS; SFX.click(); }
+  else if (is(k, 'down')) { UI.optSel = (UI.optSel + 1) % OPT_ROWS; SFX.click(); }
+  else if (is(k, 'left') || is(k, 'right')) { if (UI.optSel < 2) optAct(UI.optSel); }
+  else if (is(k, 'ok')) optAct(UI.optSel);
   else if (is(k, 'back')) closeOptions();
 }
 
 
-function openPause() { G.pauseFrom = G.state; G.pauseT = G.stateTime; G.pauseSel = 0; setState('pause'); SFX.click(); }
+function openPause() { UI.pauseFrom = G.state; UI.pauseT = G.stateTime; UI.pauseSel = 0; setState('pause'); SFX.click(); }
 
 
-function pauseAct(i) { if (i === 0) { G.state = G.pauseFrom; G.stateTime = G.pauseT; SFX.select(); } else { SFX.click(); setState('main'); } }
+function pauseAct(i) { if (i === 0) { G.state = UI.pauseFrom; G.stateTime = UI.pauseT; SFX.select(); } else { SFX.click(); setState('main'); } }
 
 
 function pauseKey(k) {
-  if (is(k, 'up') || is(k, 'down') || is(k, 'left') || is(k, 'right')) { G.pauseSel = 1 - G.pauseSel; SFX.click(); }
-  else if (is(k, 'ok')) pauseAct(G.pauseSel);
+  if (is(k, 'up') || is(k, 'down') || is(k, 'left') || is(k, 'right')) { UI.pauseSel = 1 - UI.pauseSel; SFX.click(); }
+  else if (is(k, 'ok')) pauseAct(UI.pauseSel);
   else if (k === 'Escape' || k === 'p' || k === 'P') pauseAct(0);
 }
 
@@ -110,38 +110,38 @@ export function onPress(k) {
   if (G.state === 'shop') { shopKey(k); return; }
   if (G.state === 'main') {
     if (k === 'k' || k === 'K') { toggleKids(); SFX.click(); return; }
-    if (G.mainRow === 1) {
-      if (is(k, 'down') || back) { G.mainRow = 0; SFX.click(); }
+    if (UI.mainRow === 1) {
+      if (is(k, 'down') || back) { UI.mainRow = 0; SFX.click(); }
       else if (lr || ok) { toggleKids(); SFX.select(); }
       return;
     }
-    if (is(k, 'up')) { G.mainRow = 1; SFX.click(); }
-    else if (lr) { G.selMode = step(G.selMode, k, MODES.length); G.selAnim = G.time; SFX.click(); }
+    if (is(k, 'up')) { UI.mainRow = 1; SFX.click(); }
+    else if (lr) { UI.selMode = step(UI.selMode, k, MODES.length); UI.selAnim = G.time; SFX.click(); }
     else if (ok) {
-      const id = MODES[G.selMode].id; SFX.select();
+      const id = MODES[UI.selMode].id; SFX.select();
       if (id === 'shop') { openShop(); return; }
       G.mode = id; G.tt = null; setState(G.mode === 'gp' ? 'select_cup' : G.mode === 'run' ? 'select_car' : 'select_track');
     }
   } else if (G.state === 'select_cup') {
     const ud = is(k, 'up') ? -1 : is(k, 'down') ? 1 : 0;
-    if (ud) { G.selCup = (G.selCup + ud + CUPS.length) % CUPS.length; G.selAnim = G.time; SFX.click(); }
-    else if (lr) { if (G.kids) SFX.bump(); else { setDiff(G.diff + (is(k, 'left') ? -1 : 1)); setFx(G.diff > 0); SFX.click(); } }
+    if (ud) { PREFS.selCup = (PREFS.selCup + ud + CUPS.length) % CUPS.length; UI.selAnim = G.time; SFX.click(); }
+    else if (lr) { if (PREFS.kids) SFX.bump(); else { setDiff(PREFS.diff + (is(k, 'left') ? -1 : 1)); setFx(PREFS.diff > 0); SFX.click(); } }
     else if (ok) {
-      const cup = CUPS[G.selCup];
+      const cup = CUPS[PREFS.selCup];
       if (cupLocked(cup) || !cupReady(cup)) SFX.bump();
       else if (cup.custom) { SFX.select(); openCustom(); }
-      else { G.cup = cup; SFX.select(); setState('select_car'); }
+      else { PREFS.cup = cup; SFX.select(); setState('select_car'); }
     }
     else if (back) setState('main');
   } else if (G.state === 'select_car') {
-    if (lr) pickCar(step(G.selCar, k, CAR_DEFS.length));
+    if (lr) pickCar(step(PREFS.selCar, k, CAR_DEFS.length));
     else if (ok) {
-      if (isLocked(CAR_DEFS[G.selCar])) { SFX.bump(); return; }
+      if (isLocked(CAR_DEFS[PREFS.selCar])) { SFX.bump(); return; }
       SFX.select();
       if (G.mode === 'gp') startGP(); else if (G.mode === 'run') startRun(); else openRaceOpts();
-    } else if (back) setState(G.mode === 'gp' ? (G.cup && G.cup.custom ? 'custom' : 'select_cup') : G.mode === 'run' ? 'main' : 'select_track');
+    } else if (back) setState(G.mode === 'gp' ? (PREFS.cup && PREFS.cup.custom ? 'custom' : 'select_cup') : G.mode === 'run' ? 'main' : 'select_track');
   } else if (G.state === 'select_track') {
-    if (lr) { G.selTrack = step(G.selTrack, k, TRACKS.length); G.selAnim = G.time; SFX.click(); }
+    if (lr) { PREFS.selTrack = step(PREFS.selTrack, k, TRACKS.length); UI.selAnim = G.time; SFX.click(); }
     else if (ok) { SFX.select(); setState('select_car'); }
     else if (back) setState('main');
   } else if (G.state === 'select_count') {
@@ -177,7 +177,7 @@ function optionsClick(x, y) {
   if (x > VW - 34 && y < 30) { closeOptions(); return; }
   for (let i = 0; i < OPT_ROWS; i++) {
     const ry = OPT.y + OPT.r0 + i * OPT.row;
-    if (x >= OPT.x + 6 && x < OPT.x + OPT.w - 6 && y >= ry && y < ry + OPT.row - 2) { G.optSel = i; optAct(i); return; }
+    if (x >= OPT.x + 6 && x < OPT.x + OPT.w - 6 && y >= ry && y < ry + OPT.row - 2) { UI.optSel = i; optAct(i); return; }
   }
   if (x < OPT.x || x > OPT.x + OPT.w || y > OPT.y + OPT.h) closeOptions();
 }
@@ -186,7 +186,7 @@ function optionsClick(x, y) {
 function pauseClick(x, y) {
   for (let i = 0; i < 2; i++) {
     const ry = PAU.y + PAU.r0 + i * PAU.row;
-    if (x >= PAU.x + 14 && x < PAU.x + PAU.w - 14 && y >= ry && y < ry + PAU.rh) { G.pauseSel = i; pauseAct(i); return; }
+    if (x >= PAU.x + 14 && x < PAU.x + PAU.w - 14 && y >= ry && y < ry + PAU.rh) { UI.pauseSel = i; pauseAct(i); return; }
   }
 }
 
@@ -198,10 +198,10 @@ export function onClick(x, y) {
   if (gearVisible() && x > VW - 34 && y < 30) { openOptions(); return; }
   if (G.state === 'main') {
     const b = KIDS_BTN;
-    if (x >= b.x - 2 && x < b.x + b.w + 2 && y >= b.y - 2 && y < b.y + b.h + 4) { G.mainRow = 1; onPress('Enter'); return; }
+    if (x >= b.x - 2 && x < b.x + b.w + 2 && y >= b.y - 2 && y < b.y + b.h + 4) { UI.mainRow = 1; onPress('Enter'); return; }
     const i = mainCardAt(x, y);
-    G.mainRow = 0;
-    if (i >= 0) { if (i === G.selMode) onPress('Enter'); else { G.selMode = i; G.selAnim = G.time; SFX.click(); } }
+    UI.mainRow = 0;
+    if (i >= 0) { if (i === UI.selMode) onPress('Enter'); else { UI.selMode = i; UI.selAnim = G.time; SFX.click(); } }
     return;
   }
   if (G.state === 'custom') { customClick(x, y); return; }
@@ -211,12 +211,12 @@ export function onClick(x, y) {
     const d = DIFF_BOX;
     if (y < d.y + d.h + 4 && x > d.x - 20 && x < d.x + d.w + 20) { onPress(x < d.x + d.w / 2 ? 'ArrowLeft' : 'ArrowRight'); return; }
     const i = cupRowAt(y);
-    if (i >= 0) { if (i === G.selCup) onPress('Enter'); else { G.selCup = i; G.selAnim = G.time; SFX.click(); } }
+    if (i >= 0) { if (i === PREFS.selCup) onPress('Enter'); else { PREFS.selCup = i; UI.selAnim = G.time; SFX.click(); } }
     return;
   }
   if (G.state === 'select_car') {
     const i = carSlotAt(x, y);
-    if (i >= 0) { if (i === G.selCar) onPress('Enter'); else pickCar(i); return; }
+    if (i >= 0) { if (i === PREFS.selCar) onPress('Enter'); else pickCar(i); return; }
   }
   const side = x < VW * .27 ? 'ArrowLeft' : x > VW * .73 ? 'ArrowRight' : 'Enter';
   if (G.state === 'main' || G.state === 'select_cup' || G.state === 'select_car' || G.state === 'select_track' || G.state === 'select_count') onPress(side);

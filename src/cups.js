@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { PREFS } from './g.js';
 import { getItem, setItem } from './save.js';
 import { CAR_DEFS } from './cars.js';
 import { TRACKS } from './tracks.js';
@@ -15,40 +15,40 @@ export const CUPS = [
   { n: 3, name: 'GOLD', tracks: ['RENNSTRECKE', 'WUESTE', 'EIS'] },
   { n: 4, name: 'PLATIN', tracks: ['VULKAN', 'DSCHUNGEL'] },
   { n: 5, name: 'FANTASY', tracks: [] },
-  { n: 6, name: 'SUPER', label: 'SUPERCUP', all: 4, unlock: () => [1, 2, 3, 4].every(n => G.cupsWon.includes(n)), need: 'GEWINNE CUP 1 BIS 4' },
-  { n: 7, name: 'SUPERDUPER', label: 'SUPERDUPER', all: 5, unlock: () => G.cupsWon.includes(5), need: 'GEWINNE CUP 5 (FANTASY)' },
+  { n: 6, name: 'SUPER', label: 'SUPERCUP', all: 4, unlock: () => [1, 2, 3, 4].every(n => PREFS.cupsWon.includes(n)), need: 'GEWINNE CUP 1 BIS 4' },
+  { n: 7, name: 'SUPERDUPER', label: 'SUPERDUPER', all: 5, unlock: () => PREFS.cupsWon.includes(5), need: 'GEWINNE CUP 5 (FANTASY)' },
   { n: 8, name: 'CUSTOM', label: 'CUSTOM CUP', custom: true },
 ];
 
 export const cupLabel = cup => cup.label || 'CUP ' + cup.n;
-export const cupLocked = cup => !G.kids && !!cup.unlock && !cup.unlock();
+export const cupLocked = cup => !PREFS.kids && !!cup.unlock && !cup.unlock();
 export const cupTrackIdx = cup => {
-  if (cup.custom) return G.custom.tracks.slice();
+  if (cup.custom) return PREFS.custom.tracks.slice();
   const names = cup.all ? CUPS.filter(c => c.n <= cup.all).flatMap(c => c.tracks) : cup.tracks;
   return names.map(name => TRACKS.findIndex(t => t.name === name));
 };
 export const cupReady = cup => cup.custom || cupTrackIdx(cup).length > 0;
 export const cupReward = cup => CAR_DEFS.find(d => d.cup === cup.n);
-export const cupWon = cup => G.cupsWon.includes(cup.n);
+export const cupWon = cup => PREFS.cupsWon.includes(cup.n);
 
 export function markCupWon(cup) {
   if (cupWon(cup)) return false;
-  G.cupsWon.push(cup.n);
-  try { setItem('mudracer-cups', JSON.stringify(G.cupsWon)); } catch (e) {}
+  PREFS.cupsWon.push(cup.n);
+  try { setItem('mudracer-cups', JSON.stringify(PREFS.cupsWon)); } catch (e) {}
   return true;
 }
 
 // ----- the custom cup: which tracks (in order, a track may come more than once) and how many opponents -----
 
 export const CUSTOM_MAX = 12;
-G.custom = { tracks: [0, 1, 2], count: 5 };
+PREFS.custom = { tracks: [0, 1, 2], count: 5 };
 try {
   const c = JSON.parse(getItem('mudracer-custom') || 'null');
-  if (c && Array.isArray(c.tracks)) G.custom.tracks = c.tracks.filter(i => Number.isInteger(i) && i >= 0 && i < TRACKS.length).slice(0, CUSTOM_MAX);
-  if (c && c.count >= 2 && c.count <= 7) G.custom.count = c.count;
+  if (c && Array.isArray(c.tracks)) PREFS.custom.tracks = c.tracks.filter(i => Number.isInteger(i) && i >= 0 && i < TRACKS.length).slice(0, CUSTOM_MAX);
+  if (c && c.count >= 2 && c.count <= 7) PREFS.custom.count = c.count;
 } catch (e) {}
 
-export function saveCustom() { try { setItem('mudracer-custom', JSON.stringify(G.custom)); } catch (e) {} }
+export function saveCustom() { try { setItem('mudracer-custom', JSON.stringify(PREFS.custom)); } catch (e) {} }
 
 // ----- best final place and trophies of one car in one cup, per difficulty (0 LEICHT, 1 MITTEL, 2 SCHWER) -----
 // Saves from before the difficulties have no level in the key: those races were LEICHT (same opponents), a win there is the LEICHT trophy.

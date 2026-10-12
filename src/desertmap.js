@@ -263,7 +263,7 @@ export function* paintDesert(S) {
   for (let k = 0, tries = 0; k < 40 && tries < 900; tries++) {
     const x = 4 + (S.r() * (MW - 8) | 0), y = 4 + (S.r() * (MH - 8) | 0); if (!okOff(x, y, 3)) continue;
     if (k % 5 === 0) { // a skull with horns
-      for (const [dx, dy, c] of [[0, 0, '#f4ecd8'], [1, 0, '#f4ecd8'], [-1, 0, '#f4ecd8'], [0, 1, '#f4ecd8'], [0, -1, '#f4ecd8'], [-1, -1, '#2a1a10'], [1, -1, '#2a1a10'], [-3, -2, '#e0d4b8'], [3, -2, '#e0d4b8'], [-2, -1, '#e0d4b8'], [2, -1, '#e0d4b8'], [0, 2, '#d8ccb0']]) px(x + dx, y + dy, hex(c));
+      for (const [dx, dy, c] of /** @type {Array<[number, number, string]>} */ ([[0, 0, '#f4ecd8'], [1, 0, '#f4ecd8'], [-1, 0, '#f4ecd8'], [0, 1, '#f4ecd8'], [0, -1, '#f4ecd8'], [-1, -1, '#2a1a10'], [1, -1, '#2a1a10'], [-3, -2, '#e0d4b8'], [3, -2, '#e0d4b8'], [-2, -1, '#e0d4b8'], [2, -1, '#e0d4b8'], [0, 2, '#d8ccb0']])) px(x + dx, y + dy, hex(c));
     } else for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(x + dx, y + dy, dy === 0 ? K.rockL : dy === 2 ? K.rockD : K.rock);
     k++;
   }

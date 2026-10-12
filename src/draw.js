@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, PREFS } from './g.js';
 import { carSet } from './cars.js';
 import { HALF, LAPS, SS, TAU, VH, VW, clamp, ctx, hash, rotIndex } from './core.js';
 import { drawEventsAbove, drawEventsGround, drawNight, drawRain } from './events.js';
@@ -264,7 +264,7 @@ function drawTrain(R) {
 // the ghost of the best run (only when switched on); it waits on the grid during the countdown and parks at the line once it is done
 
 function ghostPose() {
-  if (!G.tt || !G.selGhost || G.kids || !G.tt.rec0) return null; // no ghosts in the kids mode
+  if (!G.tt || !PREFS.selGhost || PREFS.kids || !G.tt.rec0) return null; // no ghosts in the kids mode
   const g = G.tt.rec0.g, len = (g.length / 4 - 1) * GHOST_DT, t = G.state === 'countdown' ? 0 : G.tt.t;
   return t > len + 2 ? null : ghostAt(g, t);
 }
@@ -337,7 +337,7 @@ export function drawRace() {
   if (G.T.desert) drawStorm(cx, cy);
   if (G.T.ice) drawIceSky(cx, cy);
   if (G.T.volcano) drawVolcanoSky(cx, cy);
-  if (G.T.jungle) drawJungleSky(cx, cy);
+  if (G.T.jungle) drawJungleSky();
   drawMood();
   // the 1P sign floats over your car the whole race, above night, storm and snow, so you find yourself among dirty (or snowed-in) cars;
   // at the start it bounces higher

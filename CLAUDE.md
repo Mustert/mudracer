@@ -8,10 +8,10 @@ Nur wenn der Nutzer im Prompt ausdrücklich sagt, dass es ohne Commit/Push erfol
 ## Projektstruktur
 
 - Vite-Projekt: Quellcode in `src/` (ES-Module), `index.html` im Root ist nur noch das Gerüst mit CSS.
-- Gemeinsamer veränderlicher Spielzustand liegt in `G` (`src/g.js`), alles andere sind normale Exporte.
+- Gemeinsamer veränderlicher Zustand liegt in `src/g.js`, in drei Teilen: `G` (Spielablauf und Rennen), `UI` (Menüzustand), `PREFS` (Auswahl und Einstellungen). Neue Felder gehören in einen davon und in die Liste dort; alles andere sind normale Exporte. Gespeichert wird nur über `src/save.js`.
 - `npm run dev` startet den Dev-Server (Port 5177), `npm run build` erzeugt **eine** Datei `dist/index.html` (vite-plugin-singlefile).
 - `dist/` und `node_modules/` sind nicht im Repo. Nach dem Klonen `npm install`.
-- `npm run lint` (ESLint) und `npm test` (Vitest, Tests in `test/`) laufen vor jedem Commit und müssen sauber sein.
+- `npm run lint` (ESLint), `npm test` (Vitest, Tests in `test/`) und `npm run typecheck` (TypeScript prüft die JS-Dateien) laufen vor jedem Commit und müssen sauber sein.
 - Nichts Schweres beim Start berechnen: Strecken und Auto-Sprites entstehen in Häppchen (`src/idle.js`), die Spielphysik läuft in festen Schritten (`src/clock.js`). Im Dev-Server gibt es `window.mudracer` mit `frameAt(now)`, um Frames ohne sichtbares Vorschaufenster zu rechnen.
 
 ## Doku und Analyse aktuell halten (Pflicht bei jeder Änderung)
@@ -54,7 +54,7 @@ Gelten für jede neue Strecke und jede Überarbeitung. Vor dem Abschluss einer S
 4. **Elegante Streckenführung:** Man kann nicht durch die Mitte abkürzen, und man muss nie raten, welchen Weg man nehmen muss, damit die Runde zählt. Begrenzungen ergeben sich aus dem Thema (Felsen, Wasser, Hecken, Lava …), nicht aus unsichtbaren Wänden. Die Form der Strecke passt zum Thema der Karte.
 5. **Startaufstellung:** Bis zu 10 Autos (5 Reihen à 2, siehe `startRace` in `src/race.js`) stehen komplett auf einer Geraden, nie in einer Kurve.
 6. **Mehr als ein Kreis ab Strecke 5:** Ab Nummer 5 bietet jede Strecke mehr als einen einfachen Rundkurs (Ausbuchtungen, Wege zur Wahl, Ebenen, Kreuzungen, Abkürzungen mit Risiko …).
-7. **Streckenereignis:** Jede Strecke hat mindestens ein thematisch passendes Ereignis, das über `G.events` ausschaltbar ist und eine witzige Schwierigkeit, gern auch Chaos, hineinbringt.
+7. **Streckenereignis:** Jede Strecke hat mindestens ein thematisch passendes Ereignis, das über `PREFS.events` ausschaltbar ist und eine witzige Schwierigkeit, gern auch Chaos, hineinbringt.
 8. **Eigenes Lied:** Jede Strecke hat ihr eigenes Lied, passend zum Thema, zu Mudracer und zu einem Autorennen.
 9. **Nicht zu viel auf einmal:** Mehrere Dinge auf einer Strecke sind gut, aber nicht gleichzeitig und nicht zu dicht hintereinander. Gefahren kündigen sich an (Schatten, Blinken, Ton, Text), sodass man reagieren kann.
 10. **Wege sind sichtbar:** Was durchfahrbar ist, sieht deutlich anders aus als das, was ein Auto aufhält (z. B. Deko-Zäune flach und blass, feste Zäune und Wände kräftig mit Schatten). Hindernisse auf der Fahrbahn unterscheiden sich klar von gleichartiger Deko daneben.

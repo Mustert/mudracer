@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, UI, PREFS } from './g.js';
 import { isLocked } from './cars.js';
 import { VW, ctx } from './core.js';
 import { CUPS, cupLabel, cupLocked, cupReady, cupReward, cupTrackIdx, cupWon } from './cups.js';
@@ -18,7 +18,7 @@ export const DIFF_BOX = { x: VW - 180, y: 4, w: 110, h: 16 };
 function layout() {
   const out = []; let y = ROW.y0;
   CUPS.forEach((c, i) => {
-    const sel = i === G.selCup;
+    const sel = i === PREFS.selCup;
     if (sel) y += ROW.pad;
     const h = sel ? ROW.hSel : ROW.h;
     out.push({ y, h, sel }); y += h + ROW.gap + (sel ? ROW.pad : 0);
@@ -78,7 +78,7 @@ export function drawSelectCup() {
   drawMenuBg(TRACKS[0]);
   text('CUP WAEHLEN', ROW.x, 6, 16, '#ffd23f');
   drawDiffBox();
-  const L = layout(), pop = Math.round(Math.max(0, 1 - (G.time - G.selAnim) * 5) * 4);
+  const L = layout(), pop = Math.round(Math.max(0, 1 - (G.time - UI.selAnim) * 5) * 4);
   CUPS.forEach((cup, i) => {
     const { y, h, sel } = L[i], locked = cupLocked(cup), ready = cupReady(cup) && !locked, x = ROW.x, w = ROW.w, cy = y + Math.round(h / 2) - (sel ? pop : 0);
     R1(x - 3, y - 3, w + 6, h + 6, sel ? '#ffd23f' : '#3a2a1c'); R1(x - 1, y - 1, w + 2, h + 2, '#1b120c'); R1(x, y, w, h, sel ? '#5a3a1f' : '#3a2a1c');
@@ -117,13 +117,13 @@ export function drawSelectCup() {
       if (sel) { text('NEUES', gx - 20, cy - 10, 8, '#ffd23f', 'right'); text('AUTO', gx - 20, cy + 1, 8, '#ffd23f', 'right'); }
     }
   });
-  text(G.kids ? 'HOCH/RUNTER = CUP    ENTER = WEITER' : 'HOCH/RUNTER = CUP   < > = SCHWIERIGKEIT', VW / 2, 258, 8, '#d8c4a8', 'center');
+  text(PREFS.kids ? 'HOCH/RUNTER = CUP    ENTER = WEITER' : 'HOCH/RUNTER = CUP   < > = SCHWIERIGKEIT', VW / 2, 258, 8, '#d8c4a8', 'center');
 }
 
 function drawDiffBox() {
   const b = DIFF_BOX, d = DIFFS[curDiff()], wig = Math.round(Math.sin(G.time * 5) * 2);
   R1(b.x - 1, b.y - 1, b.w + 2, b.h + 2, '#1b120c'); R1(b.x, b.y, b.w, b.h, '#3a2a1c');
-  text(G.kids ? 'KINDERMODUS' : d.name, b.x + b.w / 2, b.y + 4, 8, G.kids ? '#9fd6ff' : d.col, 'center', null);
-  if (G.kids) return; // the kids mode always drives on LEICHT
+  text(PREFS.kids ? 'KINDERMODUS' : d.name, b.x + b.w / 2, b.y + 4, 8, PREFS.kids ? '#9fd6ff' : d.col, 'center', null);
+  if (PREFS.kids) return; // the kids mode always drives on LEICHT
   tri(b.x - 8 - wig, b.y + b.h / 2, 'left', 5, '#ffd23f'); tri(b.x + b.w + 8 + wig, b.y + b.h / 2, 'right', 5, '#ffd23f');
 }

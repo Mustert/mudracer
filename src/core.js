@@ -14,7 +14,7 @@ export const FONT = '"Press Start 2P", monospace';
 
 // the game canvas. The tests (npm test) load the modules without a page: there cv and ctx stay null and nothing is drawn.
 const doc = globalThis.document;
-export const cv = doc ? doc.getElementById('game') : null, ctx = cv ? cv.getContext('2d') : null;
+export const cv = doc ? /** @type {HTMLCanvasElement} */ (doc.getElementById('game')) : null, ctx = cv ? cv.getContext('2d') : null;
 
 
 if (ctx) ctx.imageSmoothingEnabled = false;

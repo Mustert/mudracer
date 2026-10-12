@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, UI, PREFS } from './g.js';
 import { CAR_DEFS, carSet, isLocked } from './cars.js';
 import { TAU, VH, VW, ctx, hash } from './core.js';
 import { cupLabel } from './cups.js';
@@ -21,7 +21,7 @@ export function drawTrackPic(t, dx, dy, dw, dh, sx = 0, sy = 0, sw = VW, sh = VH
 }
 
 export function drawMenuBg(t) {
-  t = t || TRACKS[(G.state === 'options' ? G.optFrom : G.state) === 'select_track' ? G.selTrack : 0];
+  t = t || TRACKS[(G.state === 'options' ? UI.optFrom : G.state) === 'select_track' ? PREFS.selTrack : 0];
   ctx.drawImage(trackPicture(t), 0, 0);
   ctx.fillStyle = 'rgba(27,16,9,.62)'; ctx.fillRect(0, 0, VW, VH);
 }
@@ -49,14 +49,14 @@ export function drawLock(cx, cy) {
 const CARD = { sel: 120, w: 82, gap: 4, y0: 62, h: 150 };
 export function mainCardAt(px, py) {
   let x = (VW - (CARD.sel + (MODES.length - 1) * CARD.w + (MODES.length - 1) * CARD.gap)) / 2;
-  for (let i = 0; i < MODES.length; i++) { const w = i === G.selMode ? CARD.sel : CARD.w; if (px >= x && px < x + w && py >= CARD.y0 - 8 && py < CARD.y0 + CARD.h) return i; x += w + CARD.gap; }
+  for (let i = 0; i < MODES.length; i++) { const w = i === UI.selMode ? CARD.sel : CARD.w; if (px >= x && px < x + w && py >= CARD.y0 - 8 && py < CARD.y0 + CARD.h) return i; x += w + CARD.gap; }
   return -1;
 }
 
 // kids mode switch, top left of the main menu
 export const KIDS_BTN = { x: 4, y: 4, w: 84, h: 16 };
 function drawKidsBtn() {
-  const b = KIDS_BTN, on = G.kids, focus = G.mainRow === 1;
+  const b = KIDS_BTN, on = PREFS.kids, focus = UI.mainRow === 1;
   R1(b.x - 2, b.y - 2, b.w + 4, b.h + 4, focus ? '#ffd23f' : '#1b120c'); R1(b.x, b.y, b.w, b.h, on ? '#3f6b35' : '#3a2a1c');
   const sx = b.x + 4, sy = b.y + 4;
   R1(sx, sy, 18, 8, '#1b120c'); R1(sx + 1, sy + 1, 16, 6, on ? '#7bd37b' : '#6b5a48');
@@ -70,9 +70,9 @@ export function drawMain() {
   drawKidsBtn();
   const chh = CARD.h, nm = MODES.length, y0 = CARD.y0;
   let x = (VW - (CARD.sel + (nm - 1) * CARD.w + (nm - 1) * CARD.gap)) / 2;
-  const pop = Math.round(Math.max(0, 1 - (G.time - G.selAnim) * 4) * 5);
-  for (let i = 0; i < nm; i++, x += (i - 1 === G.selMode ? CARD.sel : CARD.w) + CARD.gap) {
-    const sel = i === G.selMode, cw = sel ? CARD.sel : CARD.w, lift = sel ? 3 + Math.round(Math.abs(Math.sin(G.time * 3)) * 2) + pop : 0, y = y0 - lift;
+  const pop = Math.round(Math.max(0, 1 - (G.time - UI.selAnim) * 4) * 5);
+  for (let i = 0; i < nm; i++, x += (i - 1 === UI.selMode ? CARD.sel : CARD.w) + CARD.gap) {
+    const sel = i === UI.selMode, cw = sel ? CARD.sel : CARD.w, lift = sel ? 3 + Math.round(Math.abs(Math.sin(G.time * 3)) * 2) + pop : 0, y = y0 - lift;
     ctx.fillStyle = sel ? '#ffd23f' : '#3a2a1c'; ctx.fillRect(x - 3, y - 3, cw + 6, chh + 6);
     ctx.fillStyle = '#1b120c'; ctx.fillRect(x - 1, y - 1, cw + 2, chh + 2);
     ctx.fillStyle = '#5a3a1f'; ctx.fillRect(x, y, cw, chh);
@@ -83,10 +83,10 @@ export function drawMain() {
     else if (i === 1) {
       R1(cx - 26, cy - 26, 3, 52, '#1b120c'); R1(cx - 25, cy - 25, 1, 50, '#d8c4a8');
       for (let r = 0; r < 5; r++) for (let q = 0; q < 8; q++) { const wv = Math.round(Math.sin(G.time * 5 + q * .7) * 2); R1(cx - 22 + q * 5, cy - 24 + r * 5 + wv, 5, 5, (r + q) & 1 ? '#222' : '#fff'); }
-      ctx.drawImage(carSet(CAR_DEFS[G.selCar], false).frames[0][0], cx - 12, cy + 4);
+      ctx.drawImage(carSet(CAR_DEFS[PREFS.selCar], false).frames[0][0], cx - 12, cy + 4);
     } else if (i === 2) {
       // stopwatch with a ghost car behind the real one
-      const hand = G.time * 2.2, F0 = carSet(CAR_DEFS[G.selCar], false).frames[0][0];
+      const hand = G.time * 2.2, F0 = carSet(CAR_DEFS[PREFS.selCar], false).frames[0][0];
       ctx.globalAlpha = .4; ctx.drawImage(F0, cx - 34 + Math.round(Math.sin(G.time * 2) * 3), cy + 18); ctx.globalAlpha = 1;
       ctx.drawImage(F0, cx - 22, cy + 18);
       R1(cx - 3, cy - 30, 6, 4, '#1b120c'); R1(cx - 2, cy - 29, 4, 2, '#ffd23f');
@@ -96,7 +96,7 @@ export function drawMain() {
       R1(cx - 1, cy - 7, 3, 3, '#1b120c');
     } else if (i === 4) {
       // the workshop: a car being sprayed in a changing colour, with a spanner beside it
-      const F0 = carSet(CAR_DEFS[G.selCar], false).frames[0][0], pc = ['#e03131', '#ffd23f', '#2f6fd8', '#3aa845', '#ff5fa2'][((G.time * 1.5) | 0) % 5];
+      const F0 = carSet(CAR_DEFS[PREFS.selCar], false).frames[0][0], pc = ['#e03131', '#ffd23f', '#2f6fd8', '#3aa845', '#ff5fa2'][((G.time * 1.5) | 0) % 5];
       ctx.drawImage(F0, cx - 30, cy - 8, 44, 44);
       R1(cx + 14, cy - 18, 10, 14, '#1b120c'); R1(cx + 15, cy - 17, 8, 12, '#c9ced6'); R1(cx + 15, cy - 14, 8, 5, pc); R1(cx + 17, cy - 21, 4, 3, '#1b120c');
       for (let q = 0; q < 8; q++) R1(Math.round(cx + 12 - q * 3 - hash(q, (G.time * 8) | 0, 3) * 4), Math.round(cy - 10 + (hash(q, (G.time * 8) | 0, 4) - .5) * 10), 2, 2, pc);
@@ -104,14 +104,14 @@ export function drawMain() {
     } else {
       ell(cx, cy + 14, 42, 14, '#3b2512'); ell(cx, cy + 14, 39, 12, '#5a3a1f'); ell(cx - 10, cy + 12, 14, 4, '#6b4626');
       for (let q = 0; q < 10; q++) { const a = Math.PI + q / 9 * Math.PI, rr = 30 + ((G.time * 40 + q * 13) % 16); R1(Math.round(cx + Math.cos(a) * rr), Math.round(cy + 14 + Math.sin(a) * rr * .6), 3, 3, q % 2 ? '#4a2f18' : '#7d5a36'); }
-      ctx.drawImage(carSet(CAR_DEFS[G.selCar], false).frames[3][0], cx - 22, cy - 12 + (((G.time * 10) | 0) % 2));
+      ctx.drawImage(carSet(CAR_DEFS[PREFS.selCar], false).frames[3][0], cx - 22, cy - 12 + (((G.time * 10) | 0) % 2));
     }
     text(MODES[i].name.length * 8 > cw - 2 ? MODES[i].short : MODES[i].name, cx, y + ih + 14, 8, sel ? '#ffd23f' : '#fff3dc', 'center');
     text(MODES[i].sub, cx, y + ih + 32, 8, '#d8c4a8', 'center');
     if (!sel) { ctx.fillStyle = 'rgba(27,16,9,.35)'; ctx.fillRect(x, y, cw, chh); }
   }
-  text(G.mainRow === 1 ? 'ENTER = MODUS WECHSELN   RUNTER = ZURUECK' : '< > WAEHLEN   HOCH = KINDERMODUS   ENTER = LOS', VW / 2, 234, 8, '#d8c4a8', 'center');
-  if (G.kids) text('KINDERMODUS: ALLES FREI, LEICHT, OHNE EFFEKTE', VW / 2, 252, 8, '#9fd6ff', 'center');
+  text(UI.mainRow === 1 ? 'ENTER = MODUS WECHSELN   RUNTER = ZURUECK' : '< > WAEHLEN   HOCH = KINDERMODUS   ENTER = LOS', VW / 2, 234, 8, '#d8c4a8', 'center');
+  if (PREFS.kids) text('KINDERMODUS: ALLES FREI, LEICHT, OHNE EFFEKTE', VW / 2, 252, 8, '#9fd6ff', 'center');
   else { const open = CAR_DEFS.filter(d => !isLocked(d)).length; text('AUTOS ' + open + '/' + CAR_DEFS.length, VW / 2, 252, 8, open === CAR_DEFS.length ? '#ffd23f' : '#9a8a78', 'center'); }
 }
 
@@ -119,16 +119,16 @@ export function drawMain() {
 export function drawSelectTrack() {
   drawMenuBg();
   text('STRECKE', VW / 2, 12, 16, '#ffd23f', 'center');
-  if (G.mode === 'tt') { const rec = loadRecord(TRACKS[G.selTrack], CAR_DEFS[G.selCar]); text('BEST ' + (rec ? fmtTime(rec.t) : '-:--.--'), VW - 8, 34, 8, rec ? '#ffd23f' : '#9a8a78', 'right'); }
+  if (G.mode === 'tt') { const rec = loadRecord(TRACKS[PREFS.selTrack], CAR_DEFS[PREFS.selCar]); text('BEST ' + (rec ? fmtTime(rec.t) : '-:--.--'), VW - 8, 34, 8, rec ? '#ffd23f' : '#9a8a78', 'right'); }
   const n = TRACKS.length, cw = 224, chh = 126, cx0 = VW / 2 - cw / 2, cy0 = 38;
   // neighbours peek in from the sides
   for (const off of [-1, 1]) {
-    const t = TRACKS[(G.selTrack + off + n) % n], w = 96, h = 54, x = off < 0 ? 16 : VW - 16 - w, y = cy0 + 36;
+    const t = TRACKS[(PREFS.selTrack + off + n) % n], w = 96, h = 54, x = off < 0 ? 16 : VW - 16 - w, y = cy0 + 36;
     ctx.fillStyle = '#1b120c'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
     drawTrackPic(t, x, y, w, h);
     ctx.fillStyle = 'rgba(27,16,9,.55)'; ctx.fillRect(x, y, w, h);
   }
-  const t = TRACKS[G.selTrack], pop = Math.round(Math.max(0, 1 - (G.time - G.selAnim) * 4) * 6), b = Math.round(Math.abs(Math.sin(G.time * 3)) * 2) + pop;
+  const t = TRACKS[PREFS.selTrack], pop = Math.round(Math.max(0, 1 - (G.time - UI.selAnim) * 4) * 6), b = Math.round(Math.abs(Math.sin(G.time * 3)) * 2) + pop;
   ctx.fillStyle = '#ffd23f'; ctx.fillRect(cx0 - 4, cy0 - 4 - b, cw + 8, chh + 8);
   ctx.fillStyle = '#1b120c'; ctx.fillRect(cx0 - 1, cy0 - 1 - b, cw + 2, chh + 2);
   drawTrackPic(t, cx0, cy0 - b, cw, chh);
@@ -137,9 +137,9 @@ export function drawSelectTrack() {
   tri(cx0 - 12 - wig + 1, cy0 + chh / 2 + 1, 'left', 10, '#1b120c'); tri(cx0 - 12 - wig, cy0 + chh / 2, 'left', 10, '#ffd23f');
   tri(cx0 + cw + 12 + wig + 1, cy0 + chh / 2 + 1, 'right', 10, '#1b120c'); tri(cx0 + cw + 12 + wig, cy0 + chh / 2, 'right', 10, '#ffd23f');
   text(t.name, VW / 2, cy0 + chh + 10, 16, '#ffd23f', 'center');
-  for (let i = 0; i < n; i++) { ctx.fillStyle = i === G.selTrack ? '#ffd23f' : '#6b5a48'; ctx.fillRect(VW / 2 - n * 5 + i * 10, cy0 + chh + 32, 7, 2); }
+  for (let i = 0; i < n; i++) { ctx.fillStyle = i === PREFS.selTrack ? '#ffd23f' : '#6b5a48'; ctx.fillRect(VW / 2 - n * 5 + i * 10, cy0 + chh + 32, 7, 2); }
   // the chosen car drives through mud (gets dirty) and then a puddle (gets clean again)
-  const th = t.th, F = carSet(CAR_DEFS[G.selCar], th.goo);
+  const th = t.th, F = carSet(CAR_DEFS[PREFS.selCar], th.goo);
   const cx = ((G.time * 90) % (VW + 100)) - 50, py = 224, mudX = 170, watX = 320;
   ell(mudX, py + 6, 30, 7, th.mudEdge); ell(mudX, py + 6, 28, 6, th.mud[0]); ctx.fillStyle = th.mudHi; ctx.fillRect(mudX - 10, py + 4, 4, 1); ctx.fillRect(mudX + 12, py + 8, 3, 1);
   ell(watX, py + 6, 30, 7, th.shore[0]); ell(watX, py + 6, 27, 6, th.water[1]); ell(watX + 4, py + 5, 18, 3, th.water[3]); ctx.fillStyle = '#e8f7ff'; ctx.fillRect(watX - 10, py + 4, 3, 1);

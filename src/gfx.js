@@ -4,6 +4,9 @@ import { FONT, ctx } from './core.js';
 // ---------- small drawing helpers (text, shapes, panels, the 1P sign) ----------
 // They only draw on the canvas and know nothing of the game logic, so every module can use them without import circles.
 
+/** pixel text with a shadow below right (sh = null: none)
+ * @param {string} s @param {number} x @param {number} y @param {number} size @param {string} col
+ * @param {CanvasTextAlign} [align] @param {string | null} [sh] */
 export function text(s, x, y, size, col, align = 'left', sh = '#1b120c') {
   ctx.font = size + 'px ' + FONT; ctx.textAlign = align; ctx.textBaseline = 'top';
   if (sh) { ctx.fillStyle = sh; ctx.fillText(s, Math.round(x) + 1, Math.round(y) + 1); }

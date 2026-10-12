@@ -212,7 +212,7 @@ export function paintSite(S) {
   silo(322, 22, 12); silo(350, 22, 12);
   rect(318, 36, 36, 1, K.greyD); for (let yy = 36; yy < 62; yy++) { py(333, yy, K.greyD); py(334, yy, K.grey); py(335, yy, K.greyD); }
   shade(321, 60, 32, 18, .66); rect(320, 58, 32, 18, K.white); rect(320, 58, 32, 2, K.grey); rect(320, 74, 32, 2, K.greyD); rect(324, 63, 8, 5, K.tarpL); rect(340, 63, 8, 5, K.tarpL);
-  for (const [by, cols] of [[98, [K.sandD, K.sand, K.sandL]], [124, [K.gravelD, K.gravel, K.gravelL]], [150, [K.earthD, K.earth, K.earthL]]]) {
+  for (const [by, cols] of /** @type {Array<[number, any]>} */ ([[98, [K.sandD, K.sand, K.sandL]], [124, [K.gravelD, K.gravel, K.gravelL]], [150, [K.earthD, K.earth, K.earthL]]])) {
     rect(341, by, 27, 23, K.slab2); rect(341, by, 27, 1, K.rim); rect(341, by + 22, 27, 1, K.rim); rect(341, by, 1, 23, K.rim);
     heap(356, by + 12, 10, 8, cols, by);
   }

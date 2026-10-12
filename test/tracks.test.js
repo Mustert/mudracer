@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CUPS, cupTrackIdx } from '../src/cups.js';
-import { G } from '../src/g.js';
+import { PREFS } from '../src/g.js';
 import '../src/state.js';
 import { TRACKS, centreLine } from '../src/tracks.js';
 
@@ -22,8 +22,8 @@ describe('tracks', () => {
       }
     }
   });
-  it('every track event can be switched off (G.events)', () => {
-    for (const t of TRACKS) for (const e of t.def.events || []) expect(G.events[e], t.name + ': ' + e).toBe(true);
+  it('every track event can be switched off (PREFS.events)', () => {
+    for (const t of TRACKS) for (const e of t.def.events || []) expect(PREFS.events[e], t.name + ': ' + e).toBe(true);
   });
   it('every cup only names tracks that exist', () => {
     for (const cup of CUPS) if (!cup.custom) expect(cupTrackIdx(cup).every(i => i >= 0)).toBe(true);

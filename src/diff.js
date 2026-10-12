@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, PREFS } from './g.js';
 import { getItem, setItem } from './save.js';
 
 // ---------- difficulty, kids mode and track effects ----------
@@ -13,38 +13,38 @@ export const DIFFS = [
   { name: 'SCHWER', col: '#ff6b6b', skill: [.80, .91], ahead: .18, slow: .88, behind: .12, catchUp: 1.1, wander: 8, avoid: 1 },
 ];
 
-G.diff = 0;
-G.kids = false;
-G.selFx = false;
+PREFS.diff = 0;
+PREFS.kids = false;
+PREFS.selFx = false;
 try {
-  G.diff = Math.min(2, Math.max(0, parseInt(getItem('mudracer-diff') || '0', 10) || 0));
-  G.kids = getItem('mudracer-kids') === '1';
+  PREFS.diff = Math.min(2, Math.max(0, parseInt(getItem('mudracer-diff') || '0', 10) || 0));
+  PREFS.kids = getItem('mudracer-kids') === '1';
   const fx = getItem('mudracer-fx');
-  G.selFx = fx === null ? G.diff > 0 : fx === '1';
+  PREFS.selFx = fx === null ? PREFS.diff > 0 : fx === '1';
 } catch (e) {}
 
 // the difficulty that really counts: the kids mode always drives on LEICHT
-export const curDiff = () => G.kids ? 0 : G.diff;
+export const curDiff = () => PREFS.kids ? 0 : PREFS.diff;
 
 export function setDiff(d) {
-  G.diff = (d + 3) % 3;
-  try { setItem('mudracer-diff', String(G.diff)); } catch (e) {}
+  PREFS.diff = (d + 3) % 3;
+  try { setItem('mudracer-diff', String(PREFS.diff)); } catch (e) {}
 }
 
 export function setFx(on) {
-  G.selFx = on;
+  PREFS.selFx = on;
   try { setItem('mudracer-fx', on ? '1' : '0'); } catch (e) {}
 }
 
 export function toggleKids() {
-  G.kids = !G.kids;
-  try { setItem('mudracer-kids', G.kids ? '1' : '0'); } catch (e) {}
+  PREFS.kids = !PREFS.kids;
+  try { setItem('mudracer-kids', PREFS.kids ? '1' : '0'); } catch (e) {}
 }
 
 // are the track effects on? Grand Prix: from MITTEL. Single race and time trial: the switch in the options. Kids mode: never.
 export function fxActive() {
-  if (G.kids) return false;
-  return G.mode === 'gp' ? G.diff > 0 : G.selFx;
+  if (PREFS.kids) return false;
+  return G.mode === 'gp' ? PREFS.diff > 0 : PREFS.selFx;
 }
 
 // the throttle of opponent i (1..n) in a field of n opponents: the first ones are the calmest

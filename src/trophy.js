@@ -17,8 +17,8 @@ const RIB = ['#2f6fd8', '#5a9ad8', '#1b4796'];
 // the shape in units, x around the middle, y upwards from the bottom (negative = above); [x, y, w, h, colour key]
 function shape(lv) {
   const R = [], bowl = [[5, 8], [6, 10], [7, 12]][lv], [hw, bh] = bowl;
-  const foot = [[[-4, -2, 8, 2, 'd'], [-4, -2, 8, 1, 'm']], [[-5, -2, 10, 2, 'd'], [-4, -4, 8, 2, 'm'], [-4, -4, 8, 1, 'h']],
-    [[-8, -4, 16, 4, 'p'], [-8, -4, 16, 1, 'P'], [-5, -6, 10, 2, 'm'], [-5, -6, 10, 1, 'h']]][lv];
+  const foot = /** @type {Array<Array<[number, number, number, number, string]>>} */ ([[[-4, -2, 8, 2, 'd'], [-4, -2, 8, 1, 'm']], [[-5, -2, 10, 2, 'd'], [-4, -4, 8, 2, 'm'], [-4, -4, 8, 1, 'h']],
+    [[-8, -4, 16, 4, 'p'], [-8, -4, 16, 1, 'P'], [-5, -6, 10, 2, 'm'], [-5, -6, 10, 1, 'h']]])[lv];
   R.push(...foot);
   const fy = foot[foot.length - 1][1], stem = lv ? 3 : 3, top = fy - stem - 1 - bh;
   R.push([-1, fy - stem, 2, stem, 'm'], [-2, fy - stem - 1, 4, 1, 'd']);

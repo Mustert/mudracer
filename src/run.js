@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, PREFS } from './g.js';
 import { AU, SFX } from './audio.js';
 import { CAR_DEFS } from './cars.js';
 import { TAU, VH, VW, clamp, ctx, hash, hex, mk, outlineImg, rng, toCanvas, vnoise } from './core.js';
@@ -204,7 +204,7 @@ G.RUN = null;
 export function startRun() {
   G.RUN = G.RUN || buildRun();
   G.T = G.RUN; resetWorld();
-  const y = G.T.startY + 44, def = CAR_DEFS[G.selCar];
+  const y = G.T.startY + 44, def = CAR_DEFS[PREFS.selCar];
   G.cars = [makeCar(def, G.T.roadX(y), y, -Math.PI / 2, false, 1, { def, me: true })];
   G.player = G.cars[0];
   G.run = { jumps: 0, splashes: 0, muds: 0, shake: 0 };

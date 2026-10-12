@@ -26,7 +26,7 @@ import { initCrocs, initJungle, initTrees, jungleCollisions, jungleUpdate } from
 // Vulkan: from lap 2 the eruption (lava bombs, a lava tongue over the serpentine, ash rain; see volcano.js).
 // Dschungel: rotten trees fall across the road and stay there as little ramps, from lap 2 a stone ball rolls through the temple;
 // crocodiles snap in the ford and the swamp (see jungle.js).
-// Every event can be switched off with G.events (see state.js); G.fx switches all of them for the current race (difficulty,
+// Every event can be switched off with PREFS.events (see state.js); G.fx switches all of them for the current race (difficulty,
 // options, kids mode, see diff.js). A track is changed in place; setupEvents/resetTrackEvents put it back.
 
 // in the menus every track looks as it was built (events change the map during a race)

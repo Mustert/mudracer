@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, UI, PREFS } from './g.js';
 import { CAR_DEFS, carSet, isLocked } from './cars.js';
 import { SS, VW, ctx } from './core.js';
 import { CUPS, cupLabel, cupTrackIdx, loadBestPlace, places } from './cups.js';
@@ -19,13 +19,13 @@ const N = CAR_DEFS.length, PITCH = 46, SW = 44, X0 = Math.round((VW - (N * PITCH
 const PANEL = { y: 28 }, WIN_Y = 46, WIN_H = 34, INFO_Y = 83, INFO_H = 12, CAR_Y = 79;
 
 // the info boxes only exist where there is something to show (cup places, best times); the rack is shorter without them
-const hasInfo = () => G.state !== 'shop' && ((G.mode === 'gp' && !!G.cup && !G.cup.custom) || G.mode === 'tt');
-const gpInfo = () => G.mode === 'gp' && G.cup && !G.cup.custom;
+const hasInfo = () => G.state !== 'shop' && ((G.mode === 'gp' && !!PREFS.cup && !PREFS.cup.custom) || G.mode === 'tt');
+const gpInfo = () => G.mode === 'gp' && PREFS.cup && !PREFS.cup.custom;
 const panelH = () => hasInfo() ? 70 : 56;
 
 // a car in the selection strip gets focus (arrow keys and taps alike): locked ones are silent and are not remembered
 export function pickCar(i) {
-  G.selCar = i; G.selAnim = G.time;
+  PREFS.selCar = i; UI.selAnim = G.time;
   if (isLocked(CAR_DEFS[i])) SFX.click(); else { SFX.honk[CAR_DEFS[i].honk](); setItem('mudracer-car', i); }
 }
 
@@ -37,8 +37,8 @@ export function carSlotAt(x, y) {
 }
 
 function bgTrack() {
-  if (G.mode === 'gp' && G.cup) return TRACKS[cupTrackIdx(G.cup)[0]];
-  if (G.mode === 'single' || G.mode === 'tt') return TRACKS[G.selTrack];
+  if (G.mode === 'gp' && PREFS.cup) return TRACKS[cupTrackIdx(PREFS.cup)[0]];
+  if (G.mode === 'single' || G.mode === 'tt') return TRACKS[PREFS.selTrack];
   return TRACKS[0];
 }
 
@@ -48,8 +48,8 @@ function slotInfos() {
   if (!cache || G.stateTime < cacheT) {
     cache = CAR_DEFS.map(def => {
       if (isLocked(def)) return null;
-      if (gpInfo()) { const d = curDiff(), p = loadBestPlace(G.cup, def, d); return { places: places(G.cup, def), long: 'BESTER PLATZ ' + (p || '-') + ' (' + DIFFS[d].name + ')' }; }
-      if (G.mode === 'tt') { const r = loadRecord(TRACKS[G.selTrack], def); return r ? { txt: fmtTime(r.t).slice(0, 4), col: '#ffd23f', long: 'BESTZEIT ' + fmtTime(r.t) } : { txt: '--', col: '#6b5a48', long: 'BESTZEIT -:--.--' }; }
+      if (gpInfo()) { const d = curDiff(), p = loadBestPlace(PREFS.cup, def, d); return { places: places(PREFS.cup, def), long: 'BESTER PLATZ ' + (p || '-') + ' (' + DIFFS[d].name + ')' }; }
+      if (G.mode === 'tt') { const r = loadRecord(TRACKS[PREFS.selTrack], def); return r ? { txt: fmtTime(r.t).slice(0, 4), col: '#ffd23f', long: 'BESTZEIT ' + fmtTime(r.t) } : { txt: '--', col: '#6b5a48', long: 'BESTZEIT -:--.--' }; }
       return null;
     });
   }
@@ -71,7 +71,7 @@ export function drawRack(infos) {
   // checkered edge on top
   for (let cx = x; cx < x + w; cx += 3) for (let r = 0; r < 2; r++) R1(cx, PANEL.y + r * 3, Math.min(3, x + w - cx), 3, ((cx - x) / 3 + r) & 1 ? '#f2f2f2' : '#1b120c');
   CAR_DEFS.forEach((def, i) => {
-    const sel = i === G.selCar, locked = isLocked(def), sx = X0 + i * PITCH, wy = sel ? WIN_Y - 2 : WIN_Y;
+    const sel = i === PREFS.selCar, locked = isLocked(def), sx = X0 + i * PITCH, wy = sel ? WIN_Y - 2 : WIN_Y;
     if (sel) {
       R1(sx - 3, wy - 3, SW + 6, WIN_H + 6, '#ffd23f');
       R1(sx + (SW - 18) / 2, PANEL.y + 7, 18, 8, '#f07a1a'); text('1P', sx + SW / 2 + 1, PANEL.y + 7, 8, '#ffffff', 'center', null);
@@ -92,14 +92,14 @@ export function drawRack(infos) {
 
 export function drawSelectCar() {
   drawMenuBg(bgTrack());
-  const infos = slotInfos(), def = CAR_DEFS[G.selCar], F = carSet(def, false), S3 = SS * 3, locked = isLocked(def);
+  const infos = slotInfos(), def = CAR_DEFS[PREFS.selCar], F = carSet(def, false), S3 = SS * 3, locked = isLocked(def);
   drawRack(infos);
   // what is being selected for, and the page-specific info of the focused car
-  const ctxt = G.mode === 'gp' && G.cup ? 'GRAND PRIX  ' + cupLabel(G.cup) : G.mode === 'single' || G.mode === 'tt' ? MODES.find(m => m.id === G.mode).name + '  ' + TRACKS[G.selTrack].name : MODES.find(m => m.id === G.mode).name;
+  const ctxt = G.mode === 'gp' && PREFS.cup ? 'GRAND PRIX  ' + cupLabel(PREFS.cup) : G.mode === 'single' || G.mode === 'tt' ? MODES.find(m => m.id === G.mode).name + '  ' + TRACKS[PREFS.selTrack].name : MODES.find(m => m.id === G.mode).name;
   text(ctxt, 8, 103, 8, '#d8c4a8');
-  if (infos[G.selCar]) text(infos[G.selCar].long, VW - 8, 103, 8, '#ffd23f', 'right');
+  if (infos[PREFS.selCar]) text(infos[PREFS.selCar].long, VW - 8, 103, 8, '#ffd23f', 'right');
   // the car stands still, facing right, and gently idles
-  const jump = Math.max(0, 1 - (G.time - G.selAnim) * 3.5), hop = Math.round(Math.sin(jump * Math.PI) * 14);
+  const jump = Math.max(0, 1 - (G.time - UI.selAnim) * 3.5), hop = Math.round(Math.sin(jump * Math.PI) * 14);
   const idle = locked ? 0 : ((G.time * 12) | 0) % 2;
   const x = VW / 2 - S3 / 2, y = CAR_Y - hop - idle;
   ell(VW / 2, CAR_Y + 66, 76, 12, 'rgba(0,0,0,.35)');
@@ -123,7 +123,7 @@ export function drawSelectCar() {
     text('MATSCH', VW / 2 - 8, 227, 8, '#fff3dc', 'right');
     for (let i = 0; i < 5; i++) { star(VW / 2 + i * 10, 214, i < def.tempo); star(VW / 2 + i * 10, 227, i < def.matsch); }
   }
-  if (gpInfo() && !locked) drawShelf(places(G.cup, def));
+  if (gpInfo() && !locked) drawShelf(places(PREFS.cup, def));
   text('< > AUTO WAEHLEN    ENTER = WEITER', VW / 2, 252, 8, '#d8c4a8', 'center');
 }
 

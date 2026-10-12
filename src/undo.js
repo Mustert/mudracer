@@ -1,10 +1,10 @@
-import { G } from './g.js';
+import { G, PREFS } from './g.js';
 import { clamp } from './core.js';
 
 // ---------- what the track events share (events.js and the event parts of desert.js, ice.js, ring.js, volcano.js) ----------
 
-// is this event on in the current race? (G.fx: all effects of the race, G.events: each one on its own)
-export const eventOn = key => !!G.fx && G.events[key] !== false;
+// is this event on in the current race? (G.fx: all effects of the race, PREFS.events: each one on its own)
+export const eventOn = key => !!G.fx && PREFS.events[key] !== false;
 
 // ----- undo: the base picture and the terrain of every changed area are saved first (events.js resetTrackEvents puts them back) -----
 

@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, UI } from './g.js';
 import { AU, noise, synth, voice } from './audio.js';
 import { LAPS } from './core.js';
 
@@ -389,7 +389,7 @@ export const Music = {
   },
   level() {
     if (!AU.a) return;
-    const vs = G.state === 'options' ? G.optFrom : G.state;
+    const vs = G.state === 'options' ? UI.optFrom : G.state;
     const menuish = ['title', 'main', 'select_cup', 'select_track', 'select_car', 'select_count', 'standings', 'ceremony'].includes(vs);
     let w = menuish ? 'menu' : G.T.def.song;
     if (SONGS[w] && SONGS[w].swap) w = SONGS[w].swap() || w; // a song can hand over to another one (the volcano gets faster in the last lap)

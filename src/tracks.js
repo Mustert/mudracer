@@ -1009,6 +1009,7 @@ function* buildTrack(def, ti) {
 const KEEP = 2, LIGHT = new Set(['def', 'ti', 'name', 'th', 'W', 'H', 'built', 'job', 'progress', 'used', 'preview', 'shape']);
 let clock = 0;
 
+/** @type {Array<Record<string, any>>} */
 export const TRACKS = TRACK_DEFS.map((def, ti) => ({ def, ti, name: def.name, th: THEMES[def.theme], W: def.W || WW, H: def.H || WH, built: false, job: null, progress: 0, used: 0, preview: null, shape: null }));
 
 // one more slice of the build, until the clock (performance.now()) reaches `until`; true when the track is built

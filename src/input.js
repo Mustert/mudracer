@@ -4,6 +4,7 @@ import { VH, VW, cv } from './core.js';
 // The menus (menus.js) and the sound (main.js: audio may only start after a touch or key) register what happens on a key
 // press, a tap and any first contact; input.js itself depends on nothing, so the game logic can ask held() without import circles.
 
+/** @type {{ press: (k: string) => void, click: (x: number, y: number) => void, touch: () => void }} */
 const H = { press: () => {}, click: () => {}, touch: () => {} };
 export function setInputHandlers(h) { Object.assign(H, h); }
 
@@ -49,7 +50,7 @@ export const coarse = matchMedia('(pointer: coarse)').matches;
 touchBox.hidden = !coarse;
 
 
-touchBox.querySelectorAll('[data-k]').forEach(b => {
+touchBox.querySelectorAll('[data-k]').forEach((/** @type {HTMLElement} */ b) => {
   const k = b.dataset.k;
   const on = e => { e.preventDefault(); H.touch(); if (!keys[k]) H.press(k); keys[k] = true; b.classList.add('on'); };
   const off = () => { keys[k] = false; b.classList.remove('on'); };

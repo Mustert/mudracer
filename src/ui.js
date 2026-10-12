@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, UI, PREFS } from './g.js';
 import { AU } from './audio.js';
 import { VH, VW, ctx } from './core.js';
 import { drawRace } from './draw.js';
@@ -43,11 +43,11 @@ export function drawOptions() {
   ctx.fillStyle = 'rgba(27,18,12,.5)'; ctx.fillRect(0, 0, VW, VH);
   panel(OPT.x, OPT.y, OPT.w, OPT.h);
   text('OPTIONEN', OPT.x + OPT.w / 2, OPT.y + 9, 8, '#ffd23f', 'center');
-  const rows = [['MUSIK', AU.music ? 'AN' : 'AUS'], ['STEUERUNG', G.CTRL === 'std' ? 'STANDARD' : 'ALTERNATIV'], ['SPIELSTAND', 'SICHERN'], ['SPIELSTAND', 'LADEN'], ['ZURUECK', '']];
-  rows.forEach(([a, b], i) => drawChoiceRow(OPT.x + 6, OPT.y + OPT.r0 + i * OPT.row, OPT.w - 12, OPT.row - 2, G.optSel === i, a, b));
+  const rows = [['MUSIK', AU.music ? 'AN' : 'AUS'], ['STEUERUNG', PREFS.CTRL === 'std' ? 'STANDARD' : 'ALTERNATIV'], ['SPIELSTAND', 'SICHERN'], ['SPIELSTAND', 'LADEN'], ['ZURUECK', '']];
+  rows.forEach(([a, b], i) => drawChoiceRow(OPT.x + 6, OPT.y + OPT.r0 + i * OPT.row, OPT.w - 12, OPT.row - 2, UI.optSel === i, a, b));
   // under the rows: a message after saving or loading (a few seconds), otherwise what the steering does
-  const msg = G.optMsg && G.time - G.optMsg.t < 4 ? G.optMsg : null;
-  const hint = msg ? [msg.s] : G.CTRL === 'std' ? ['HOCH=GAS RUNTER=BREMSE', 'LINKS/RECHTS = LENKEN'] : ['PFEIL = RICHTUNG AUF', 'DEM BILDSCHIRM'];
+  const msg = UI.optMsg && G.time - UI.optMsg.t < 4 ? UI.optMsg : null;
+  const hint = msg ? [msg.s] : PREFS.CTRL === 'std' ? ['HOCH=GAS RUNTER=BREMSE', 'LINKS/RECHTS = LENKEN'] : ['PFEIL = RICHTUNG AUF', 'DEM BILDSCHIRM'];
   hint.forEach((s, i) => text(s, OPT.x + OPT.w / 2, OPT.y + OPT.r0 + OPT_ROWS * OPT.row + 2 + i * 11, 8, msg ? (msg.ok ? '#7bd37b' : '#ff6b6b') : '#d8c4a8', 'center'));
   drawGear(true);
 }
@@ -58,7 +58,7 @@ export function drawPause() {
   panel(PAU.x, PAU.y, PAU.w, PAU.h);
   text('PAUSE', VW / 2, PAU.y + 14, 16, '#ffd23f', 'center');
   ['WEITER', 'RENNEN BEENDEN'].forEach((s, i) => {
-    const y = PAU.y + PAU.r0 + i * PAU.row, sel = G.pauseSel === i;
+    const y = PAU.y + PAU.r0 + i * PAU.row, sel = UI.pauseSel === i;
     R1(PAU.x + 14, y, PAU.w - 28, PAU.rh, sel ? '#e8a860' : '#3a2a1c');
     text(s, VW / 2, y + 7, 8, sel ? '#1b120c' : '#fff3dc', 'center', null);
   });

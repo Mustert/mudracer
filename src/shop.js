@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, UI, PREFS } from './g.js';
 import { SFX } from './audio.js';
 import { CAR_DEFS, PAINTS, carSet, isLocked, savePaint } from './cars.js';
 import { SS, VW, clamp, ctx, hash } from './core.js';
@@ -17,30 +17,30 @@ const GAR = { x: 16, y: 90, w: VW - 32, h: 118 }, FLOOR = 184;
 const SW = { y: 214, w: 20, h: 16, gap: 4 };
 const swX0 = () => Math.round(VW / 2 - (PAINTS.length * (SW.w + SW.gap) - SW.gap) / 2);
 
-G.shop = { prev: -1, t: -10, row: 0, paintT: -10 };
+UI.shop = { prev: -1, t: -10, row: 0, paintT: -10 };
 
-export function openShop() { G.shop = { prev: -1, t: -10, row: 0, paintT: -10 }; setState('shop'); }
+export function openShop() { UI.shop = { prev: -1, t: -10, row: 0, paintT: -10 }; setState('shop'); }
 
 function choose(i) {
-  if (i === G.selCar) return;
+  if (i === PREFS.selCar) return;
   // a car still driving in counts as arrived: it is the one that drives out now
-  G.shop.prev = G.selCar; G.shop.t = G.time; pickCar(i);
+  UI.shop.prev = PREFS.selCar; UI.shop.t = G.time; pickCar(i);
 }
 
 function paint(i) {
-  const def = CAR_DEFS[G.selCar];
+  const def = CAR_DEFS[PREFS.selCar];
   if (isLocked(def)) { SFX.bump(); return; }
   if (i === (def.paint || 0)) return;
-  savePaint(def, (i + PAINTS.length) % PAINTS.length); G.shop.paintT = G.time; SFX.splash(.5);
+  savePaint(def, (i + PAINTS.length) % PAINTS.length); UI.shop.paintT = G.time; SFX.splash(.5);
 }
 
 export function shopKey(k) {
-  const s = G.shop;
+  const s = UI.shop;
   if (is(k, 'up') || is(k, 'down')) { s.row = 1 - s.row; SFX.click(); }
   else if (is(k, 'left') || is(k, 'right')) {
     const d = is(k, 'left') ? -1 : 1;
-    if (s.row === 0) choose((G.selCar + d + CAR_DEFS.length) % CAR_DEFS.length);
-    else paint((CAR_DEFS[G.selCar].paint || 0) + d);
+    if (s.row === 0) choose((PREFS.selCar + d + CAR_DEFS.length) % CAR_DEFS.length);
+    else paint((CAR_DEFS[PREFS.selCar].paint || 0) + d);
   }
   else if (is(k, 'ok')) { if (s.row === 0) { s.row = 1; SFX.click(); } else SFX.select(); }
   else if (is(k, 'back')) { SFX.click(); setState('main'); }
@@ -48,11 +48,11 @@ export function shopKey(k) {
 
 export function shopClick(x, y) {
   const i = carSlotAt(x, y);
-  if (i >= 0) { G.shop.row = 0; choose(i); return; }
+  if (i >= 0) { UI.shop.row = 0; choose(i); return; }
   const x0 = swX0();
   if (y >= SW.y - 3 && y < SW.y + SW.h + 3) for (let j = 0; j < PAINTS.length; j++) {
     const sx = x0 + j * (SW.w + SW.gap);
-    if (x >= sx - 2 && x < sx + SW.w + 2) { G.shop.row = 1; paint(j); return; }
+    if (x >= sx - 2 && x < sx + SW.w + 2) { UI.shop.row = 1; paint(j); return; }
   }
 }
 
@@ -111,9 +111,9 @@ export function drawShop() {
   drawGarage();
   // the cars: the new one comes in from the left and stops in the middle, the old one leaves on the right
   ctx.save(); ctx.beginPath(); ctx.rect(GAR.x, GAR.y + 8, GAR.w, GAR.h - 8); ctx.clip();
-  const s = G.shop, p = clamp((G.time - s.t) / .9, 0, 1), q = clamp((G.time - s.t) / .75, 0, 1);
+  const s = UI.shop, p = clamp((G.time - s.t) / .9, 0, 1), q = clamp((G.time - s.t) / .75, 0, 1);
   if (s.prev >= 0 && q < 1) drawCarAt(CAR_DEFS[s.prev], VW / 2 + q * q * (VW / 2 + 90), true);
-  const e = 1 - (1 - p) ** 3, def = CAR_DEFS[G.selCar];
+  const e = 1 - (1 - p) ** 3, def = CAR_DEFS[PREFS.selCar];
   drawCarAt(def, -80 + e * (VW / 2 + 80), p < 1);
   // fresh paint: a cloud of spray around the car for a moment
   const pt = G.time - s.paintT;

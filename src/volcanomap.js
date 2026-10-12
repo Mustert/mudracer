@@ -225,7 +225,7 @@ export function* paintVolcano(S) {
   if (def.station) {
     const [sx, sy] = def.station, R = (x, y, w, h, c) => { for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) setT(sx + x + xx, sy + y + yy, c); };
     for (let y = 0; y < 26; y++) for (let x = 0; x < 64; x++) dk(sx - 28 + x, sy - 8 + y, .72);
-    for (const [x, col] of [[-32, K.cont], [2, K.contO]]) {
+    for (const [x, col] of /** @type {Array<[number, any]>} */ ([[-32, K.cont], [2, K.contO]])) {
       R(x, -12, 30, 18, [30, 26, 24]); R(x + 1, -11, 28, 16, col); for (let k = 3; k < 28; k += 4) R(x + 1 + k, -11, 1, 16, col === K.cont ? K.contD : [180, 90, 30]);
       for (let yy = -12; yy < 6; yy++) for (let xx = x; xx < x + 30; xx++) wallMask[(sy + yy) * MW + sx + xx] = 1;
       walls.push({ x: sx + x + 8, y: sy - 3, r: 8 }); walls.push({ x: sx + x + 22, y: sy - 3, r: 8 });

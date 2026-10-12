@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { PREFS } from './g.js';
 import { getItem, setItem } from './save.js';
 import { ROTS, SOIL_HI, SOIL_LO, SS, TAU, clamp, hash, hex, mk, outlineImg, rng, toCanvas } from './core.js';
 
@@ -7,6 +7,7 @@ import { ROTS, SOIL_HI, SOIL_LO, SS, TAU, clamp, hash, hex, mk, outlineImg, rng,
 export const HL = '#fff7c2', TL = '#ff3b3b';
 
 
+/** @type {Array<Record<string, any>>} */
 export const CAR_DEFS = [
   { id: 'flitzer', name: 'FLITZER', M: '#f07a1a', D: '#b44d0c', L: '#ffb45e', speed: 1.085, mud: 0.80, acc: 1.2, turn: 1.12, engine: 64, honk: 'meep',
     draw({ R, wheel, glass, cut }, c) {
@@ -155,6 +156,7 @@ export const CAR_DEFS = [
 
 // plain little cars that fill the Grand Prix field up to eight
 
+/** @type {Array<Record<string, any>>} */
 export const GENERICS = [['GRAU', '#9aa3ad', '#6b737c', '#c9d0d6'], ['BEIGE', '#d8c8a0', '#a8986e', '#f0e4c4'], ['OLIV', '#6b8a4a', '#4a6333', '#9ab878'], ['WEINROT', '#8a2b3a', '#5e1d27', '#b85566'],
   ['TUERKIS', '#3aa0b8', '#277080', '#7fd0e0'], ['LILA', '#6a5a9a', '#473b70', '#9a8ac8'], ['GOLD', '#c7a02e', '#8e7020', '#e8cb68']].map(([name, M, D, L], i) => ({
   id: 'gen' + i, name, M, D, L, speed: 1.03, mud: 1.0, acc: 1, turn: 1, engine: 50 + i * 3, honk: 'meep', generic: true,
@@ -186,15 +188,15 @@ GENERICS.forEach((d, i) => { d.k = 20 + i; });
 
 // cups won so far: a car with 'cup: n' is locked until cup n has been won. Saves from before the cups only know
 // 'mudracer-unlock' (0 to 3 Grand Prix wins): that count becomes cups 1..n, so cars unlocked back then stay unlocked.
-G.cupsWon = [];
+PREFS.cupsWon = [];
 try {
   const saved = JSON.parse(getItem('mudracer-cups') || 'null');
-  if (Array.isArray(saved)) G.cupsWon = saved.filter(n => Number.isInteger(n));
-  else G.cupsWon = Array.from({ length: clamp(parseInt(getItem('mudracer-unlock') || '0', 10) || 0, 0, 3) }, (_, i) => i + 1);
+  if (Array.isArray(saved)) PREFS.cupsWon = saved.filter(n => Number.isInteger(n));
+  else PREFS.cupsWon = Array.from({ length: clamp(parseInt(getItem('mudracer-unlock') || '0', 10) || 0, 0, 3) }, (_, i) => i + 1);
 } catch (e) {}
 
 // the kids mode opens every car
-export const isLocked = def => !G.kids && !!def.cup && !G.cupsWon.includes(def.cup);
+export const isLocked = def => !PREFS.kids && !!def.cup && !PREFS.cupsWon.includes(def.cup);
 
 
 const DIRT = ['#6b4a2b', '#58391f', '#7d5a36'].map(hex);

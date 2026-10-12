@@ -1,4 +1,4 @@
-import { G } from './g.js';
+import { G, PREFS } from './g.js';
 import { CAR_DEFS, GENERICS, carSet, isLocked, stepSet } from './cars.js';
 import { cupReady, cupTrackIdx } from './cups.js';
 import { VW, ctx } from './core.js';
@@ -21,10 +21,10 @@ const BUSY = new Set(['countdown', 'race', 'finish', 'pause']);
 export function upcomingTrack() {
   if (G.mode === 'gp') {
     if (G.state === 'standings' && G.gp) return TRACKS[G.gp.tracks[G.gp.race + 1]] || null;
-    if (G.cup && cupReady(G.cup)) return TRACKS[cupTrackIdx(G.cup)[0]] || null;
+    if (PREFS.cup && cupReady(PREFS.cup)) return TRACKS[cupTrackIdx(PREFS.cup)[0]] || null;
     return null;
   }
-  return G.mode === 'single' || G.mode === 'tt' ? TRACKS[G.selTrack] : null;
+  return G.mode === 'single' || G.mode === 'tt' ? TRACKS[PREFS.selTrack] : null;
 }
 
 // the sprite sets a race on track T needs for these cars (the cement track also needs the grey ones)
@@ -36,7 +36,7 @@ export function raceSets(T, defs) {
 
 // the cars that will probably drive the next race: your car, the unlocked ones, plain cars to fill the field
 function upcomingField() {
-  const me = CAR_DEFS[G.selCar];
+  const me = CAR_DEFS[PREFS.selCar];
   if (G.mode === 'tt') return [me];
   if (G.gp && G.state === 'standings') return G.gp.entries.map(e => e.def);
   return [me, ...CAR_DEFS.filter(d => d !== me && !isLocked(d)), ...GENERICS].slice(0, 8);
@@ -47,11 +47,11 @@ function nextJob() {
   const T = upcomingTrack();
   if (T && !T.built) { if (!T.job) useTrack(T); return until => stepTrack(T, until); }
   // the menu pictures: in the track choice the neighbours first
-  const n = TRACKS.length, order = G.state === 'select_track' ? [1, -1, 2, -2].map(o => TRACKS[(G.selTrack + o + n) % n]).concat(TRACKS) : TRACKS;
+  const n = TRACKS.length, order = G.state === 'select_track' ? [1, -1, 2, -2].map(o => TRACKS[(PREFS.selTrack + o + n) % n]).concat(TRACKS) : TRACKS;
   const pic = order.find(t => !t.preview);
   if (pic) return until => stepTrack(pic, until);
   if (T) { const S = raceSets(T, upcomingField()).find(s => !s.done); if (S) return until => stepSet(S, until); }
-  if (G.mode === 'run') { const S = carSet(CAR_DEFS[G.selCar], false); if (!S.done) return until => stepSet(S, until); }
+  if (G.mode === 'run') { const S = carSet(CAR_DEFS[PREFS.selCar], false); if (!S.done) return until => stepSet(S, until); }
   return null;
 }
 
