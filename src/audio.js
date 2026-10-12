@@ -186,6 +186,18 @@ export const SFX = {
   snap: () => { noise({ type: 'bandpass', f: 1800, q: 2, d: .05, vol: .3 }); voice({ type: 'square', f: 300, to: 120, d: .08, vol: .1, lp: 1500 }); },
   parrot: () => { for (let i = 0; i < 3; i++) voice({ t: i * .12 + Math.random() * .05, type: 'sawtooth', f: 1400 + Math.random() * 600, to: 900, a: .01, d: .1, vol: .04, bp: 2200, q: 3 }); },
   plopp: () => { voice({ f: 300, to: 900, a: .005, d: .12, vol: .25 }); voice({ t: .08, f: 600, to: 1200, d: .08, vol: .12 }); },
+  // space: drifting off (a falling whoosh), the tractor beam (a rising hum), the wormhole (a whoosh with an echo), the swing-by (a rising
+  // chime), the radar beep before an asteroid, a rock breaking, a thruster puff, the airlock hissing, the black hole opening and its hum
+  drift: v => { noise({ type: 'bandpass', f: 1800, to: 300, a: .02, hold: .3, d: .6, vol: .12 * v, q: 2 }); voice({ type: 'sine', f: 600, to: 180, a: .02, hold: .2, d: .6, vol: .06 * v }); },
+  tractor: v => { voice({ type: 'sawtooth', f: 110, to: 440, a: .05, hold: .25, d: .2, vol: .05 * v, lp: 1400 }); voice({ type: 'sine', f: 880, to: 1760, a: .05, hold: .2, d: .2, vol: .05 * v }); },
+  warp: v => { for (const [t, k] of [[0, 1], [.16, .45], [.32, .2]]) { noise({ t, type: 'bandpass', f: 300, to: 4000, a: .05, d: .3, vol: .2 * v * k, q: 3 }); voice({ t, type: 'sine', f: 1400, to: 200, a: .01, d: .3, vol: .07 * v * k }); } },
+  swingby: v => { [784, 988, 1175, 1568].forEach((f, i) => bell(f, i * .06, .1 * v)); voice({ type: 'sawtooth', f: 200, to: 1200, d: .5, vol: .05 * v, lp: 3000 }); },
+  radar: () => { for (const t of [0, .14]) voice({ t, type: 'square', f: 1760, a: .003, hold: .05, d: .04, vol: .05, lp: 4000 }); },
+  rockBreak: () => { noise({ type: 'lowpass', f: 1600, to: 200, d: .35, vol: .35 }); for (let i = 0; i < 5; i++) noise({ t: i * .03, type: 'bandpass', f: 1200 + i * 400, q: 2, d: .04, vol: .1 }); },
+  thruster: () => noise({ type: 'highpass', f: 3000, a: .005, d: .08, vol: .05 }),
+  airlock: v => { noise({ type: 'highpass', f: 2200, to: 5000, a: .02, hold: .35, d: .5, vol: .18 * v }); voice({ type: 'square', f: 220, a: .003, hold: .05, d: .05, vol: .04 * v, lp: 900 }); },
+  holeOpen: () => { voice({ type: 'sawtooth', f: 400, to: 40, a: .05, hold: .6, d: 1.4, vol: .12, lp: 900 }); noise({ type: 'lowpass', f: 1200, to: 80, a: .2, hold: .6, d: 1.5, vol: .3 }); voice({ f: 50, to: 30, a: .3, hold: .8, d: 1, vol: .3 }); },
+  holeHum: v => voice({ type: 'sawtooth', f: 46, to: 40, a: .6, hold: 1, d: 1.2, vol: .07 * v, lp: 260 }),
   quack: v => { for (const t of [0, .16]) voice({ t, type: 'sawtooth', f: 700, to: 420, a: .01, hold: .04, d: .09, vol: .06 * v, bp: 1200, q: 4 }); },
   rain: () => noise({ type: 'highpass', f: 4200, q: .5, a: 1.2, hold: 5.5, d: 2.5, vol: .09 }),
   thunder: () => { noise({ type: 'lowpass', f: 300, to: 70, a: .05, d: 2, vol: .45, q: .7 }); voice({ f: 62, to: 34, d: 1.6, vol: .3 }); },

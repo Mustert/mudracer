@@ -362,6 +362,33 @@ const SONGS = {
 // the volcano in the last lap: the same song, faster, the brass plays the tune
 SONGS.volcanoFast = { ...SONGS.volcano, bpm: 160, swap: null, fast: true };
 
+// space: the space disco of the rainbow track (D major, 150 BPM, four on the floor, octave bass, glittering arpeggios), grown up for space:
+// a vocoder sings "space race" in syllables, sci-fi blips fill the gaps, the pads pump with the kick (sidechain). When the black hole is open
+// everything is a whole tone lower and darker (a dive pulls it down when it opens); in the last lap the arpeggio runs twice as fast and the
+// vocoder sings in the chorus too. (The rainbow track keeps the old song until its rework, see Obsidian/Mudracer/Strecken.md.)
+let dived = null;
+const holeOpen = () => !!(G.T && G.T.space && G.T.ev && G.T.ev.hole);
+const spaceLast = () => !!G.player && !G.T.run && G.player.lap >= LAPS && (G.state === 'race' || G.state === 'finish');
+SONGS.space = { ...SONGS.rainbow,
+  up: () => holeOpen() ? -2 : 0,
+  lead(M, m, t, d, sec) {
+    M.lead(hz(m - 12), t, d); M.glock(hz(m), t, holeOpen() ? .5 : 1);
+    if (sec === 'A' || spaceLast()) M.vocoder(hz(m - 24), t, d, ['a', 'e', 'a', 'e'][(m + Math.round(t * 4)) % 4]);
+  },
+  band(M, s, t, bi, ch, sec) {
+    const dark = holeOpen(), last = spaceLast(), tones = [...ch.n, ...ch.n.map(m => m + 12)];
+    if (dark && dived !== G.T.ev.hole) { dived = G.T.ev.hole; M.dive(t); }
+    M.arp(hz(tones[s % 8] + 12), t); if (last) M.arp(hz(tones[(s + 4) % 8] + 24), t + M.sd / 2);
+    if (s % 4 === 0) M.pumpPad(ch.n, t, dark ? 600 : 1300);
+    if (s % 2 === 0) M.bassDisco(hz(ch.r + ((s >> 1) % 2 ? 12 : 0)), t, M.sd * 1.8);
+    if (s % 4 === 0) M.kick(t);
+    if (s === 4 || s === 12) M.clap(t);
+    if ((s & 3) === 2) M.hat(t, true); else if (s % 2) M.hat(t, false, .6);
+    if ((s === 14 && bi % 2) || (s === 7 && bi === 7)) M.blip(hz(ch.n[(bi + s) % ch.n.length] + 24), t);
+    if (s === 0 && bi === 0) M.crash(t);
+    if (sec === 'B' && s === 0 && bi % 4 === 3) M.riser(t, 16 * M.sd);
+  } };
+
 
 export const Music = {
   init() {
@@ -500,5 +527,15 @@ export const Music = {
   bird(t, f) { voice({ at: t, f, to: f * 1.5, a: .01, d: .08, vol: .04, dest: this.out }); voice({ at: t + .1, f: f * 1.2, to: f * 1.8, a: .01, d: .08, vol: .035, dest: this.out }); },
   crickets(t, d) { for (let i = 0; i < 6; i++) noise({ at: t + i * d / 6, type: 'bandpass', f: 4500, q: 8, a: .01, d: .05, vol: .02, dest: this.out }); },
   gong(t) { synth({ at: t, f: 98, parts: [['sine', 1, 1], ['sine', 2.7, .5], ['sine', 5.1, .25]], a: .01, d: 2.2, vol: .08, dest: this.out }); },
+  // space: a vocoder (a saw through two formant filters, a vowel per note, an "s" at the start), sci-fi blips, pads that pump with the kick,
+  // the dive when the black hole opens
+  vocoder(f, t, d, vow) {
+    const F = { a: [730, 1090], e: [530, 1840] }[vow] || [600, 1200];
+    for (const [k, v] of [[0, .05], [1, .035]]) synth({ at: t, f, parts: [['sawtooth', 1, .7], ['sawtooth', 1, .5, 8]], a: .03, hold: Math.max(0, d * .7), d: .1, vol: v, ft: 'bandpass', lp: F[k], q: 6, dest: this.leadBus });
+    noise({ at: t, type: 'highpass', f: 5000, d: .05, vol: .03, dest: this.leadBus });
+  },
+  blip(f, t) { voice({ at: t, type: 'square', f, to: f * 2, a: .002, d: .06, vol: .03, lp: 5000, dest: this.out }); voice({ at: t + .07, type: 'sine', f: f * 1.5, to: f * .75, a: .002, d: .06, vol: .03, dest: this.out }); },
+  pumpPad(ns, t, lp) { for (const m of ns) synth({ at: t + this.sd * .5, f: hz(m), parts: [['sawtooth', 1, .5, -7], ['sawtooth', 1, .5, 7]], a: this.sd * 1.2, hold: this.sd, d: this.sd * .8, vol: .016, lp, dest: this.out }); },
+  dive(t) { voice({ at: t, type: 'sawtooth', f: 880, to: 55, a: .05, hold: .4, d: 1.2, vol: .07, lp: 1600, dest: this.out }); noise({ at: t, type: 'bandpass', f: 3000, to: 120, a: .1, hold: .4, d: 1.2, vol: .08, q: 2, dest: this.out }); },
   timp(f, t, v = 1) { voice({ at: t, f: f * 1.02, to: f, a: .003, d: .6, vol: .3 * v, dest: this.out }); noise({ at: t, type: 'lowpass', f: 300, d: .15, vol: .1 * v, dest: this.out }); },
 };

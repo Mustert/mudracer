@@ -8,6 +8,7 @@ import { desertTerrain, paintDesert } from './desertmap.js';
 import { iceTerrain, paintIce } from './icemap.js';
 import { paintVolcano, volcanoTerrain } from './volcanomap.js';
 import { jungleTerrain, paintJungle } from './junglemap.js';
+import { paintSpace, spaceTerrain } from './spacemap.js';
 
 // ---------- tracks (800x450 world) ----------
 
@@ -52,6 +53,12 @@ export const THEMES = {
   dschungel: { ...MUDDY, mud: ['#4e5a2a', '#424e22', '#5a6a32'], mudEdge: '#33401a', mudHi: '#8aa83a', mudP: ['#4e5a2a', '#5a6a32', '#6a8a3a', '#3a4a1e'], mudTrail: ['#33401a', '#465626'], goo: 'swamp',
     water: ['#2a6a6a', '#2f8080', '#3c9490', '#7cc4b4'], shore: ['#4a3a22', '#3e301c'], grass: ['#2f6a2a', '#286024', '#367a30'], grassEdge: '#22501e', tuft: '#1e4a1a',
     track: ['#7a5a36', '#6e5030', '#86643e'], trackEdge: '#4e3a22', trail: '#1e4a1a', roadTrail: '#4a3420', decor: 'dschungel', tree: 'round', treeCol: ['#1e5a24', '#2f7a2e', '#5aa83e', '#0e2e12'], trees: 46, treeGap: 22, ambient: 'butterfly', beams: true },
+  // space: metal platforms in zero gravity (terrain 17, little grip), the station and the glass tube with gravity (terrain 1), the moon (its road 1,
+  // its ground 13), moon dust instead of mud (goo 'dust': silver cars), next to the platforms is nothing (terrain 0: you drift off, a tractor beam
+  // brings you back). flat: the top speeds are closer together, here the acceleration counts
+  weltall: { ...MUDDY, mud: ['#b9bcc4', '#a9acb5', '#c9ccd3'], mudEdge: '#8c8f99', mudHi: '#eceef3', mudP: ['#c9ccd3', '#b0b3bb', '#9a9da6', '#e2e4ea'], mudTrail: ['#8c8f99', '#a4a7b0'], goo: 'dust',
+    grass: ['#05061a', '#0a0b26', '#14103c'], grassEdge: '#1c1e40', tuft: '#05061a', track: ['#3c465a', '#363f52', '#434e63'], trackEdge: '#5fe8ff', trail: '#2a2c48', roadTrail: '#4a4e5c', trailA: .07,
+    decor: 'weltall', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#0a0a16'], trees: 0, space: true, glowTrail: true, flat: .6 },
   bahn:   { ...MUDDY, grass: ['#8fbf4a', '#7fae3f', '#9fcc5a'], grassEdge: '#6f9a33', tuft: '#5f8a2a', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#4f7a22', decor: 'farm', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 18 },
 };
 
@@ -71,6 +78,10 @@ const S2 = a => a.map(p => [p[0] * 2, p[1] * 2]);
 
 
 const B2 = a => a.map(m => [m[0], m[1] * 2, m[2] * 2, m[3] * 2]);
+
+
+// points on a circle (centre, radius, from and to in degrees, clockwise on the screen), as plain poly points: a big even curve
+const ARC = (cx, cy, r, a0, a1, step = 5) => { const out = []; for (let a = a0; a <= a1 + .01; a += step) out.push([cx + Math.cos(a * Math.PI / 180) * r, cy + Math.sin(a * Math.PI / 180) * r, 0]); return out; };
 
 
 const TRACK_DEFS = [
@@ -210,6 +221,28 @@ const TRACK_DEFS = [
     boardwalk: [548, 168, -10, 7], quick: [[372, 424, 12], [286, 377, 11]],
     trees: [[60, 196, -1, 17, 6], [300, 400, 1, 19, 11], [468, 400, 1, 16, 3], [720, 368, -1, 18, 14]],
     crocs: [[612, 404], [400, 426], [250, 376]], camp: [150, 320], heads: [[776, 34], [778, 440], [22, 442]] },
+  // Space (a bigger map): from the station (gravity, the start) through the glass tube out onto the platforms (zero gravity: little grip), round a
+  // satellite, in a wide curve round the ringed planet (its gravity pulls; the short way on the planet's ring gives a swing-by), down through the
+  // asteroid belt (a hairpin round a big asteroid, or the wormhole over it), over the moon past a dusty crater and through the airlock (it washes)
+  // back into the station (see spacemap.js, space.js). Next to the platforms is nothing: you drift off, a tractor beam brings you back.
+  // station = the deck [x0, y0, x1, y1]; tube = the glass tube from [x, y] to [x, y]; moon = [x, y, r]; craters = [x, y, r, dusty]; planet = [x, y,
+  // radius of the planet, inner and outer edge of its ring]; orbit = where the ways onto the ring and back leave the road (degrees round the planet) and
+  // where they meet the ring; narrow = narrow bridges between the platforms [x, y, half length, half width]; pads = round platforms that widen a bend [x, y, r]; portals = the wormhole: its little
+  // platform beside the road [x, y, radius] (the mouth in the middle) and where you come out [x, y]; fields = force fields outside the sharp bends
+  // [x, y, half length in steps of the centre line]; rocks = the big asteroids (solid) [x, y, r]; hole = the black hole [x, y] (event schwarzesloch);
+  // airlock = [x, y] on the road; sat = satellite [x, y]; wheel = the turning ring of the station [x, y, r]; earth = [x, y, r]
+  { name: 'WELTALL', seed: 12, W: 1360, H: 765, theme: 'weltall', song: 'space', events: ['asteroiden', 'schwarzesloch'], wall: [], wash: null, space: true,
+    poly: [[135, 410, 0], [135, 110, 75], [560, 110, 70], [640, 185, 70], [770, 185, 70], [850, 110, 70], ...ARC(1070, 310, 200, -90, 90),
+      [920, 510, 75], [920, 680, 55], [810, 680, 45], [810, 590, 45], [650, 590, 45], [650, 680, 45], [520, 680, 50], [440, 625, 55], [330, 625, 55], [255, 680, 50], [135, 680, 60]],
+    mud: [], water: [], ponds: [],
+    mudAt: [[902, 604, 20, 10], [671, 652, 18, 9]],
+    boostAt: [[300, 110], [560, 680]],
+    station: [52, 205, 222, 592], tube: [[135, 215], [440, 110]], moon: [300, 940, 390], craters: [[385, 720, 50, 1], [205, 700, 15, 1], [480, 660, 12, 1], [90, 690, 22, 0], [300, 745, 16, 0], [560, 735, 12, 0]],
+    planet: [1070, 310, 100, 118, 156], orbit: { out: [-88, 86], on: [-46, 42], lane: [120, 154], half: 20 },
+    narrow: [[518, 110, 24, 18]], pads: [[966, 552, 34]],
+    portals: { a: [730, 548, 22], b: [588, 680] }, fields: [[810, 680, 22], [810, 590, 22], [650, 590, 22], [650, 680, 22], [1035, 509, 34], [920, 510, 30], [920, 680, 26]],
+    rocks: [[730, 700, 34], [865, 600, 18], [1005, 640, 26], [590, 540, 20], [860, 742, 18]],
+    hole: [560, 400], airlock: [135, 575], sat: [705, 60], wheel: [312, 300, 46], earth: [1290, 772, 125] },
   { name: 'REGENBOGEN', seed: 3, theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 }
 ];
@@ -356,6 +389,7 @@ function* buildTrack(def, ti) {
   const iceT = def.ice ? yield* iceTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N, deep }) : null;
   const volT = def.volcano ? yield* volcanoTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N, stampAt }) : null;
   const junT = def.jungle ? yield* jungleTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N }) : null;
+  const spaT = def.space ? yield* spaceTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N }) : null;
   yield .35;
   // railway: a straight vertical line through the whole world
   let rail = null;
@@ -547,7 +581,7 @@ function* buildTrack(def, ti) {
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (MW - 10) | 0), y = 5 + (r() * (MH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
   const rock = (x, y) => { const L2 = hex('#c4c4bb'), M2 = hex('#9a9a92'), D2 = hex('#6e6e68'); for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(x + dx, y + dy, dy === 0 ? L2 : dy === 2 ? D2 : M2); };
   const trees = [], critters = [], C = th.treeCol.map(hex);
-  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null, desert = null, ice = null, volcano = null, jungle = null;
+  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null, desert = null, ice = null, volcano = null, jungle = null, space = null;
   const darken = (x, y, rad, ox, oy) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + ox, yy = y + dy + oy; if (xx < 0 || yy < 0 || xx >= MW || yy >= MH) continue; const i = (yy * MW + xx) * 4; d[i] *= .78; d[i + 1] *= .76; d[i + 2] *= .76; } };
   const flowers = (n, PET) => scatter(n, 2, (x, y) => { const pc = PET[(r() * PET.length) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, pc === PET[1] ? hex('#ff8c1a') : hex('#ffe14d')); });
   // wall look: fence + hay (meadow), log pile + pines (forest), beach bar + surfboards + palms (beach), asteroid belt (space), railway barrier (train)
@@ -914,6 +948,8 @@ function* buildTrack(def, ti) {
     volcano = yield* paintVolcano({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT: volT });
   } else if (th.decor === 'dschungel') {
     jungle = yield* paintJungle({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, th, r, critters, darken, RT: junT });
+  } else if (th.decor === 'weltall') {
+    space = yield* paintSpace({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, r, starPix, mudPix, RT: spaT });
   } else if (th.decor === 'farm') {
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
@@ -993,9 +1029,9 @@ function* buildTrack(def, ti) {
   const top = toCanvas(outlineImg(new ImageData(tp, MW, MH), MW, MH, C[3]));
   const wp = path[wi], solid = trees.concat(walls);
   return { W: MW, H: MH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: solid, grid: obstacleGrid(solid, MW, MH), critters, windmill, shoreY, boat: { x: 60 }, base, top, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice, volcano, jungle,
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice, volcano, jungle, space,
     // Cup 3 building blocks (see trackfx.js): ramps to jump from, stretches that push the cars, where a second way runs beside the road
-    jumps: (desert || ice || volcano || jungle || {}).jumps || [], pushes: (desert || ice || volcano || jungle || {}).pushes || [], alt: (desert || ice || volcano || jungle || {}).alt || null };
+    jumps: (desert || ice || volcano || jungle || space || {}).jumps || [], pushes: (desert || ice || volcano || jungle || space || {}).pushes || [], alt: (desert || ice || volcano || jungle || space || {}).alt || null };
 }
 
 

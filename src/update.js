@@ -15,6 +15,7 @@ import { desertGround } from './desert.js';
 import { iceGround, iceStuck } from './ice.js';
 import { volcanoGround } from './volcano.js';
 import { jungleGround, jungleStuck } from './jungle.js';
+import { spaceGround, spaceRespawn } from './space.js';
 import { moveCamera } from './race.js';
 import { updateJumps } from './run.js';
 import { nearObstacles } from './grid.js';
@@ -37,14 +38,14 @@ function respawn(c) {
   const T = G.T, N = T.N, i0 = c.respawnI != null ? c.respawnI : ((c.safe || c.idx) - 5 + N) % N;
   c.respawnI = null; c.fallKind = null; c.sink = 0;
   // never onto lava, the gorge or deep water (the middle of the road can be lava, e.g. between the bridges of the ford): further back or to the side
-  const bad = (x, y) => { const t = T.ter[clamp(y | 0, 0, T.H - 1) * T.W + clamp(x | 0, 0, T.W - 1)]; return t === 15 || t === 11 || t === 5 || (t === 16 && T.volcano && T.volcano.hot); };
+  const bad = (x, y) => { const t = T.ter[clamp(y | 0, 0, T.H - 1) * T.W + clamp(x | 0, 0, T.W - 1)]; return t === 15 || t === 11 || t === 5 || (t === 16 && T.volcano && T.volcano.hot) || (t === 0 && !!T.space); };
   let i = i0, o = 0;
   search: for (let k = 0; k < 90; k += 3) for (const q of [0, -16, 16, -22, 22]) {
     const j = (i0 - k + N) % N, p = T.path[j]; if (!bad(p.x + T.nrm[j].x * q, p.y + T.nrm[j].y * q)) { i = j; o = q; break search; }
   }
   const p = T.path[i], tg = T.tan[i];
   c.x = p.x + T.nrm[i].x * o; c.y = p.y + T.nrm[i].y * o; c.ang = Math.atan2(tg.y, tg.x); c.vx = c.vy = 0; c.idx = i; c.surf = 1; c.ghost = 2.4;
-  splash(c.x, c.y, 8);
+  if (T.space) spaceRespawn(c); else splash(c.x, c.y, 8);
 }
 
 
@@ -84,6 +85,8 @@ function updateRace(dt) {
         thr = c.finished ? .45 : c.skill;
         // on sheet ice they lift off before a bend
         if (c.surf === 12 && tgt !== null && Math.abs(angDiff(tgt, c.ang)) > .35) thr *= .55;
+        // on the platforms in space a little less
+        else if (c.surf === 17 && !c.ringWay && tgt !== null && Math.abs(angDiff(tgt, c.ang)) > .35) thr *= .65;
         // opponents far ahead lift off a little, ones far behind push harder; never above full throttle (on SCHWER less of both)
         if (c.ai && !c.finished && !G.player.finished) {
           const D = DIFFS[G.raceDiff || 0], diff = score(c) - score(G.player);
@@ -179,6 +182,7 @@ function updateRace(dt) {
     if (G.T.ice) { iceGround(c, j, sp, dt); if (c.fall > 0) continue; }
     if (G.T.volcano) volcanoGround(c, sp, dt);
     if (G.T.jungle) jungleGround(c, sp, dt);
+    if (G.T.space) { spaceGround(c, j, sp, dt); if (c.fall > 0) continue; }
     if (c.boost > 0 && Math.random() < dt * 40) drop(c.x - Math.cos(c.ang) * 14, c.y - Math.sin(c.ang) * 14, c.ang + Math.PI + (Math.random() - .5) * .8, 20 + Math.random() * 30, 20 + Math.random() * 30, pick(RAINBOW), .8, false);
     if (c.washing) {
       c.dirt = Math.max(0, c.dirt - 3 * dt);
@@ -186,7 +190,7 @@ function updateRace(dt) {
     }
     if (c.dirt > .8 && sp > 15 && Math.random() < dt * 3) mudBurst(c, 1);
     if (c.surf === 1 && !th.space && !G.T.ring && sp > 80 && Math.random() < dt * 10) addP({ t: 'dust', x: c.x - Math.cos(c.ang) * 14, y: c.y - Math.sin(c.ang) * 14, vx: (Math.random() - .5) * 10, vy: (Math.random() - .5) * 10, life: .55, ml: .55 });
-    c.bump = (c.surf === 0 || c.surf === 2 || c.surf === 6 || c.surf === 7 || c.kerb) && sp > 25 && ((G.time * 14 + c.seed) | 0) % 2 ? 1 : 0;
+    c.bump = (c.surf === 0 || c.surf === 2 || c.surf === 6 || c.surf === 7 || c.surf === 13 || c.kerb) && sp > 25 && ((G.time * 14 + c.seed) | 0) % 2 ? 1 : 0;
     if (sp > 6) {
       const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
       for (const side of [-8, 8]) {
@@ -198,9 +202,9 @@ function updateRace(dt) {
         else if (c.surf === 3 || c.surf === 5) col = null;
         else if (c.mudTrail > 0) { col = th.mudTrail[1]; a = .45 * c.mudTrail / 1.6; }
         else if (c.wetTrail > 0 && c.surf === 1) { col = '#7a5a3a'; a = .3 * c.wetTrail; }
-        else if (c.surf === 0) { col = th.trail; a = th.trailA ? .2 : .1; }
+        else if (c.surf === 0) { if (!G.T.space) { col = th.trail; a = th.trailA ? .2 : .1; } }
         else if (c.surf === 7) { col = '#8a7d5a'; a = .25; }
-        else if (!th.rainbow) { col = th.roadTrail || '#8a6440'; a = th.trailA || .09; }
+        else if (!th.rainbow && !(th.glowTrail && c.surf === 17)) { col = th.roadTrail || '#8a6440'; a = th.trailA || .09; } // (space: the tracks on the platforms glow for a moment, see space.js)
         if (col) { tctx.globalAlpha = a; tctx.fillStyle = col; tctx.fillRect(Math.round(wx) - 1, Math.round(wy) - 1, 2, 2); }
       }
       tctx.globalAlpha = 1;
@@ -239,7 +243,7 @@ function updateParticles(dt) {
     const p = G.parts[i]; p.life -= dt;
     if (p.vx !== undefined) { p.x += p.vx * dt; p.y += p.vy * dt; }
     if (p.t === 'd') {
-      p.vz -= 300 * dt; p.z += p.vz * dt; p.vx *= .98; p.vy *= .98;
+      p.vz -= (p.g || 300) * dt; p.z += p.vz * dt; p.vx *= .98; p.vy *= .98; // (g: less gravity, the moon dust in space)
       // drops of mud stay on the ground (oil drops on the race circuit only faintly, black on asphalt would pile up)
       if (p.z <= 0) { if (p.mud) { const oil = !!G.T.ring; tctx.globalAlpha = oil ? .2 : .6; tctx.fillStyle = p.col; tctx.fillRect(p.x | 0, p.y | 0, oil ? 1 : p.s, oil ? 1 : p.s); tctx.globalAlpha = 1; } p.life = 0; }
     } else if (p.t === 'conf') p.x += Math.sin(G.time * 5 + p.ph) * 14 * dt;

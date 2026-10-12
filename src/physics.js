@@ -8,6 +8,7 @@ import { desertLane } from './desert.js';
 import { iceTarget } from './ice.js';
 import { volcanoLane, volcanoTarget } from './volcano.js';
 import { jungleLane, jungleTarget } from './jungle.js';
+import { spaceLane, spaceTarget } from './space.js';
 import { setState } from './state.js';
 import { finishRace } from './race.js';
 import { ttLap } from './timetrial.js';
@@ -19,7 +20,13 @@ function surfOf(c) {
   const m = c.def.mud;
   switch (c.surf) {
     // off the road is as slow as mud, but the car stays clean (only the Matschfahrt is made of rough ground)
-    case 0: return G.T.run ? [.6, 7, .9] : [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
+    // in space there is nothing beside the road: no grip, no gas (the car drifts off, see space.js)
+    case 0: return G.T.run ? [.6, 7, .9] : G.T.space ? [1, .3, .15, 0] : [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
+    // the ground of the moon beside the road: slow like grass, it stays clean
+    case 13: return [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
+    // a platform in zero gravity: full speed and full gas, but little grip to the side and slower steering (better than sheet ice);
+    // nimble cars keep more grip
+    case 17: return [1, 3 * c.def.turn * c.def.turn, .8, 1];
     case 2: return [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
     // cement: very sticky, the speed is far lower than in mud (about a quarter of it)
     case 6: return [(MUD_A + MUD_B * m) / 3.8, 3.2 * m, Math.min(.8, .55 * m) * .75];
@@ -85,7 +92,8 @@ export function aiTarget(c) {
   // race circuit: a dirty car goes through the pit lane (the box washes it)
   // ice: the short cut across the frozen lake
   // volcano: the long way round the crust when the stream is about to break through
-  const pt = (G.T.ring && ringPitTarget(c)) || (G.T.ice && iceTarget(c)) || (G.T.volcano && volcanoTarget(c)) || (G.T.jungle && jungleTarget(c));
+  // space: the short way over the ring of the planet
+  const pt = (G.T.ring && ringPitTarget(c)) || (G.T.ice && iceTarget(c)) || (G.T.volcano && volcanoTarget(c)) || (G.T.jungle && jungleTarget(c)) || (G.T.space && spaceTarget(c));
   if (pt) { const [tx, ty] = steerAround(c, pt[0], pt[1]); return Math.atan2(ty - c.y, tx - c.x); }
   const sp = Math.hypot(c.vx, c.vy), i = (c.idx + 18 + Math.round(sp / 8)) % G.T.N, p = G.T.path[i], n = G.T.nrm[i];
   // on the flooded pier there is no room to wander across the track
@@ -108,6 +116,8 @@ export function aiTarget(c) {
   if (G.T.volcano) lane = volcanoLane(c, i, lane);
   // jungle: the liana or the log bridge at the gorge, the boardwalk in the swamp, away from fallen trees when slow
   if (G.T.jungle) lane = jungleLane(c, i, lane);
+  // space: the wormhole, a little outside on the curve round the planet, never at the edge of a platform
+  if (G.T.space) lane = spaceLane(c, i, lane);
   const [tx, ty] = steerAround(c, p.x + n.x * lane, p.y + n.y * lane);
   return Math.atan2(ty - c.y, tx - c.x);
 }
