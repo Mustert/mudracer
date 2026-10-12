@@ -71,6 +71,7 @@ Arbeitsweise: `npm run lint`, `npm test` und `npm run typecheck` vor jedem Commi
 | M11 | N | offen? | Werkstatt rein kosmetisch, alle Farben sofort offen, kein Belohnungskreislauf | `shop.js`, `cars.js` `PAINTS` | Farben/Sticker für Trophäen und Rekorde freischalten |
 | M12 | N | offen | Fest 3 Runden für alle Modi | `core.js` `LAPS` | Runden pro Schwierigkeit (Kinder 2, SCHWER 4) |
 | M13 | N | offen | Feld wird mit `sort(() => Math.random() - .5)` verzerrt gemischt | `race.js` `startGP` | Fisher-Yates |
+| M14 | H | offen (Bug-Report, Nutzer, 2026-10-13; nicht im Code nachgeprüft) | Im GP langsam gefahren, am Ende beim Einfahren Platz 41. Vermutung des Nutzers: die anderen hatten schon viele Runden beendet. Zu klären: wird im Ziel nach Runden und Zeit oder nach Ankunft gewertet, und wie viele Autos sind im Feld | `race.js` `finishRace`, `rank.js` (Platzberechnung) | prüfen, ob beendete Autos weiter gewertet werden und wie der Rückstand in Runden berechnet wird; bei Bedarf Platz nach Rundenstand und Zielzeit |
 
 ## Design-Theorie (D)
 
@@ -113,6 +114,7 @@ Stark: einheitliche Lichtrichtung (Schatten nach rechts unten), durchgehend dunk
 | B7 | N | offen? | Blinken (Sirenen ~4 Hz, Warnschilder, Texte) ohne Option zum Reduzieren | `draw.js` | Option „weniger Blinken“ |
 | B8 | N | offen? | Matsch, Erde, Straße alles Brauntöne; bei Rot-Grün-Schwäche und im Dunkeln schwer zu trennen | Themen in `tracks.js` | Textur oder Glanzrand am Matsch |
 | B9 | N | offen | Nur Deutsch, Texte über die Module verteilt; kein Manifest/Offline | alle Bildschirme, `index.html` | Texttabelle; PWA mit lokal eingebetteter Schrift (T8) |
+| B10 | H | offen (Bug-Report, Nutzer, 2026-10-13; nicht im Code nachgeprüft) | Musik im Weltall stockt/ruckelt („gerusht“) kurz vor der 3. Runde, also wenn das Lied nach Runde 2 in die letzte Runde übergeht (`spaceLast`, Vocoder-Phase) | `music.js` `SONGS.space` (Zeilen ca. 365–380), `spaceLast`, `holeOpen` | prüfen, ob Schleifenende, Tempo- oder Sektionswechsel und das Schwarze-Loch-Abdunkeln an der Rundengrenze die Tonerzeugung überlasten (z. B. Vocoder und Pads gleichzeitig neu aufgebaut); Rundenwechsel nur an Taktgrenzen |
 
 ## Ideen und Wünsche (I)
 
