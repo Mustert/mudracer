@@ -19,19 +19,45 @@
     display: flex; align-items: center; justify-content: center; touch-action: none;
   }
   #touch .b.on { background: var(--btn-on); }
+  /* menus: arrow cross on the left, OK on the right */
   #bu { left: 84px;  bottom: calc(152px + env(safe-area-inset-bottom, 0px)); }
   #bl { left: 16px;  bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
   #br { left: 152px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
   #bd { left: 84px;  bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
   #bh { right: 16px; bottom: calc(40px + env(safe-area-inset-bottom, 0px)); width: 100px !important; height: 100px !important; border-radius: 50% !important; font-size: 12px !important; }
+  #touch .std, #sz { display: none !important; }
+  /* race, standard steering: steer with the left thumb, gas and brake with the right one */
+  #touch[data-mode="std"] #bu, #touch[data-mode="std"] #bd { display: none; }
+  #touch[data-mode="std"] .std { display: flex !important; }
+  #touch[data-mode="std"] #bl, #touch[data-mode="std"] #br { width: 84px; height: 84px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); font-size: 20px; }
+  #touch[data-mode="std"] #br { left: 112px; }
+  #bg { right: 16px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); width: 100px !important; height: 100px !important; border-radius: 50% !important; }
+  #bb { right: 128px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); width: 72px !important; height: 72px !important; }
+  #touch[data-mode="std"] #bh { width: 72px !important; height: 72px !important; bottom: calc(136px + env(safe-area-inset-bottom, 0px)); right: 30px; font-size: 10px !important; }
+  /* race, alternative steering: a stick at the bottom left that moves to where the thumb lands */
+  #touch[data-mode="stick"] #bu, #touch[data-mode="stick"] #bd, #touch[data-mode="stick"] #bl, #touch[data-mode="stick"] #br { display: none; }
+  #touch[data-mode="stick"] #sz { display: block !important; }
+  #sz { position: fixed; left: 0; bottom: 0; width: min(50vw, 440px); height: 75vh; touch-action: none; }
+  #sb {
+    position: fixed; left: 24px; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); width: 128px; height: 128px;
+    box-sizing: border-box; border: 2px solid var(--btn-edge); border-radius: 50%; background: var(--btn); pointer-events: none;
+  }
+  #sk {
+    position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px;
+    box-sizing: border-box; border: 2px solid var(--btn-edge); border-radius: 50%; background: var(--btn-on);
+  }
+  #sb.on #sk { background: var(--ink); }
 </style>
 
 <div id="wrap"><canvas id="game" width="480" height="270" aria-label="Mudracer Spielfeld"></canvas></div>
-<div id="touch" hidden>
+<div id="touch" hidden data-mode="menu">
   <div class="b" id="bu" data-k="ArrowUp">&#9650;</div>
   <div class="b" id="bl" data-k="ArrowLeft">&#9664;</div>
   <div class="b" id="br" data-k="ArrowRight">&#9654;</div>
   <div class="b" id="bd" data-k="ArrowDown">&#9660;</div>
+  <div class="b std" id="bb" data-k="ArrowDown">&#9660;</div>
+  <div class="b std" id="bg" data-k="ArrowUp">GAS</div>
+  <div id="sz"><div id="sb"><div id="sk"></div></div></div>
   <div class="b" id="bh" data-k=" ">OK</div>
 </div>
 

@@ -3,7 +3,7 @@ import { SFX } from './audio.js';
 import { HALF, VH, VW, angDiff, clamp, ctx, hash } from './core.js';
 import { R1, disc, text } from './gfx.js';
 import { eventOn, snap } from './undo.js';
-import { held } from './input.js';
+import { dirHeld, held } from './input.js';
 import { WATC, addP, drop } from './particles.js';
 import { placeOf } from './rank.js';
 import { cam } from './state.js';
@@ -14,7 +14,7 @@ import { tctx } from './tracks.js';
 // ---------- Rennstrecke while racing: the bridge (two levels), slipstream, start lights with a rocket start, kerbs, gravel, the pit stop,
 // and the event "reifen": tyres roll across the road, loose tyres from the tyre walls, the oil gets smeared from lap 2 on ----------
 
-const gas = () =>PREFS.CTRL === 'alt' ? ['left', 'right', 'up', 'down'].some(held) : held('up');
+const gas = () => PREFS.CTRL === 'alt' ? dirHeld() : held('up');
 const near = (x, y) => Math.hypot(x - cam.x - VW / 2, y - cam.y - VH / 2);
 
 // level at the crossing: 1 = up on the bridge, 2 = on the road below it, 0 = somewhere else. It follows the car's place on the lap.

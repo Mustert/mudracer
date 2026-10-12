@@ -3,7 +3,7 @@
 Die eine Liste für alles, was am Spiel schwach, offen oder geplant ist. Enthält auch die früheren Verbesserungsideen (ehemals `VERBESSERUNGEN.md`, Abschnitt I).
 
 - Analyse am 2026-10-09 auf Stand `c5aed10` bis `42eb5ec`, am 2026-10-11 gegen `2d022f4` (Branch `map_pack`, 12 Strecken) nachgeprüft.
-- Zuletzt abgeglichen: 2026-10-12, Commit „Alle Technik-Punkte erledigt“ (Branch `map_pack`; T1–T15 erledigt, siehe „Stand Technik“ unter der Technik-Tabelle). (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
+- Zuletzt abgeglichen: 2026-10-12, Commit „Touch-Steuerung: Gasknopf, Stick, Touch-Laptops“ (Branch `map_pack`; B1–B3 erledigt). (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
 - Ausführliche Fassung der Analyse mit Begründungen (Stand 2026-10-09): https://claude.ai/code/artifact/5ecd1e70-685b-404d-b2e6-ed798433c1fb
 
 ## So wird diese Datei benutzt
@@ -97,9 +97,9 @@ Stark: einheitliche Lichtrichtung (Schatten nach rechts unten), durchgehend dunk
 
 | ID | S | Status | Befund | Fundstelle | Empfehlung |
 |---|---|---|---|---|---|
-| B1 | H | offen? | Touch im Standardmodus: Gas und Lenken liegen alle im Steuerkreuz unten links, Gas halten und lenken braucht zwei Finger einer Hand | `index.html` (`#touch`), `input.js` | eigener Gasknopf rechts oder Auto-Gas auf Touch |
-| B2 | M | offen? | Alternativer Touch-Modus kennt nur 4 Richtungen | `index.html`, `update.js` | virtueller Stick mit freiem Winkel |
-| B3 | N | offen? | Touch-Knöpfe nur bei `pointer: coarse`; Touch-Laptops bekommen sie nicht | `input.js` `coarse` | auch beim ersten Touch-Ereignis einblenden |
+| B1 | H | erledigt (Touch-Steuerung: Gasknopf rechts) | Touch im Standardmodus: Gas und Lenken liegen alle im Steuerkreuz unten links, Gas halten und lenken braucht zwei Finger einer Hand | `index.html` (`#touch`), `input.js` | im Rennen mit Standardsteuerung: ◀ ▶ links, GAS und Bremse ▼ rechts, HUPE darüber (`setTouchMode` `std`); der Daumen kann von ◀ nach ▶ gleiten |
+| B2 | M | erledigt (Touch-Steuerung: Stick) | Alternativer Touch-Modus kennt nur 4 Richtungen | `index.html`, `update.js` | im Rennen mit alternativer Steuerung ein Stick unten links, der dorthin springt, wo der Daumen aufsetzt; freier Winkel (`stick.js`, `stickDir`), Tasten weiter 8 Richtungen |
+| B3 | N | erledigt (Touch-Steuerung) | Touch-Knöpfe nur bei `pointer: coarse`; Touch-Laptops bekommen sie nicht | `input.js` `coarse` | `touchShown()`: bei `pointer: coarse` von Anfang an, sonst ab dem ersten Finger auf dem Bildschirm; ein Tastendruck blendet sie wieder aus |
 | B4 | N | offen | Kein Gamepad, keine freie Tastenbelegung; `Backspace` als Zurück | `input.js` `KEYS` | Gamepad-API, Belegung im Optionsmenü |
 | B5 | M | offen? | Nur das Spielerauto hat einen Motor, ein Feld von 8 Autos klingt leer | `audio.js` `engineSound` | 2–3 leise Gegnermotoren in der Nähe |
 | B6 | N | offen? | Nur Musik an/aus und Stummtaste, keine getrennten Regler | `menus.js` Optionen, `audio.js` | Regler Musik/Effekte |
@@ -146,7 +146,7 @@ Gespeicherte Daten (`mudracer-car`, `mudracer-unlock`, `mudracer-cups`, `mudrace
 
 ## Priorität
 
-1. **Sofort (wenig Aufwand, viel Nutzen):** M1 (Batmobil erreichbar), B1 (Gasknopf), G2 (ganzzahlig skalieren), M9 (Koi-Ankündigung). (T9 und T6 erledigt.)
+1. **Sofort (wenig Aufwand, viel Nutzen):** M1 (Batmobil erreichbar), ~~B1 (Gasknopf)~~ erledigt, G2 (ganzzahlig skalieren), M9 (Koi-Ankündigung). (T9 und T6 erledigt.)
 2. **Planen (viel Aufwand, viel Nutzen):** G1 (RotSprite), D2 (Ausweichlinien bei Matsch), M2/M3 (KI), M10 (Ziele für die Matschfahrt), G8/M6 (Hitboxen). (T3, T4, T5, T15 erledigt.)
 3. **Nebenbei:** G6, M13. (G4, T8, T10 erledigt.)
 4. **Später:** B4, B9 (PWA). (T7, T14 erledigt.)

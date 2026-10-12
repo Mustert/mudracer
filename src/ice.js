@@ -2,7 +2,7 @@ import { G } from './g.js';
 import { SFX } from './audio.js';
 import { LAPS, TAU, VH, VW, clamp, ctx, hash, hex, vnoise } from './core.js';
 import { R1, disc, ell, text } from './gfx.js';
-import { held } from './input.js';
+import { dirHeld } from './input.js';
 import { snap } from './undo.js';
 import { addP } from './particles.js';
 import { cam } from './state.js';
@@ -85,7 +85,7 @@ export function iceGround(c, j, sp, dt) {
 export function iceStuck(c, dt, racing) {
   c.vx = c.vy = 0;
   let k = 1;
-  if (!c.ai && racing) { const g = ['left', 'right', 'up', 'down'].some(held); if (g && !c.gasPrev) { k = 0; c.snowT -= .14; c.shake = 1; } c.gasPrev = g; }
+  if (!c.ai && racing) { const g = dirHeld(); if (g && !c.gasPrev) { k = 0; c.snowT -= .14; c.shake = 1; } c.gasPrev = g; }
   c.snowT -= dt * k; c.shake = Math.max(0, (c.shake || 0) - dt * 4);
   if (Math.random() < dt * 10) addP({ t: 'd', x: c.x + (Math.random() - .5) * 26, y: c.y + (Math.random() - .5) * 18, z: 6, vx: (Math.random() - .5) * 30, vy: (Math.random() - .5) * 30, vz: 30, col: '#ffffff', s: 2, life: .5, ml: .5 });
   if (c.snowT <= 0) {
