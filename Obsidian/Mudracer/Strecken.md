@@ -3,6 +3,8 @@ Stand 2026-10-11, Branch `map_pack`. Die Strecken 1 bis 6 sind umgesetzt, 7 bis 
 
 **Streckenereignisse** lassen sich im Code pro Ereignis ein- und ausschalten: `G.events` in `src/state.js` (`kuehe`, `regen`, `flut`, `kois`, `kipper`, `zug`, `reifen`, `sandsturm`, `frost`, `pinguine`, `ausbruch`, `baeume`, `kroko`, alle auf `true`). Im Spiel gibt es einen gemeinsamen Schalter „Streckeneffekte“ (Einzelstrecke und Zeitfahren in den Optionen; im Grand Prix ab MITTEL an; im Kindermodus immer aus, `fxActive` in `src/diff.js`). Die Ereignisse ändern die Karte während des Rennens (die Karte wird dafür zur Laufzeit umgemalt). Nach dem Rennen stellt das Spiel die Strecke wieder her, Menüs und Vorschaubilder zeigen die saubere Strecke.
 
+**Kartengröße:** Alle heutigen Strecken sind 800×450 px groß (Standard). Seit 2026-10-12 kann eine Strecke eine eigene Größe bekommen (`W` und `H` in ihrer Definition in `TRACK_DEFS`, `src/tracks.js`). Die Strecken werden erst gebaut, wenn sie gebraucht werden (im Hintergrund oder auf einem kurzen Ladebildschirm), also verlängern größere Karten den Spielstart nicht.
+
 **Zeitfahren-Rekorde:** Wiese, Wald und Strand haben durch die Änderungen eine neue Revision (`rev: 1`). Ihre Rekorde starten neu (Schlüssel mit Zusatz `-r1`), die alten Zeiten bleiben unangetastet im Speicher.
 
 **Cups:** Die Strecken sind in Cups 1-5 eingeteilt. Das kindliche Zielpublikum ist mit Cup 1 gut bedient, ab Cup 2 können und sollen die Strecken immer aufwendiger und verrückter werden (Sprungschanzen etc.) selbst im Modus ohne Streckenereignis, während der Ursprung des Spiels natürlich nicht verloren geht.
