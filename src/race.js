@@ -32,7 +32,8 @@ export function singleField() {
 export function resetWorld() {
   if (tctx.w !== G.T.W || tctx.h !== G.T.H) tctx.resize(G.T.W, G.T.H);
   tctx.clearRect(0, 0, G.T.W, G.T.H);
-  tctx.keep = G.T.run ? 24 : Infinity; // the Matschfahrt forgets the tracks far below the car G.parts = []; G.finCount = 0; G.lastCount = -1;
+  tctx.keep = G.T.run ? 24 : Infinity; // the Matschfahrt forgets the tracks far below the car
+  G.parts = []; G.finCount = 0; G.lastCount = -1;
 }
 
 
