@@ -3,7 +3,7 @@
 Die eine Liste für alles, was am Spiel schwach, offen oder geplant ist. Enthält auch die früheren Verbesserungsideen (ehemals `VERBESSERUNGEN.md`, Abschnitt I).
 
 - Analyse am 2026-10-09 auf Stand `c5aed10` bis `42eb5ec`, am 2026-10-11 gegen `2d022f4` (Branch `map_pack`, 12 Strecken) nachgeprüft.
-- Zuletzt abgeglichen: 2026-10-12, Commit „Touch-Steuerung: Gasknopf, Stick, Touch-Laptops“ (Branch `map_pack`; B1–B3 erledigt). (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
+- Zuletzt abgeglichen: 2026-10-12, Commit „Notiz zur Zusammenführung von main und map_pack (T16)“ (Branch `map_pack`; B1–B3 erledigt, T16 neu). (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
 - Ausführliche Fassung der Analyse mit Begründungen (Stand 2026-10-09): https://claude.ai/code/artifact/5ecd1e70-685b-404d-b2e6-ed798433c1fb
 
 ## So wird diese Datei benutzt
@@ -39,6 +39,7 @@ Annahme der Analyse: Kinder sind die Hauptzielgruppe, SCHWER ist ein Bonus für 
 | T13 | N | erledigt (Technik-Umbau: `save.js`, alle Zugriffe laufen darüber, Version in `mudracer-save`, Schlüssel unverändert; Optionsmenü: SPIELSTAND SICHERN (Datei) und LADEN; im claude.ai-Artifact kann der Download vom Browser gesperrt sein, das Menü meldet es dann) | Speicherstände in vielen Einzelschlüsseln, ohne Gesamtversion, ohne Export | `cars.js`, `cups.js`, `timetrial.js`, `diff.js` | ein Save-Modul mit Version, Export/Import als JSON |
 | T14 | N | erledigt (Technik-Umbau; Kacheln à 400 Zeilen, pixelgleich geprüft; die Reifenspur-Ebene ist seit dem Folge-Umbau ebenfalls gekachelt, `layer.js`, Kacheln nur wo gefahren wird, in der Matschfahrt höchstens 24) | Matschfahrt baut 480 × 6.400 px auf einmal, zeitweise ~50 MB Puffer (Mobilgeräte) | `run.js` `buildRun` | nur sichtbare Kacheln rendern |
 | T15 | M | erledigt (Folge-Umbau 2026-10-12: jede Strecke kann `W`/`H` in ihrer Definition mitbringen, Standard bleibt 800×450; Bau- und Laufzeitmodule rechnen mit `T.W`/`T.H` bzw. `MW`/`MH`, nur `core.js` und `tracks.js` kennen den Standard. Geprüft: alle Strecken pixelgleich, eine doppelt so große Testkarte 1600×900 baut in ~0,4 s und lässt sich ohne Fehler zu Ende fahren) | Weltgröße 800×450 ist an ~300 Stellen als `WW`/`WH` fest verdrahtet (Kartenmodule, Ereignisse); größere Strecken brauchen `T.W`/`T.H` überall | alle `*map.js`, Ereignis-Module | schrittweise auf `T.W`/`T.H` umstellen |
+| T16 | M | offen | `main` und `map_pack` haben die Touch-Steuerung (B1–B3) doppelt: auf `main` angepasst an den alten Aufbau (a1454b1, veröffentlicht), auf `map_pack` 274d477. Beim Zusammenführen gibt es Konflikte in `src/audio.js` (1 Stelle: Import `reportError`), `src/input.js` (4 Stellen: `H`-Handler statt `audioInit`/`onPress`, JSDoc-Typen) und `src/update.js` (3 Stellen: Importe, `G.CTRL` gegen `PREFS.CTRL` zweimal); `index.html` und `src/stick.js` gehen ohne Konflikt durch | `src/audio.js`, `src/input.js`, `src/update.js` | Auflösung: in allen drei Dateien die `map_pack`-Fassung nehmen (`git merge map_pack` auf `main`, dann `git checkout --theirs src/audio.js src/input.js src/update.js`; andersherum `--ours`). Am 2026-10-12 probehalber geprüft: das Ergebnis ist Datei für Datei gleich `map_pack`, nichts aus `main` geht verloren. Danach `npm install`, `npm run lint`, `npm test`, `npm run typecheck` |
 
 ### Stand Technik (2026-10-12)
 
