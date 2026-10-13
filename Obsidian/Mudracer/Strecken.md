@@ -1,9 +1,9 @@
 
-Stand 2026-10-11, Branch `map_pack`. Die Strecken 1 bis 6 sind umgesetzt, 7 bis 11 als Prototyp, für 12 bis 15 gibt es ausgearbeitete Vorschläge. Im Spiel ist außerdem noch die alte Regenbogen-Strecke (Plattformen im All, siehe 15). Reihenfolge in Einzelstrecke und Zeitfahren heute: Wiese, Wald, Strand, Zug, Baustelle, Garten, Rennstrecke, Wüste, Eis, Vulkan, Dschungel, Regenbogen.
+Stand 2026-10-13, Branch `map_pack`. Die Strecken 1 bis 6 sind umgesetzt, 7 bis 12 als Prototyp, für 13 bis 15 gibt es ausgearbeitete Vorschläge. Im Spiel ist außerdem noch die alte Regenbogen-Strecke (Plattformen im All, siehe 15). Reihenfolge in Einzelstrecke und Zeitfahren heute: Wiese, Wald, Strand, Zug, Baustelle, Garten, Rennstrecke, Wüste, Eis, Vulkan, Dschungel, Weltall, Regenbogen.
 
-**Streckenereignisse** lassen sich im Code pro Ereignis ein- und ausschalten: `PREFS.events` in `src/state.js` (`kuehe`, `regen`, `flut`, `kois`, `kipper`, `zug`, `reifen`, `sandsturm`, `frost`, `pinguine`, `ausbruch`, `baeume`, `kroko`, alle auf `true`). Im Spiel gibt es einen gemeinsamen Schalter „Streckeneffekte“ (Einzelstrecke und Zeitfahren in den Optionen; im Grand Prix ab MITTEL an; im Kindermodus immer aus, `fxActive` in `src/diff.js`). Die Ereignisse ändern die Karte während des Rennens (die Karte wird dafür zur Laufzeit umgemalt). Nach dem Rennen stellt das Spiel die Strecke wieder her, Menüs und Vorschaubilder zeigen die saubere Strecke.
+**Streckenereignisse** lassen sich im Code pro Ereignis ein- und ausschalten: `PREFS.events` in `src/state.js` (`kuehe`, `regen`, `flut`, `kois`, `kipper`, `zug`, `reifen`, `sandsturm`, `frost`, `pinguine`, `ausbruch`, `baeume`, `kroko`, `asteroiden`, `schwarzesloch`, alle auf `true`). Im Spiel gibt es einen gemeinsamen Schalter „Streckeneffekte“ (Einzelstrecke und Zeitfahren in den Optionen; im Grand Prix ab MITTEL an; im Kindermodus immer aus, `fxActive` in `src/diff.js`). Die Ereignisse ändern die Karte während des Rennens (die Karte wird dafür zur Laufzeit umgemalt). Nach dem Rennen stellt das Spiel die Strecke wieder her, Menüs und Vorschaubilder zeigen die saubere Strecke.
 
-**Kartengröße:** Alle heutigen Strecken sind 800×450 px groß (Standard). Seit 2026-10-12 kann eine Strecke eine eigene Größe bekommen (`W` und `H` in ihrer Definition in `TRACK_DEFS`, `src/tracks.js`). Die Strecken werden erst gebaut, wenn sie gebraucht werden (im Hintergrund oder auf einem kurzen Ladebildschirm), also verlängern größere Karten den Spielstart nicht.
+**Kartengröße:** Die Strecken sind 800×450 px groß (Standard), nur das Weltall ist größer (1360×765). Seit 2026-10-12 kann eine Strecke eine eigene Größe bekommen (`W` und `H` in ihrer Definition in `TRACK_DEFS`, `src/tracks.js`). Die Strecken werden erst gebaut, wenn sie gebraucht werden (im Hintergrund oder auf einem kurzen Ladebildschirm), also verlängern größere Karten den Spielstart nicht.
 
 **Zeitfahren-Rekorde:** Wiese, Wald und Strand haben durch die Änderungen eine neue Revision (`rev: 1`). Ihre Rekorde starten neu (Schlüssel mit Zusatz `-r1`), die alten Zeiten bleiben unangetastet im Speicher.
 
@@ -332,7 +332,7 @@ Streckenereignis: (Vorschlag) Ab Runde 2 friert ein Teil der Strecke zu, Eisflä
 
 
 # Cup 4
-Stand 2026-10-11, Branch `map_pack`. Vulkan und Dschungel sind als **Prototyp umgesetzt** (Abweichungen beim Status), das Weltall ist noch ein **Vorschlag**.
+Stand 2026-10-13, Branch `map_pack`. Vulkan, Dschungel und Weltall sind als **Prototyp umgesetzt** (Abweichungen beim Status).
 
 **Steigerung im Cup:** In Cup 3 waren die Strecken schwer zu fahren. In Cup 4 wird **die Strecke selbst zum Gegner**: Sie verändert sich während des Rennens, Wege gehen auf und zu, und man muss vorausschauen statt nur gut zu lenken. Jede Strecke bevorzugt wieder eine andere Art von Auto.
 
@@ -344,7 +344,7 @@ Stand 2026-10-11, Branch `map_pack`. Vulkan und Dschungel sind als **Prototyp um
 
 **Gemeinsame Bausteine:** Fast alles baut auf Cup 3 auf. Die Schubzone (Wind, Gefälle) wird zur Strömung im Fluss und zur Schwerkraft eines Planeten (dort zeigt die Kraft zur Mitte, wie der Sog im Treibsand, nur ohne Einsinken). Das „Ins Wasser fallen“ aus dem Garten ist hier Lava, Fluss und Weltall (weg, absetzen, blinken). Die Sprünge kommen aus der Matschfahrt. Das Sichtfeld aus dem Wald (Scheinwerfer) gibt es in der Lavaröhre und im Tempel. **Neu für den ganzen Cup:** Strecken, die sich zeitgesteuert öffnen und schließen („Weg zu“), immer mit Vorwarnung (Blinken, Text, Ton), damit es fair bleibt. Alle Ereignisse hängen nur an der Rennzeit, im Zeitfahren sind sie bei jedem Versuch gleich. Neue Schalter in `PREFS.events`: `ausbruch`, `baeume`, `kroko`, `asteroiden`, `schwarzesloch`.
 
-Reihenfolge in Einzelstrecke und Zeitfahren: … Eis, **Vulkan, Dschungel, Weltall**, Süßigkeitenland, Spielzimmer, Regenbogen. Cup 4 (`PLATIN` in `src/cups.js`): geplant `['VULKAN', 'DSCHUNGEL', 'WELTALL']`, heute `['VULKAN', 'DSCHUNGEL']`.
+Reihenfolge in Einzelstrecke und Zeitfahren: … Eis, **Vulkan, Dschungel, Weltall**, Süßigkeitenland, Spielzimmer, Regenbogen. Cup 4 (`PLATIN` in `src/cups.js`): `['VULKAN', 'DSCHUNGEL', 'WELTALL']` ✅ umgesetzt (Weltall-Prototyp).
 
 ## 10. Vulkan
 Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `VULKAN`, Theme `vulkan`, Musik `volcano`, Streckenereignis Ausbruch `ausbruch`; Code in `src/volcanomap.js` und `src/volcano.js`). Im Cup PLATIN eingetragen.
@@ -465,7 +465,19 @@ Streckenereignis: (Vorschlag) Umstürzende Baumstämme und schwingende Lianen; F
 Änderung: Mud ist Sumpf, dichtes Laub verdeckt Teile der Strecke.
 
 ## 12. Weltall
-Status: **Vorschlag** (Streckenname `WELTALL`, Theme `weltall`, Musik `space`, Streckenereignisse Asteroiden `asteroiden` und Schwarzes Loch `schwarzesloch`)
+Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `WELTALL`, Theme `weltall`, Musik `space`, Streckenereignisse Asteroiden `asteroiden` und Schwarzes Loch `schwarzesloch`; Code in `src/spacemap.js` und `src/space.js`). Im Cup PLATIN eingetragen. Größere Karte (1360×765), eine Runde dauert etwa 25 bis 30 s.
+
+Abweichungen vom Vorschlag (erster Wurf):
+- Das **Wurmloch** pendelt nicht auf der Straße, sondern sitzt auf einer kleinen runden Plattform neben ihr (gelb-schwarzer Rand): Man muss bewusst hinfahren, zufällig trifft man es nicht. Es überspringt eine Kehre im Asteroidengürtel, um einen großen Asteroiden herum; der türkise Ausgang liegt kurz vor dem Mond.
+- An den **engen Kehren** stehen Kraftfeld-Banden (leuchtende Linie zwischen kleinen Pfosten), die wie die Bande der Bobbahn abfedern. Die weiten Kurven (Satellit, Planet) sind offen.
+- Nach der Glasröhre eine **schmale Gitterbrücke** (gelb-schwarzer Rand), danach eine Senke der Straße unter einem großen **Satelliten** hindurch.
+- **Ring des Planeten:** Zwei breite Abzweige (gelb-schwarzer Rand) führen auf den Ring und zurück. Wer den Ring sauber fährt, bekommt am Ende den Swing-by-Schub. Die Anziehung ist auf dem Ring am stärksten; auf dem Ring braucht man etwa Höchsttempo, sonst zieht der Planet einen nach innen.
+- **Boost-Felder** liegen in der Glasröhre und vor dem Mond (nicht direkt vor dem Planeten, dort hätte niemand die Abzweigung geschafft).
+- Der **Mond** hat einen Weg mit Fahrspuren über den Rand eines großen Kraters; Mondstaub liegt in den Kratern und neben den Asteroiden auf den Plattformen. Lämpchen am Wegrand, eine karierte Rennflagge und eine Landefähre. Der Mondboden neben dem Weg bremst wie Gras.
+- Die **Luftschleuse** ist ein Tor über der Straße am Übergang vom Mond in die Station; Düsen im Boden blasen den Staub ab (weißer Nebel, Zischen).
+- Die **Asteroiden** fliegen nur über die offenen Plattformen und den Mond, nicht in die Glasröhre oder die Station. Mittlere zerbrechen bei einem Treffer in zwei kleine.
+- Ab dem **schwarzen Loch** wird die Musik einen Ganzton tiefer (mit einem Absturz-Effekt beim Öffnen); in der letzten Runde läuft das Arpeggio doppelt so schnell, der Vocoder singt auch im Refrain.
+- Noch nicht: Stationsmodule und Staubflecken sind schlicht, das Lied ist noch nicht angehört. Der Regenbogen behält bis zu seinem Rework sein Lied `rainbow`, das Weltall-Lied `space` ist daraus abgeleitet.
 
 Idee: Die bisherige Weltall-Optik der Regenbogen-Strecke (Sterne, Asteroidengürtel, `decor: 'space'`) zieht hierher, und das bisherige Lied `rainbow` (Space-Disco) wird zum Lied dieser Strecke. Die Strecke ist eine Bahn aus Metallplattformen und Röhren zwischen Raumstation, Mond und einem Ringplaneten. Es geht um **Schwung**: Im All hat man wenig Grip, aber die Schwerkraft eines Planeten kann einen schleudern.
 
@@ -735,4 +747,4 @@ Custom
 - Auswahl wie viele Gegner (1-9)
 - Auswahl wie viele und welche Strecken.
 
-Stand im Spiel (2026-10-11, `src/cups.js`): Cup 1 bis 4 haben Strecken (Cup 4 noch ohne Weltall), Cup 5 ist leer. Supercup = alle Strecken der Cups 1 bis 4 (heute 11), offen nach den ersten Siegen in Cup 1 bis 4. Superdupercup = alle Strecken der Cups 1 bis 5, offen nach dem ersten Sieg in Cup 5. Custom Cup: bis 12 Strecken in beliebiger Folge (auch doppelt), 2 bis 7 Gegner.
+Stand im Spiel (2026-10-13, `src/cups.js`): Cup 1 bis 4 haben Strecken (Cup 4 mit Weltall), Cup 5 ist leer. Supercup = alle Strecken der Cups 1 bis 4 (heute 12), offen nach den ersten Siegen in Cup 1 bis 4. Superdupercup = alle Strecken der Cups 1 bis 5, offen nach dem ersten Sieg in Cup 5. Custom Cup: bis 12 Strecken in beliebiger Folge (auch doppelt), 2 bis 7 Gegner; er wird nicht gespeichert, sondern bei jeder Wahl neu zusammengestellt (beginnt leer).

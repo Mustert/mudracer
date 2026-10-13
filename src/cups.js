@@ -39,16 +39,12 @@ export function markCupWon(cup) {
 }
 
 // ----- the custom cup: which tracks (in order, a track may come more than once) and how many opponents -----
+// It is put together for the moment and not kept: every time the custom cup is chosen it starts empty. (Old games kept it under
+// 'mudracer-custom'; that key is no longer read and never written, see ANALYSE.md T17.)
 
 export const CUSTOM_MAX = 12;
-PREFS.custom = { tracks: [0, 1, 2], count: 5 };
-try {
-  const c = JSON.parse(getItem('mudracer-custom') || 'null');
-  if (c && Array.isArray(c.tracks)) PREFS.custom.tracks = c.tracks.filter(i => Number.isInteger(i) && i >= 0 && i < TRACKS.length).slice(0, CUSTOM_MAX);
-  if (c && c.count >= 2 && c.count <= 7) PREFS.custom.count = c.count;
-} catch (e) {}
-
-export function saveCustom() { try { setItem('mudracer-custom', JSON.stringify(PREFS.custom)); } catch (e) {} }
+export function resetCustom() { PREFS.custom = { tracks: [], count: 5 }; }
+resetCustom();
 
 // ----- best final place and trophies of one car in one cup, per difficulty (0 LEICHT, 1 MITTEL, 2 SCHWER) -----
 // Saves from before the difficulties have no level in the key: those races were LEICHT (same opponents), a win there is the LEICHT trophy.

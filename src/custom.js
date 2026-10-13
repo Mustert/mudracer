@@ -1,7 +1,7 @@
 import { G, UI, PREFS } from './g.js';
 import { SFX } from './audio.js';
 import { VW, clamp } from './core.js';
-import { CUPS, CUSTOM_MAX, saveCustom } from './cups.js';
+import { CUPS, CUSTOM_MAX, resetCustom } from './cups.js';
 import { DIFFS, setDiff, setFx } from './diff.js';
 import { R1, text, tri } from './gfx.js';
 import { is } from './input.js';
@@ -23,16 +23,17 @@ UI.cuPick = 0;
 
 const rows = () => PREFS.kids ? ['track', 'remove', 'count', 'go'] : ['track', 'remove', 'count', 'diff', 'go'];
 
-export function openCustom() { UI.cuRow = 0; PREFS.cup = CUPS.find(c => c.custom); setState('custom'); }
+// a new custom cup every time it is chosen (nothing is kept)
+export function openCustom() { UI.cuRow = 0; resetCustom(); PREFS.cup = CUPS.find(c => c.custom); setState('custom'); }
 
 function add() {
   if (PREFS.custom.tracks.length >= CUSTOM_MAX) { SFX.bump(); return; }
-  PREFS.custom.tracks.push(UI.cuPick); saveCustom(); UI.selAnim = G.time; SFX.select();
+  PREFS.custom.tracks.push(UI.cuPick); UI.selAnim = G.time; SFX.select();
 }
 
 function removeAt(i) {
   if (!PREFS.custom.tracks.length) { SFX.bump(); return; }
-  PREFS.custom.tracks.splice(i, 1); saveCustom(); SFX.click();
+  PREFS.custom.tracks.splice(i, 1); SFX.click();
 }
 
 function go() {
@@ -42,7 +43,7 @@ function go() {
 
 function change(r, dir) {
   if (r === 'track') { UI.cuPick = (UI.cuPick + dir + TRACKS.length) % TRACKS.length; UI.selAnim = G.time; }
-  else if (r === 'count') { PREFS.custom.count = clamp(PREFS.custom.count + dir, 2, 7); saveCustom(); }
+  else if (r === 'count') { PREFS.custom.count = clamp(PREFS.custom.count + dir, 2, 7); }
   else if (r === 'diff') { setDiff(PREFS.diff + dir); setFx(PREFS.diff > 0); }
   else return;
   SFX.click();
