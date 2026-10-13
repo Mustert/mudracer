@@ -58,6 +58,7 @@ Gelten für jede neue Strecke und jede Überarbeitung. Vor dem Abschluss einer S
 8. **Eigenes Lied:** Jede Strecke hat ihr eigenes Lied, passend zum Thema, zu Mudracer und zu einem Autorennen.
 9. **Nicht zu viel auf einmal:** Mehrere Dinge auf einer Strecke sind gut, aber nicht gleichzeitig und nicht zu dicht hintereinander. Gefahren kündigen sich an (Schatten, Blinken, Ton, Text), sodass man reagieren kann.
 10. **Wege sind sichtbar:** Was durchfahrbar ist, sieht deutlich anders aus als das, was ein Auto aufhält (z. B. Deko-Zäune flach und blass, feste Zäune und Wände kräftig mit Schatten). Hindernisse auf der Fahrbahn unterscheiden sich klar von gleichartiger Deko daneben.
+11. **Nicht kindgerecht:** Kindgerechtes Design ist kein Kriterium für neue Strecken. Darum kümmert sich der Kindermodus. Das Spiel hat die Kinderspielschuhe hinter sich gelassen.
 
 ## Feature-Abschluss und Publish
 
