@@ -14,6 +14,7 @@ import { initEruption, initVolcano, volcanoUpdate } from './volcano.js';
 import { initCrocs, initJungle, initTrees, jungleCollisions, jungleUpdate } from './jungle.js';
 import { initAsteroids, initHole, initSpace, spaceCollisions, spaceUpdate } from './space.js';
 import { initSchoko, initSuess, initWatte, suessCollisions, suessUpdate } from './suess.js';
+import { initRobot, initToyEvents, initToys, toyCollisions, toyUpdate } from './toys.js';
 
 // ---------- track events: the map changes while you race ----------
 // Wiese: a herd of cows grazes on and next to the track (they are obstacles, they moo).
@@ -30,6 +31,8 @@ import { initSchoko, initSuess, initWatte, suessCollisions, suessUpdate } from '
 // crocodiles snap in the ford and the swamp (see jungle.js).
 // Weltall: asteroids fly across the map (a dashed line and a red arrow first); from lap 2 a black hole opens in the middle and pulls (see space.js).
 // Suess: from lap 2 chocolate streams run over the road, sprinkles rain in the last lap; candyfloss clouds hide the road (see suess.js).
+// Spielzimmer: the wooden train, a wind-up car, marbles and the domino tower (spielzeug); from lap 2 the robot vacuum, in the last lap the light
+// goes out (saugroboter; see toys.js).
 // Every event can be switched off with PREFS.events (see state.js); G.fx switches all of them for the current race (difficulty,
 // options, kids mode, see diff.js). A track is changed in place; setupEvents/resetTrackEvents put it back.
 
@@ -103,6 +106,7 @@ export function eventCollisions() {
   if (G.T.jungle) jungleCollisions();
   if (G.T.space) spaceCollisions();
   if (G.T.suess) suessCollisions();
+  if (G.T.toys) toyCollisions();
   const ev = G.T.ev; if (!ev) return;
   for (const w of ev.cows) for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
@@ -499,7 +503,8 @@ function drawLights(T) {
 
 // ======================================================= setup, update, drawing
 
-const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {}, sandsturm: initStorm, frost: initFrost, pinguine: initPenguins, ausbruch: initEruption, baeume: initTrees, kroko: initCrocs, asteroiden: initAsteroids, schwarzesloch: initHole, schoko: initSchoko, zuckerwatte: initWatte };
+const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {}, sandsturm: initStorm, frost: initFrost, pinguine: initPenguins, ausbruch: initEruption, baeume: initTrees, kroko: initCrocs, asteroiden: initAsteroids, schwarzesloch: initHole, schoko: initSchoko, zuckerwatte: initWatte,
+  spielzeug: initToyEvents, saugroboter: initRobot };
 
 // dev server only (ANALYSE.md T12): some events have fixed places on the map (holes, koi leaps, rolling tyres, falling trees,
 // dump trucks). They are checked against the built track, so a changed course line that moves the road away is noticed at once.
@@ -529,6 +534,7 @@ export function setupEvents(T) {
   if (T.jungle) initJungle(T);
   if (T.space) initSpace(T);
   if (T.suess) initSuess(T);
+  if (T.toys) initToys(T);
   for (const name of T.def.events || []) if (eventOn(name)) INIT[name](T);
 }
 
@@ -544,6 +550,7 @@ export function updateEvents(dt) {
   if (T.jungle) jungleUpdate(T, dt);
   if (T.space) spaceUpdate(T, dt);
   if (T.suess) suessUpdate(T, dt);
+  if (T.toys) toyUpdate(T, dt);
   if (ev.cows.length) updateCows(T, dt);
   if (ev.holes.length) updateRain(T, dt);
   if (ev.kois.length) updateKois(T, dt);

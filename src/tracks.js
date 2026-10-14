@@ -10,6 +10,7 @@ import { paintVolcano, volcanoTerrain } from './volcanomap.js';
 import { jungleTerrain, paintJungle } from './junglemap.js';
 import { paintSpace, spaceTerrain } from './spacemap.js';
 import { paintSuess, suessTerrain } from './suessmap.js';
+import { paintToys, toyTerrain } from './toymap.js';
 
 // ---------- tracks (800x450 world) ----------
 
@@ -66,6 +67,11 @@ export const THEMES = {
     water: ['#40200f', '#4a2615', '#56301c', '#70422a'], shore: ['#fff8ec', '#f6e6cc'], grass: ['#f7b6d0', '#f2a8c6', '#fbc6dc'], grassEdge: '#e48cb2', tuft: '#ffffff',
     track: ['#2a2028', '#241b22', '#30262e'], trackEdge: '#0e080c', trail: '#e48cb2', roadTrail: '#4a3a44', trailA: .1, decor: 'suess', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#3a1a24'], trees: 0,
     ambient: 'butterfly', landCol: ['#ff4d6d', '#ffd93d', '#6bcb77', '#4d96ff', '#ffffff'] },
+  // kids' room: the printed road of the play mat, parquet (terrain 30, slippery), the bed and the desk up high, plasticine instead of mud in four
+  // colours (goo 'knete': colourful cars), the robot vacuum spits cars out grey (the cement set, see toys.js)
+  spielzimmer: { ...MUDDY, mud: ['#e04848', '#3c6ee0', '#f2cc30'], mudEdge: '#7a2a2a', mudHi: '#ffffff', mudP: ['#e04848', '#3c6ee0', '#f2cc30', '#40b850'], mudTrail: ['#c84a6a', '#8a6ab0'], goo: 'knete',
+    grass: ['#c8915a', '#bd8650', '#d29c64'], grassEdge: '#7e5230', tuft: '#ad7844', track: ['#6e747c', '#666c74', '#787e86'], trackEdge: '#f4f4ee', trail: '#4a7a3e', roadTrail: '#5a4a3a', trailA: .06,
+    decor: 'spielzimmer', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#2a1a10'], trees: 0 },
   bahn:   { ...MUDDY, grass: ['#8fbf4a', '#7fae3f', '#9fcc5a'], grassEdge: '#6f9a33', tuft: '#5f8a2a', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#4f7a22', decor: 'farm', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 18 },
 };
 
@@ -275,6 +281,34 @@ const TRACK_DEFS = [
     streams: [[[[700, 330], [735, 260], [748, 190], [752, 138]], 13], [[[730, 375], [820, 360], [930, 330], [1012, 318]], 13], [[[520, 420], [500, 500], [486, 565], [480, 612]], 13]],
     house: [24, 236, 102, 334], donuts: [[52, 40], [1150, 36], [1150, 640], [52, 636]], rainbow: [290, 512, 72], men: [[205, 470], [880, 250], [40, 420]],
     fizzField: [190, 700, 600] },
+  // The kids' room (a bigger map): start on the printed road of the play mat, over the parquet and the wooden toy train, up a ramp of books onto
+  // the bed, round the teddy, the pillow throws you over the gap onto the desk (between crayons, past an eraser and the paint box, over the
+  // ruler between the two tables), down the marble run to the floor, through the building-block quarter and the toy car wash (see toymap.js,
+  // toys.js). Levels: floor, bed, desk; whoever leaves the bed or the desk falls to the floor.
+  // rug, bed, pillow, desk (two tables) = [x0, y0, x1, y1]; ramp = the books from [x, y] to [x, y]; lip = the end of the pillow (the jump), land =
+  // the edge of the desk, runup = where you start again after a fall from the pillow; ruler = [x, half width] over the gap between the tables;
+  // tower = the marble run [x, y, r]; fork = the clean way round the paint box (points, half width); paints = watercolour [x, y, r, colour];
+  // knete = the colour of each plasticine patch (mudAt); train = the loop [x, y, rx, ry] (event spielzeug), station = [x, y]; wind = the wind-up
+  // car (start, box it drives in); marble = where the marbles come out and where they roll; domino = the tower [x, y], n stones, step; robot =
+  // its dock and the box it cleans (event saugroboter); the rest is furniture and toys
+  { name: 'SPIELZIMMER', seed: 14, W: 1280, H: 720, theme: 'spielzimmer', song: 'toys', events: ['spielzeug', 'saugroboter'], wall: [], wash: null, toys: true, cement: [],
+    poly: [[110, 470, 0], [110, 95, 62], [980, 95, 70], [980, 445, 50], [1170, 445, 50], [1170, 640, 50], [600, 640, 35], [540, 570, 35], [400, 570, 35], [340, 640, 35], [110, 640, 55]],
+    mud: [], water: [], ponds: [],
+    mudAt: [[110, 330, 16, 18], [568, 604, 16, 15], [668, 646, 18, 13], [290, 636, 16, 14]], knete: [0, 1, 2, 3],
+    tubs: [[52, 330, 0], [618, 586, 1], [700, 694, 2], [300, 694, 3]],
+    rug: [40, 150, 760, 704], bed: [640, 28, 1070, 300], pillow: [930, 160, 1048, 296], pillow2: [1012, 36, 50, 92], teddy: [820, 200],
+    desk: [[860, 356, 1245, 512], [860, 548, 1245, 700]], ramp: [[550, 95], [640, 95]], lip: [980, 290], land: [980, 356], runup: [980, 180],
+    ruler: [1170, 15], tower: [800, 640, 50], fork: { pts: [[1130, 640, 0], [1092, 575, 22], [962, 575, 22], [922, 640, 0]], half: 15 },
+    paints: [[1012, 624, 9, 1], [1040, 636, 10, 0], [1068, 627, 7, 2], [1000, 650, 6, 3]],
+    crayons: [[1032, 408, 42, 0], [1078, 408, 42, 1], [1032, 482, 42, 2], [1078, 482, 42, 3]], eraser: [1062, 418, 20, 12], paintbox: [993, 592, 64, 16],
+    hefte: [[880, 380, 44, 30, 1], [886, 420, 40, 28, 3]], notes: [[1060, 372, 2], [1080, 380, 0], [1140, 370, 3]], cup: [900, 482], lamp: [1200, 386],
+    train: [360, 95, 120, 62], station: [360, 16], wind: { start: [200, 230], box: [40, 165, 600, 362] },
+    marble: { out: [775, 702], dir: [-1, -.62] }, domino: { x: 470, y: 527, n: 12, step: 7 }, robot: { dock: [26, 520], box: [40, 395, 850, 705] },
+    blockWall: [140, 860, 382], castle: [420, 612, 520, 700], dollhouse: [250, 200, 100, 66], toybox: [440, 250, 64, 46], shelf: [480, 630], window: [40, 200],
+    stand: [1104, 44, 74, 96], projector: [1141, 92], nightlight: [1266, 600], ball: [700, 470, 11], duck: [180, 692],
+    socks: [[1110, 330, 0], [1150, 318, 1]], puzzle: [[640, 345, 2], [760, 540, 1], [60, 610, 3], [690, 330, 0]], sheet: [170, 290],
+    streets: [[150, 446, 740, 454], [556, 160, 564, 370]], houses: [[180, 400, 22, 18], [250, 470, 24, 18], [380, 410, 20, 16], [620, 470, 22, 18]],
+    ptrees: [[220, 410, 7], [330, 480, 8], [450, 420, 7], [690, 420, 6]], ppond: [400, 485, 28, 14], zebra: [110, 240], washAt: [230, 640] },
   { name: 'REGENBOGEN', seed: 3, theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 }
 ];
@@ -423,6 +457,7 @@ function* buildTrack(def, ti) {
   const junT = def.jungle ? yield* jungleTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N }) : null;
   const spaT = def.space ? yield* spaceTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N }) : null;
   const sueT = def.suess ? yield* suessTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N, deep }) : null;
+  const toyT = def.toys ? yield* toyTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N }) : null;
   yield .35;
   // railway: a straight vertical line through the whole world
   let rail = null;
@@ -614,7 +649,7 @@ function* buildTrack(def, ti) {
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (MW - 10) | 0), y = 5 + (r() * (MH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
   const rock = (x, y) => { const L2 = hex('#c4c4bb'), M2 = hex('#9a9a92'), D2 = hex('#6e6e68'); for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(x + dx, y + dy, dy === 0 ? L2 : dy === 2 ? D2 : M2); };
   const trees = [], critters = [], C = th.treeCol.map(hex);
-  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null, desert = null, ice = null, volcano = null, jungle = null, space = null, suess = null;
+  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null, desert = null, ice = null, volcano = null, jungle = null, space = null, suess = null, toys = null;
   const darken = (x, y, rad, ox, oy) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + ox, yy = y + dy + oy; if (xx < 0 || yy < 0 || xx >= MW || yy >= MH) continue; const i = (yy * MW + xx) * 4; d[i] *= .78; d[i + 1] *= .76; d[i + 2] *= .76; } };
   const flowers = (n, PET) => scatter(n, 2, (x, y) => { const pc = PET[(r() * PET.length) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, pc === PET[1] ? hex('#ff8c1a') : hex('#ffe14d')); });
   // wall look: fence + hay (meadow), log pile + pines (forest), beach bar + surfboards + palms (beach), asteroid belt (space), railway barrier (train)
@@ -985,6 +1020,8 @@ function* buildTrack(def, ti) {
     space = yield* paintSpace({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, r, starPix, mudPix, RT: spaT });
   } else if (th.decor === 'suess') {
     suess = yield* paintSuess({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, deep, bridgeMask, isBridge, stoneMask, sd, r, mudPix, watPix, darken, RT: sueT });
+  } else if (th.decor === 'spielzimmer') {
+    toys = yield* paintToys({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, RT: toyT });
   } else if (th.decor === 'farm') {
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
@@ -1064,9 +1101,9 @@ function* buildTrack(def, ti) {
   const top = toCanvas(outlineImg(new ImageData(tp, MW, MH), MW, MH, C[3]));
   const wp = path[wi], solid = trees.concat(walls);
   return { W: MW, H: MH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: solid, grid: obstacleGrid(solid, MW, MH), critters, windmill, shoreY, boat: { x: 60 }, base, top, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice, volcano, jungle, space, suess,
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice, volcano, jungle, space, suess, toys,
     // Cup 3 building blocks (see trackfx.js): ramps to jump from, stretches that push the cars, where a second way runs beside the road
-    jumps: (desert || ice || volcano || jungle || space || suess || {}).jumps || [], pushes: (desert || ice || volcano || jungle || space || suess || {}).pushes || [], alt: (desert || ice || volcano || jungle || space || suess || {}).alt || null };
+    jumps: (desert || ice || volcano || jungle || space || suess || toys || {}).jumps || [], pushes: (desert || ice || volcano || jungle || space || suess || toys || {}).pushes || [], alt: (desert || ice || volcano || jungle || space || suess || toys || {}).alt || null };
 }
 
 
