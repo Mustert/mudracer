@@ -9,6 +9,7 @@ import { iceTarget } from './ice.js';
 import { volcanoLane, volcanoTarget } from './volcano.js';
 import { jungleLane, jungleTarget } from './jungle.js';
 import { spaceLane, spaceTarget } from './space.js';
+import { rainbowLane, rainbowSurf, rainbowTarget } from './rainbow.js';
 import { setState } from './state.js';
 import { finishRace } from './race.js';
 import { ttLap } from './timetrial.js';
@@ -18,6 +19,7 @@ import { reportError } from './errors.js';
 
 function surfOf(c) {
   const m = c.def.mud;
+  if (G.T.rainbow && c.surf >= 31) return rainbowSurf(c); // the rainbow: its colour lanes, the asphalt of the gold coin, cloud holes (see rainbow.js)
   switch (c.surf) {
     // off the road is as slow as mud, but the car stays clean (only the Matschfahrt is made of rough ground)
     // in space there is nothing beside the road: no grip, no gas (the car drifts off, see space.js)
@@ -93,7 +95,8 @@ export function aiTarget(c) {
   // ice: the short cut across the frozen lake
   // volcano: the long way round the crust when the stream is about to break through
   // space: the short way over the ring of the planet
-  const pt = (G.T.ring && ringPitTarget(c)) || (G.T.ice && iceTarget(c)) || (G.T.volcano && volcanoTarget(c)) || (G.T.jungle && jungleTarget(c)) || (G.T.space && spaceTarget(c));
+  // rainbow: the double rainbow in the last lap, the wormhole
+  const pt = (G.T.ring && ringPitTarget(c)) || (G.T.ice && iceTarget(c)) || (G.T.volcano && volcanoTarget(c)) || (G.T.jungle && jungleTarget(c)) || (G.T.space && spaceTarget(c)) || (G.T.rainbow && rainbowTarget(c));
   if (pt) { const [tx, ty] = steerAround(c, pt[0], pt[1]); return Math.atan2(ty - c.y, tx - c.x); }
   const sp = Math.hypot(c.vx, c.vy), i = (c.idx + 18 + Math.round(sp / 8)) % G.T.N, p = G.T.path[i], n = G.T.nrm[i];
   // on the flooded pier there is no room to wander across the track
@@ -118,6 +121,8 @@ export function aiTarget(c) {
   if (G.T.jungle) lane = jungleLane(c, i, lane);
   // space: the wormhole, a little outside on the curve round the planet, never at the edge of a platform
   if (G.T.space) lane = spaceLane(c, i, lane);
+  // rainbow: the red side of the road, away from lightning, the wormhole
+  if (G.T.rainbow) lane = rainbowLane(c, i, lane);
   const [tx, ty] = steerAround(c, p.x + n.x * lane, p.y + n.y * lane);
   return Math.atan2(ty - c.y, tx - c.x);
 }

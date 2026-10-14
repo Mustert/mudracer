@@ -137,25 +137,6 @@ const SONGS = {
       if (s === 0 || s === 8) M.conga(290, t, .45);
       M.shaker(t, (s & 3) === 2 ? 1 : .4);
     } },
-  // space disco: four on the floor, octave bass, sparkly arpeggios
-  rainbow: { bpm: 150, swing: 0,
-    chords: { D: { r: 38, n: [62, 66, 69, 73] }, Bm: { r: 35, n: [59, 62, 66, 69] }, G: { r: 43, n: [59, 62, 66, 67] }, A: { r: 45, n: [57, 61, 64, 69] }, Em: { r: 40, n: [59, 62, 64, 67] }, Fm: { r: 42, n: [61, 64, 66, 69] }, A7: { r: 45, n: [57, 61, 64, 67] } },
-    A: { ch: ['D', 'Bm', 'G', 'A', 'Em', 'Fm', 'G', 'A7'], mel: mel([
-      'F#5:0:2 A5:2:2 C#6:4:2 D6:6:4 C#6:10:2 A5:12:4', 'B5:0:2 D6:2:2 F#6:4:4 E6:8:2 D6:10:2 B5:12:4', 'D6:0:3 B5:3:3 G5:6:2 F#5:8:4 G5:12:2 A5:14:2', 'A5:0:6 E5:6:2 A5:8:2 C#6:10:2 E6:12:4',
-      'G6:0:2 F#6:2:2 E6:4:4 B5:8:4 D6:12:4', 'C#6:0:2 E6:2:2 F#6:4:4 E6:8:2 C#6:10:2 A5:12:4', 'B5:0:2 D6:2:2 F#6:4:2 G6:6:2 F#6:8:2 D6:10:2 B5:12:4', 'C#6:0:4 E6:4:4 A6:8:8']) },
-    B: { ch: ['G', 'A', 'Fm', 'Bm', 'Em', 'A7', 'D', 'A7'], mel: mel([
-      'D6:0:1 D6:2:1 B5:3:3 D6:6:2 G6:8:4 F#6:12:4', 'E6:0:1 E6:2:1 C#6:3:3 E6:6:2 A6:8:4 G6:12:2 E6:14:2', 'F#6:0:4 E6:4:2 C#6:6:2 A5:8:4 C#6:12:4', 'D6:0:4 C#6:4:2 B5:6:2 F#5:8:8',
-      'E6:0:2 G6:2:2 B6:4:4 A6:8:2 G6:10:2 E6:12:4', 'C#6:0:2 E6:2:2 G6:4:4 F#6:8:2 E6:10:2 C#6:12:4', 'D6:0:3 F#6:3:3 A6:6:6 F#6:12:4', 'E6:0:2 C#6:2:2 A5:4:2 G5:6:2 E5:8:2 C#5:10:2 A4:12:4']) },
-    lead(M, m, t, d) { M.lead(hz(m - 12), t, d); M.glock(hz(m), t); },
-    band(M, s, t, bi, ch) {
-      const tones = [...ch.n, ...ch.n.map(m => m + 12)];
-      M.arp(hz(tones[s % 8] + 12), t);
-      if (s === 0) { M.pad(ch.n, t, 16 * M.sd, .022); if (bi === 0) M.crash(t); }
-      if (s % 2 === 0) M.bassDisco(hz(ch.r + ((s >> 1) % 2 ? 12 : 0)), t, M.sd * 1.8);
-      if (s % 4 === 0) M.kick(t);
-      if (s === 4 || s === 12) M.clap(t);
-      if ((s & 3) === 2) M.hat(t, true); else if (s % 2) M.hat(t, false, .6);
-    } },
   // country train shuffle: harmonica, banjo rolls, boom-chick bass, brushed "chugga" snare
   train: { bpm: 172, swing: .15,
     chords: { G: { r: 43, n: [55, 59, 62] }, C: { r: 48, n: [55, 60, 64] }, D: { r: 50, n: [57, 62, 66] }, A7: { r: 45, n: [57, 61, 64, 67] } },
@@ -362,14 +343,22 @@ const SONGS = {
 // the volcano in the last lap: the same song, faster, the brass plays the tune
 SONGS.volcanoFast = { ...SONGS.volcano, bpm: 160, swap: null, fast: true };
 
-// space: the space disco of the rainbow track (D major, 150 BPM, four on the floor, octave bass, glittering arpeggios), grown up for space:
-// a vocoder sings "space race" in syllables, sci-fi blips fill the gaps, the pads pump with the kick (sidechain). When the black hole is open
-// everything is a whole tone lower and darker (a dive pulls it down when it opens); in the last lap the arpeggio runs twice as fast and the
-// vocoder sings in the chorus too. (The rainbow track keeps the old song until its rework, see Obsidian/Mudracer/Strecken.md.)
+// space: the space disco that the rainbow track had before its rework (D major, 150 BPM, four on the floor, octave bass, glittering arpeggios),
+// grown up for space: a vocoder sings "space race" in syllables, sci-fi blips fill the gaps, the pads pump with the kick (sidechain). When the
+// black hole is open everything is a whole tone lower and darker (a dive pulls it down when it opens); in the last lap the arpeggio runs twice
+// as fast and the vocoder sings in the chorus too.
+const SPACE_DISCO = { bpm: 150, swing: 0,
+  chords: { D: { r: 38, n: [62, 66, 69, 73] }, Bm: { r: 35, n: [59, 62, 66, 69] }, G: { r: 43, n: [59, 62, 66, 67] }, A: { r: 45, n: [57, 61, 64, 69] }, Em: { r: 40, n: [59, 62, 64, 67] }, Fm: { r: 42, n: [61, 64, 66, 69] }, A7: { r: 45, n: [57, 61, 64, 67] } },
+  A: { ch: ['D', 'Bm', 'G', 'A', 'Em', 'Fm', 'G', 'A7'], mel: mel([
+    'F#5:0:2 A5:2:2 C#6:4:2 D6:6:4 C#6:10:2 A5:12:4', 'B5:0:2 D6:2:2 F#6:4:4 E6:8:2 D6:10:2 B5:12:4', 'D6:0:3 B5:3:3 G5:6:2 F#5:8:4 G5:12:2 A5:14:2', 'A5:0:6 E5:6:2 A5:8:2 C#6:10:2 E6:12:4',
+    'G6:0:2 F#6:2:2 E6:4:4 B5:8:4 D6:12:4', 'C#6:0:2 E6:2:2 F#6:4:4 E6:8:2 C#6:10:2 A5:12:4', 'B5:0:2 D6:2:2 F#6:4:2 G6:6:2 F#6:8:2 D6:10:2 B5:12:4', 'C#6:0:4 E6:4:4 A6:8:8']) },
+  B: { ch: ['G', 'A', 'Fm', 'Bm', 'Em', 'A7', 'D', 'A7'], mel: mel([
+    'D6:0:1 D6:2:1 B5:3:3 D6:6:2 G6:8:4 F#6:12:4', 'E6:0:1 E6:2:1 C#6:3:3 E6:6:2 A6:8:4 G6:12:2 E6:14:2', 'F#6:0:4 E6:4:2 C#6:6:2 A5:8:4 C#6:12:4', 'D6:0:4 C#6:4:2 B5:6:2 F#5:8:8',
+    'E6:0:2 G6:2:2 B6:4:4 A6:8:2 G6:10:2 E6:12:4', 'C#6:0:2 E6:2:2 G6:4:4 F#6:8:2 E6:10:2 C#6:12:4', 'D6:0:3 F#6:3:3 A6:6:6 F#6:12:4', 'E6:0:2 C#6:2:2 A5:4:2 G5:6:2 E5:8:2 C#5:10:2 A4:12:4']) } };
 let dived = null;
 const holeOpen = () => !!(G.T && G.T.space && G.T.ev && G.T.ev.hole);
 const spaceLast = () => !!G.player && !G.T.run && G.player.lap >= LAPS && (G.state === 'race' || G.state === 'finish');
-SONGS.space = { ...SONGS.rainbow,
+SONGS.space = { ...SPACE_DISCO,
   up: () => holeOpen() ? -2 : 0,
   lead(M, m, t, d, sec) {
     M.lead(hz(m - 12), t, d); M.glock(hz(m), t, holeOpen() ? .5 : 1);
@@ -389,6 +378,52 @@ SONGS.space = { ...SONGS.rainbow,
     if (sec === 'B' && s === 0 && bi % 4 === 3) M.riser(t, 16 * M.sd);
   } };
 
+
+// the rainbow (the finale): radiant Euro-dance pop in C major, 128 BPM. Synth bells play the tune (with the delay), a supersaw joins in the
+// chorus; glittering arpeggios in sixteenths, a choir ("aah"), four on the floor with an open hi-hat on the off-beat and claps on 2 and 4, a
+// pumping eighth bass that ducks under the kick. In the storm (lap 2) the same tune in A minor (every note two steps of the scale down), the
+// filters close, a deep timpani thunders on the one of every fourth bar. In the last lap (the sun) only the chorus, in D major, a full choir,
+// bells and a crash at the start of every phrase: the big finale of the game.
+const rbEv = () => G.T && G.T.rainbow && G.T.ev;
+const rbStorm = () => { const ev = rbEv(); return !!(ev && ev.storm && !ev.sun); };
+const rbFinal = () => { const ev = rbEv(); return !!(ev && (ev.sun || (G.player && !G.T.run && G.player.lap >= LAPS && (G.state === 'race' || G.state === 'finish')))); };
+const SCALE = [0, 2, 4, 5, 7, 9, 11];
+const toMinor = m => { const o = Math.floor(m / 12), dg = SCALE.indexOf(m % 12); if (dg < 0) return m - 3; return dg >= 2 ? o * 12 + SCALE[dg - 2] : (o - 1) * 12 + SCALE[dg + 5]; };
+SONGS.rainbow = { bpm: 128, swing: 0,
+  chords: { C: { r: 36, n: [60, 64, 67, 72] }, G: { r: 31, n: [59, 62, 67, 71] }, Am: { r: 33, n: [57, 60, 64, 69] }, F: { r: 29, n: [57, 60, 65, 69] }, Em: { r: 40, n: [59, 64, 67, 71] } },
+  A: { ch: ['C', 'G', 'Am', 'F', 'C', 'G', 'F', 'G'], mel: mel([
+    'E5:0:2 G5:2:2 C6:4:4 B5:8:2 G5:10:2 E5:12:4', 'D5:0:2 G5:2:2 B5:4:4 A5:8:2 G5:10:2 D5:12:4', 'C5:0:2 E5:2:2 A5:4:4 G5:8:2 E5:10:2 C5:12:4', 'A4:0:2 C5:2:2 F5:4:4 E5:8:2 D5:10:2 C5:12:4',
+    'E5:0:2 G5:2:2 C6:4:4 D6:8:2 C6:10:2 G5:12:4', 'B5:0:2 A5:2:2 G5:4:4 D5:8:4 G5:12:4', 'A5:0:3 G5:3:1 F5:4:2 E5:6:2 C5:8:4 A4:12:4', 'B4:0:2 D5:2:2 G5:4:4 F5:8:2 D5:10:2 B4:12:4']) },
+  B: { ch: ['F', 'G', 'Em', 'Am', 'F', 'G', 'C', 'C'], mel: mel([
+    'C6:0:3 A5:3:1 C6:4:4 D6:8:4 C6:12:4', 'B5:0:3 G5:3:1 B5:4:4 D6:8:4 B5:12:4', 'G5:0:2 B5:2:2 E6:4:6 D6:10:2 B5:12:4', 'C6:0:2 B5:2:2 A5:4:4 E5:8:4 A5:12:4',
+    'A5:0:2 C6:2:2 F6:4:4 E6:8:2 D6:10:2 C6:12:4', 'D6:0:2 C6:2:2 B5:4:4 G5:8:2 A5:10:2 B5:12:4', 'C6:0:4 G5:4:2 E5:6:2 G5:8:2 C6:10:2 E6:12:4', 'C6:0:12']) },
+  swap: () => rbFinal() ? 'rainbowFinal' : rbStorm() ? 'rainbowStorm' : null,
+  lead(M, m, t, d, sec) {
+    if (sec === 'B') { M.supersaw(hz(m - 12), t, d, .8); M.bellLead(hz(m), t, d, .7); }
+    else { M.bellLead(hz(m), t, d, 1); M.glock(hz(m + 12), t, .35); }
+  },
+  band(M, s, t, bi, ch, sec) {
+    const tones = [...ch.n, ...ch.n.map(m => m + 12)], dark = !!M.song.dark, fin = !!M.song.fin;
+    M.arp(hz(tones[s % 8] + 12), t); if (fin) M.arp(hz(tones[(s + 3) % 8] + 24), t + M.sd / 2);
+    if (s === 0 && (sec === 'B' || fin)) M.choir(ch.n, t, 16 * M.sd);
+    if (s % 4 === 0) M.pumpPad(ch.n, t, dark ? 560 : 1500);
+    if (s % 2 === 0) M.bassPump(hz(ch.r + ((s >> 1) % 2 ? 12 : 0)), t, M.sd * 1.7, s % 4 === 0 ? .55 : 1);
+    if (s % 4 === 0) M.kick(t);
+    if (s === 4 || s === 12) M.clap(t);
+    if ((s & 3) === 2) M.hat(t, true); else if (s % 2) M.hat(t, false, .5);
+    if (dark && s === 0 && bi % 4 === 0) M.timp(hz(ch.r - 12), t, 1.3);
+    if (s === 0 && (fin ? bi % 4 === 0 : bi === 0)) M.crash(t);
+    if (!fin && sec === 'A' && bi === 7 && s === 0) M.riser(t, 16 * M.sd);
+  } };
+// the storm: the same song in A minor, darker
+SONGS.rainbowStorm = { ...SONGS.rainbow, swap: null, dark: true,
+  chords: { C: { r: 33, n: [57, 60, 64, 69] }, G: { r: 40, n: [59, 64, 67, 71] }, Am: { r: 29, n: [57, 60, 65, 69] }, F: { r: 38, n: [57, 62, 65, 69] }, Em: { r: 36, n: [60, 64, 67, 72] } },
+  A: { ch: SONGS.rainbow.A.ch, mel: SONGS.rainbow.A.mel.map(bar => bar.map(([m, st, l]) => [toMinor(m), st, l])) },
+  B: { ch: SONGS.rainbow.B.ch, mel: SONGS.rainbow.B.mel.map(bar => bar.map(([m, st, l]) => [toMinor(m), st, l])) },
+  lead(M, m, t, d) { M.lead(hz(m - 12), t, d); M.bellLead(hz(m), t, d, .5); } };
+// the last lap: only the chorus, a whole tone up (D major), everything on
+SONGS.rainbowFinal = { ...SONGS.rainbow, swap: null, fin: true, order: ['B'], up: () => 2,
+  lead(M, m, t, d) { M.supersaw(hz(m - 12), t, d, 1); M.bellLead(hz(m), t, d, .8); M.glock(hz(m + 12), t, .4); } };
 
 export const Music = {
   init() {
@@ -537,5 +572,8 @@ export const Music = {
   blip(f, t) { voice({ at: t, type: 'square', f, to: f * 2, a: .002, d: .06, vol: .03, lp: 5000, dest: this.out }); voice({ at: t + .07, type: 'sine', f: f * 1.5, to: f * .75, a: .002, d: .06, vol: .03, dest: this.out }); },
   pumpPad(ns, t, lp) { for (const m of ns) synth({ at: t + this.sd * .5, f: hz(m), parts: [['sawtooth', 1, .5, -7], ['sawtooth', 1, .5, 7]], a: this.sd * 1.2, hold: this.sd, d: this.sd * .8, vol: .016, lp, dest: this.out }); },
   dive(t) { voice({ at: t, type: 'sawtooth', f: 880, to: 55, a: .05, hold: .4, d: 1.2, vol: .07, lp: 1600, dest: this.out }); noise({ at: t, type: 'bandpass', f: 3000, to: 120, a: .1, hold: .4, d: 1.2, vol: .08, q: 2, dest: this.out }); },
+  // rainbow: synth bells (glassy partials, a long ring, into the delay), a pumping bass that ducks under the kick (v)
+  bellLead(f, t, d, v = 1) { synth({ at: t, f, parts: [['sine', 1, 1], ['sine', 2, .35], ['sine', 3.01, .16], ['triangle', 4.2, .06]], a: .003, d: Math.max(.45, d * 1.4), vol: .075 * v, dest: this.leadBus }); },
+  bassPump(f, t, d, v = 1) { synth({ at: t + this.sd * .08, f, parts: [['sawtooth', 1, .7], ['square', .5, .35]], a: this.sd * .25, d, vol: .14 * v, lp: 1200, lpTo: 300, dest: this.out }); },
   timp(f, t, v = 1) { voice({ at: t, f: f * 1.02, to: f, a: .003, d: .6, vol: .3 * v, dest: this.out }); noise({ at: t, type: 'lowpass', f: 300, d: .15, vol: .1 * v, dest: this.out }); },
 };

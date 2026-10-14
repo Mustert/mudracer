@@ -33,7 +33,7 @@ export function airborne(c, dt) {
     c.ja[k] = a;
     if (J.off || pa === undefined || pa >= 0 || a < 0 || a > 20 || l < J.lo || l > J.hi) return;
     const fwd = c.vx * J.tx + c.vy * J.ty; if (fwd < (J.push ? 5 : 30)) return;
-    c.z = .01; c.vz = J.vz; c.air = 0;
+    c.z = .01; c.vz = J.vz; c.air = 0; c.jumpLand = J.land; // (land: where it is set down if it falls short, the rainbow)
     if (J.push && fwd < J.push) { c.vx += J.tx * (J.push - fwd); c.vy += J.ty * (J.push - fwd); }
     const v = loud(c, c.x, c.y); if (v > .02) (J.sfx ? SFX[J.sfx] : J.vz > 120 ? SFX.bigJump : SFX.jump)(v);
   });
@@ -45,8 +45,9 @@ function land(c) {
   c.z = 0; c.vz = 0;
   if (t === 11) { fallCar(c, 'abyss', T.desert && T.desert.landI); return; }
   if (t === 15 || (t === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }
+  if (t === 38 && T.rainbow) { fallCar(c, 'cloud', c.jumpLand); return; } // short of the far side: through the clouds
   if (t === 3 || t === 5) { splash(c.x, c.y, 24); SFX.splash(v); return; }
-  const col = T.th.decor === 'eis' ? ['#ffffff', '#e6eef6', '#cfdcea'] : ['#e8d2a8', '#d9b878', '#c9a263'];
+  const col = T.th.decor === 'eis' || T.rainbow ? ['#ffffff', '#e6eef6', '#cfdcea'] : ['#e8d2a8', '#d9b878', '#c9a263'];
   for (let i = 0; i < (big ? 22 : 10); i++) drop(c.x + (Math.random() - .5) * 20, c.y + (Math.random() - .5) * 14, Math.random() * 6.3, 20 + Math.random() * 50, 30 + Math.random() * 50, col[(Math.random() * 3) | 0], .8, false);
   if (v > .02) SFX.land(v * (big ? 1 : .6));
   if (big && !c.ai) G.jumpShake = .35;
@@ -57,7 +58,7 @@ function land(c) {
 }
 
 // gone for a moment: into the gorge (it is set down behind it), under the quicksand (beige, set down where it left the road), drifting off into
-// space (the tractor beam brings it back, see space.js)
+// space (the tractor beam brings it back, see space.js), through a cloud hole (a unicorn brings it back, see rainbow.js)
 export function fallCar(c, kind, at) {
   c.fall = kind === 'sand' ? 1.1 : kind === 'space' ? 1.2 : 1.4; c.fallT0 = c.fall; c.fallKind = kind; c.fx0 = c.x; c.fy0 = c.y; c.dvx = c.vx; c.dvy = c.vy;
   c.vx = c.vy = 0; c.boost = 0; c.stun = 0; c.z = 0; c.sink = 0;
@@ -65,7 +66,7 @@ export function fallCar(c, kind, at) {
   // quicksand leaves the car beige, lava sooty (and it comes back hot)
   if (kind === 'sand' || kind === 'lava') c.dirt = 1; // (in the jungle the deep swamp makes it green)
   if (kind === 'lava') { c.heat = .6; c.burnT = 1.3; for (let i = 0; i < 16; i++) addP({ t: 'smoke', x: c.x + (Math.random() - .5) * 16, y: c.y + (Math.random() - .5) * 12, vx: (Math.random() - .5) * 20, vy: -15 - Math.random() * 20, life: 1.2, ml: 1.2 }); }
-  const v = loud(c, c.x, c.y); if (v > .02) ({ abyss: SFX.fall, sand: SFX.sink, lava: SFX.burn, space: SFX.drift }[kind] || SFX.sink)(v);
+  const v = loud(c, c.x, c.y); if (v > .02) ({ abyss: SFX.fall, sand: SFX.sink, lava: SFX.burn, space: SFX.drift, cloud: SFX.fall }[kind] || SFX.sink)(v);
 }
 
 // the push of the slopes along the road, and the wind (desert storm) for everybody; in the air the wind blows twice as hard

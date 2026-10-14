@@ -3,7 +3,7 @@
 Die eine Liste für alles, was am Spiel schwach, offen oder geplant ist. Enthält auch die früheren Verbesserungsideen (ehemals `VERBESSERUNGEN.md`, Abschnitt I).
 
 - Analyse am 2026-10-09 auf Stand `c5aed10` bis `42eb5ec`, am 2026-10-11 gegen `2d022f4` (Branch `map_pack`, 12 Strecken) nachgeprüft.
-- Zuletzt abgeglichen: 2026-10-13, Commit „Custom Cup nur für den Moment, Doku zum Weltall“ (Branch `map_pack`; T17 erledigt, T18 und D7 neu, Weltall-Prototyp). (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
+- Zuletzt abgeglichen: 2026-10-14, Commit „Regenbogen-Rework (Prototyp)“ (Branch vom `map_pack`; T19, G13, B11 neu, M1 und I4 nachgezogen, Regenbogen-Prototyp). (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
 - Ausführliche Fassung der Analyse mit Begründungen (Stand 2026-10-09): https://claude.ai/code/artifact/5ecd1e70-685b-404d-b2e6-ed798433c1fb
 
 ## So wird diese Datei benutzt
@@ -43,9 +43,12 @@ Annahme der Analyse: Kinder sind die Hauptzielgruppe, SCHWER ist ein Bonus für 
 
 | T17 | H | erledigt (anders gelöst, 2026-10-13: der Custom Cup wird nicht mehr gespeichert, er beginnt bei jeder Wahl leer und gilt nur für den Moment; `mudracer-custom` wird nie mehr gelesen oder geschrieben, alte Spielstände bleiben unangetastet) | Der Custom Cup speicherte Strecken als Index (`mudracer-custom`). Jede neue Strecke vor dem Regenbogen (Cup 3, 4, jetzt WELTALL) verschob dessen Index; ein gespeicherter Custom Cup zeigte dann eine andere Strecke | `cups.js` `resetCustom`, `custom.js` `openCustom` | – |
 | T18 | N | offen | WELTALL ist 1360×765 groß: Runde ~25–30 s, Rennen ~80 s, Bau ~0,8 s in Häppchen | `tracks.js` `TRACK_DEFS` | im Spiel prüfen, ob das für Kinder zu lang ist |
+| T19 | N | offen | REGENBOGEN ist 1440×810 groß und baut ~2 s (in Häppchen bzw. auf dem Ladebildschirm, Weltall ~0,8 s); dazu hält die Strecke zwei Überlagerungen in Kartengröße (graue und saubere Farbbahnen, je ~4,7 MB). Runde ~26 s, Rennen ~80 s | `rainbowmap.js` `rainbowTerrain` (Schleifen über alle Pixel: Innenraum, Doppel-Regenbogen-Abstand, Spalte nach der Schanze), `paintRainbow` (`clean`, `grey`) | im Spiel auf schwachen Geräten prüfen; ggf. die Überlagerungen nur für die Straßen-Rechtecke halten |
 | D7 | M | offen | Startaufstellung (Grundsatz 5), nachgemessen 2026-10-12: bei fast allen Strecken stehen die hinteren Reihen schon in der Kurve (8 Autos: Wiese 82°, Strand 94°, Wüste/Eis/Vulkan/Dschungel 90°; nur Rennstrecke gerade). WELTALL hat 210 px Startgerade | `race.js` `startRace`, Startpunkt in `TRACK_DEFS` | Startlinien verschieben oder eigene Aufstellung wie auf der Rennstrecke |
 
-Weltall-Prototyp (2026-10-12, Commit „Weltall-Prototyp“): Strecke 12 `WELTALL` mit `src/spacemap.js`, `src/space.js`, Lied `space`, Ereignisse `asteroiden` und `schwarzesloch`; im Schnelldurchlauf getestet (Rennen auf allen Stufen, ohne Effekte, Zeitfahren, keine Fehler). `Obsidian/Mudracer/Strecken.md` ist abgeglichen (2026-10-13). Offen: Feinschliff der Optik (Staubflecken neben den Asteroiden, schlichte Stationsmodule), das Weltall-Lied ist noch nicht angehört; der Regenbogen teilt sich bis zu seinem Rework das Grundlied mit dem Weltall.
+Weltall-Prototyp (2026-10-12, Commit „Weltall-Prototyp“): Strecke 12 `WELTALL` mit `src/spacemap.js`, `src/space.js`, Lied `space`, Ereignisse `asteroiden` und `schwarzesloch`; im Schnelldurchlauf getestet (Rennen auf allen Stufen, ohne Effekte, Zeitfahren, keine Fehler). `Obsidian/Mudracer/Strecken.md` ist abgeglichen (2026-10-13). Offen: Feinschliff der Optik (Staubflecken neben den Asteroiden, schlichte Stationsmodule), das Weltall-Lied ist noch nicht angehört; das alte Regenbogen-Lied lebt seit dem Regenbogen-Rework nur noch im Weltall-Lied (`SPACE_DISCO`, unverändert).
+
+Regenbogen-Prototyp (2026-10-14, Commit „Regenbogen-Rework (Prototyp)“): Strecke 15 `REGENBOGEN` neu (rev 1, 1440×810) mit `src/rainbowmap.js`, `src/rainbow.js`, Liedern `rainbow`/`rainbowStorm`/`rainbowFinal`, Ereignissen `einhorn` und `gewitter`; im Cup FANTASY eingetragen. Im Dev-Server im Schnelldurchlauf getestet (Rennen auf MITTEL und SCHWER mit KI am Steuer des Spielers, Zeitfahren, alle drei Runden mit Gewitter, Sonne, doppeltem Regenbogen und Wurmloch, Weltall, Wiese und Garten zur Kontrolle, keine Fehler). Alte Teile entfernt: `decor: 'space'`, Wandstil `rocks`, der lila Glibber (`GOO`, Sprite-Satz `_goo`), die Regenbogen-Farbbahnen in der allgemeinen Bodenmalerei. Neu und geteilt: zweiter Sprite-Satz über `def.goo2` (`race.js`, `idle.js`), `c.lift` (größer gezeichnet auf ansteigender Straße, `draw.js`), `J.land`/`c.jumpLand` (wo ein zu kurzer Sprung abgesetzt wird, `trackfx.js`), Kühe mit eigener Geschwindigkeit (`w.sp`, `events.js`), Terrain-Codes 31–38 (bewusst weit oben, damit andere neue Strecken nicht kollidieren). Offen (siehe `Obsidian/Mudracer/Strecken.md`, 15): Leitmotive der Cups, Wolkenzug, drehendes Podest, Lied nicht angehört, Farbbahnen und Sprung nicht mit Kindern geprüft.
 
 ### Stand Technik (2026-10-12)
 
@@ -58,7 +61,7 @@ Arbeitsweise: `npm run lint`, `npm test` und `npm run typecheck` vor jedem Commi
 
 | ID | S | Status | Befund | Fundstelle | Empfehlung |
 |---|---|---|---|---|---|
-| M1 | H | teilweise | Belohnungen an leere Cups gebunden. Seit `map_pack` haben Cup 3 und 4 Strecken (Quad, Rally, Supercup erreichbar). Cup 5 ist weiter leer: Batmobil und Superdupercup außerhalb des Kindermodus unerreichbar | `cups.js` `CUPS`, `cars.js` (`cup: 5`) | Cup 5 bauen oder Batmobil vorerst an ein erreichbares Ziel hängen |
+| M1 | H | teilweise | Belohnungen an leere Cups gebunden. Seit `map_pack` haben Cup 3 und 4 Strecken (Quad, Rally, Supercup erreichbar). Cup 5 hat seit dem Regenbogen-Rework (2026-10-14) eine Strecke (`REGENBOGEN`; geplant `['SUESS', 'SPIELZIMMER', 'REGENBOGEN']`) und keine Freischaltbedingung; Batmobil damit erreichbar, Superdupercup nach dem ersten Cup-5-Sieg | `cups.js` `CUPS`, `cars.js` (`cup: 5`) | Cup 5 bauen oder Batmobil vorerst an ein erreichbares Ziel hängen |
 | M2 | H | offen | KI-Gas = Höchstgeschwindigkeit: 0,52–0,66 (LEICHT) bis 0,80–0,91 (SCHWER), mit Gummiband max. 1,0. Gegner nie schneller als ein fehlerfreier Spieler mit gleichem Auto | `diff.js` `DIFFS`, `update.js` (Gummiband) | auf SCHWER Ideallinie mit Kurvenbremsen statt Gasdrossel; ein Rivale pro Rennen leicht über 1,0 |
 | M3 | M | offen? | KI folgt Mittellinie mit Sinus-Versatz, weicht Kühen und (je Stufe) Matsch aus; überholt, blockt, rammt nicht gezielt; Hupe ohne Wirkung | `physics.js` `aiTarget` | Fahrstile pro Auto (Polizei sauber, Monster rammt, Traktor stur) |
 | M4 | M | offen? | Spieler startet immer in Reihe 1; mit gedrosselten Gegnern Führung ab Kurve 1 | `race.js` `startRace` | im GP nach Punktestand umgekehrt aufstellen |
@@ -101,6 +104,7 @@ Stark: einheitliche Lichtrichtung (Schatten nach rechts unten), durchgehend dunk
 | G9 | N | offen? | Fliegende Autos werden nach y sortiert und liegen unter Baumkronen | `draw.js` `drawRace` | Autos mit `z > 0` nach der Kronen-Ebene zeichnen |
 | G10 | N | offen? | Schmale Menükarten füllen ZEITFAHREN und WERKSTATT randlos (80 von 82 px) | `screens.js` `CARD` | 2 px Innenabstand oder Kurzform |
 | G11 | N | erledigt (mit T10) | Pokal-Funkeln blinkt nicht (siehe T10) | `screens.js` `drawTrophy` | umbenennen |
+| G13 | N | offen | Regenbogen-Prototyp: Wolken und Wolkenlöcher sind prozedurales Rauschen (die Löcher wirken gemustert), Gewitterwolken auf der Straße sehen eher wie Steine aus, Münzinseln ohne Glanz-Animation, nur eine Parallaxe-Ebene | `rainbowmap.js` `paintRainbow` (`cloud`, `stormCol`, Löcher), `rainbow.js` `drawRainbowGround` | Wolken mit gezeichneten Wolkenballen, Gewitterwolken mit Blitz-Glimmen und Bewegung, zweite Wolkenebene über den Löchern |
 | G12 | N | offen? | HUD ohne Rundenzeit und Abstand zum Vordermann | `draw.js` `drawRace` | für Ältere ergänzen, Kindermodus schlank lassen |
 
 ## Audio, Bedienung, Zugänglichkeit (B)
@@ -116,6 +120,7 @@ Stark: einheitliche Lichtrichtung (Schatten nach rechts unten), durchgehend dunk
 | B7 | N | offen? | Blinken (Sirenen ~4 Hz, Warnschilder, Texte) ohne Option zum Reduzieren | `draw.js` | Option „weniger Blinken“ |
 | B8 | N | offen? | Matsch, Erde, Straße alles Brauntöne; bei Rot-Grün-Schwäche und im Dunkeln schwer zu trennen | Themen in `tracks.js` | Textur oder Glanzrand am Matsch |
 | B9 | N | offen | Nur Deutsch, Texte über die Module verteilt; kein Manifest/Offline | alle Bildschirme, `index.html` | Texttabelle; PWA mit lokal eingebetteter Schrift (T8) |
+| B11 | M | offen | Regenbogen: die Lieder `rainbow`, `rainbowStorm` (a-Moll, jede Note zwei Tonleiterstufen tiefer) und `rainbowFinal` (D-Dur, nur Refrain) sind ungehört; der Wechsel geschieht über `swap` an der Rundengrenze (wie beim Vulkan), also womöglich derselbe Ruckler wie B10 | `music.js` `SONGS.rainbow` (`swap`, `rbStorm`, `rbFinal`) | anhören; Übergang mit B10 zusammen prüfen |
 | B10 | H | offen (Bug-Report, Nutzer, 2026-10-13; nicht im Code nachgeprüft) | Musik im Weltall stockt/ruckelt („gerusht“) kurz vor der 3. Runde, also wenn das Lied nach Runde 2 in die letzte Runde übergeht (`spaceLast`, Vocoder-Phase) | `music.js` `SONGS.space` (Zeilen ca. 365–380), `spaceLast`, `holeOpen` | prüfen, ob Schleifenende, Tempo- oder Sektionswechsel und das Schwarze-Loch-Abdunkeln an der Rundengrenze die Tonerzeugung überlasten (z. B. Vocoder und Pads gleichzeitig neu aufgebaut); Rundenwechsel nur an Taktgrenzen |
 
 ## Ideen und Wünsche (I)
@@ -127,7 +132,7 @@ Stark: einheitliche Lichtrichtung (Schatten nach rechts unten), durchgehend dunk
 | I1 | erledigt | Autos spürbar unterscheiden | Feinwerte `speed`, `mud`, `acc`, `turn`, `soil` in `cars.js`, Sterne TEMPO/MATSCH daraus abgeleitet; alle Autos brauchen etwa gleich lang (±3 %), fühlen sich aber verschieden an |
 | I2 | erledigt | Bestzeiten, Geist, Zeitfahren | Rekord pro Strecke und Auto (`mudracer-tt-<STRECKE>-<auto-id>`), Geist schaltbar (`mudracer-ghost`) |
 | I3 | teilweise | Einstellungen und Pause | Zahnrad (Musik, Steuerung), Pause (`Esc`, `P`, Menüknopf) da; offen: getrennte Regler (B6), freie Tastenbelegung (B4) |
-| I4 | offen | Items / Power-ups: Matschbombe, Schlammschild, Nitro | bisher nur Boost-Felder auf Regenbogen; würde das Rennen am stärksten verändern |
+| I4 | offen | Items / Power-ups: Matschbombe, Schlammschild, Nitro | bisher nur Boost-Felder (Weltall, Regenbogen-Spirale) und die Boost-Spur der Einhörner (Regenbogen); würde das Rennen am stärksten verändern |
 | I5 | offen | KI mit Charakter | siehe M2, M3 |
 | I6 | offen | Drift / Handbremse mit Mini-Boost, besonders für Quad und Flitzer | gäbe Älteren eine Technik zum Meistern (D1) |
 | I7 | teilweise | Mehr Freischaltziele | Cups schalten Autos frei, Trophäen nach Platz und Stufe; offen: Ziele wie Matschfahrt unter X s, alle Strecken sauber beenden, 3× Waschanlage (passt zu M10, M11) |

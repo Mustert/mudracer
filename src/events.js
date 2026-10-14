@@ -13,6 +13,7 @@ import { iceCollisions, iceUpdate, initFrost, initIce, initPenguins } from './ic
 import { initEruption, initVolcano, volcanoUpdate } from './volcano.js';
 import { initCrocs, initJungle, initTrees, jungleCollisions, jungleUpdate } from './jungle.js';
 import { initAsteroids, initHole, initSpace, spaceCollisions, spaceUpdate } from './space.js';
+import { initRainbow, initThunder, initUnicorns, rainbowCollisions, rainbowUpdate } from './rainbow.js';
 
 // ---------- track events: the map changes while you race ----------
 // Wiese: a herd of cows grazes on and next to the track (they are obstacles, they moo).
@@ -28,6 +29,8 @@ import { initAsteroids, initHole, initSpace, spaceCollisions, spaceUpdate } from
 // Dschungel: rotten trees fall across the road and stay there as little ramps, from lap 2 a stone ball rolls through the temple;
 // crocodiles snap in the ford and the swamp (see jungle.js).
 // Weltall: asteroids fly across the map (a dashed line and a red arrow first); from lap 2 a black hole opens in the middle and pulls (see space.js).
+// Regenbogen: unicorns fly across the road and leave a rainbow trail (a boost); the storm of lap 2 (rain, storm clouds, lightning) and the sun
+// with the double rainbow in the last lap (see rainbow.js).
 // Every event can be switched off with PREFS.events (see state.js); G.fx switches all of them for the current race (difficulty,
 // options, kids mode, see diff.js). A track is changed in place; setupEvents/resetTrackEvents put it back.
 
@@ -82,7 +85,7 @@ function initCows(T) {
 
 function updateCows(T, dt) {
   for (const w of T.ev.cows) {
-    const a = T.ev.t * .45 + w.ph, s = Math.sin(a), v = Math.cos(a);
+    const a = T.ev.t * (w.sp || .45) + w.ph, s = Math.sin(a), v = Math.cos(a); // (sp: the cows on the rainbow are slower)
     w.x = w.bx + w.dx * s * w.range; w.y = w.by + w.dy * s * w.range;
     const vx = w.dx * v;
     if (Math.abs(vx) > .08) w.face = vx > 0 ? 1 : -1;
@@ -100,6 +103,7 @@ export function eventCollisions() {
   if (G.T.ice) iceCollisions();
   if (G.T.jungle) jungleCollisions();
   if (G.T.space) spaceCollisions();
+  if (G.T.rainbow) rainbowCollisions();
   const ev = G.T.ev; if (!ev) return;
   for (const w of ev.cows) for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
@@ -496,7 +500,7 @@ function drawLights(T) {
 
 // ======================================================= setup, update, drawing
 
-const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {}, sandsturm: initStorm, frost: initFrost, pinguine: initPenguins, ausbruch: initEruption, baeume: initTrees, kroko: initCrocs, asteroiden: initAsteroids, schwarzesloch: initHole };
+const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {}, sandsturm: initStorm, frost: initFrost, pinguine: initPenguins, ausbruch: initEruption, baeume: initTrees, kroko: initCrocs, asteroiden: initAsteroids, schwarzesloch: initHole, einhorn: initUnicorns, gewitter: initThunder };
 
 // dev server only (ANALYSE.md T12): some events have fixed places on the map (holes, koi leaps, rolling tyres, falling trees,
 // dump trucks). They are checked against the built track, so a changed course line that moves the road away is noticed at once.
@@ -519,12 +523,13 @@ export function setupEvents(T) {
   if (import.meta.env.DEV) checkSpots(T);
   resetAllEvents();
   T.ev = { t: 0, cows: [], holes: [], rain: null, flood: null, pier: false, kois: [], kipper: [] };
-  // the desert, the ice, the volcano, the jungle and space have things that are always there (cacti, cracking lake ice, gravity ...) besides their events
+  // the desert, the ice, the volcano, the jungle, space and the rainbow have things that are always there (cacti, cracking lake ice, gravity ...) besides their events
   if (T.desert) initDesert(T);
   if (T.ice) initIce(T);
   if (T.volcano) initVolcano(T);
   if (T.jungle) initJungle(T);
   if (T.space) initSpace(T);
+  if (T.rainbow) initRainbow(T);
   for (const name of T.def.events || []) if (eventOn(name)) INIT[name](T);
 }
 
@@ -539,6 +544,7 @@ export function updateEvents(dt) {
   if (T.volcano) volcanoUpdate(T, dt);
   if (T.jungle) jungleUpdate(T, dt);
   if (T.space) spaceUpdate(T, dt);
+  if (T.rainbow) rainbowUpdate(T, dt);
   if (ev.cows.length) updateCows(T, dt);
   if (ev.holes.length) updateRain(T, dt);
   if (ev.kois.length) updateKois(T, dt);

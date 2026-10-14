@@ -203,7 +203,6 @@ const DIRT = ['#6b4a2b', '#58391f', '#7d5a36'].map(hex);
 
 
 const CEM = ['#8c9097', '#a4a9af', '#6f747a'].map(hex);
-const GOO = ['#c04dd8', '#a33bbf', '#e38cf5'].map(hex);
 
 
 export const OUT = [27, 18, 12];
@@ -277,7 +276,6 @@ export function stepSet(S, until) {
 // all turns now (a race starts)
 export const completeSet = S => stepSet(S, Infinity);
 
-// the rainbow track paints cars with purple glitter goo instead of mud; built the first time it is needed
 // sprites (48 turns x 6 dirt levels): turn 0 the first time a car is shown, the rest in slices (see newSet)
 
 // cem: the grey set for cars that drove through cement; goo 'oil': the black set of the race circuit, 'sand' and 'snow' (desert, ice)
@@ -290,12 +288,14 @@ const ASH = ['#55524e', '#77736d', '#34312e'].map(hex);
 const SWAMP = ['#4e6a26', '#6a8a34', '#34481a'].map(hex);
 // moon dust makes them silver
 const DUST = ['#b4b8c2', '#d2d5dc', '#8e929c'].map(hex);
+// the storm clouds of the rainbow make them grey like a rainy day
+const STORM = ['#6e7480', '#8a909c', '#545a66'].map(hex);
 export function carSet(def, goo, cem) {
-  const kind = cem ? 'cem' : typeof goo === 'string' ? goo : goo ? 'goo' : 'mud', key = '_' + kind;
-  return def[key] || (def[key] = newSet(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, ash: ASH, swamp: SWAMP, dust: DUST, goo: GOO, mud: DIRT }[kind]));
+  const kind = cem ? 'cem' : typeof goo === 'string' ? goo : 'mud', key = '_' + kind;
+  return def[key] || (def[key] = newSet(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, ash: ASH, swamp: SWAMP, dust: DUST, storm: STORM, mud: DIRT }[kind]));
 }
 
-const KINDS = ['_mud', '_goo', '_cem', '_oil', '_sand', '_snow', '_ash', '_swamp', '_dust'];
+const KINDS = ['_mud', '_cem', '_oil', '_sand', '_snow', '_ash', '_swamp', '_dust', '_storm'];
 
 // the sprite sets of one car (a new paint makes them again)
 export function dropSets(def) { for (const k of KINDS) delete def[k]; }

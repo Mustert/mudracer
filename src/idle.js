@@ -27,10 +27,10 @@ export function upcomingTrack() {
   return G.mode === 'single' || G.mode === 'tt' ? TRACKS[PREFS.selTrack] : null;
 }
 
-// the sprite sets a race on track T needs for these cars (the cement track also needs the grey ones)
+// the sprite sets a race on track T needs for these cars (the cement track also needs the grey ones, the rainbow the brown ones: def.goo2)
 export function raceSets(T, defs) {
   const out = [];
-  for (const d of defs) { out.push(carSet(d, T.th.goo)); if (T.def.cement) out.push(carSet(d, false, true)); }
+  for (const d of defs) { out.push(carSet(d, T.th.goo)); if (T.def.cement) out.push(carSet(d, false, true)); else if (T.def.goo2) out.push(carSet(d, T.def.goo2)); }
   return out;
 }
 

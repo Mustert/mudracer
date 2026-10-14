@@ -11,6 +11,7 @@ import { drawIceAbove, drawIceGround, drawIceSky } from './ice.js';
 import { drawVolcanoAbove, drawVolcanoGround, drawVolcanoSky } from './volcano.js';
 import { drawJungleAbove, drawJungleGround, drawJungleSky } from './jungle.js';
 import { drawSpaceAbove, drawSpaceFall, drawSpaceGround, drawSpaceSky } from './space.js';
+import { drawRainbowAbove, drawRainbowFall, drawRainbowGround, drawRainbowSky } from './rainbow.js';
 import { cam } from './state.js';
 import { GHOST_DT, fmtDelta, fmtTime, ghostAt } from './timetrial.js';
 import { tctx } from './tracks.js';
@@ -24,6 +25,7 @@ function drawCar(c) {
   const F = c.cem && c.Fc ? c.Fc : c.F, rot = rotIndex(c.ang), lv = Math.min(5, Math.round(c.dirt * 5));
   if (c.fall > 0) {
     if (c.fallKind === 'space') { drawSpaceFall(c, F, lv); return; } // drifting off into space, then the tractor beam
+    if (c.fallKind === 'cloud') { drawRainbowFall(c, F, lv); return; } // through a cloud hole, then a unicorn catches it
     // into the gorge or under the quicksand: the car gets smaller for a moment, then it is gone (under water it is gone at once)
     const t = c.fallKind ? (c.fallT0 - c.fall) / .55 : 1; if (t >= 1) return;
     if (c.fallKind === 'lava') { // like on a hot stove: the car jumps up and is gone
@@ -46,9 +48,11 @@ function drawCar(c) {
     ctx.drawImage(F.frames[lv][rot], Math.round(c.x - S / 2), Math.round(c.y - S / 2), S, S);
     return;
   }
-  if (c.z > 0) { // in the air: bigger car, shadow left on the ground
-    const S = Math.round(SS * (1 + c.z / 90)), lift = Math.round(c.z * .6);
-    ctx.globalAlpha = .3 * Math.max(.2, 1 - c.z / 80); ctx.drawImage(F.shadow[rot], x + 3 + Math.round(c.z * .3), y + 4 + Math.round(c.z * .4)); ctx.globalAlpha = 1;
+  // lift: up on a road that climbs (the rainbow arch): bigger, the shadow falls far away
+  const L = c.lift || 0;
+  if (c.z > 0 || L > .02) { // in the air: bigger car, shadow left on the ground
+    const S = Math.round(SS * (1 + c.z / 90 + L * .3)), lift = Math.round(c.z * .6);
+    ctx.globalAlpha = .3 * Math.max(.2, 1 - c.z / 80 - L * .4); ctx.drawImage(F.shadow[rot], x + 3 + Math.round(c.z * .3 + L * 26), y + 4 + Math.round(c.z * .4 + L * 38)); ctx.globalAlpha = 1;
     ctx.drawImage(F.frames[lv][rot], Math.round(c.x - S / 2), Math.round(c.y - S / 2) - lift, S, S);
     return;
   }
@@ -293,6 +297,7 @@ export function drawRace() {
   if (G.T.volcano) drawVolcanoGround();
   if (G.T.jungle) drawJungleGround();
   if (G.T.space) drawSpaceGround();
+  if (G.T.rainbow) drawRainbowGround();
   const gh = ghostPose(), drawGhost = () => {
     const F = carSet(G.player.def, G.T.th.goo);
     ctx.globalAlpha = .45; ctx.drawImage(F.frames[Math.round(gh.dirt * 5)][rotIndex(gh.ang)], Math.round(gh.x) - SS / 2, Math.round(gh.y) - SS / 2); ctx.globalAlpha = 1;
@@ -335,6 +340,7 @@ export function drawRace() {
   if (G.T.volcano) drawVolcanoAbove();
   if (G.T.jungle) drawJungleAbove();
   if (G.T.space) drawSpaceAbove();
+  if (G.T.rainbow) drawRainbowAbove();
   ctx.restore();
   if (dark) { drawNight(cx, cy); ctx.save(); ctx.translate(-cx, -cy); drawFlyers(); ctx.restore(); }
   drawRain();
@@ -343,6 +349,7 @@ export function drawRace() {
   if (G.T.volcano) drawVolcanoSky(cx, cy);
   if (G.T.jungle) drawJungleSky();
   if (G.T.space) drawSpaceSky();
+  if (G.T.rainbow) drawRainbowSky();
   drawMood();
   // the 1P sign floats over your car the whole race, above night, storm and snow, so you find yourself among dirty (or snowed-in) cars;
   // at the start it bounces higher
