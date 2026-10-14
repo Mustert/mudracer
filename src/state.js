@@ -13,8 +13,8 @@ UI.selAnim = -1;
 UI.selMode = 0;
 PREFS.selCount = 3;
 PREFS.selCup = 0;
-// track events (cows, rain, flood, koi, dump trucks, train, tyres, sandstorm, frost, penguins, eruption, trees, crocodiles, asteroids, black hole), one switch each; G.fx turns all of them on or off for a race (diff.js)
-PREFS.events = { kuehe: true, regen: true, flut: true, kois: true, kipper: true, zug: true, reifen: true, sandsturm: true, frost: true, pinguine: true, ausbruch: true, baeume: true, kroko: true, asteroiden: true, schwarzesloch: true };
+// track events (cows, rain, flood, koi, dump trucks, train, tyres, sandstorm, frost, penguins, eruption, trees, crocodiles, asteroids, black hole, toys, robot vacuum), one switch each; G.fx turns all of them on or off for a race (diff.js)
+PREFS.events = { kuehe: true, regen: true, flut: true, kois: true, kipper: true, zug: true, reifen: true, sandsturm: true, frost: true, pinguine: true, ausbruch: true, baeume: true, kroko: true, asteroiden: true, schwarzesloch: true, spielzeug: true, saugroboter: true };
 G.fx = true;
 PREFS.cup = null;
 G.mode = 'single';

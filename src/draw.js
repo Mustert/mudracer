@@ -11,6 +11,7 @@ import { drawIceAbove, drawIceGround, drawIceSky } from './ice.js';
 import { drawVolcanoAbove, drawVolcanoGround, drawVolcanoSky } from './volcano.js';
 import { drawJungleAbove, drawJungleGround, drawJungleSky } from './jungle.js';
 import { drawSpaceAbove, drawSpaceFall, drawSpaceGround, drawSpaceSky } from './space.js';
+import { drawToyAbove, drawToyCar, drawToyGround, drawToySky } from './toys.js';
 import { cam } from './state.js';
 import { GHOST_DT, fmtDelta, fmtTime, ghostAt } from './timetrial.js';
 import { tctx } from './tracks.js';
@@ -22,6 +23,7 @@ import { TRAIN } from './trainsprite.js';
 
 function drawCar(c) {
   const F = c.cem && c.Fc ? c.Fc : c.F, rot = rotIndex(c.ang), lv = Math.min(5, Math.round(c.dirt * 5));
+  if (G.T.toys && drawToyCar(c, F, rot, lv)) return; // kids' room: bigger up on the bed and the desk, in the marble run, swallowed by the robot
   if (c.fall > 0) {
     if (c.fallKind === 'space') { drawSpaceFall(c, F, lv); return; } // drifting off into space, then the tractor beam
     // into the gorge or under the quicksand: the car gets smaller for a moment, then it is gone (under water it is gone at once)
@@ -293,6 +295,7 @@ export function drawRace() {
   if (G.T.volcano) drawVolcanoGround();
   if (G.T.jungle) drawJungleGround();
   if (G.T.space) drawSpaceGround();
+  if (G.T.toys) drawToyGround();
   const gh = ghostPose(), drawGhost = () => {
     const F = carSet(G.player.def, G.T.th.goo);
     ctx.globalAlpha = .45; ctx.drawImage(F.frames[Math.round(gh.dirt * 5)][rotIndex(gh.ang)], Math.round(gh.x) - SS / 2, Math.round(gh.y) - SS / 2); ctx.globalAlpha = 1;
@@ -335,6 +338,7 @@ export function drawRace() {
   if (G.T.volcano) drawVolcanoAbove();
   if (G.T.jungle) drawJungleAbove();
   if (G.T.space) drawSpaceAbove();
+  if (G.T.toys) drawToyAbove();
   ctx.restore();
   if (dark) { drawNight(cx, cy); ctx.save(); ctx.translate(-cx, -cy); drawFlyers(); ctx.restore(); }
   drawRain();
@@ -343,6 +347,7 @@ export function drawRace() {
   if (G.T.volcano) drawVolcanoSky(cx, cy);
   if (G.T.jungle) drawJungleSky();
   if (G.T.space) drawSpaceSky();
+  if (G.T.toys) drawToySky(cx, cy);
   drawMood();
   // the 1P sign floats over your car the whole race, above night, storm and snow, so you find yourself among dirty (or snowed-in) cars;
   // at the start it bounces higher

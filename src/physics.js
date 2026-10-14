@@ -9,6 +9,7 @@ import { iceTarget } from './ice.js';
 import { volcanoLane, volcanoTarget } from './volcano.js';
 import { jungleLane, jungleTarget } from './jungle.js';
 import { spaceLane, spaceTarget } from './space.js';
+import { toyLane } from './toys.js';
 import { setState } from './state.js';
 import { finishRace } from './race.js';
 import { ttLap } from './timetrial.js';
@@ -27,6 +28,10 @@ function surfOf(c) {
     // a platform in zero gravity: full speed and full gas, but little grip to the side and slower steering (better than sheet ice);
     // nimble cars keep more grip
     case 17: return [1, 3 * c.def.turn * c.def.turn, .8, 1];
+    // kids' room (see toys.js): parquet is slippery like sheet ice, but only half as bad ("like in socks"); the soft road over the blanket
+    // is a little slower (watercolour, 32, is a normal road)
+    case 30: return [1, 4.5 * c.def.turn * c.def.turn, .78, .8];
+    case 31: return [.86, 8, .95];
     case 2: return [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
     // cement: very sticky, the speed is far lower than in mud (about a quarter of it)
     case 6: return [(MUD_A + MUD_B * m) / 3.8, 3.2 * m, Math.min(.8, .55 * m) * .75];
@@ -118,6 +123,8 @@ export function aiTarget(c) {
   if (G.T.jungle) lane = jungleLane(c, i, lane);
   // space: the wormhole, a little outside on the curve round the planet, never at the edge of a platform
   if (G.T.space) lane = spaceLane(c, i, lane);
+  // kids' room: the middle of the ruler and the pillow, past the eraser, the clean way round the paint box, waiting at the barriers
+  if (G.T.toys) lane = toyLane(c, i, lane);
   const [tx, ty] = steerAround(c, p.x + n.x * lane, p.y + n.y * lane);
   return Math.atan2(ty - c.y, tx - c.x);
 }

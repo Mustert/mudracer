@@ -601,7 +601,33 @@ Streckenereignis: (Vorschlag) Schokoladenfluss ergießt sich ab Runde 2 über Te
 Änderung: Mud ist Schokolade oder Karamell (klebrig, bremst stark), Waschanlage als Zuckerwasser-Dusche.
 
 ## 14. Spielzimmer
-Status: **Vorschlag** (Streckenname `SPIELZIMMER`, Theme `spielzimmer`, Musik `toys`, Streckenereignisse Spielzeug `spielzeug` und Saugroboter `saugroboter`)
+Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `SPIELZIMMER`, Theme `spielzimmer`, Musik `toys`, Streckenereignisse Spielzeug `spielzeug` und Saugroboter `saugroboter`; Code in `src/toymap.js` und `src/toys.js`). Im Cup FANTASY eingetragen. Größere Karte (1280×720), eine Runde dauert etwa 26 bis 28 s, ein Rennen etwa 85 s.
+
+Umgesetzt im Prototyp (erster Wurf):
+- **Ebenen** ✅ umgesetzt: Boden, Bett, Schreibtisch; die Ebene folgt `c.idx` (Höhe je Streckenpunkt). Oben werden die Autos größer gezeichnet, der Schatten liegt weiter weg. Zusammenstöße nur auf derselben Ebene (`c.lvl`: 2 Boden, 1 Bett, 3 Schreibtisch, 4 in der Murmelbahn); die Möbelkanten sind nur für Autos auf dem Boden fest. Wer oben die Fläche verlässt, fällt mit Pfeifen auf den Boden und wird wieder auf die Straße gesetzt.
+- **Spielteppich** ✅ umgesetzt: grüner Filz mit aufgedruckter Straße (grau, weiße Ränder, gestrichelte Mitte, Zebrastreifen) und blassen aufgedruckten Nebenstraßen, Häusern, Bäumen und Teich; daneben bremst der Flor wie Gras. Fransen an den Enden.
+- **Parkett** ✅ umgesetzt (neues Terrain 30): halb so glatt wie Glatteis. Die Straße darauf ist mit Malerkrepp markiert. Die Ecke oben links und die Gerade mit der Eisenbahn liegen auf Parkett.
+- **Spielzeugeisenbahn** ✅ umgesetzt: Holzschiene als Oval, die Straße kreuzt sie zweimal; rot-weiße Holzschranken schließen, wenn der Zug kommt, und klappen weg, wenn man durchfährt; der Zug (Lok und zwei Wagen) wirft Autos herum; einmal pro Runde hält er an seinem Bahnhof oben. Ohne Ereignis steht der Zug am Bahnhof.
+- **Bücherrampe aufs Bett** ✅ umgesetzt (gestapelte Bücher, an jeder Stufe die Seiten), **Bettdecke** ✅ (Patchwork mit Falten; der Weg darüber ist ein weiches Band, Terrain 31, etwas langsamer und holprig), **Kuscheltier** ✅ (Teddy mit Fliege, fest).
+- **Sprung vom Kissen** ✅ umgesetzt: Ab etwa 60 % des Tempos landet man auf dem Schreibtisch, darunter fällt man in die Lücke und beginnt wieder am Anfang der Kissen-Geraden (etwa 2 s Verlust). Die Computerautos geben dort immer Vollgas (sie kennen das Kissen).
+- **Schreibtisch** ✅ umgesetzt: Die Straße ist ein Streifen liniertes Papier mit Bleistiftrand auf Ahornholz; Buntstifte begrenzen die Straße, ein Radiergummi liegt am Rand auf der Straße, Hefte, Klebezettel, Stiftebecher und Schreibtischlampe. **Lineal** als schmale Brücke ✅, angepasst: über die Lücke zwischen zwei Tischen statt zwischen zwei Heften.
+- **Malkasten** ✅ umgesetzt: offen zwischen der Straße und einem zweiten, sauberen Weg (eine Ausbuchtung zur Wahl); davor Wasserfarbe auf der Straße (Terrain 32, bremst nicht, färbt).
+- **Murmelbahn** ✅ umgesetzt: ein Holzturm mit bunter Spirale; das Auto fährt oben am Schreibtisch hinein, dreht sich zweimal im Kreis, wird dabei kleiner und kommt unten auf dem Boden mit Schub heraus.
+- **Bauklotz-Viertel** ✅ umgesetzt: eine Schikane um eine Burg aus Bauklötzen und Klemmbausteinen; eine Mauer aus Bauklötzen quer durchs Zimmer verhindert die Abkürzung durch die Mitte. Puppenhaus und Spielzeugkiste stehen im Innenfeld.
+- **Knete** ✅ umgesetzt: vier Fladen (rot, blau, gelb, grün), jeweils neben einer offenen Knetedose. Angepasst: das Auto wird bunt gesprenkelt (ein Sprite-Satz in den vier Farben), nicht in der Farbe der zuletzt befahrenen Knete.
+- **Spielzeug-Waschstraße** ✅ umgesetzt: Plastikboden, gelbe Pfosten, roter Balken, drehende Bürsten, Rubbel-Geräusch.
+- **Ereignis Spielzeug** ✅ umgesetzt: Holzeisenbahn, **Aufziehauto** (fährt geradeaus über den Teppich, prallt ab, wird mit Ratschen wieder aufgezogen), **Murmeln** (rollen nach einem Klackern in der Murmelbahn quer über die Straße unten, man dreht sich kurz), **Dominoturm** (fällt bei Berührung als Kette quer über die Straße, man holpert darüber, nach 20 s steht er wieder).
+- **Ereignis Saugroboter** ✅ umgesetzt: ab Runde 2 Piepen und „SAUGROBOTER!“, er fährt in geraden Bahnen über den Boden der unteren Zimmerhälfte, zieht Autos an und saugt sie bei Berührung ein („SCHLUERF!“), spuckt sie hinter sich staubgrau wieder aus (1,2 s); er frisst Murmeln und liegende Dominosteine. Nicht auf Bett und Schreibtisch. Die Computerautos weichen aus. **Letzte Runde Licht aus** ✅: „SCHLAFENSZEIT!“, Lichtschalter-Klick, dunkel mit Scheinwerfern, der Sternenprojektor auf dem Nachttisch wirft drehende Sterne und einen Mond, das Nachtlicht leuchtet, der Roboter hat blaue Lichter.
+- **Musik `toys`** ✅ umgesetzt: G-Dur, 112 BPM, Toy-Piano, Xylophon, Glockenspiel und Spieluhr, Holzklötze, Klicks, Quietscheente, Ratsche, Tuba-Bass; mit dem Saugroboter 124 BPM und Drone, in der letzten Runde Spieluhr-Schlaflied mit leisen Holzklicks. Noch nicht angehört.
+- **Neue Töne** ✅ umgesetzt: Holzpfeife des Zuges, Schranke und Dominosteine (Klack), Ratschen, Murmeln, Saugroboter (Piepen, Summen, Schlürfen, Rattern, Ausspucken), Bürsten, Lichtschalter, Kissen-Boing, Murmelbahn.
+- **Optik** ✅ teilweise: Bett, Schreibtisch, Bücherregal, Fenster mit Gardinen und Lichtstrahlen mit Staub, Nachttisch, Puppenhaus, Bauklötze, Puzzleteile, Socken, Quietscheente, Ball, Kinderzeichnung. Beim Countdown haben alle Autos einen Aufziehschlüssel.
+
+Fehlt noch (für später):
+- Unter dem Bett (dunkel, Staubflusen, Socken) und die **lange Rampe zurück** nach einem Sturz vom Kissen; heute wird man an den Anfang der Kissen-Geraden zurückgesetzt.
+- Der Saugroboter saugt die **Knete** nicht weg; die Strecke wird dadurch nicht sauberer.
+- Knete mit der Farbe des zuletzt befahrenen Fladens (bräuchte vier Sprite-Sätze je Auto).
+- Bettfalten als echte kleine Hügel (heute nur holprig), Staubkörner nur im Licht des Fensters, Kreidezeichnungen, Gardine am Fenster bewegt sich nicht.
+- Feinschliff: Abstimmung des Sprungs und der Kanten, Klang des Liedes.
 
 Idee: Die Autos sind **Spielzeugautos** im Kinderzimmer. Die Strecke beginnt auf dem **Straßen-Spielteppich** (den kennt jedes Kind) und klettert über Rampen aus Büchern und Bauklötzen aufs Bett und auf den Schreibtisch. Zum ersten Mal gibt es **Ebenen**: Wer oben von der Kante fällt, landet unten und hat einen Umweg. Ab Runde 2 fährt der Saugroboter los, und in der letzten Runde geht das Licht aus.
 

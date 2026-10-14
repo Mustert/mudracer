@@ -16,6 +16,7 @@ import { iceGround, iceStuck } from './ice.js';
 import { volcanoGround } from './volcano.js';
 import { jungleGround, jungleStuck } from './jungle.js';
 import { spaceGround, spaceRespawn } from './space.js';
+import { toyGround, toyRespawn } from './toys.js';
 import { moveCamera } from './race.js';
 import { updateJumps } from './run.js';
 import { nearObstacles } from './grid.js';
@@ -45,7 +46,7 @@ function respawn(c) {
   }
   const p = T.path[i], tg = T.tan[i];
   c.x = p.x + T.nrm[i].x * o; c.y = p.y + T.nrm[i].y * o; c.ang = Math.atan2(tg.y, tg.x); c.vx = c.vy = 0; c.idx = i; c.surf = 1; c.ghost = 2.4;
-  if (T.space) spaceRespawn(c); else splash(c.x, c.y, 8);
+  if (T.space) spaceRespawn(c); else if (T.toys) toyRespawn(c); else splash(c.x, c.y, 8);
 }
 
 
@@ -183,6 +184,7 @@ function updateRace(dt) {
     if (G.T.volcano) volcanoGround(c, sp, dt);
     if (G.T.jungle) jungleGround(c, sp, dt);
     if (G.T.space) { spaceGround(c, j, sp, dt); if (c.fall > 0) continue; }
+    if (G.T.toys) { toyGround(c, j, sp, dt); if (c.fall > 0) continue; }
     if (c.boost > 0 && Math.random() < dt * 40) drop(c.x - Math.cos(c.ang) * 14, c.y - Math.sin(c.ang) * 14, c.ang + Math.PI + (Math.random() - .5) * .8, 20 + Math.random() * 30, 20 + Math.random() * 30, pick(RAINBOW), .8, false);
     if (c.washing) {
       c.dirt = Math.max(0, c.dirt - 3 * dt);

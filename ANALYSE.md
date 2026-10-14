@@ -3,7 +3,7 @@
 Die eine Liste für alles, was am Spiel schwach, offen oder geplant ist. Enthält auch die früheren Verbesserungsideen (ehemals `VERBESSERUNGEN.md`, Abschnitt I).
 
 - Analyse am 2026-10-09 auf Stand `c5aed10` bis `42eb5ec`, am 2026-10-11 gegen `2d022f4` (Branch `map_pack`, 12 Strecken) nachgeprüft.
-- Zuletzt abgeglichen: 2026-10-13, Commit „Custom Cup nur für den Moment, Doku zum Weltall“ (Branch `map_pack`; T17 erledigt, T18 und D7 neu, Weltall-Prototyp). (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
+- Zuletzt abgeglichen: 2026-10-14, Commit „Spielzimmer-Prototyp“ (Branch `map_pack`; M1 teilweise, T19, T20, M17, M18, G13 neu). (Bei jedem Abgleich Datum und Commit hier nachziehen, siehe `CLAUDE.md`.)
 - Ausführliche Fassung der Analyse mit Begründungen (Stand 2026-10-09): https://claude.ai/code/artifact/5ecd1e70-685b-404d-b2e6-ed798433c1fb
 
 ## So wird diese Datei benutzt
@@ -43,9 +43,13 @@ Annahme der Analyse: Kinder sind die Hauptzielgruppe, SCHWER ist ein Bonus für 
 
 | T17 | H | erledigt (anders gelöst, 2026-10-13: der Custom Cup wird nicht mehr gespeichert, er beginnt bei jeder Wahl leer und gilt nur für den Moment; `mudracer-custom` wird nie mehr gelesen oder geschrieben, alte Spielstände bleiben unangetastet) | Der Custom Cup speicherte Strecken als Index (`mudracer-custom`). Jede neue Strecke vor dem Regenbogen (Cup 3, 4, jetzt WELTALL) verschob dessen Index; ein gespeicherter Custom Cup zeigte dann eine andere Strecke | `cups.js` `resetCustom`, `custom.js` `openCustom` | – |
 | T18 | N | offen | WELTALL ist 1360×765 groß: Runde ~25–30 s, Rennen ~80 s, Bau ~0,8 s in Häppchen | `tracks.js` `TRACK_DEFS` | im Spiel prüfen, ob das für Kinder zu lang ist |
+| T19 | N | offen | Terrain-Codes sind eine einzige Zahlenreihe für alle Strecken (0–17 belegt). Das Spielzimmer nimmt bewusst 30–32 (Parkett, Bettdecke, Wasserfarbe), damit parallel gebaute Strecken nicht dieselben Nummern vergeben | `physics.js` `surfOf`, `toymap.js` | Liste der vergebenen Codes an einer Stelle führen (z. B. Kommentar in `physics.js`) |
+| T20 | N | offen | Felder in `T.ev` teilen sich einen Namensraum: `ev.wind` ist der Wüstenwind und wird in `trackfx.js` `pushCars` auf jeder Strecke als Kraft gelesen. Das Aufziehauto des Spielzimmers hieß zuerst auch `ev.wind` und schob alle Autos in die Ecke (vor dem Commit gefunden, heißt jetzt `ev.windup`) | `trackfx.js` `pushCars`, `events.js` `setupEvents` | Streckenfelder unter einem eigenen Unterobjekt (`ev.toy`, `ev.space` …) ablegen |
 | D7 | M | offen | Startaufstellung (Grundsatz 5), nachgemessen 2026-10-12: bei fast allen Strecken stehen die hinteren Reihen schon in der Kurve (8 Autos: Wiese 82°, Strand 94°, Wüste/Eis/Vulkan/Dschungel 90°; nur Rennstrecke gerade). WELTALL hat 210 px Startgerade | `race.js` `startRace`, Startpunkt in `TRACK_DEFS` | Startlinien verschieben oder eigene Aufstellung wie auf der Rennstrecke |
 
 Weltall-Prototyp (2026-10-12, Commit „Weltall-Prototyp“): Strecke 12 `WELTALL` mit `src/spacemap.js`, `src/space.js`, Lied `space`, Ereignisse `asteroiden` und `schwarzesloch`; im Schnelldurchlauf getestet (Rennen auf allen Stufen, ohne Effekte, Zeitfahren, keine Fehler). `Obsidian/Mudracer/Strecken.md` ist abgeglichen (2026-10-13). Offen: Feinschliff der Optik (Staubflecken neben den Asteroiden, schlichte Stationsmodule), das Weltall-Lied ist noch nicht angehört; der Regenbogen teilt sich bis zu seinem Rework das Grundlied mit dem Weltall.
+
+Spielzimmer-Prototyp (2026-10-14, Commit „Spielzimmer-Prototyp“): Strecke 14 `SPIELZIMMER` (1280×720) mit `src/toymap.js`, `src/toys.js`, Lied `toys`, Ereignisse `spielzeug` und `saugroboter`, im Cup FANTASY. Im Schnelldurchlauf getestet: Einzelrennen mit 8 Autos und allen Effekten, ohne Effekte, Zeitfahren (82,8 s), Sprung vom Kissen (bei 60 px/s Sturz, ab 80 px/s Landung), keine Fehler; Runde etwa 26–28 s, Rennen etwa 85 s (wie T18). Die Startgerade hat 115 px bis zur Kurve, die letzte Reihe steht knapp davor (D7). Das Lied ist noch nicht angehört. Was noch fehlt, steht in `Obsidian/Mudracer/Strecken.md` unter 14.
 
 ### Stand Technik (2026-10-12)
 
@@ -58,7 +62,7 @@ Arbeitsweise: `npm run lint`, `npm test` und `npm run typecheck` vor jedem Commi
 
 | ID | S | Status | Befund | Fundstelle | Empfehlung |
 |---|---|---|---|---|---|
-| M1 | H | teilweise | Belohnungen an leere Cups gebunden. Seit `map_pack` haben Cup 3 und 4 Strecken (Quad, Rally, Supercup erreichbar). Cup 5 ist weiter leer: Batmobil und Superdupercup außerhalb des Kindermodus unerreichbar | `cups.js` `CUPS`, `cars.js` (`cup: 5`) | Cup 5 bauen oder Batmobil vorerst an ein erreichbares Ziel hängen |
+| M1 | H | teilweise | Belohnungen an leere Cups gebunden. Seit `map_pack` haben Cup 3 und 4 Strecken (Quad, Rally, Supercup erreichbar). Seit dem Spielzimmer-Prototyp (2026-10-14) hat Cup 5 eine Strecke: Batmobil und Superdupercup sind erreichbar, Cup 5 hat aber noch keine Freischaltbedingung und nur ein Rennen | `cups.js` `CUPS`, `cars.js` (`cup: 5`) | Cup 5 bauen oder Batmobil vorerst an ein erreichbares Ziel hängen |
 | M2 | H | offen | KI-Gas = Höchstgeschwindigkeit: 0,52–0,66 (LEICHT) bis 0,80–0,91 (SCHWER), mit Gummiband max. 1,0. Gegner nie schneller als ein fehlerfreier Spieler mit gleichem Auto | `diff.js` `DIFFS`, `update.js` (Gummiband) | auf SCHWER Ideallinie mit Kurvenbremsen statt Gasdrossel; ein Rivale pro Rennen leicht über 1,0 |
 | M3 | M | offen? | KI folgt Mittellinie mit Sinus-Versatz, weicht Kühen und (je Stufe) Matsch aus; überholt, blockt, rammt nicht gezielt; Hupe ohne Wirkung | `physics.js` `aiTarget` | Fahrstile pro Auto (Polizei sauber, Monster rammt, Traktor stur) |
 | M4 | M | offen? | Spieler startet immer in Reihe 1; mit gedrosselten Gegnern Führung ab Kurve 1 | `race.js` `startRace` | im GP nach Punktestand umgekehrt aufstellen |
@@ -74,6 +78,9 @@ Arbeitsweise: `npm run lint`, `npm test` und `npm run typecheck` vor jedem Commi
 | M14 | H | offen, Ursache wahrscheinlich M16 (Bug-Report, Nutzer, 2026-10-13; nicht im Code nachgeprüft) | Im GP langsam gefahren, am Ende beim Einfahren Platz 41. Vermutung des Nutzers: die anderen hatten schon viele Runden beendet. Zu klären: wird im Ziel nach Runden und Zeit oder nach Ankunft gewertet, und wie viele Autos sind im Feld | `race.js` `finishRace`, `rank.js` (Platzberechnung) | prüfen, ob beendete Autos weiter gewertet werden und wie der Rückstand in Runden berechnet wird; bei Bedarf Platz nach Rundenstand und Zielzeit |
 | M16 | H | erledigt (845bdaa) | Platz zählt über Rennen hinweg hoch (Vulkan Platz 52 nach Weltall): In `resetWorld` stand der Reset von `G.finCount` hinter einem Kommentar und lief nie, so dass `place = ++G.finCount` in `physics.js` von Rennen zu Rennen weiterzählte. Dasselbe betrifft `G.parts` und `G.lastCount` | `race.js` `resetWorld` | Reset in eigene Zeile gesetzt; im Spiel noch nicht nachgeprüft |
 | M15 | H | offen, Ursache wahrscheinlich M16 (Bug-Report, Nutzer, 2026-10-13; nicht im Code nachgeprüft) | Einzelstrecke WELTALL: Spieler landet wieder auf Platz 45. Verdacht: Ein Auto, das ins All driftet, Wurmloch nimmt oder ins Schwarze Loch gerät, bekommt einen falschen Streckenindex (`idx`) oder `lap`, dadurch sinkt es in der Rangfolge `score` (Index-Sprung beim Wurmloch: `c.idx = ib`; Respawn nach dem Fallen setzt `idx` neu). Hängt vermutlich mit M14 zusammen | `space.js` `spaceUpdate` (Wurmloch), `update.js` (Respawn, ca. Zeile 39–47), `rank.js` `score`/`placeOf`, `physics.js` `updateProgress` | Ursache per Protokoll prüfen (Platz, `lap`, `idx` je Auto nach jedem Ereignis); Rangliste nur aus Runde und Fortschritt entlang der Strecke, Wurmloch-Sprung mit gleicher Rundenzahl |
+
+| M17 | M | offen | Spielzimmer: Die Computerautos bekommen auf der Kissen-Geraden Schub, damit sie den Sprung immer schaffen, und bremsen oben vor scharfen Kurven. Sie fallen dadurch praktisch nie; nur der Spieler kann am Kissen und am Lineal stürzen | `toys.js` `toyGround`, `toyLane` | auf LEICHT ab und zu einen Sturz zulassen, damit die Gefahr sichtbar wird |
+| M18 | N | offen | Spielzimmer: Der Saugroboter erwischt im Test fast nie ein Computerauto (sie weichen aus, er fährt zufällige Bahnen) | `toys.js` `updateRobot` | ihn gezielter in Richtung Straße lenken, wenn er lange niemanden erwischt hat |
 
 ## Design-Theorie (D)
 
@@ -101,6 +108,7 @@ Stark: einheitliche Lichtrichtung (Schatten nach rechts unten), durchgehend dunk
 | G9 | N | offen? | Fliegende Autos werden nach y sortiert und liegen unter Baumkronen | `draw.js` `drawRace` | Autos mit `z > 0` nach der Kronen-Ebene zeichnen |
 | G10 | N | offen? | Schmale Menükarten füllen ZEITFAHREN und WERKSTATT randlos (80 von 82 px) | `screens.js` `CARD` | 2 px Innenabstand oder Kurzform |
 | G11 | N | erledigt (mit T10) | Pokal-Funkeln blinkt nicht (siehe T10) | `screens.js` `drawTrophy` | umbenennen |
+| G13 | N | offen | Spielzimmer: Knete-Spritzer bleiben als bunte Punkte dauerhaft auf der Reifenspur-Ebene liegen und färben die Straße nach drei Runden stark ein (wie G6) | `update.js` `updateParticles` (`p.mud`) | Spritzer seltener oder blasser |
 | G12 | N | offen? | HUD ohne Rundenzeit und Abstand zum Vordermann | `draw.js` `drawRace` | für Ältere ergänzen, Kindermodus schlank lassen |
 
 ## Audio, Bedienung, Zugänglichkeit (B)
