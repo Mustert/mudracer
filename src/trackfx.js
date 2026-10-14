@@ -45,7 +45,7 @@ function land(c) {
   c.z = 0; c.vz = 0;
   if (t === 11) { fallCar(c, 'abyss', T.desert && T.desert.landI); return; }
   if (t === 15 || (t === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }
-  if (t === 38 && T.rainbow) { fallCar(c, 'cloud', c.jumpLand); return; } // short of the far side: through the clouds
+  if (t === 48 && T.rainbow) { fallCar(c, 'cloud', c.jumpLand); return; } // short of the far side: through the clouds
   if (t === 3 || t === 5) { splash(c.x, c.y, 24); SFX.splash(v); return; }
   const col = T.th.decor === 'eis' || T.rainbow ? ['#ffffff', '#e6eef6', '#cfdcea'] : ['#e8d2a8', '#d9b878', '#c9a263'];
   for (let i = 0; i < (big ? 22 : 10); i++) drop(c.x + (Math.random() - .5) * 20, c.y + (Math.random() - .5) * 14, Math.random() * 6.3, 20 + Math.random() * 50, 30 + Math.random() * 50, col[(Math.random() * 3) | 0], .8, false);

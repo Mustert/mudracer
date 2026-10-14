@@ -56,7 +56,7 @@ export const THEMES = {
   weltall: { ...MUDDY, mud: ['#b9bcc4', '#a9acb5', '#c9ccd3'], mudEdge: '#8c8f99', mudHi: '#eceef3', mudP: ['#c9ccd3', '#b0b3bb', '#9a9da6', '#e2e4ea'], mudTrail: ['#8c8f99', '#a4a7b0'], goo: 'dust',
     grass: ['#05061a', '#0a0b26', '#14103c'], grassEdge: '#1c1e40', tuft: '#05061a', track: ['#3c465a', '#363f52', '#434e63'], trackEdge: '#5fe8ff', trail: '#2a2c48', roadTrail: '#4a4e5c', trailA: .07,
     decor: 'weltall', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#0a0a16'], trees: 0, space: true, glowTrail: true, flat: .6 },
-  // the rainbow (the finale): a rainbow road of six colour lanes over a sea of clouds (terrain 31..36, see rainbowmap.js), soft clouds beside it (slow, the
+  // the rainbow (the finale): a rainbow road of six colour lanes over a sea of clouds (terrain 41..46, see rainbowmap.js), soft clouds beside it (slow, the
   // car stays clean), cloud holes further out (38: you fall through), storm clouds instead of mud (goo 'storm': grey cars; the brown mud puddle of the
   // bronze coin uses the second set of sprites, def.goo2). rainbow: no tyre tracks on the rainbow road
   regenbogen: { ...MUDDY, mud: ['#6c7280', '#5d6270', '#7e8492'], mudEdge: '#454a56', mudHi: '#c8ccd6', mudP: ['#6c7280', '#7e8492', '#9aa0ad', '#545a66'], mudTrail: ['#4a4f5c', '#5d6270'], goo: 'storm',

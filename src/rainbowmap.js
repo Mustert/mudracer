@@ -2,13 +2,13 @@ import { HALF, TAU, clamp, hash, hex, mk, vnoise } from './core.js';
 import { nearestIdx } from './bau.js';
 
 // ---------- Regenbogen: the rainbow road over a sea of clouds between the floating coins of the four cups (the finale) ----------
-// Terrain: 31..36 the six colour lanes of the rainbow road (red always on the left in driving direction, violet on the right; each has its own
-// effect, see rainbow.js), 37 the asphalt of the gold coin, 38 a cloud hole (you fall through, a unicorn brings you back), 0 soft clouds beside
+// Terrain: 41..46 the six colour lanes of the rainbow road (red always on the left in driving direction, violet on the right; each has its own
+// effect, see rainbow.js), 47 the asphalt of the gold coin, 48 a cloud hole (you fall through, a unicorn brings you back), 0 soft clouds beside
 // the road and the ground of the coins (slow like grass, it stays clean), 1 the roads of the bronze, silver, platinum and Fantasy coins,
 // 2 storm clouds (like mud, they make the car grey; on the bronze coin a brown mud puddle), 5 the cloud pond of the garden (deep water),
 // 7 gravel (gold), 12 the ice ramp (gold), 4 boost arrows.
 
-export const LANE = 31, ASPH = 37, HOLE = 38;
+export const LANE = 41, ASPH = 47, HOLE = 48;
 // the coins: their order in def.coins and the colours of their metal (main, dark, light, deep)
 export const COINS = ['bronze', 'silver', 'gold', 'platinum', 'fantasy'];
 const METAL = [['#c88a4a', '#a8683a', '#e8b878', '#6a3e1a'], ['#c8ced8', '#9aa2b0', '#f2f5fa', '#5a6270'], ['#f2c230', '#c8961a', '#fff0a0', '#7a5a0a'],

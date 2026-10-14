@@ -19,7 +19,7 @@ import { reportError } from './errors.js';
 
 function surfOf(c) {
   const m = c.def.mud;
-  if (G.T.rainbow && c.surf >= 31) return rainbowSurf(c); // the rainbow: its colour lanes, the asphalt of the gold coin, cloud holes (see rainbow.js)
+  if (G.T.rainbow && c.surf >= 41) return rainbowSurf(c); // the rainbow: its colour lanes, the asphalt of the gold coin, cloud holes (see rainbow.js)
   switch (c.surf) {
     // off the road is as slow as mud, but the car stays clean (only the Matschfahrt is made of rough ground)
     // in space there is nothing beside the road: no grip, no gas (the car drifts off, see space.js)

@@ -39,7 +39,7 @@ function respawn(c) {
   const T = G.T, N = T.N, i0 = c.respawnI != null ? c.respawnI : ((c.safe || c.idx) - 5 + N) % N;
   c.respawnI = null; c.fallKind = null; c.sink = 0;
   // never onto lava, the gorge or deep water (the middle of the road can be lava, e.g. between the bridges of the ford): further back or to the side
-  const bad = (x, y) => { const t = T.ter[clamp(y | 0, 0, T.H - 1) * T.W + clamp(x | 0, 0, T.W - 1)]; return t === 15 || t === 11 || t === 5 || (t === 16 && T.volcano && T.volcano.hot) || (t === 0 && !!T.space) || (t === 38 && !!T.rainbow); };
+  const bad = (x, y) => { const t = T.ter[clamp(y | 0, 0, T.H - 1) * T.W + clamp(x | 0, 0, T.W - 1)]; return t === 15 || t === 11 || t === 5 || (t === 16 && T.volcano && T.volcano.hot) || (t === 0 && !!T.space) || (t === 48 && !!T.rainbow); };
   let i = i0, o = 0;
   search: for (let k = 0; k < 90; k += 3) for (const q of [0, -16, 16, -22, 22]) {
     const j = (i0 - k + N) % N, p = T.path[j]; if (!bad(p.x + T.nrm[j].x * q, p.y + T.nrm[j].y * q)) { i = j; o = q; break search; }
