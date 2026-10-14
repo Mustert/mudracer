@@ -16,7 +16,7 @@ import { TRACKS } from './tracks.js';
 // Einzelstrecke: opponents, difficulty, track effects. Zeitfahren: ghost, track effects. The kids mode hides what it decides itself.
 
 const ROWS = { x: VW / 2 - 130, w: 260, y0: 44, h: 20, pitch: 24 };
-const FX_NAMES = { kuehe: 'KUEHE', regen: 'REGEN', flut: 'FLUT', zug: 'ZUG', kipper: 'KIPPLASTER', kois: 'KOIS', reifen: 'REIFEN', sandsturm: 'SANDSTURM', frost: 'FROST', pinguine: 'PINGUINE', ausbruch: 'AUSBRUCH', baeume: 'BAEUME', kroko: 'KROKODILE' };
+const FX_NAMES = { kuehe: 'KUEHE', regen: 'REGEN', flut: 'FLUT', zug: 'ZUG', kipper: 'KIPPLASTER', kois: 'KOIS', reifen: 'REIFEN', sandsturm: 'SANDSTURM', frost: 'FROST', pinguine: 'PINGUINE', ausbruch: 'AUSBRUCH', baeume: 'BAEUME', kroko: 'KROKODILE', asteroiden: 'ASTEROIDEN', schwarzesloch: 'SCHWARZES LOCH', schoko: 'SCHOKOLADE', zuckerwatte: 'ZUCKERWATTE' };
 
 UI.raceRow = 0;
 

@@ -290,12 +290,14 @@ const ASH = ['#55524e', '#77736d', '#34312e'].map(hex);
 const SWAMP = ['#4e6a26', '#6a8a34', '#34481a'].map(hex);
 // moon dust makes them silver
 const DUST = ['#b4b8c2', '#d2d5dc', '#8e929c'].map(hex);
+// Süßigkeitenland: chocolate makes them brown, caramel golden
+const CHOCO = ['#5a3020', '#7a4a2e', '#3a1a0e'].map(hex), CARAMEL = ['#e0a030', '#f0c050', '#b07018'].map(hex);
 export function carSet(def, goo, cem) {
   const kind = cem ? 'cem' : typeof goo === 'string' ? goo : goo ? 'goo' : 'mud', key = '_' + kind;
-  return def[key] || (def[key] = newSet(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, ash: ASH, swamp: SWAMP, dust: DUST, goo: GOO, mud: DIRT }[kind]));
+  return def[key] || (def[key] = newSet(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, ash: ASH, swamp: SWAMP, dust: DUST, choco: CHOCO, caramel: CARAMEL, goo: GOO, mud: DIRT }[kind]));
 }
 
-const KINDS = ['_mud', '_goo', '_cem', '_oil', '_sand', '_snow', '_ash', '_swamp', '_dust'];
+const KINDS = ['_mud', '_goo', '_cem', '_oil', '_sand', '_snow', '_ash', '_swamp', '_dust', '_choco', '_caramel'];
 
 // the sprite sets of one car (a new paint makes them again)
 export function dropSets(def) { for (const k of KINDS) delete def[k]; }

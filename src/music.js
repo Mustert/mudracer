@@ -1,6 +1,7 @@
 import { G, UI } from './g.js';
 import { AU, noise, synth, voice } from './audio.js';
 import { LAPS } from './core.js';
+import { candySong } from './suessmusic.js';
 
 // ---------- music: one original tune per track, sequenced live ----------
 
@@ -389,6 +390,8 @@ SONGS.space = { ...SONGS.rainbow,
     if (sec === 'B' && s === 0 && bi % 4 === 3) M.riser(t, 16 * M.sd);
   } };
 
+// Süßigkeitenland: bubblegum pop with a kazoo (see suessmusic.js)
+SONGS.candy = candySong({ synth, voice, noise }, hz, mel);
 
 export const Music = {
   init() {

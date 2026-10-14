@@ -35,7 +35,7 @@ export function airborne(c, dt) {
     const fwd = c.vx * J.tx + c.vy * J.ty; if (fwd < (J.push ? 5 : 30)) return;
     c.z = .01; c.vz = J.vz; c.air = 0;
     if (J.push && fwd < J.push) { c.vx += J.tx * (J.push - fwd); c.vy += J.ty * (J.push - fwd); }
-    const v = loud(c, c.x, c.y); if (v > .02) (J.sfx ? SFX[J.sfx] : J.vz > 120 ? SFX.bigJump : SFX.jump)(v);
+    const v = loud(c, c.x, c.y); if (v > .02) (J.snd || (J.sfx ? SFX[J.sfx] : J.vz > 120 ? SFX.bigJump : SFX.jump))(v); // (snd: a sound of its own, the trampolines)
   });
 }
 
@@ -46,8 +46,8 @@ function land(c) {
   if (t === 11) { fallCar(c, 'abyss', T.desert && T.desert.landI); return; }
   if (t === 15 || (t === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }
   if (t === 3 || t === 5) { splash(c.x, c.y, 24); SFX.splash(v); return; }
-  const col = T.th.decor === 'eis' ? ['#ffffff', '#e6eef6', '#cfdcea'] : ['#e8d2a8', '#d9b878', '#c9a263'];
-  for (let i = 0; i < (big ? 22 : 10); i++) drop(c.x + (Math.random() - .5) * 20, c.y + (Math.random() - .5) * 14, Math.random() * 6.3, 20 + Math.random() * 50, 30 + Math.random() * 50, col[(Math.random() * 3) | 0], .8, false);
+  const col = T.th.landCol || (T.th.decor === 'eis' ? ['#ffffff', '#e6eef6', '#cfdcea'] : ['#e8d2a8', '#d9b878', '#c9a263']);
+  for (let i = 0; i < (big ? 22 : 10); i++) drop(c.x + (Math.random() - .5) * 20, c.y + (Math.random() - .5) * 14, Math.random() * 6.3, 20 + Math.random() * 50, 30 + Math.random() * 50, col[(Math.random() * col.length) | 0], .8, false);
   if (v > .02) SFX.land(v * (big ? 1 : .6));
   if (big && !c.ai) G.jumpShake = .35;
   if (big) {

@@ -9,6 +9,7 @@ import { iceTerrain, paintIce } from './icemap.js';
 import { paintVolcano, volcanoTerrain } from './volcanomap.js';
 import { jungleTerrain, paintJungle } from './junglemap.js';
 import { paintSpace, spaceTerrain } from './spacemap.js';
+import { paintSuess, suessTerrain } from './suessmap.js';
 
 // ---------- tracks (800x450 world) ----------
 
@@ -59,6 +60,12 @@ export const THEMES = {
   weltall: { ...MUDDY, mud: ['#b9bcc4', '#a9acb5', '#c9ccd3'], mudEdge: '#8c8f99', mudHi: '#eceef3', mudP: ['#c9ccd3', '#b0b3bb', '#9a9da6', '#e2e4ea'], mudTrail: ['#8c8f99', '#a4a7b0'], goo: 'dust',
     grass: ['#05061a', '#0a0b26', '#14103c'], grassEdge: '#1c1e40', tuft: '#05061a', track: ['#3c465a', '#363f52', '#434e63'], trackEdge: '#5fe8ff', trail: '#2a2c48', roadTrail: '#4a4e5c', trailA: .07,
     decor: 'weltall', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#0a0a16'], trees: 0, space: true, glowTrail: true, flat: .6 },
+  // Süßigkeitenland: a liquorice road, icing with sprinkles beside it, chocolate instead of mud (goo 'choco': brown cars), caramel that sticks
+  // (goo2 'caramel': golden cars, see suess.js), the lake and the river are deep chocolate (water: its colours), a lemonade fountain washes
+  suess: { ...MUDDY, mud: ['#5a3020', '#4a2618', '#6a3a26'], mudEdge: '#3a1a0e', mudHi: '#9a5a3a', mudP: ['#5a3020', '#6a3a26', '#4a2618', '#9a5a3a'], mudTrail: ['#3a1a0e', '#5a3020'], goo: 'choco', goo2: 'caramel',
+    water: ['#40200f', '#4a2615', '#56301c', '#70422a'], shore: ['#fff8ec', '#f6e6cc'], grass: ['#f7b6d0', '#f2a8c6', '#fbc6dc'], grassEdge: '#e48cb2', tuft: '#ffffff',
+    track: ['#2a2028', '#241b22', '#30262e'], trackEdge: '#0e080c', trail: '#e48cb2', roadTrail: '#4a3a44', trailA: .1, decor: 'suess', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#3a1a24'], trees: 0,
+    ambient: 'butterfly', landCol: ['#ff4d6d', '#ffd93d', '#6bcb77', '#4d96ff', '#ffffff'] },
   bahn:   { ...MUDDY, grass: ['#8fbf4a', '#7fae3f', '#9fcc5a'], grassEdge: '#6f9a33', tuft: '#5f8a2a', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#4f7a22', decor: 'farm', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 18 },
 };
 
@@ -243,6 +250,31 @@ const TRACK_DEFS = [
     portals: { a: [730, 548, 22], b: [588, 680] }, fields: [[810, 680, 22], [810, 590, 22], [650, 590, 22], [650, 680, 22], [1035, 509, 34], [920, 510, 30], [920, 680, 26]],
     rocks: [[730, 700, 34], [865, 600, 18], [1005, 640, 26], [590, 540, 20], [860, 742, 18]],
     hole: [560, 400], airlock: [135, 575], sat: [705, 60], wheel: [312, 300, 46], earth: [1290, 772, 125] },
+  // Süßigkeitenland (a bigger map): from the gingerbread house up through the lollipop forest (two gummy-bear trampolines throw you over
+  // caramel), right through the caramel moor on a cookie road, down through the candyfloss clouds (soft walls), round the U over the waffle
+  // bridge across the chocolate river (or straight on over the marshmallow stepping stones), left over the fizz field (fizz pads, bubblegum
+  // bubbles) and through the lemonade fountain back to the line (see suessmap.js, suess.js). The chocolate fountain stands in the lake in the
+  // middle, its river runs out at the bottom edge.
+  // lake = the chocolate fountain [x, y]; rivers = the lake and the river (deep chocolate, circles); stones = marshmallows; shortcut = the liquorice
+  // path to them (points, half width); tramps = trampolines [x, y]; caramel = caramel fields [x, y, half length, half width]; chocoAt = chocolate
+  // puddles; moor = the caramel moor [x, y, rx, ry] (and a band along the cookie road: cookie = from [x, y] to [x, y]); forest = the lollipop forest (from [x, y] to [x, y] on the road); floss = the candyfloss walls
+  // (from, to); flossLand = more candyfloss between the bends [x0, y0, x1, y1]; gum = bubblegum spots [x, y]; lemon = the lemonade fountain
+  // [x, y, rx, ry]; streams = the chocolate streams of the event schoko [points, half width]; house = the gingerbread house [x0, y0, x1, y1];
+  // machine = the candyfloss machine [x, y]; donuts = donut stacks [x, y]; rainbow = the candy rainbow [x, y, radius]; men = gingerbread men;
+  // fizzField = fizz powder beside the road [x from, x to, y from]
+  { name: 'SUESS', seed: 13, W: 1200, H: 675, theme: 'suess', song: 'candy', events: ['schoko', 'zuckerwatte'], wall: [], wash: null, suess: true,
+    poly: [[150, 300, 0], [150, 90, 60], [600, 90, 45], [690, 185, 45], [810, 185, 45], [900, 90, 45], [1060, 90, 60], [1060, 225, 45], [965, 320, 45], [1060, 415, 45],
+      [1060, 565, 55], [880, 565, 35], [880, 640, 35], [720, 640, 35], [720, 565, 35], [150, 565, 60]],
+    mud: [], water: [], ponds: [],
+    boostAt: [[625, 565], [370, 565]],
+    rivers: [[[470, 375, 48], [540, 368, 64], [620, 370, 68], [700, 378, 50]], [[690, 425, 14], [745, 478, 13], [788, 522, 13], [800, 565, 18], [802, 610, 13], [802, 650, 13], [803, 700, 14]]],
+    stones: [[784, 570, 7], [800, 560, 7], [816, 570, 7]], shortcut: { pts: [[852, 565], [748, 565]], half: 11 },
+    tramps: [[270, 90], [450, 90]], caramel: [[318, 90, 24, 58], [498, 90, 24, 58]], chocoAt: [[770, 566, 9, 13], [831, 566, 9, 13]],
+    moor: [750, 75, 215, 80], cookie: [[565, 90], [935, 90]], forest: [[150, 200], [565, 90]], floss: [[1060, 170], [1060, 480]], flossLand: [1000, 130, 1185, 500],
+    gum: [[555, 553], [425, 578]], lemon: [300, 598, 48, 30], lake: [585, 368], machine: [1165, 330],
+    streams: [[[[700, 330], [735, 260], [748, 190], [752, 138]], 13], [[[730, 375], [820, 360], [930, 330], [1012, 318]], 13], [[[520, 420], [500, 500], [486, 565], [480, 612]], 13]],
+    house: [24, 236, 102, 334], donuts: [[52, 40], [1150, 36], [1150, 640], [52, 636]], rainbow: [290, 512, 72], men: [[205, 470], [880, 250], [40, 420]],
+    fizzField: [190, 700, 600] },
   { name: 'REGENBOGEN', seed: 3, theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
     mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 }
 ];
@@ -390,6 +422,7 @@ function* buildTrack(def, ti) {
   const volT = def.volcano ? yield* volcanoTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N, stampAt }) : null;
   const junT = def.jungle ? yield* jungleTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N }) : null;
   const spaT = def.space ? yield* spaceTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N }) : null;
+  const sueT = def.suess ? yield* suessTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N, deep }) : null;
   yield .35;
   // railway: a straight vertical line through the whole world
   let rail = null;
@@ -581,7 +614,7 @@ function* buildTrack(def, ti) {
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (MW - 10) | 0), y = 5 + (r() * (MH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
   const rock = (x, y) => { const L2 = hex('#c4c4bb'), M2 = hex('#9a9a92'), D2 = hex('#6e6e68'); for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(x + dx, y + dy, dy === 0 ? L2 : dy === 2 ? D2 : M2); };
   const trees = [], critters = [], C = th.treeCol.map(hex);
-  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null, desert = null, ice = null, volcano = null, jungle = null, space = null;
+  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null, desert = null, ice = null, volcano = null, jungle = null, space = null, suess = null;
   const darken = (x, y, rad, ox, oy) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + ox, yy = y + dy + oy; if (xx < 0 || yy < 0 || xx >= MW || yy >= MH) continue; const i = (yy * MW + xx) * 4; d[i] *= .78; d[i + 1] *= .76; d[i + 2] *= .76; } };
   const flowers = (n, PET) => scatter(n, 2, (x, y) => { const pc = PET[(r() * PET.length) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, pc === PET[1] ? hex('#ff8c1a') : hex('#ffe14d')); });
   // wall look: fence + hay (meadow), log pile + pines (forest), beach bar + surfboards + palms (beach), asteroid belt (space), railway barrier (train)
@@ -950,6 +983,8 @@ function* buildTrack(def, ti) {
     jungle = yield* paintJungle({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, th, r, critters, darken, RT: junT });
   } else if (th.decor === 'weltall') {
     space = yield* paintSpace({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, r, starPix, mudPix, RT: spaT });
+  } else if (th.decor === 'suess') {
+    suess = yield* paintSuess({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, deep, bridgeMask, isBridge, stoneMask, sd, r, mudPix, watPix, darken, RT: sueT });
   } else if (th.decor === 'farm') {
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
@@ -1029,9 +1064,9 @@ function* buildTrack(def, ti) {
   const top = toCanvas(outlineImg(new ImageData(tp, MW, MH), MW, MH, C[3]));
   const wp = path[wi], solid = trees.concat(walls);
   return { W: MW, H: MH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: solid, grid: obstacleGrid(solid, MW, MH), critters, windmill, shoreY, boat: { x: 60 }, base, top, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice, volcano, jungle, space,
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice, volcano, jungle, space, suess,
     // Cup 3 building blocks (see trackfx.js): ramps to jump from, stretches that push the cars, where a second way runs beside the road
-    jumps: (desert || ice || volcano || jungle || space || {}).jumps || [], pushes: (desert || ice || volcano || jungle || space || {}).pushes || [], alt: (desert || ice || volcano || jungle || space || {}).alt || null };
+    jumps: (desert || ice || volcano || jungle || space || suess || {}).jumps || [], pushes: (desert || ice || volcano || jungle || space || suess || {}).pushes || [], alt: (desert || ice || volcano || jungle || space || suess || {}).alt || null };
 }
 
 
