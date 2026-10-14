@@ -198,6 +198,14 @@ export const SFX = {
   airlock: v => { noise({ type: 'highpass', f: 2200, to: 5000, a: .02, hold: .35, d: .5, vol: .18 * v }); voice({ type: 'square', f: 220, a: .003, hold: .05, d: .05, vol: .04 * v, lp: 900 }); },
   holeOpen: () => { voice({ type: 'sawtooth', f: 400, to: 40, a: .05, hold: .6, d: 1.4, vol: .12, lp: 900 }); noise({ type: 'lowpass', f: 1200, to: 80, a: .2, hold: .6, d: 1.5, vol: .3 }); voice({ f: 50, to: 30, a: .3, hold: .8, d: 1, vol: .3 }); },
   holeHum: v => voice({ type: 'sawtooth', f: 46, to: 40, a: .6, hold: 1, d: 1.2, vol: .07 * v, lp: 260 }),
+  // rainbow: a unicorn neighing (it warbles down), glitter (little bells going up), a lightning strike (a crack, then the boom), a car buzzing
+  // with electricity, the sun breaking through (a choir chord swelling up with bells), a firework rocket (whistle, bang, crackle)
+  neigh: v => { for (let i = 0; i < 6; i++) voice({ t: i * .07, type: 'sawtooth', f: 1150 - i * 80, to: 980 - i * 90, a: .006, d: .08, vol: .05 * v, bp: 1500, q: 4 }); voice({ t: .4, type: 'sawtooth', f: 700, to: 420, a: .02, d: .25, vol: .04 * v, bp: 1100, q: 3 }); },
+  glitter: v => [1568, 2093, 2637, 3136, 4186].forEach((f, i) => bell(f, i * .05, .045 * v)),
+  strike: v => { noise({ type: 'highpass', f: 2500, a: .002, d: .14, vol: .45 * v }); for (let i = 0; i < 4; i++) noise({ t: .02 + i * .03, type: 'bandpass', f: 3000 + i * 600, q: 2, d: .03, vol: .15 * v }); noise({ t: .06, type: 'lowpass', f: 700, to: 60, d: 1.5, vol: .55 * v, q: .7 }); voice({ t: .06, f: 90, to: 32, d: 1, vol: .4 * v }); },
+  zap: () => { for (let i = 0; i < 7; i++) voice({ t: i * .045, type: 'square', f: 900 + Math.random() * 900, to: 260, a: .002, d: .04, vol: .05, lp: 4200 }); },
+  sunburst: () => { for (const f of [523, 659, 784, 1047]) voice({ type: 'sawtooth', f: f / 2, to: f, toAt: 1, a: .8, hold: .8, d: 1.2, vol: .035, lp: 2200 }); [1047, 1319, 1568, 2093].forEach((f, i) => bell(f, 1 + i * .1, .1)); },
+  firework: v => { voice({ type: 'sine', f: 500, to: 1600, d: .25, vol: .03 * v }); noise({ t: .25, type: 'lowpass', f: 1400, to: 160, d: .5, vol: .3 * v }); for (let i = 0; i < 8; i++) noise({ t: .3 + Math.random() * .5, type: 'bandpass', f: 2500 + Math.random() * 3500, q: 3, d: .03, vol: .07 * v }); },
   quack: v => { for (const t of [0, .16]) voice({ t, type: 'sawtooth', f: 700, to: 420, a: .01, hold: .04, d: .09, vol: .06 * v, bp: 1200, q: 4 }); },
   rain: () => noise({ type: 'highpass', f: 4200, q: .5, a: 1.2, hold: 5.5, d: 2.5, vol: .09 }),
   thunder: () => { noise({ type: 'lowpass', f: 300, to: 70, a: .05, d: 2, vol: .45, q: .7 }); voice({ f: 62, to: 34, d: 1.6, vol: .3 }); },

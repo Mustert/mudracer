@@ -200,7 +200,7 @@ export function* paintSuess(S) {
 
   yield;
   // ----- the candy rainbow in the infield (only a picture) -----
-  const RB = ['#ff4d6d', '#ff9f43', '#ffd93d', '#6bcb77', '#4d96ff', '#9b5de5'].map(hex), [rx0, ry0, rr0] = def.rainbow;
+  const RB = ['#ff4d6d', '#ff9f43', '#ffd93d', '#6bcb77', '#4d96ff', '#9b5de5'].map(hex), [rx0, ry0, rr0] = def.candyBow;
   for (let y = ry0 - rr0 - 30; y <= ry0; y++) for (let x = rx0 - rr0 - 30; x <= rx0 + rr0 + 30; x++) {
     if (x < 0 || y < 0 || x >= MW || y >= MH) continue;
     const j = y * MW + x; if (ter[j] !== 0 || zone[j]) continue;
@@ -265,7 +265,7 @@ export function* paintSuess(S) {
   for (let k = 0, tries = 0; k < 26 && tries < 2500; tries++) {
     const x = 20 + (S.r() * (MW - 40) | 0), y = 20 + (S.r() * (MH - 40) | 0), rr = 7 + (S.r() * 5 | 0);
     if (!free(x, y, rr + 10) || lollis.some(l => Math.hypot(l.x - x, l.y - y) < 40)) continue;
-    if (Math.hypot(x - def.rainbow[0], y - def.rainbow[1]) < def.rainbow[2] + 40) continue;
+    if (Math.hypot(x - def.candyBow[0], y - def.candyBow[1]) < def.candyBow[2] + 40) continue;
     if (x > def.flossLand[0] - 20 && y > def.flossLand[1] - 20 && x < def.flossLand[2] + 20 && y < def.flossLand[3] + 20) continue; // (the candyfloss grows there)
     lolli(x, y, rr, nl++); k++;
   }

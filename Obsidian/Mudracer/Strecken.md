@@ -1,11 +1,11 @@
 
-Stand 2026-10-14, Branch `map_pack`. Die Strecken 1 bis 6 sind umgesetzt, 7 bis 14 als Prototyp, für 15 gibt es einen ausgearbeiteten Vorschlag. Im Spiel ist außerdem noch die alte Regenbogen-Strecke (Plattformen im All, siehe 15). Reihenfolge in Einzelstrecke und Zeitfahren heute: Wiese, Wald, Strand, Zug, Baustelle, Garten, Rennstrecke, Wüste, Eis, Vulkan, Dschungel, Weltall, Süßigkeitenland, Spielzimmer, Regenbogen.
+Stand 2026-10-14, Branch `map_pack`. Die Strecken 1 bis 6 sind umgesetzt, 7 bis 15 als Prototyp (15 Regenbogen als Rework der alten Plattform-Strecke). Reihenfolge in Einzelstrecke und Zeitfahren heute: Wiese, Wald, Strand, Zug, Baustelle, Garten, Rennstrecke, Wüste, Eis, Vulkan, Dschungel, Weltall, Süßigkeitenland, Spielzimmer, Regenbogen.
 
-**Streckenereignisse** lassen sich im Code pro Ereignis ein- und ausschalten: `PREFS.events` in `src/state.js` (`kuehe`, `regen`, `flut`, `kois`, `kipper`, `zug`, `reifen`, `sandsturm`, `frost`, `pinguine`, `ausbruch`, `baeume`, `kroko`, `asteroiden`, `schwarzesloch`, alle auf `true`). Im Spiel gibt es einen gemeinsamen Schalter „Streckeneffekte“ (Einzelstrecke und Zeitfahren in den Optionen; im Grand Prix ab MITTEL an; im Kindermodus immer aus, `fxActive` in `src/diff.js`). Die Ereignisse ändern die Karte während des Rennens (die Karte wird dafür zur Laufzeit umgemalt). Nach dem Rennen stellt das Spiel die Strecke wieder her, Menüs und Vorschaubilder zeigen die saubere Strecke.
+**Streckenereignisse** lassen sich im Code pro Ereignis ein- und ausschalten: `PREFS.events` in `src/state.js` (`kuehe`, `regen`, `flut`, `kois`, `kipper`, `zug`, `reifen`, `sandsturm`, `frost`, `pinguine`, `ausbruch`, `baeume`, `kroko`, `asteroiden`, `schwarzesloch`, `schoko`, `zuckerwatte`, `spielzeug`, `saugroboter`, `einhorn`, `gewitter`, alle auf `true`). Im Spiel gibt es einen gemeinsamen Schalter „Streckeneffekte“ (Einzelstrecke und Zeitfahren in den Optionen; im Grand Prix ab MITTEL an; im Kindermodus immer aus, `fxActive` in `src/diff.js`). Die Ereignisse ändern die Karte während des Rennens (die Karte wird dafür zur Laufzeit umgemalt). Nach dem Rennen stellt das Spiel die Strecke wieder her, Menüs und Vorschaubilder zeigen die saubere Strecke.
 
-**Kartengröße:** Die Strecken sind 800×450 px groß (Standard), nur das Weltall ist größer (1360×765). Seit 2026-10-12 kann eine Strecke eine eigene Größe bekommen (`W` und `H` in ihrer Definition in `TRACK_DEFS`, `src/tracks.js`). Die Strecken werden erst gebaut, wenn sie gebraucht werden (im Hintergrund oder auf einem kurzen Ladebildschirm), also verlängern größere Karten den Spielstart nicht.
+**Kartengröße:** Die Strecken sind 800×450 px groß (Standard), größer sind das Weltall (1360×765), das Süßigkeitenland (1200×675), das Spielzimmer (1280×720) und der Regenbogen (1440×810). Seit 2026-10-12 kann eine Strecke eine eigene Größe bekommen (`W` und `H` in ihrer Definition in `TRACK_DEFS`, `src/tracks.js`). Die Strecken werden erst gebaut, wenn sie gebraucht werden (im Hintergrund oder auf einem kurzen Ladebildschirm), also verlängern größere Karten den Spielstart nicht.
 
-**Zeitfahren-Rekorde:** Wiese, Wald und Strand haben durch die Änderungen eine neue Revision (`rev: 1`). Ihre Rekorde starten neu (Schlüssel mit Zusatz `-r1`), die alten Zeiten bleiben unangetastet im Speicher.
+**Zeitfahren-Rekorde:** Wiese, Wald, Strand und Regenbogen haben durch die Änderungen eine neue Revision (`rev: 1`). Ihre Rekorde starten neu (Schlüssel mit Zusatz `-r1`), die alten Zeiten bleiben unangetastet im Speicher.
 
 **Cups:** Die Strecken sind in Cups 1-5 eingeteilt. Das kindliche Zielpublikum ist mit Cup 1 gut bedient, ab Cup 2 können und sollen die Strecken immer aufwendiger und verrückter werden (Sprungschanzen etc.) selbst im Modus ohne Streckenereignis, während der Ursprung des Spiels natürlich nicht verloren geht.
 # Cup 1
@@ -477,7 +477,7 @@ Abweichungen vom Vorschlag (erster Wurf):
 - Die **Luftschleuse** ist ein Tor über der Straße am Übergang vom Mond in die Station; Düsen im Boden blasen den Staub ab (weißer Nebel, Zischen).
 - Die **Asteroiden** fliegen nur über die offenen Plattformen und den Mond, nicht in die Glasröhre oder die Station. Mittlere zerbrechen bei einem Treffer in zwei kleine.
 - Ab dem **schwarzen Loch** wird die Musik einen Ganzton tiefer (mit einem Absturz-Effekt beim Öffnen); in der letzten Runde läuft das Arpeggio doppelt so schnell, der Vocoder singt auch im Refrain.
-- Noch nicht: Stationsmodule und Staubflecken sind schlicht, das Lied ist noch nicht angehört. Der Regenbogen behält bis zu seinem Rework sein Lied `rainbow`, das Weltall-Lied `space` ist daraus abgeleitet.
+- Noch nicht: Stationsmodule und Staubflecken sind schlicht, das Lied ist noch nicht angehört. Das alte Regenbogen-Lied (Space-Disco) steckt jetzt allein im Weltall-Lied `space` (`SPACE_DISCO` in `src/music.js`); seit dem Regenbogen-Rework (2026-10-14) hat der Regenbogen sein eigenes neues Lied `rainbow`. ✅ umgesetzt
 
 Idee: Die bisherige Weltall-Optik der Regenbogen-Strecke (Sterne, Asteroidengürtel, `decor: 'space'`) zieht hierher, und das bisherige Lied `rainbow` (Space-Disco) wird zum Lied dieser Strecke. Die Strecke ist eine Bahn aus Metallplattformen und Röhren zwischen Raumstation, Mond und einem Ringplaneten. Es geht um **Schwung**: Im All hat man wenig Grip, aber die Schwerkraft eines Planeten kann einen schleudern.
 
@@ -529,7 +529,7 @@ Streckenereignis: (Vorschlag) Schwerkraftwechsel/Asteroiden, die über die Strec
 Änderung: (Vorschlag) Kein Mud, stattdessen Schwerelosigkeits-Zonen mit reduzierter Lenkung. Sterne, Planeten und Raumstationen als Kulisse. **Angepasst:** Mondstaub als Matsch, damit das Waschen auch hier Sinn ergibt (Mudracer bleibt Mudracer).
 
 # Cup 5
-Stand 2026-10-14, Branch `map_pack`. Die drei Strecken unten sind **ausgearbeitete Vorschläge**; Süßigkeitenland (13) und Spielzimmer (14) gibt es als Prototyp, den Regenbogen noch nicht.
+Stand 2026-10-14, Branch `map_pack`. Die drei Strecken unten waren **ausgearbeitete Vorschläge**; alle drei gibt es jetzt als Prototyp (Süßigkeitenland 13, Spielzimmer 14, Regenbogen-Rework 15).
 
 **Steigerung im Cup:** Cup 5 (Fantasy) ist erst nach dem Supercup freigeschaltet, wer hier fährt, kennt also alle Mechaniken. Die Fantasy-Strecken **verdrehen bekannte Regeln** auf lustige Art (Matsch, der klebt, Möbel als Berge, ein Regenbogen, der erst im Gewitter entsteht) und sind dabei die buntesten und verrücktesten Strecken im Spiel. Sie sollen sich wie eine Belohnung anfühlen, nicht wie eine Strafe. Schwer sind sie durch die Menge: Auf jeder passiert viel gleichzeitig.
 
@@ -541,7 +541,7 @@ Stand 2026-10-14, Branch `map_pack`. Die drei Strecken unten sind **ausgearbeite
 
 **Gemeinsame Bausteine:** Die Fantasy-Strecken verwenden fast nur vorhandene Mechaniken, neu gemischt: Kleben ist Matsch mit Nachwirkung, das Trampolin ist ein Sprung, die Zuckerwatte ist die federnde Bande aus der Bobbahn, der Saugroboter ist der Treibsand-Sog auf Rädern, Licht aus ist der Wald. Der **Regenbogen** baut auf allem auf und sollte darum als Letztes umgesetzt werden. Neue Schalter in `PREFS.events`: `schoko`, `zuckerwatte`, `saugroboter`, `spielzeug`, `einhorn`, `gewitter`.
 
-Reihenfolge in Einzelstrecke und Zeitfahren: … Weltall, **Süßigkeitenland, Spielzimmer, Regenbogen**. Cup 5 (`FANTASY` in `src/cups.js`): geplant `['SUESS', 'SPIELZIMMER', 'REGENBOGEN']`, heute `['SUESS', 'SPIELZIMMER']` (✅ Süßigkeitenland und Spielzimmer umgesetzt als Prototyp; damit ist Cup 5 spielbar und das Batmobil erreichbar). In Einzelstrecke und Zeitfahren stehen Süßigkeitenland und Spielzimmer ✅ zwischen Weltall und Regenbogen. Der Regenbogen ist damit auch das letzte Rennen des Superdupercups. Im Code hat Cup 5 noch keine Freischaltbedingung (geplant: 1. Sieg im Supercup).
+Reihenfolge in Einzelstrecke und Zeitfahren: … Weltall, **Süßigkeitenland, Spielzimmer, Regenbogen**. Cup 5 (`FANTASY` in `src/cups.js`): geplant `['SUESS', 'SPIELZIMMER', 'REGENBOGEN']`, ✅ umgesetzt, heute `['SUESS', 'SPIELZIMMER', 'REGENBOGEN']` (alle drei als Prototyp; damit ist Cup 5 spielbar und das Batmobil erreichbar). In Einzelstrecke und Zeitfahren stehen Süßigkeitenland und Spielzimmer ✅ zwischen Weltall und Regenbogen. Der Regenbogen ist damit auch das letzte Rennen des Superdupercups. Im Code hat Cup 5 noch keine Freischaltbedingung (geplant: 1. Sieg im Supercup).
 
 ## 13. Süßigkeitenland
 Status: **Prototyp** (Streckenname `SUESS`, Theme `suess`, Musik `candy`, Streckenereignisse Schokolade `schoko` und Zuckerwatte `zuckerwatte`; Code in `src/suessmap.js`, `src/suess.js`, `src/suessmusic.js`)
@@ -696,7 +696,24 @@ Streckenereignis: (Vorschlag) Ein Aufziehauto oder die Spielzeugeisenbahn kreuzt
 
 ## 15. Regenbogen
 ![[Pasted image 20261006220134.png]]
-Status: **Vorschlag für den Rework** (Streckenname bleibt `REGENBOGEN`, Theme `regenbogen` neu, Musik `rainbow` neu, Streckenereignisse Einhörner `einhorn` und Gewitter `gewitter`). Die bisherige Strecke (Plattformen im All mit Boost-Pads, siehe Bild) gibt ihre Optik und ihr Lied an das Weltall (12) ab. Die Zeitfahr-Rekorde starten neu (`rev: 1`).
+Status: **Prototyp umgesetzt** (Rework, 2026-10-14, Branch vom `map_pack`): Streckenname `REGENBOGEN` (letzte Strecke in `TRACK_DEFS`), Theme `regenbogen`, Musik `rainbow` (neu, mit `rainbowStorm` und `rainbowFinal`), Streckenereignisse Einhörner `einhorn` und Gewitter `gewitter`; Code in `src/rainbowmap.js` (Karte) und `src/rainbow.js` (Rennen). Im Cup FANTASY eingetragen. Größere Karte (1440×810), eine Runde dauert etwa 26 s. Die alte Strecke (Plattformen im All mit Boost-Pads, siehe Bild) ist weg, ihre Optik (`decor: 'space'`, lila Glibber) ist entfernt, ihr Lied lebt nur noch im Weltall-Lied `space`. Die Zeitfahr-Rekorde starten neu (`rev: 1`) ✅ umgesetzt.
+
+Umgesetzt (Prototyp, Abweichungen vom Vorschlag in Klammern):
+- Rundenverlauf wie unten ✅ umgesetzt, nur anders verteilt: Bronze etwa 12–17 %, Bogen 18–29 %, Silber 31–37 %, Gold 41–48 %, Platin 51–56 %, Spirale 58–83 % (eine kleine Rechtskurve, dann die große Linkskurve durch die Mitte und die Rechtskurve hinunter), Regenschauer bei 87 %, dann über die Fantasy-Münze ins Ziel. Startaufstellung komplett auf der Geraden auf der Fantasy-Münze (Grundsatz 5).
+- Münzinseln mit Metallrand, Dicke und Schatten auf den Wolken, Cup-Symbol groß als Einlage (Straße, Bonsai, Stern, Blitz, Einhorn) ✅. Der Rand jeder Münze ist fest (Bande), nur die Straße führt darüber.
+- Fantasy-Münze: Wolkentor mit Regenbogenbanner und Fähnchen über der Startlinie, Siegerpodest ✅ (Podest dreht sich nicht).
+- Bronze: Wiese, Erdweg, braune Matschpfütze (eigener brauner Sprite-Satz, `goo2`), zwei langsamere Kühe auf der Straße (Schalter `kuehe`), drei Tannen, Strandkorb, blasser Deko-Zaun ✅.
+- Regenbogen-Bogen über einer Wolkenschlucht mit Lücke (Sprung mit 1,3 s Luft), bergauf etwas langsamer, bergab Schub, Autos werden nach oben hin größer, Schatten weit weg; weiche Wolken-Banden an beiden Seiten des Bogens; zu kurz gesprungen → Einhorn setzt hinter der Lücke ab ✅.
+- Silber: Garten, Wolkenteich mit roter Brücke (Geländer fest), Kois schwimmen und springen über die Brücke (Schalter `kois`), Kirschbäume, Steinlaterne ✅ (Bahnübergang mit Wolkenzug fehlt noch).
+- Gold: Asphalt-Schikane mit Kerbs (Rütteln), Kiesbetten außen, Kakteen, Eis-Schanze über eine kleine Wolkenspalte zurück auf den Regenbogen ✅.
+- Platin: Basaltweg mit glühendem Rand, kleiner Vulkan (fest), Lavarinne neben der Straße (nur Kulisse, Felsrand), Wurmloch auf einer Plattform innen in der Kurve, Ausgang auf der Straße hinter der nächsten Kurve ✅.
+- Spirale mit zwei Boost-Pfeilen ✅; Regenschauer mit kleiner Wolke und Sonne, wäscht, Glitzerspur für etwa eine Runde, wenn man sauber herauskommt ✅.
+- Farbbahnen mit Wirkung ✅ (Rot +8 %, Grün mehr Grip, Blau glatt, Violett −6 %; im Gewitter grau, Rot und Blau behalten etwas; in der Sonne doppelt). Wolken neben der Straße bremsen wie Gras, Wolkenlöcher (Terrain 48) mit Einhorn-Rettung ✅. Die Mitte der Karte ist eine tiefe Wolkenschlucht (man kann nicht abkürzen).
+- Gewitterwolken statt Matsch (grau) ✅; Ereignis Einhörner mit Boost-Spur und „WIEHER!“ ✅; Ereignis Gewitter mit Sonnenaufgang, Wolkenfront von rechts, Regen (wäscht langsam), fünf zusätzlichen Gewitterwolken, Blitzen mit gelbem Zielkreis (nie auf den Münzen), „BZZZT!“, und in der letzten Runde Sonne, Glitzer statt Gewitterwolken, doppelter Regenbogen (ohne Bande), Feuerwerk ✅.
+- Computerautos: rote Seite, Vollgas den Bogen hinauf (ein paar nicht), weichen Blitzkreisen aus, nehmen manchmal das Wurmloch und ab MITTEL den doppelten Regenbogen ✅.
+- Musik `rainbow` (C-Dur, 128 BPM, Synth-Bells, Supersaw im Refrain, Arpeggios, Chor, pumpender Bass), im Gewitter a-Moll mit Pauke, letzte Runde D-Dur nur Refrain ✅; neue Töne Wiehern, Glitzer, Blitz, Summen, Sonnendurchbruch, Feuerwerk ✅.
+
+Noch nicht: Leitmotive der Cups auf den Inseln, Bahnübergang mit Wolkenzug (Silber), sich drehendes Siegerpodest, Konfetti-Regen ab dem Zieleinlauf (nur das normale Konfetti), mehrere Wolkenebenen (nur eine Parallaxe-Ebene in den Löchern), „elektrische“ Antenne; das Lied ist noch nicht angehört, die Werte der Farbbahnen und der Sprung sind noch nicht im Spiel mit Kindern geprüft.
 
 Idee: Die **letzte Strecke des Spiels** und das letzte Rennen des Superdupercups. Sie soll sich wie ein Finale anfühlen: eine **Ehrenrunde durch alle Welten** über den Wolken und gleichzeitig die schwerste Prüfung. Die Strecke erzählt eine kleine Geschichte über drei Runden: Sonnenaufgang, dann ein Gewitter, und erst danach, wenn die Sonne durch den Regen bricht, steht der **Regenbogen in voller Pracht** da (genau so entsteht ein echter Regenbogen: Sonne und Regen zugleich).
 
@@ -782,4 +799,4 @@ Custom
 - Auswahl wie viele Gegner (1-9)
 - Auswahl wie viele und welche Strecken.
 
-Stand im Spiel (2026-10-14, `src/cups.js`): Cup 1 bis 4 haben Strecken (Cup 4 mit Weltall), Cup 5 hat Süßigkeitenland und Spielzimmer (Prototypen). Supercup = alle Strecken der Cups 1 bis 4 (heute 12), offen nach den ersten Siegen in Cup 1 bis 4. Superdupercup = alle Strecken der Cups 1 bis 5, offen nach dem ersten Sieg in Cup 5. Custom Cup: bis 12 Strecken in beliebiger Folge (auch doppelt), 2 bis 7 Gegner; er wird nicht gespeichert, sondern bei jeder Wahl neu zusammengestellt (beginnt leer).
+Stand im Spiel (2026-10-14, `src/cups.js`): Cup 1 bis 4 haben Strecken (Cup 4 mit Weltall), Cup 5 hat Süßigkeitenland, Spielzimmer und Regenbogen (Prototypen). Supercup = alle Strecken der Cups 1 bis 4 (heute 12), offen nach den ersten Siegen in Cup 1 bis 4. Superdupercup = alle Strecken der Cups 1 bis 5, offen nach dem ersten Sieg in Cup 5. Custom Cup: bis 12 Strecken in beliebiger Folge (auch doppelt), 2 bis 7 Gegner; er wird nicht gespeichert, sondern bei jeder Wahl neu zusammengestellt (beginnt leer).

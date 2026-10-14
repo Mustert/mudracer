@@ -11,6 +11,7 @@ import { jungleTerrain, paintJungle } from './junglemap.js';
 import { paintSpace, spaceTerrain } from './spacemap.js';
 import { paintSuess, suessTerrain } from './suessmap.js';
 import { paintToys, toyTerrain } from './toymap.js';
+import { paintRainbow, rainbowTerrain } from './rainbowmap.js';
 
 // ---------- tracks (800x450 world) ----------
 
@@ -25,10 +26,6 @@ export const THEMES = {
   strand: { ...MUDDY, water: ['#1d8fb3', '#2bb3cc', '#48cfd9', '#8aeee6'], shore: ['#c9a060', '#bf9655'],
     grass: ['#f3d995', '#ebcc81', '#f8e6b0'], grassEdge: '#dcb96c', tuft: '#e2c275', track: ['#bb8c5a', '#ae8050', '#c69864'], trackEdge: '#8f6a42', trail: '#b89656',
     decor: 'strand', tree: 'palm', treeCol: ['#2a8a3c', '#3cac4e', '#74d66c', '#18521f'], trees: 18, sea: true, fence: 'rope', ambient: 'gull' },
-  regenbogen: { mud: ['#c04dd8', '#a33bbf', '#d971f0'], mudEdge: '#6a1f7a', mudHi: '#ffe6ff', water: ['#1d6fd0', '#29a3f0', '#4cc3ff', '#8ae1ff'],
-    shore: ['#3b2a6b', '#33245e'], mudP: ['#c04dd8', '#d971f0', '#ff9cf5', '#a33bbf'], mudTrail: ['#a33bbf', '#c04dd8'], goo: true,
-    grass: ['#0c0a24', '#161040', '#24145a'], grassEdge: '#3a2a7a', tuft: '#0c0a24', track: ['#ffffff', '#ffffff', '#ffffff'], trackEdge: '#ffffff', trail: '#6b5bd6',
-    decor: 'space', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#000000'], trees: 0, space: true, rainbow: true },
   garten: { ...MUDDY, water: ['#2a7184', '#34899b', '#43a0ae', '#7ccfd2'], shore: ['#8d8f86', '#777970'], grass: ['#6fb85a', '#62a84e', '#7ec766'], grassEdge: '#54944a', tuft: '#4d8a42',
     track: ['#c4ad86', '#b59d76', '#d0ba94'], trackEdge: '#948063', trail: '#3f7a35', decor: 'garten', tree: 'cherry', treeCol: ['#c4547f', '#e98cb0', '#f9cfdf', '#4a2438'], trees: 14, fence: 'bamboo', ambient: 'sakura' },
   baustelle: { ...MUDDY, water: ['#5d7f86', '#6b909a', '#7da3ac', '#a9cdd3'], shore: ['#5a4630', '#4d3a26'], grass: ['#9b9684', '#8f8a79', '#a8a392'], grassEdge: '#6f6a5a', tuft: '#7c7766',
@@ -72,6 +69,12 @@ export const THEMES = {
   spielzimmer: { ...MUDDY, mud: ['#e04848', '#3c6ee0', '#f2cc30'], mudEdge: '#7a2a2a', mudHi: '#ffffff', mudP: ['#e04848', '#3c6ee0', '#f2cc30', '#40b850'], mudTrail: ['#c84a6a', '#8a6ab0'], goo: 'knete',
     grass: ['#c8915a', '#bd8650', '#d29c64'], grassEdge: '#7e5230', tuft: '#ad7844', track: ['#6e747c', '#666c74', '#787e86'], trackEdge: '#f4f4ee', trail: '#4a7a3e', roadTrail: '#5a4a3a', trailA: .06,
     decor: 'spielzimmer', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#2a1a10'], trees: 0 },
+  // the rainbow (the finale): a rainbow road of six colour lanes over a sea of clouds (terrain 41..46, see rainbowmap.js), soft clouds beside it (slow, the
+  // car stays clean), cloud holes further out (48: you fall through), storm clouds instead of mud (goo 'storm': grey cars; the brown mud puddle of the
+  // bronze coin uses the second set of sprites, def.goo2). rainbow: no tyre tracks on the rainbow road
+  regenbogen: { ...MUDDY, mud: ['#6c7280', '#5d6270', '#7e8492'], mudEdge: '#454a56', mudHi: '#c8ccd6', mudP: ['#6c7280', '#7e8492', '#9aa0ad', '#545a66'], mudTrail: ['#4a4f5c', '#5d6270'], goo: 'storm',
+    water: ['#5a9ac0', '#7fc4e8', '#95d2f0', '#e8f6ff'], grass: ['#e3e6f7', '#f2f3fc', '#ffffff'], grassEdge: '#cfd4ef', tuft: '#e3e6f7', track: ['#ff4d6d', '#ffd93d', '#4d96ff'], trackEdge: '#ffffff',
+    trail: '#cfd4ef', roadTrail: '#8a7a6a', trailA: .07, decor: 'regenbogen', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#1b120c'], trees: 0, rainbow: true },
   bahn:   { ...MUDDY, grass: ['#8fbf4a', '#7fae3f', '#9fcc5a'], grassEdge: '#6f9a33', tuft: '#5f8a2a', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#4f7a22', decor: 'farm', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 18 },
 };
 
@@ -266,7 +269,7 @@ const TRACK_DEFS = [
   // puddles; moor = the caramel moor [x, y, rx, ry] (and a band along the cookie road: cookie = from [x, y] to [x, y]); forest = the lollipop forest (from [x, y] to [x, y] on the road); floss = the candyfloss walls
   // (from, to); flossLand = more candyfloss between the bends [x0, y0, x1, y1]; gum = bubblegum spots [x, y]; lemon = the lemonade fountain
   // [x, y, rx, ry]; streams = the chocolate streams of the event schoko [points, half width]; house = the gingerbread house [x0, y0, x1, y1];
-  // machine = the candyfloss machine [x, y]; donuts = donut stacks [x, y]; rainbow = the candy rainbow [x, y, radius]; men = gingerbread men;
+  // machine = the candyfloss machine [x, y]; donuts = donut stacks [x, y]; candyBow = the candy rainbow [x, y, radius] (not `rainbow`: that flag builds the rainbow track); men = gingerbread men;
   // fizzField = fizz powder beside the road [x from, x to, y from]
   { name: 'SUESS', seed: 13, W: 1200, H: 675, theme: 'suess', song: 'candy', events: ['schoko', 'zuckerwatte'], wall: [], wash: null, suess: true,
     poly: [[150, 300, 0], [150, 90, 60], [600, 90, 45], [690, 185, 45], [810, 185, 45], [900, 90, 45], [1060, 90, 60], [1060, 225, 45], [965, 320, 45], [1060, 415, 45],
@@ -279,7 +282,7 @@ const TRACK_DEFS = [
     moor: [750, 75, 215, 80], cookie: [[565, 90], [935, 90]], forest: [[150, 200], [565, 90]], floss: [[1060, 170], [1060, 480]], flossLand: [1000, 130, 1185, 500],
     gum: [[555, 553], [425, 578]], lemon: [300, 598, 48, 30], lake: [585, 368], machine: [1165, 330],
     streams: [[[[700, 330], [735, 260], [748, 190], [752, 138]], 13], [[[730, 375], [820, 360], [930, 330], [1012, 318]], 13], [[[520, 420], [500, 500], [486, 565], [480, 612]], 13]],
-    house: [24, 236, 102, 334], donuts: [[52, 40], [1150, 36], [1150, 640], [52, 636]], rainbow: [290, 512, 72], men: [[205, 470], [880, 250], [40, 420]],
+    house: [24, 236, 102, 334], donuts: [[52, 40], [1150, 36], [1150, 640], [52, 636]], candyBow: [290, 512, 72], men: [[205, 470], [880, 250], [40, 420]],
     fizzField: [190, 700, 600] },
   // The kids' room (a bigger map): start on the printed road of the play mat, over the parquet and the wooden toy train, up a ramp of books onto
   // the bed, round the teddy, the pillow throws you over the gap onto the desk (between crayons, past an eraser and the paint box, over the
@@ -309,8 +312,33 @@ const TRACK_DEFS = [
     socks: [[1110, 330, 0], [1150, 318, 1]], puzzle: [[640, 345, 2], [760, 540, 1], [60, 610, 3], [690, 330, 0]], sheet: [170, 290],
     streets: [[150, 446, 740, 454], [556, 160, 564, 370]], houses: [[180, 400, 22, 18], [250, 470, 24, 18], [380, 410, 20, 16], [620, 470, 22, 18]],
     ptrees: [[220, 410, 7], [330, 480, 8], [450, 420, 7], [690, 420, 6]], ppond: [400, 485, 28, 14], zebra: [110, 240], washAt: [230, 640] },
-  { name: 'REGENBOGEN', seed: 3, theme: 'regenbogen', song: 'rainbow', wallStyle: 'rocks', wall: [{ x: 400, y: 262, ang: 0 }], pts: [[110, 230], [150, 90], [290, 60], [380, 150], [470, 70], [640, 70], [720, 170], [650, 260], [700, 360], [560, 400], [420, 330], [280, 400], [140, 370]],
-    mud: [[.2, 0, 30, 36], [.56, 10, 26, 30]], water: [[.4, 0, 26, 36], [.79, -12, 20, 18]], boost: [.07, .3, .48, .67, .86], ponds: [], wash: .95 }
+  // The rainbow (the finale, a bigger map): a rainbow road over a sea of clouds between floating coins, one for every cup (see rainbowmap.js,
+  // rainbow.js). From the Fantasy coin (the start, under a gate of clouds) up to the bronze coin (a meadow: earth road, a mud puddle, two cows),
+  // over the rainbow arch (it climbs over a cloud gorge, the biggest jump of the game over the gap at its top), across the silver coin (a garden:
+  // a red bridge over a cloud pond, koi), down the gold coin (an asphalt chicane with kerbs and gravel, an ice ramp back onto the rainbow), round
+  // the platinum coin (a little volcano, a wormhole over the next bend), through the spiral (a big left and a right curve, boost arrows) and the
+  // rain shower (it washes) back. In the last lap of the storm (event gewitter) a double rainbow cuts the spiral short.
+  // coins = [x, y, r] of every coin; arch = where it starts and ends and its gap ([x, y] on the road); ramp = the ice ramp: ice from, lip, end of
+  // the gap; puddle = the mud puddle of the bronze coin [x, y, rx, ry]; cows = [x, y, how far it walks, phase]; pines, chair (beach chair),
+  // cherries, lantern, cacti = [x, y]; pond = the cloud pond [x, y, rx, ry] (the koi leap over the bridge); gravel = [x, y, r]; cone = the little volcano [x, y, r]
+  // and its lava rill (points); portals = the wormhole: its little platform [x, y, r] and where you come out [x, y]; storm = storm clouds on the
+  // road [t, offset, half length, half width], stormAt = the ones the storm brings (event gewitter); shower = the rain shower [x, y] on the
+  // road; podium = [x, y]; emblems = the cup symbols [x, y, size]; double = the double rainbow (a curve: start, two control points, end)
+  { name: 'REGENBOGEN', rev: 1, seed: 15, W: 1440, H: 810, theme: 'regenbogen', song: 'rainbow', events: ['einhorn', 'gewitter'], wall: [], wash: null, rainbow: true, goo2: 'mud',
+    poly: [[180, 440, 0], [180, 110, 95], [1300, 110, 60], [1300, 190, 45], [1258, 255, 55], [1300, 320, 45], [1300, 585, 95], [1060, 585, 80], [900, 425, 120], [700, 355, 150],
+      [560, 535, 150], [520, 742, 110], [180, 742, 95]],
+    mud: [], water: [], ponds: [], boost: [.72, .785],
+    coins: { bronze: [420, 125, 100], silver: [1010, 145, 105], gold: [1288, 262, 95], platinum: [1240, 590, 100], fantasy: [180, 430, 120] },
+    arch: [[521, 110], [906, 110], [658, 110], [768, 110]], ramp: [[1300, 350], [1300, 372], [1300, 402]],
+    puddle: [455, 118, 22, 13], cows: [[388, 102, 14, 0], [492, 121, 9, 2.4]], pines: [[350, 170], [492, 170], [446, 50]], chair: [382, 52],
+    pond: [1010, 112, 34, 56], cherries: [[940, 60], [1082, 175]], lantern: [940, 178],
+    gravel: [[1342, 200, 22], [1212, 255, 26], [1342, 322, 22]], cacti: [[1226, 190], [1224, 332], [1250, 214]],
+    cone: [1305, 652, 22], rill: [[1290, 640], [1266, 632], [1240, 642]], portals: { a: [1232, 520, 15], b: [960, 485] },
+    storm: [[.085, -16, 24, 12], [.39, 16, 22, 11], [.615, 15, 24, 12], [.70, -16, 26, 12], [.80, 15, 24, 12]],
+    stormAt: [[.045, 14, 22, 11], [.38, -15, 22, 11], [.655, -14, 24, 12], [.745, 15, 24, 12], [.835, 14, 22, 11]],
+    shower: [380, 742], podium: [105, 480],
+    emblems: { bronze: [420, 182, 26], silver: [1010, 208, 22], gold: [1345, 262, 16], platinum: [1185, 655, 14], fantasy: [252, 440, 24] },
+    double: [[1080, 585], [880, 585], [700, 742], [520, 742]] }
 ];
 
 
@@ -458,6 +486,7 @@ function* buildTrack(def, ti) {
   const spaT = def.space ? yield* spaceTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N }) : null;
   const sueT = def.suess ? yield* suessTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N, deep }) : null;
   const toyT = def.toys ? yield* toyTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N }) : null;
+  const rbT = def.rainbow ? yield* rainbowTerrain({ MW, MH, def, ter, dist, near, path, tan, nrm, N }) : null;
   yield .35;
   // railway: a straight vertical line through the whole world
   let rail = null;
@@ -498,7 +527,6 @@ function* buildTrack(def, ti) {
   const WAT = th.water.map(hex), SHORE = th.shore.map(hex);
   const SEA = ['#f4fbff', '#9df0e6', '#4fd0d8', '#2fa6d6', '#2285c4'].map(hex), WET = [hex('#c9a060'), hex('#d8b66e'), hex('#e2c47e')];
   const PEB = [hex('#e2cda6'), hex('#86653f')];
-  const RB = ['#ff4d6d', '#ff9f43', '#ffd93d', '#6bcb77', '#4d96ff', '#9b5de5'].map(hex), RBL = ['#ff7a90', '#ffb86b', '#ffe46b', '#8fdc98', '#78b0ff', '#b585ee'].map(hex);
   const PLANK = [hex('#8d8373'), hex('#7a7163')], BAL = ['#8a8580', '#77726c', '#9c968f'].map(hex), SLEEPER = [hex('#6b4a2e'), hex('#56391f')], RAIL = [hex('#d5dae2'), hex('#6f757d')];
   const mudPix = [], watPix = [], starPix = [];
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
@@ -530,15 +558,8 @@ function* buildTrack(def, ti) {
       const e = ed(x, y, 2, 1);
       if (e === 1) col = MUDE; else { mudPix.push(j); const v = nv * .6 + h * .4; col = v < .38 ? MUD[1] : v > .66 ? MUD[2] : MUD[0]; if (h < .025) col = MUDH; }
     } else if (t === 1 || t === 4) {
-      if (th.rainbow) {
-        const i = near[j], p = path[i], c = (x + .5 - p.x) * nrm[i].x + (y + .5 - p.y) * nrm[i].y;
-        const b = clamp(Math.floor((c + HALF) / (2 * HALF) * 6), 0, 5);
-        col = (i >> 3) & 1 ? RB[b] : RBL[b];
-        if (dist[j] > HALF - 2.5) col = [255, 255, 255]; else if (h > .993) col = [255, 255, 255];
-      } else {
-        const v = nv * .6 + h * .4; col = v < .35 ? TRK[1] : v > .68 ? TRK[2] : TRK[0];
-        if (dist[j] > HALF - 3) col = TE; else if (h > .988) col = PEB[0]; else if (h < .01) col = PEB[1];
-      }
+      const v = nv * .6 + h * .4; col = v < .35 ? TRK[1] : v > .68 ? TRK[2] : TRK[0];
+      if (dist[j] > HALF - 3) col = TE; else if (h > .988) col = PEB[0]; else if (h < .01) col = PEB[1];
     } else if (th.space) {
       const neb = vnoise(x / 45, y / 45, sd + 3);
       col = neb > .62 ? GRS[2] : neb > .45 ? GRS[1] : GRS[0];
@@ -649,10 +670,10 @@ function* buildTrack(def, ti) {
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (MW - 10) | 0), y = 5 + (r() * (MH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
   const rock = (x, y) => { const L2 = hex('#c4c4bb'), M2 = hex('#9a9a92'), D2 = hex('#6e6e68'); for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(x + dx, y + dy, dy === 0 ? L2 : dy === 2 ? D2 : M2); };
   const trees = [], critters = [], C = th.treeCol.map(hex);
-  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null, desert = null, ice = null, volcano = null, jungle = null, space = null, suess = null, toys = null;
+  let windmill = null, lights = [], mixer = null, hose = null, tight = [], ring = null, desert = null, ice = null, volcano = null, jungle = null, space = null, suess = null, toys = null, rainbow = null;
   const darken = (x, y, rad, ox, oy) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + ox, yy = y + dy + oy; if (xx < 0 || yy < 0 || xx >= MW || yy >= MH) continue; const i = (yy * MW + xx) * 4; d[i] *= .78; d[i + 1] *= .76; d[i + 2] *= .76; } };
   const flowers = (n, PET) => scatter(n, 2, (x, y) => { const pc = PET[(r() * PET.length) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, pc === PET[1] ? hex('#ff8c1a') : hex('#ffe14d')); });
-  // wall look: fence + hay (meadow), log pile + pines (forest), beach bar + surfboards + palms (beach), asteroid belt (space), railway barrier (train)
+  // wall look: fence + hay (meadow), log pile + pines (forest), beach bar + surfboards + palms (beach), railway barrier (train)
   const kind = def.wallStyle, along = (sg, step, fn) => { for (let t = 0; t <= sg.len; t += step) fn(sg.a[0] + sg.ca * t, sg.a[1] + sg.sa * t, t); };
   const frac = (sg, fs) => { if (th.tree !== 'none') for (const f of fs) wallTrees.push({ x: Math.round(sg.a[0] + sg.ca * sg.len * f), y: Math.round(sg.a[1] + sg.sa * sg.len * f) }); };
   const at = (sg, x, y, a, b) => [Math.round(x + sg.ca * a - sg.sa * b), Math.round(y + sg.sa * a + sg.ca * b)];
@@ -702,18 +723,6 @@ function* buildTrack(def, ti) {
       }
       for (let a = -26; a <= 26; a += 4) { const bc = BUN[(a / 4 + 7) % 5 | 0]; for (const bb of [15, 16]) { const [qx, qy] = at(sg, mx, my, a, bb); setT(qx, qy, bc); } }
       frac(sg, [.18, .3, .7, .82]);
-    } else if (kind === 'rocks') {
-      const rr0 = rng(sd + 77);
-      along(sg, 15, (x, y) => {
-        const rr = 6 + (rr0() * 5 | 0), X = Math.round(x), Y = Math.round(y), cr = [[rr0() * 4 - 2, rr0() * 4 - 2, 2], [rr0() * 5 - 2, rr0() * 5 - 2, 1.4]];
-        walls.push({ x, y, r: rr - 1 });
-        for (let dy = -rr - 2; dy <= rr + 2; dy++) for (let dx = -rr - 2; dx <= rr + 2; dx++) {
-          const dd = Math.hypot(dx, dy) + (vnoise((X + dx) * .4, (Y + dy) * .4, sd) - .5) * 4; if (dd > rr) continue;
-          const sh = (dx + dy) / rr; let col = sh < -.4 ? [185, 185, 204] : sh > .4 ? [94, 94, 114] : [138, 138, 158];
-          for (const c of cr) if (Math.hypot(dx - c[0], dy - c[1]) < c[2]) col = [94, 94, 114];
-          setT(X + dx, Y + dy, col);
-        }
-      });
     } else if (kind === 'barrier') {
       const RD = hex('#e84a5f'), WH2 = hex('#ffffff'), PO = hex('#444444');
       shadow(2);
@@ -1022,27 +1031,13 @@ function* buildTrack(def, ti) {
     suess = yield* paintSuess({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, deep, bridgeMask, isBridge, stoneMask, sd, r, mudPix, watPix, darken, RT: sueT });
   } else if (th.decor === 'spielzimmer') {
     toys = yield* paintToys({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, RT: toyT });
+  } else if (th.decor === 'regenbogen') {
+    rainbow = yield* paintRainbow({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, r, critters, mudPix, RT: rbT });
   } else if (th.decor === 'farm') {
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
     scatter(14, 7, (x, y) => { for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const dd = Math.hypot(dx, dy); if (dd > 6) continue; px(x + dx, y + dy, dd > 5.2 ? hex('#a8863a') : (Math.round(dd) % 2 ? hex('#e3c16f') : hex('#cfa84f'))); } });
     scatter(20, 3, rock);
-  } else if (th.decor === 'space') {
-    const planet = (x, y, rad, cols, rings) => {
-      for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) {
-        if (dx * dx + dy * dy > rad * rad) continue;
-        const s = (dx + dy) / rad; let col = s < -.5 ? cols[2] : s > .45 ? cols[0] : cols[1];
-        if (((y + dy) >> 2) % 3 === 0 && s > -.5) col = cols[3];
-        px(x + dx, y + dy, col);
-      }
-      if (rings) for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad * 2; dx <= rad * 2; dx++) {
-        const e = (dx / (rad * 1.8)) ** 2 + (dy / (rad * .45)) ** 2;
-        if (Math.abs(e - 1) < .12 && !(dy < 0 && dx * dx + dy * dy < rad * rad)) px(x + dx, y + dy, hex('#ffe9a8'));
-      }
-    };
-    const PL = [['#7a2e8e', '#b04fc6', '#e8a3f5', '#9c3fb3'], ['#1f5f8b', '#2e86de', '#8fd3f4', '#2874b8'], ['#b35a1f', '#e67e22', '#f7c08a', '#d0701f'], ['#6f6f7a', '#a0a0ab', '#e0e0e8', '#8a8a95']].map(a => a.map(hex));
-    scatter(5, 22, (x, y) => planet(x, y, 9 + (r() * 8 | 0), PL[(r() * 4) | 0], r() < .5));
-    scatter(40, 3, (x, y) => { const c = r() < .5 ? hex('#ffffff') : hex('#ffe9a8'); px(x, y, c); px(x - 1, y, c); px(x + 1, y, c); px(x, y - 1, c); px(x, y + 1, c); starPix.push(y * MW + x); });
   }
   yield .86;
   // trees: shadow on the ground, canopy on the top layer
@@ -1101,9 +1096,9 @@ function* buildTrack(def, ti) {
   const top = toCanvas(outlineImg(new ImageData(tp, MW, MH), MW, MH, C[3]));
   const wp = path[wi], solid = trees.concat(walls);
   return { W: MW, H: MH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: solid, grid: obstacleGrid(solid, MW, MH), critters, windmill, shoreY, boat: { x: 60 }, base, top, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice, volcano, jungle, space, suess, toys,
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ring, desert, ice, volcano, jungle, space, suess, toys, rainbow,
     // Cup 3 building blocks (see trackfx.js): ramps to jump from, stretches that push the cars, where a second way runs beside the road
-    jumps: (desert || ice || volcano || jungle || space || suess || toys || {}).jumps || [], pushes: (desert || ice || volcano || jungle || space || suess || toys || {}).pushes || [], alt: (desert || ice || volcano || jungle || space || suess || toys || {}).alt || null };
+    jumps: (desert || ice || volcano || jungle || space || suess || toys || rainbow || {}).jumps || [], pushes: (desert || ice || volcano || jungle || space || suess || toys || rainbow || {}).pushes || [], alt: (desert || ice || volcano || jungle || space || suess || toys || rainbow || {}).alt || null };
 }
 
 

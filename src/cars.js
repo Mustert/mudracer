@@ -203,7 +203,6 @@ const DIRT = ['#6b4a2b', '#58391f', '#7d5a36'].map(hex);
 
 
 const CEM = ['#8c9097', '#a4a9af', '#6f747a'].map(hex);
-const GOO = ['#c04dd8', '#a33bbf', '#e38cf5'].map(hex);
 
 
 export const OUT = [27, 18, 12];
@@ -277,7 +276,6 @@ export function stepSet(S, until) {
 // all turns now (a race starts)
 export const completeSet = S => stepSet(S, Infinity);
 
-// the rainbow track paints cars with purple glitter goo instead of mud; built the first time it is needed
 // sprites (48 turns x 6 dirt levels): turn 0 the first time a car is shown, the rest in slices (see newSet)
 
 // cem: the grey set for cars that drove through cement; goo 'oil': the black set of the race circuit, 'sand' and 'snow' (desert, ice)
@@ -294,12 +292,14 @@ const DUST = ['#b4b8c2', '#d2d5dc', '#8e929c'].map(hex);
 const CHOCO = ['#5a3020', '#7a4a2e', '#3a1a0e'].map(hex), CARAMEL = ['#e0a030', '#f0c050', '#b07018'].map(hex);
 // plasticine (kids' room) makes them colourful: red, blue, yellow and green specks
 const KNETE = ['#e04848', '#3c6ee0', '#f2cc30', '#40b850'].map(hex);
+// the storm clouds of the rainbow make them grey like a rainy day
+const STORM = ['#6e7480', '#8a909c', '#545a66'].map(hex);
 export function carSet(def, goo, cem) {
-  const kind = cem ? 'cem' : typeof goo === 'string' ? goo : goo ? 'goo' : 'mud', key = '_' + kind;
-  return def[key] || (def[key] = newSet(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, ash: ASH, swamp: SWAMP, dust: DUST, choco: CHOCO, caramel: CARAMEL, knete: KNETE, goo: GOO, mud: DIRT }[kind]));
+  const kind = cem ? 'cem' : typeof goo === 'string' ? goo : 'mud', key = '_' + kind;
+  return def[key] || (def[key] = newSet(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, ash: ASH, swamp: SWAMP, dust: DUST, choco: CHOCO, caramel: CARAMEL, knete: KNETE, storm: STORM, mud: DIRT }[kind]));
 }
 
-const KINDS = ['_mud', '_goo', '_cem', '_oil', '_sand', '_snow', '_ash', '_swamp', '_dust', '_choco', '_caramel', '_knete'];
+const KINDS = ['_mud', '_cem', '_oil', '_sand', '_snow', '_ash', '_swamp', '_dust', '_choco', '_caramel', '_knete', '_storm'];
 
 // the sprite sets of one car (a new paint makes them again)
 export function dropSets(def) { for (const k of KINDS) delete def[k]; }

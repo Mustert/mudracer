@@ -38,7 +38,8 @@ export function resetWorld() {
 
 
 export function makeCar(def, x, y, ang, ai, skill, entry) {
-  const F = carSet(def, G.T.th.goo), Fc = G.T.def.cement ? carSet(def, false, true) : G.T.th.goo2 ? carSet(def, G.T.th.goo2) : null; // (goo2: the caramel of Süßigkeitenland)
+  // Fc: the second set of sprites (grey cement on the building site, golden caramel in Süßigkeitenland: th.goo2, brown mud on the rainbow: def.goo2); c.cem says which one is shown
+  const g2 = G.T.th.goo2 || G.T.def.goo2, F = carSet(def, G.T.th.goo), Fc = G.T.def.cement ? carSet(def, false, true) : g2 ? carSet(def, g2) : null;
   completeSet(F); if (Fc) completeSet(Fc); // usually built already (loading screen, idle.js)
   return { def, entry, F, Fc, cem: false, x, y, ang, vx: 0, vy: 0, dirt: 0, lap: 0, cp: 0, idx: 0, off: 0, ai, skill, seed: Math.random() * 100,
     surf: 1, mudTrail: 0, wetTrail: 0, finished: false, place: 0, honk: 0, bump: 0, washing: false, boost: 0, stun: 0, spin: 0, brake: false, z: 0, vz: 0, wet: 0, fall: 0, ghost: 0, safe: 0,
