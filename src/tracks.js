@@ -174,15 +174,21 @@ const TRACK_DEFS = [
   // (jump over it from the rocky ramp or take the slow swinging rope bridge beside it), quicksand, the oasis at the start (see desertmap.js, desert.js).
   // oasis = [x, y, rx, ry] (the shallow rim reaches the road and washes, the deep middle is deep water); dunes = x of the crests on the top straight;
   // pyramid = [x, y, half size]; cacti = [x, y] on the road; canyon = x, half width, from y, ramp lip x and its y range, rope bridge y (middle) and half width;
-  // quick = quicksand [x, y, r]; drifts = where the sandstorm blows sand onto the road [x, y, r]; minis = small pyramids [x, y, half size]; sphinx = [x, y]
-  { name: 'WUESTE', seed: 8, theme: 'wueste', song: 'desert', events: ['sandsturm'], wall: [], wash: null, desert: true,
-    poly: [[70, 330, 0], [70, 70, 55], [680, 70, 45], [680, 390, 55], [70, 390, 55]],
+  // quick = quicksand [x, y, r] (in a hollow of the dunes, a damp rim round it); drifts = where the sandstorm blows sand onto the road [x, y, r];
+  // minis = small pyramids [x, y, half size]; sphinx = [x, y]; ridges = chains of rock between the pyramids and the head of the gorge (the dunes
+  // in the middle are closed, nobody cuts through); heat = places over the road where the air flickers [x0, y0, x1, y1]
+  // Revision 1: the start line moved to the long straight on the left (the grid stands straight), the right side bends (the road follows the wadi),
+  // oasis in the top left corner, rock ridges through the middle, cacti on the road bigger than the ones beside it.
+  { name: 'WUESTE', rev: 1, seed: 8, theme: 'wueste', song: 'desert', events: ['sandsturm'], wall: [], wash: null, desert: true,
+    poly: [[70, 140, 0], [70, 70, 50], [680, 70, 45], [680, 175, 38], [640, 262, 42], [690, 390, 55], [70, 390, 20]],
     mud: [], water: [], ponds: [],
-    oasis: [140, 208, 52, 38], dunes: [178, 268, 358], pyramid: [660, 86, 80],
-    cacti: [[667, 206], [694, 242], [666, 278], [693, 312]],
+    oasis: [190, 150, 50, 34], dunes: [178, 268, 358], pyramid: [660, 86, 80],
+    cacti: [[681, 206], [636, 262], [674, 311]],
     canyon: { x: 566, hw: 20, y0: 286, lip: 592, lane: [358, 396], bridge: 414, bh: 14 },
     quick: [[452, 378, 21], [352, 402, 18], [262, 372, 22]],
-    drifts: [[70, 160, 13], [300, 66, 14], [520, 76, 13], [684, 350, 13], [150, 392, 14]],
+    drifts: [[70, 260, 13], [300, 66, 14], [520, 76, 13], [150, 392, 14]],
+    ridges: [[[205, 192], [240, 210], [272, 214]], [[328, 222], [380, 236], [432, 248]], [[476, 256], [520, 270], [546, 282]], [[466, 232], [515, 203], [556, 176], [580, 168]]],
+    heat: [[110, 44, 560, 96], [120, 364, 540, 416]],
     minis: [[300, 230, 30], [452, 250, 22]], sphinx: [758, 300] },
   // The ice: the ski jump (a boost pad on the run-up, about a second in the air), the bob run with springy walls and a hairpin, deep snow and the
   // penguins on the way down, the frozen lake (the road goes round it, the short cut across the thin ice cracks and breaks), a wooden bridge over

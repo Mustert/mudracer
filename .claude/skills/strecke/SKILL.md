@@ -22,7 +22,7 @@ Gilt für neue Strecken und Überarbeitungen. Die Streckendesign-Grundsätze 1�
 | Nummer und Cup | Strecke n gehört in Cup ⌈n/3⌉ (`cups.js` `CUPS`). Schwierigkeit steigt mit n (Grundsatz 1). |
 | Kartengröße | Standard 800×450; größer über `W`/`H` im `TRACK_DEFS`-Eintrag. Mehr Fläche heißt längere Bauzeit und Runde (T18, T19, T23). |
 | Boden-Codes | Die Liste aller vergebenen Codes steht über `physics.js` `surfOf`: 0–17 gemeinsam (Straße, Matsch, Wasser, Schlucht, Eis, Lava …), eigene Zehnerblöcke 30–32 (Spielzimmer) und 41–48 (Regenbogen). Eine neue Strecke nimmt 50–59, beantwortet ihre Codes im Hook `surf` und trägt sie in die Liste ein (ANALYSE.md T21). |
-| Felder in `T.ev` | mit dem Kürzel der Strecke beginnen (z. B. `toyRobot`), nie allgemeine Namen wie `wind`, `storm` oder `msg` (T22; `checkAll` listet, was doppelt ist). Der Kern liest aus `T.ev` nur `obst` (Hindernisse, denen die KI ausweicht, gewollt gemeinsam) und `wind` (Wüstenwind, `trackfx.js`). |
+| Felder in `T.ev` | mit dem Kürzel der Strecke beginnen (z. B. `toyRobot`), nie allgemeine Namen wie `wind`, `storm` oder `msg` (T22; `checkAll` listet, was doppelt ist). Der Kern liest aus `T.ev` nur `obst` (Hindernisse, denen die KI ausweicht, gewollt gemeinsam); Kräfte wie den Wüstenwind wendet die Strecke selbst an (`desert.js`, Hook `update`; die Wüste trägt das Kürzel `ds`). |
 | Ereignisse | Schlüssel in `def.events`, Schalter in `PREFS.events` (`state.js`), Anzeigename in `FX_NAMES` (`raceopts.js`), Start im Hook `events` der Strecke (`events: { spielzeug: initToyEvents }`, siehe Abschnitt 3). |
 | Lied | eigener Schlüssel in `SONGS` (`music.js`), `song` im `TRACK_DEFS`-Eintrag (Grundsatz 8). |
 | Überarbeitung | Ändert sich der Kurs, `rev` im `TRACK_DEFS`-Eintrag hochzählen: alte Rekorde bleiben, neue starten frisch (Grundregel „Spielstände bleiben gültig“). Name nie ändern. |
@@ -43,7 +43,7 @@ Der Kern fragt nicht mehr nach einzelnen Strecken (`if (G.T.toys) …`), sondern
 | `music.js` | `SONGS.<lied>` (Wechsel über `swap`, wie Vulkan, Spielzimmer, Regenbogen) |
 | `state.js`, `raceopts.js`, `cups.js` | `PREFS.events`, `FX_NAMES`, Cup-Eintrag |
 
-Nicht über Hooks, weil die Streckenmodule sie selbst importieren (Import-Kreis): `trackfx.js` liest Daten aus dem Streckenzustand (`T.desert.landI`, `T.volcano.hot`, `quick`), `music.js` fragt in den Liedern nach `G.T.<flag>`. Braucht eine neue Strecke dort etwas, lieber Daten im Streckenzustand oder im Theme ablegen als eine neue Abfrage.
+Nicht über Hooks, weil die Streckenmodule sie selbst importieren (Import-Kreis): `trackfx.js` liest Daten aus dem Streckenzustand (`T.volcano.hot`, `T.jungle.quick`; ein Sprung bringt über `land` den Rückkehrpunkt selbst mit, eine Schlucht fällt im Boden-Hook, siehe `desert.js`), `music.js` fragt in den Liedern nach `G.T.<flag>`. Braucht eine neue Strecke dort etwas, lieber Daten im Streckenzustand oder im Theme ablegen als eine neue Abfrage.
 
 Hilfen, die es schon gibt (nicht neu schreiben): `core.js` (`hash`, `vnoise`, `rng`, `hex`, `clamp`, `mk`, `inRange` für Abschnitte der Mittellinie, `smooth`), `bau.js` (`nearestIdx`; für die Kartenmodule `paintTools(S)` mit `px`, `dk`, `solid`, `off` und `startLine(S)`), `volcanomap.js` (`polyPts` abgerundete Linie, `stampLine`), `trackfx.js` (Sprünge `jumps`, Schübe `pushes`, `fallCar`, Landung; `near`, `inView`, `lastLap`), `gfx.js` (`disc`, `ell`, `R1`, `text`, `swirl`), `grid.js` (Hindernisse), `particles.js` (`addP`, `drop`, `splash`, `mudBurst`).
 
