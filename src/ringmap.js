@@ -1,5 +1,6 @@
 import { HALF, angDiff, hash, hex, mk, vnoise } from './core.js';
-import { nearestIdx } from './bau.js';
+import { nearestIdx, paintTools } from './bau.js';
+import { polyPts } from './volcanomap.js';
 
 // ---------- Rennstrecke: kerbs, gravel traps, oil, the pit lane, barriers all around and the bridge where the road crosses itself ----------
 // The circuit is an 8: the centre line crosses itself once. The first time you drive over the bridge, the second time underneath it.
@@ -19,13 +20,13 @@ const TEAM = ['#d83a2c', '#2f6fd8', '#3aa845', '#f2c230', '#8e44ad', '#f07a1a', 
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N, stampAt }
 export function* ringTerrain(S) {
-  const { MW, MH, def, ter, dist, near, path, tan, nrm, N } = S, A = MW * MH;
+  const { MW, MH, def, ter, dist, near, path, tan, N } = S, A = MW * MH;
   yield;
   // curvature of the centre line (turn per pixel), and the strongest one nearby, so the kerbs run through the whole corner
   const ang = tan.map(t => Math.atan2(t.y, t.x)), cv = new Float32Array(N), kc = new Float32Array(N);
   for (let i = 0; i < N; i++) cv[i] = angDiff(ang[(i + 5) % N], ang[(i - 5 + N) % N]) / 20;
   for (let i = 0; i < N; i++) { let m = 0; for (let k = -10; k <= 10; k++) { const v = cv[(i + k + N) % N]; if (Math.abs(v) > Math.abs(m)) m = v; } kc[i] = m; }
-  const off = j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; };
+  const { off } = paintTools(S);
 
   yield;
   // the crossing: two points of the centre line that meet although they are far apart along the lap. The first one is the bridge.
@@ -67,19 +68,7 @@ export function* ringTerrain(S) {
   let pit = null;
   if (def.pit) {
     // the lane: [x, y, curve radius] like the circuit itself, with smooth curves into and out of it
-    const P = def.pit, pts = [], seg = (a, b) => { const m = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 2)); for (let s = 0; s < m; s++) pts.push({ x: a[0] + (b[0] - a[0]) * s / m, y: a[1] + (b[1] - a[1]) * s / m }); };
-    let cur = [P.pts[0][0], P.pts[0][1]];
-    for (let k = 1; k < P.pts.length; k++) {
-      const [x, y, r] = P.pts[k];
-      if (k === P.pts.length - 1 || !r) { seg(cur, [x, y]); cur = [x, y]; continue; }
-      const [qx, qy] = P.pts[k - 1], [nx, ny] = P.pts[k + 1], dp = Math.hypot(qx - x, qy - y), dn = Math.hypot(nx - x, ny - y), rp = Math.min(r, dp / 2), rn = Math.min(r, dn / 2);
-      const A0 = [x + (qx - x) / dp * rp, y + (qy - y) / dp * rp], B0 = [x + (nx - x) / dn * rn, y + (ny - y) / dn * rn];
-      seg(cur, A0);
-      const m = Math.max(8, Math.ceil((rp + rn) * .6));
-      for (let q = 0; q < m; q++) { const t = q / m, u = 1 - t; pts.push({ x: u * u * A0[0] + 2 * u * t * x + t * t * B0[0], y: u * u * A0[1] + 2 * u * t * y + t * t * B0[1] }); }
-      cur = B0;
-    }
-    pts.push({ x: cur[0], y: cur[1] });
+    const P = def.pit, pts = polyPts(P.pts);
     const R = P.half + 14;
     pts.forEach((p, k) => {
       for (let y = Math.max(0, Math.floor(p.y - R)); y <= Math.min(MH - 1, p.y + R); y++) for (let x = Math.max(0, Math.floor(p.x - R)); x <= Math.min(MW - 1, p.x + R); x++) {

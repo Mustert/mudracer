@@ -1,5 +1,5 @@
 import { HALF, TAU, hash, hex, vnoise } from './core.js';
-import { nearestIdx } from './bau.js';
+import { nearestIdx, paintTools, startLine } from './bau.js';
 import { stampLine } from './volcanomap.js';
 
 // ---------- Spielzimmer: the play mat with its printed road, the wooden toy train on the parquet, the ramp of books onto the bed, the pillow
@@ -92,11 +92,9 @@ export function* toyTerrain(S) {
 
 // painting, after the ground. S: { MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, RT }
 export function* paintToys(S) {
-  const { MW, MH, def, d, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, RT } = S, A = MW * MH, kind = RT.kind;
-  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); };
-  const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= MW || y >= MH) return; const i = (y * MW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
+  const { MW, MH, def, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, RT } = S, A = MW * MH, kind = RT.kind;
+  const { px, dk, off } = paintTools(S);
   const block = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < MW && Y < MH) wallMask[Y * MW + X] = 1; } };
-  const off = j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; };
   const edgeOf = (j, t) => ter[j - 1] !== t || ter[j + 1] !== t || ter[j - MW] !== t || ter[j + MW] !== t;
   // a box on the ground with a shadow to the bottom right (solid things cast one, flat decoration does not)
   const shadowRect = (x0, y0, w, h, ox, oy, k = .72) => { for (let y = y0 + oy; y < y0 + h + oy; y++) for (let x = x0 + ox; x < x0 + w + ox; x++) if (!(x >= x0 && x < x0 + w && y >= y0 && y < y0 + h)) dk(x, y, k); };
@@ -208,7 +206,7 @@ export function* paintToys(S) {
   for (let y = gy0 + FACE; y < gy1; y++) for (let x = DX0; x < DX1; x++) { const j = y * MW + x; if (kind[j] !== 6) dk(x, y, .62); else if (y < gy0 + FACE + 6) dk(x, y, .9); }
   for (let y = desk[0][1] + 8; y < desk[1][3] + FACE; y++) for (let x = DX1; x < DX1 + 16 && x < MW - 6; x++) dk(x, y, .72);
   // the start line (chequered)
-  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * MW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
+  startLine(S);
 
   yield;
   // ----- the wooden train: a loop of beech track with two grooves, joints every 40 px, a little station at the top -----

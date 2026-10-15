@@ -5,7 +5,7 @@ import { R1, disc, ell, text } from './gfx.js';
 import { snap } from './undo.js';
 import { addP } from './particles.js';
 import { cam } from './state.js';
-import { near } from './trackfx.js';
+import { inView, near } from './trackfx.js';
 
 // ---------- Vulkan while racing ----------
 // Always: the crust over the lava stream breaks through every 12 s (it glows 2 s before, then it is lava for 4 s), the geyser blows every 6 s
@@ -206,7 +206,6 @@ function lavaPic(T, pix) {
 
 // ======================================================= drawing
 
-const inView = (x, y, m = 40) => x > cam.x - m && x < cam.x + VW + m && y > cam.y - m && y < cam.y + VH + m;
 
 function drawVolcanoGround() {
   const T = G.T, V = T.volcano, ev = T.ev, k = Math.floor(G.time * 4);

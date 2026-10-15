@@ -9,6 +9,7 @@ import { bctx, eventOn, snap } from './undo.js';
 import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
 import { drawMarshals, drawTyres, tyreCollisions, updateReifen } from './ring.js';
 import { TRACK_EVENTS, trackHooks } from './hooks.js';
+import { near } from './trackfx.js';
 
 // ---------- track events: the map changes while you race ----------
 // Wiese: a herd of cows grazes on and next to the track (they are obstacles, they moo).
@@ -366,7 +367,6 @@ function initKipper(T) {
   });
 }
 
-const near = (x, y) => Math.hypot(x - cam.x - VW / 2, y - cam.y - VH / 2);
 const vol = (x, y) => clamp(1 - near(x, y) / 460, 0, 1);
 
 function paintPile(T, s, stage) {

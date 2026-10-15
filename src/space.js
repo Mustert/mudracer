@@ -1,10 +1,10 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { LAPS, SS, TAU, VH, VW, angDiff, clamp, ctx, hash, rotIndex } from './core.js';
-import { R1, disc, ell, text } from './gfx.js';
+import { SS, TAU, VH, VW, angDiff, clamp, ctx, hash, rotIndex } from './core.js';
+import { R1, disc, ell, swirl, text } from './gfx.js';
 import { addP } from './particles.js';
 import { cam } from './state.js';
-import { fallCar, near } from './trackfx.js';
+import { fallCar, inView, lastLap, near } from './trackfx.js';
 
 // ---------- Weltall while racing ----------
 // Always: the platforms are weightless (little grip, the cars steer with small thruster puffs), next to them is nothing: a car that gets
@@ -22,8 +22,6 @@ const PULL = { g: 110, reach: 330 }, HOLE = { pull: 7000, max: 52, open: 3, r: 2
 const AST = { warn: 1.9, speed: 150, small: 6, big: 10 }, VOID_T = .12;
 // the stars far away: how many, how much they move with the map, colour
 const STARS = [[46, .25, '#5a6090'], [30, .45, '#a8b0e0'], [16, .65, '#ffffff']];
-const inView = (x, y, m = 40) => x > cam.x - m && x < cam.x + VW + m && y > cam.y - m && y < cam.y + VH + m;
-const lastLap = () => !!G.player && G.player.lap >= LAPS;
 
 function initSpace(T) {
   const ev = T.ev;
@@ -243,17 +241,6 @@ function drawSpaceFall(c, F, lv) {
   }
 }
 
-// a swirl: the mouth of the wormhole
-function swirl(x, y, r, col, col2, rot) {
-  ctx.globalAlpha = .35; disc(Math.round(x), Math.round(y), r + 3, col); ctx.globalAlpha = 1;
-  disc(Math.round(x), Math.round(y), r, '#0a0618');
-  for (let k = 0; k < 3; k++) for (let s = 0; s < 1; s += .06) {
-    const a = rot + k * TAU / 3 + s * 4, d = s * r;
-    R1(Math.round(x + Math.cos(a) * d), Math.round(y + Math.sin(a) * d), 2, 2, s > .6 ? col2 : col);
-  }
-  R1(Math.round(x) - 1, Math.round(y) - 1, 2, 2, '#ffffff');
-}
-
 // on the ground (under the cars): stars far away that move slower than the map, glowing edges, the wormhole, where asteroids will fly, the
 // black hole, the lamps on the moon, glowing tyre tracks
 function drawSpaceGround() {
@@ -290,8 +277,8 @@ function drawSpaceGround() {
   }
   // the wormhole: the purple mouth on its little platform, the turquoise one is where you come out
   const P = S.portals, rot = G.time * 5;
-  if (inView(P.b.x, P.b.y)) swirl(P.b.x, P.b.y, 10, '#1fb8b0', '#9ffff0', -rot);
-  if (inView(S.ax, S.ay)) swirl(S.ax, S.ay, 11, '#8a3ad8', '#e0a8ff', rot);
+  if (inView(P.b.x, P.b.y)) swirl(P.b.x, P.b.y, 10, '#1fb8b0', '#9ffff0', -rot, '#0a0618');
+  if (inView(S.ax, S.ay)) swirl(S.ax, S.ay, 11, '#8a3ad8', '#e0a8ff', rot, '#0a0618');
   // where asteroids will fly: a dashed line along their way, until they are past
   if (ev && ev.asts) for (const a of ev.asts) {
     if (a.t > AST.warn + .2 || !inView(a.tx, a.ty, 120)) continue;

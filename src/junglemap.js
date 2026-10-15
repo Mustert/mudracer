@@ -1,5 +1,5 @@
 import { HALF, TAU, hash, hex, mk, vnoise } from './core.js';
-import { nearestIdx } from './bau.js';
+import { nearestIdx, paintTools, startLine } from './bau.js';
 import { stampLine } from './volcanomap.js';
 
 // ---------- Dschungel: the camp, the canopy with the fork under it, the gorge with the liana and the log bridge, the temple ruin, the ford,
@@ -19,8 +19,8 @@ const K = Object.fromEntries(Object.entries({
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N }
 export function* jungleTerrain(S) {
-  const { MW, MH, def, ter, dist, near, path, nrm } = S, A = MW * MH, alt = new Uint8Array(A), plankM = new Uint8Array(A), logM = new Uint8Array(A);
-  const off = j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; };
+  const { MW, MH, def, ter, dist, near, path } = S, A = MW * MH, alt = new Uint8Array(A), plankM = new Uint8Array(A), logM = new Uint8Array(A);
+  const { off } = paintTools(S);
   yield;
   // the dry detour under the canopy: a narrow road of its own
   const detour = stampLine(def.detour.pts, def.detour.half, j => { if (ter[j] === 0 || ter[j] === 2) { ter[j] = 1; alt[j] = 1; } }, MW, MH);
@@ -66,10 +66,8 @@ export function* jungleTerrain(S) {
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, th, r, critters, darken, RT }
 export function* paintJungle(S) {
-  const { MW, MH, def, d, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, RT } = S, A = MW * MH;
-  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); };
-  const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= MW || y >= MH) return; const i = (y * MW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
-  const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < MW && Y < MH) wallMask[Y * MW + X] = 1; } };
+  const { MW, MH, def, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, sd, RT } = S, A = MW * MH;
+  const { px, dk, solid } = paintTools(S);
   const swampPix = [];
 
   yield;
@@ -98,7 +96,7 @@ export function* paintJungle(S) {
   }
   yield;
   // start line (chequered)
-  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * MW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
+  startLine(S);
 
   yield;
   // ----- the gorge: rocky banks where the river cuts through the road -----

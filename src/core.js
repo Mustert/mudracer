@@ -37,6 +37,12 @@ if (cv) { addEventListener('resize', fit); fit(); }
 
 export const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 
+// index i lies between a and b on a loop (b < a: across the end, e.g. a stretch of the centre line over the start line)
+export const inRange = (i, a, b) => a <= b ? i >= a && i <= b : i >= a || i <= b;
+
+// smoothstep: 0..1 eased at both ends
+export const smooth = f => f * f * (3 - 2 * f);
+
 
 export const pick = a => a[(Math.random() * a.length) | 0];
 

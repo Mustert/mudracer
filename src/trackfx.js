@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { VH, VW, clamp } from './core.js';
+import { LAPS, VH, VW, clamp, inRange } from './core.js';
 import { addP, drop, splash } from './particles.js';
 import { cam } from './state.js';
 
@@ -14,7 +14,10 @@ import { cam } from './state.js';
 
 const GRAV = 380;
 G.jumpShake = 0;
+// how far (x, y) is from the middle of the screen (for sounds); whether it is on the screen or within m px of it; the player in the last lap
 export const near = (x, y) => Math.hypot(x - cam.x - VW / 2, y - cam.y - VH / 2);
+export const inView = (x, y, m = 40) => x > cam.x - m && x < cam.x + VW + m && y > cam.y - m && y < cam.y + VH + m;
+export const lastLap = () => !!G.player && G.player.lap >= LAPS;
 const loud = (c, x, y) => c.ai ? clamp(1 - near(x, y) / 400, 0, .5) : 1;
 
 // in the air: no grip, no steering; it takes off when it crosses the lip of a ramp going forwards
@@ -79,8 +82,7 @@ export function pushCars(dt) {
     for (const P of T.pushes) {
       if (c.z > 0) continue;
       if (P.rect) { const [x0, y0, x1, y1] = P.rect; if (c.x >= x0 && c.x <= x1 && c.y >= y0 && c.y <= y1) { c.vx += P.fx * dt; c.vy += P.fy * dt; } continue; }
-      const inside = P.i0 <= P.i1 ? c.idx >= P.i0 && c.idx <= P.i1 : c.idx >= P.i0 || c.idx <= P.i1;
-      if (!inside) continue;
+      if (!inRange(c.idx, P.i0, P.i1)) continue;
       const tg = T.tan[c.idx]; c.vx += tg.x * P.f * dt; c.vy += tg.y * P.f * dt; c.slope = P.f / 300;
     }
     if (w && (w.x || w.y)) { const k = c.z > 0 ? 2.2 : 1; c.vx += w.x * k * dt; c.vy += w.y * k * dt; }

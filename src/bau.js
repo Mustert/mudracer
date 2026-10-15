@@ -18,6 +18,24 @@ const CONT = [['#2d6aa8', '#1d4a7c', '#4a8cd0'], ['#b8392e', '#862419', '#d85a4c
 
 export const nearestIdx = (path, x, y) => { let bi = 0, bd = 1e12; for (let i = 0; i < path.length; i++) { const dx = path[i].x - x, dy = path[i].y - y, dd = dx * dx + dy * dy; if (dd < bd) { bd = dd; bi = i; } } return bi; };
 
+// helpers of the map modules (ringmap.js, desertmap.js ...), S is what buildTrack hands them: px sets a pixel of the picture, dk darkens one
+// by k, solid makes a square of radius rr solid ground, off is how far pixel j lies beside the centre line (signed, along the normal)
+export function paintTools(S) {
+  const { MW, MH, set, d, wallMask, near, path, nrm } = S;
+  return {
+    px: (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); },
+    dk: (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= MW || y >= MH) return; const i = (y * MW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; },
+    solid: (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < MW && Y < MH) wallMask[Y * MW + X] = 1; } },
+    off: j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; },
+  };
+}
+
+// the start line: a black and white chequer across the road
+export function startLine(S) {
+  const { MW, set } = S;
+  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * MW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
+}
+
 // the yards: every free cell inside one of the rectangles that is further than 6px from the road edge
 export function siteYards(def, ter, dist, MW, MH) {
   const yard = new Uint8Array(MW * MH);

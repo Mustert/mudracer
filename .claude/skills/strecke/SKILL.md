@@ -45,7 +45,7 @@ Der Kern fragt nicht mehr nach einzelnen Strecken (`if (G.T.toys) …`), sondern
 
 Nicht über Hooks, weil die Streckenmodule sie selbst importieren (Import-Kreis): `trackfx.js` liest Daten aus dem Streckenzustand (`T.desert.landI`, `T.volcano.hot`, `quick`), `music.js` fragt in den Liedern nach `G.T.<flag>`. Braucht eine neue Strecke dort etwas, lieber Daten im Streckenzustand oder im Theme ablegen als eine neue Abfrage.
 
-Hilfen, die es schon gibt (nicht neu schreiben): `core.js` (`hash`, `vnoise`, `rng`, `hex`, `clamp`, `mk`), `bau.js` `nearestIdx`, `trackfx.js` (Sprünge `jumps`, Schübe `pushes`, `fallCar`, Landung), `grid.js` (Hindernisse), `particles.js` (`addP`, `drop`, `splash`, `mudBurst`).
+Hilfen, die es schon gibt (nicht neu schreiben): `core.js` (`hash`, `vnoise`, `rng`, `hex`, `clamp`, `mk`, `inRange` für Abschnitte der Mittellinie, `smooth`), `bau.js` (`nearestIdx`; für die Kartenmodule `paintTools(S)` mit `px`, `dk`, `solid`, `off` und `startLine(S)`), `volcanomap.js` (`polyPts` abgerundete Linie, `stampLine`), `trackfx.js` (Sprünge `jumps`, Schübe `pushes`, `fallCar`, Landung; `near`, `inView`, `lastLap`), `gfx.js` (`disc`, `ell`, `R1`, `text`, `swirl`), `grid.js` (Hindernisse), `particles.js` (`addP`, `drop`, `splash`, `mudBurst`).
 
 ## 4. Prüfen mit dem Prüfskript
 

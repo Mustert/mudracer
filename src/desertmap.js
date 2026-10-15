@@ -1,5 +1,5 @@
 import { HALF, TAU, clamp, hash, hex, mk, vnoise } from './core.js';
-import { nearestIdx } from './bau.js';
+import { nearestIdx, paintTools, startLine } from './bau.js';
 
 // ---------- Wueste: the oasis, the dunes to jump over, the big pyramid (a tunnel), cacti, the gorge with its ramp and rope bridge, quicksand ----------
 // Terrain: 1 sand road, 0 dunes (slow, they make the car sandy), 3 the shallow rim of the oasis (washes), 5 its deep middle,
@@ -64,9 +64,7 @@ export function* desertTerrain(S) {
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT }
 export function* paintDesert(S) {
   const { MW, MH, def, d, set, setT, path, nrm, N, ter, dist, walls, wallMask, shore, sd, RT } = S, A = MW * MH, C = def.canyon;
-  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); };
-  const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= MW || y >= MH) return; const i = (y * MW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
-  const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < MW && Y < MH) wallMask[Y * MW + X] = 1; } };
+  const { px, dk, solid } = paintTools(S);
 
   yield;
   // ----- the ground: dunes with ripples, the sand road (tyre tracks show well on it), quicksand, the gorge -----
@@ -99,7 +97,7 @@ export function* paintDesert(S) {
   }
   yield;
   // start line (chequered)
-  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * MW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
+  startLine(S);
 
   yield;
   // ----- the dunes across the road: bright where you drive up, the crest, a shadow behind it -----

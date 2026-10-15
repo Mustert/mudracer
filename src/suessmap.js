@@ -1,5 +1,5 @@
-import { HALF, TAU, hash, hex, vnoise } from './core.js';
-import { nearestIdx } from './bau.js';
+import { HALF, TAU, hash, hex, inRange, smooth, vnoise } from './core.js';
+import { nearestIdx, paintTools, startLine } from './bau.js';
 import { stampLine } from './volcanomap.js';
 
 // ---------- Süßigkeitenland: the liquorice road from the gingerbread house up through the lollipop forest (gummy-bear trampolines over caramel),
@@ -35,13 +35,12 @@ const LOLLI = [['#ff4d6d', '#ffffff'], ['#ffd93d', '#ff9f43'], ['#6bcb77', '#fff
 // the gummy bears (trampolines and decoration)
 export const BEARS = ['#ff4d4d', '#ffb02e', '#ffe14d', '#5ad15a', '#ffffff', '#ff7ab8'];
 
-const smooth = f => f * f * (3 - 2 * f);
 
 // terrain, before the ground is painted. S: { MW, MH, def, ter, dist, near, path, tan, nrm, N, deep }
 export function* suessTerrain(S) {
   const { MW, MH, def, ter, dist, near, path, tan, nrm } = S, A = MW * MH;
   const cara = new Uint8Array(A), zone = new Uint8Array(A), alt = new Uint8Array(A);
-  const off = j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; };
+  const { off } = paintTools(S);
   // the caramel moor: a wide patch round the cookie road (top) and a band along the road on the side of the infield
   const [mx, my, mrx, mry] = def.moor, [k0, k1] = def.cookie.map(([x, y]) => nearestIdx(path, x, y));
   const cookie = i => k0 <= k1 ? i >= k0 && i <= k1 : i >= k0 || i <= k1;
@@ -97,9 +96,7 @@ export function* suessTerrain(S) {
 export function* paintSuess(S) {
   const { MW, MH, def, set, setT, path, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, deep, bridgeMask, isBridge, stoneMask, sd, mudPix, watPix, darken, RT } = S, A = MW * MH;
   const { cara, zone } = RT;
-  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); };
-  const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < MW && Y < MH) wallMask[Y * MW + X] = 1; } };
-  const off = j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; };
+  const { px, solid, off } = paintTools(S);
   const at = (j, q) => { const x = j % MW + (q === 0 ? -1 : q === 1 ? 1 : 0), y = (j / MW | 0) + (q === 2 ? -1 : q === 3 ? 1 : 0); return x < 0 || y < 0 || x >= MW || y >= MH ? -1 : y * MW + x; };
   const edgeOf = (j, test) => { for (let q = 0; q < 4; q++) { const k = at(j, q); if (k >= 0 && !test(k)) return true; } return false; };
   const isCara = j => ter[j] === 2 && cara[j], isChoc = j => ter[j] === 2 && !cara[j], isDeep = j => ter[j] === 5;
@@ -196,7 +193,7 @@ export function* paintSuess(S) {
     px(gx + dx, gy + dy, e > 7.8 ? K.gumD : dx + dy < -5 ? K.gumH : K.gum);
   }
   // the start line (chequered)
-  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * MW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
+  startLine(S);
 
   yield;
   // ----- the candy rainbow in the infield (only a picture) -----
@@ -224,7 +221,6 @@ export function* paintSuess(S) {
   yield;
   // ----- candy canes along the lollipop forest (solid): red and white posts -----
   const [f0, f1] = def.forest.map(([x, y]) => nearestIdx(path, x, y));
-  const inRange = (i, a, b) => a <= b ? i >= a && i <= b : i >= a || i <= b;
   for (let i = f0; inRange(i, f0, f1); i = (i + 6) % N) for (const s of [-1, 1]) {
     const x = Math.round(path[i].x + nrm[i].x * s * (HALF + 5)), y = Math.round(path[i].y + nrm[i].y * s * (HALF + 5)); if (x < 2 || y < 2 || x >= MW - 2 || y >= MH - 2) continue;
     const j = y * MW + x; if (ter[j] !== 0 || wallMask[j]) continue;

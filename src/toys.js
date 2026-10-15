@@ -4,8 +4,7 @@ import { HALF, LAPS, SS, TAU, VH, VW, clamp, ctx, hash, mk, rotIndex } from './c
 import { R1, disc, ell, text } from './gfx.js';
 import { nearObstacles } from './grid.js';
 import { addP } from './particles.js';
-import { cam } from './state.js';
-import { fallCar, near } from './trackfx.js';
+import { fallCar, inView, near } from './trackfx.js';
 import { loopAt, loopSpeed } from './toymap.js';
 
 // ---------- Spielzimmer while racing ----------
@@ -31,7 +30,6 @@ const MARBLE = { every: 6.5, warn: 1.1, v: 96, r: 5, rest: 5 };
 const DOMINO = { dt: .07, back: 20, rise: .6 };
 const ROBOT = { v: 46, pull: 95, reach: 85, eat: 19, r: 16 };
 const TUBE = { v: 118, out: 140 };
-const inView = (x, y, m = 40) => x > cam.x - m && x < cam.x + VW + m && y > cam.y - m && y < cam.y + VH + m;
 const vol = (x, y, k = 1) => clamp(1 - near(x, y) / 380, 0, 1) * k;
 const lastLap = () => !!G.player && G.player.lap >= LAPS && (G.state === 'race' || G.state === 'finish');
 

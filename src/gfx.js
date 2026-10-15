@@ -1,5 +1,5 @@
 import { G } from './g.js';
-import { FONT, ctx } from './core.js';
+import { FONT, TAU, ctx } from './core.js';
 
 // ---------- small drawing helpers (text, shapes, panels, the 1P sign) ----------
 // They only draw on the canvas and know nothing of the game logic, so every module can use them without import circles.
@@ -37,6 +37,14 @@ export function tri(x, y, dir, size, col) {
 
 
 export function R1(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
+
+// a swirl (the mouth of a wormhole): a glow in col, the dark middle mid, three arms from col to col2, turned by rot
+export function swirl(x, y, r, col, col2, rot, mid) {
+  ctx.globalAlpha = .35; disc(Math.round(x), Math.round(y), r + 3, col); ctx.globalAlpha = 1;
+  disc(Math.round(x), Math.round(y), r, mid);
+  for (let k = 0; k < 3; k++) for (let s = 0; s < 1; s += .06) { const a = rot + k * TAU / 3 + s * 4, d = s * r; R1(Math.round(x + Math.cos(a) * d), Math.round(y + Math.sin(a) * d), 2, 2, s > .6 ? col2 : col); }
+  R1(Math.round(x) - 1, Math.round(y) - 1, 2, 2, '#ffffff');
+}
 
 
 const MEDAL = ['#ffd23f', '#d9dde3', '#d98a4a', '#6fb3ff'], MEDAL_L = ['#fff08a', '#f4f6f8', '#f0b27a', '#a9d4ff'];

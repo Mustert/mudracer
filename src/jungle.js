@@ -3,8 +3,7 @@ import { SFX } from './audio.js';
 import { HALF, TAU, VH, VW, clamp, ctx, hash, mk } from './core.js';
 import { R1, disc, ell, text } from './gfx.js';
 import { addP } from './particles.js';
-import { cam } from './state.js';
-import { near } from './trackfx.js';
+import { inView, near } from './trackfx.js';
 
 // ---------- Dschungel while racing ----------
 // Always: under the canopy you only see round your own car; the liana swings over the gorge (3 s each way) and throws you across when it hangs
@@ -194,7 +193,6 @@ function jungleCollisions() {
 
 // ======================================================= drawing
 
-const inView = (x, y, m = 40) => x > cam.x - m && x < cam.x + VW + m && y > cam.y - m && y < cam.y + VH + m;
 
 function drawCroc(x, y, f, open, up) {
   x = Math.round(x); y = Math.round(y);

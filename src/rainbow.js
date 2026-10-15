@@ -1,10 +1,10 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { HALF, LAPS, SS, TAU, VH, VW, clamp, ctx, hash, rotIndex } from './core.js';
-import { R1, disc, ell, text } from './gfx.js';
+import { HALF, LAPS, SS, TAU, VH, VW, clamp, ctx, hash, inRange, rotIndex } from './core.js';
+import { R1, disc, ell, swirl, text } from './gfx.js';
 import { WATC, addP } from './particles.js';
 import { cam } from './state.js';
-import { fallCar, near } from './trackfx.js';
+import { fallCar, inView, near } from './trackfx.js';
 import { bctx, eventOn, snap } from './undo.js';
 import { nearestIdx } from './bau.js';
 import { ASPH, HOLE, LANE, RB } from './rainbowmap.js';
@@ -23,8 +23,6 @@ import { ASPH, HOLE, LANE, RB } from './rainbowmap.js';
 // storm clouds turn to glitter, the lanes work twice as hard, a double rainbow cuts the spiral short (no rails), fireworks.
 
 const UNI = { speed: 175, reach: 190, hit: 14, trail: 3 }, BOLT = { warn: 1.5, r: 22, show: .3 }, STORM = { front: 5, grey: 3, spots: 1.6 }, WARP = { r: 10, cool: 1.2 };
-const inView = (x, y, m = 40) => x > cam.x - m && x < cam.x + VW + m && y > cam.y - m && y < cam.y + VH + m;
-const inRange = (i, a, b) => a <= b ? i >= a && i <= b : i >= a || i <= b;
 const lap = () => G.player && !G.T.run ? G.player.lap : 0;
 const lead = () => G.cars.reduce((m, c) => Math.max(m, c.lap), 0);
 
@@ -350,14 +348,6 @@ function drawRainbowFall(c, F, lv) {
   for (let q = 0; q < 6; q++) R1(x + 14 + q * 3, y - 6 + Math.round(Math.sin(G.time * 12 + q) * 2), 2, 6, RB[q]);
 }
 
-// a swirl: the mouth of the wormhole
-function swirl(x, y, r, col, col2, rot) {
-  ctx.globalAlpha = .35; disc(Math.round(x), Math.round(y), r + 3, col); ctx.globalAlpha = 1;
-  disc(Math.round(x), Math.round(y), r, '#120a28');
-  for (let k = 0; k < 3; k++) for (let s = 0; s < 1; s += .06) { const a = rot + k * TAU / 3 + s * 4, d = s * r; R1(Math.round(x + Math.cos(a) * d), Math.round(y + Math.sin(a) * d), 2, 2, s > .6 ? col2 : col); }
-  R1(Math.round(x) - 1, Math.round(y) - 1, 2, 2, '#ffffff');
-}
-
 // far below in the holes: little clouds drifting slower than the map (two layers)
 const FAR = [[34, .3, '#b2bff0'], [20, .55, '#d8e0ff']];
 
@@ -411,8 +401,8 @@ function drawRainbowGround() {
   }
   // the wormhole: the purple mouth on its platform, the turquoise one on the road where you come out
   const P = R.portals, rot = G.time * 5;
-  if (inView(P.b.x, P.b.y)) swirl(P.b.x, P.b.y, 9, '#1fb8b0', '#9ffff0', -rot);
-  if (inView(P.a.x, P.a.y)) swirl(P.a.x, P.a.y, 10, '#8a3ad8', '#e0a8ff', rot);
+  if (inView(P.b.x, P.b.y)) swirl(P.b.x, P.b.y, 9, '#1fb8b0', '#9ffff0', -rot, '#120a28');
+  if (inView(P.a.x, P.a.y)) swirl(P.a.x, P.a.y, 10, '#8a3ad8', '#e0a8ff', rot, '#120a28');
 }
 
 // above the cars: the unicorns, the little rain cloud of the shower with the sun, balloons and birds, lightning, sparks, glitter, texts

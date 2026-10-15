@@ -1,11 +1,11 @@
 import { G } from './g.js';
 import { SFX, noise, voice } from './audio.js';
-import { LAPS, TAU, VH, VW, clamp, ctx, hash, mk } from './core.js';
+import { TAU, VH, VW, clamp, ctx, hash, mk, smooth } from './core.js';
 import { R1, disc, ell, text } from './gfx.js';
 import { nearObstacles } from './grid.js';
 import { addP, drop } from './particles.js';
 import { cam } from './state.js';
-import { near } from './trackfx.js';
+import { inView, lastLap, near } from './trackfx.js';
 import { tctx } from './tracks.js';
 
 // ---------- Süßigkeitenland while racing ----------
@@ -22,9 +22,6 @@ import { tctx } from './tracks.js';
 
 const BUB = { rest: 2.6, grow: 3, max: 14, cyc: 6.6, stick: .5 }, CLOUD = { lap1: 3, lap2: 6, most: 8, every: 5 };
 const STREAM = { speed: 42, gap: 7 };
-const inView = (x, y, m = 40) => x > cam.x - m && x < cam.x + VW + m && y > cam.y - m && y < cam.y + VH + m;
-const lastLap = () => !!G.player && G.player.lap >= LAPS;
-const smooth = f => f * f * (3 - 2 * f);
 const loud = (c, m = 300) => c.ai ? clamp(1 - near(c.x, c.y) / m, 0, .45) : 1;
 const SPR = ['#ff4d6d', '#ffd93d', '#6bcb77', '#4d96ff', '#9b5de5', '#ffffff', '#ff9f43'];
 const GOLD = ['#e0a030', '#f0bc48', '#ffe08a', '#d08c20'], CHOC = ['#5a3020', '#4a2618', '#6a3a26', '#9a5a3a'];

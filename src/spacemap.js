@@ -1,5 +1,5 @@
-import { HALF, TAU, hash, hex, mk, vnoise } from './core.js';
-import { nearestIdx } from './bau.js';
+import { HALF, TAU, hash, hex, mk, smooth, vnoise } from './core.js';
+import { nearestIdx, paintTools, startLine } from './bau.js';
 import { stampLine } from './volcanomap.js';
 
 // ---------- Weltall: the space station with the start, the glass tube, the platforms in zero gravity round the satellite, the ringed planet (the
@@ -24,7 +24,6 @@ const K = Object.fromEntries(Object.entries({
   hull: '#c8ced8', hull1: '#a8b0bc', hullD: '#6a7280', win: '#7fd8ff', win1: '#ffe9a8', solar: '#24407a', solar1: '#3a62b0', solarL: '#8ab0ff',
 }).map(([k, v]) => [k, hex(v)]));
 
-const smooth = f => f * f * (3 - 2 * f);
 
 // the way from the road onto the ring of the planet (or back): points from angle a0 at radius r0 to angle a1 at radius r1 (degrees)
 function curve(P, a0, r0, a1, r1) {
@@ -35,10 +34,10 @@ function curve(P, a0, r0, a1, r1) {
 
 // terrain, before the ground is painted. S: { MW, MH, def, ter, dist, near, path, tan, nrm, N }
 export function* spaceTerrain(S) {
-  const { MW, MH, def, ter, dist, near, path, tan, nrm, N } = S, A = MW * MH;
+  const { MW, MH, def, ter, dist, near, path, tan, N } = S, A = MW * MH;
   // kind: 1 the station deck, 2 the glass tube, 3 the moon, 4 the ring of the planet, 5 a way onto the ring
   const alt = new Uint8Array(A), kind = new Uint8Array(A), conn = new Uint8Array(A), narrowM = new Uint8Array(A);
-  const off = j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; };
+  const { off } = paintTools(S);
   const [sx0, sy0, sx1, sy1] = def.station, [mx, my, mr] = def.moon;
   const onMoon = (x, y) => Math.hypot(x + .5 - mx, y + .5 - my) < mr + (vnoise(x * .05, y * .05, 121) - .5) * 14;
   const t0 = nearestIdx(path, def.tube[0][0], def.tube[0][1]), t1 = nearestIdx(path, def.tube[1][0], def.tube[1][1]);
@@ -100,11 +99,8 @@ export function* spaceTerrain(S) {
 
 // painting, after the ground. S: { MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, r, starPix, RT }
 export function* paintSpace(S) {
-  const { MW, MH, def, d, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, starPix, RT } = S, A = MW * MH, kind = RT.kind;
-  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); };
-  const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= MW || y >= MH) return; const i = (y * MW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
-  const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < MW && Y < MH) wallMask[Y * MW + X] = 1; } };
-  const off = j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; };
+  const { MW, MH, def, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, starPix, RT } = S, A = MW * MH, kind = RT.kind;
+  const { px, dk, solid, off } = paintTools(S);
   // how far (1..3) a pixel is from the void, 4 = further
   const toVoid = (x, y) => {
     for (let q = 1; q <= 3; q++) for (let dy = -q; dy <= q; dy++) for (let dx = -q; dx <= q; dx++) {
@@ -206,7 +202,7 @@ export function* paintSpace(S) {
     k++;
   }
   // the start line (chequered)
-  S.band(0, 6, (x, y, a, c) => { if (Math.abs(c) < HALF) set(y * MW + x, ((Math.floor(a + 6) >> 2) + (Math.floor(c + 100) >> 2)) & 1 ? [245, 245, 240] : [34, 30, 28]); });
+  startLine(S);
 
   yield;
   // ----- small asteroids drifting in space (only a picture) and the big ones of the belt (solid) -----

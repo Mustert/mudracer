@@ -1,5 +1,5 @@
-import { HALF, TAU, clamp, hash, hex, mk, vnoise } from './core.js';
-import { nearestIdx } from './bau.js';
+import { HALF, TAU, clamp, hash, hex, inRange, mk, vnoise } from './core.js';
+import { nearestIdx, paintTools } from './bau.js';
 
 // ---------- Regenbogen: the rainbow road over a sea of clouds between the floating coins of the four cups (the finale) ----------
 // Terrain: 41..46 the six colour lanes of the rainbow road (red always on the left in driving direction, violet on the right; each has its own
@@ -33,7 +33,6 @@ const K = Object.fromEntries(Object.entries({
   hz: '#ffd23f', hzD: '#26262c', pl: '#8a92a0', plD: '#4a5060',
 }).map(([k, v]) => [k, hex(v)]));
 
-const inRange = (i, a, b) => a <= b ? i >= a && i <= b : i >= a || i <= b;
 const bez = (P, t) => { const u = 1 - t; return [0, 1].map(k => u * u * u * P[0][k] + 3 * u * u * t * P[1][k] + 3 * u * t * t * P[2][k] + t * t * t * P[3][k]); };
 
 // terrain, before the ground is painted. S: { MW, MH, def, ter, dist, near, path, tan, nrm, N }
@@ -41,7 +40,7 @@ export function* rainbowTerrain(S) {
   const { MW, MH, def, ter, dist, near, path, tan, nrm, N } = S, A = MW * MH, sd = def.seed * 7;
   const coin = new Uint8Array(A), lane = new Uint8Array(A), alt = new Uint8Array(A), inside = new Uint8Array(A), brown = new Uint8Array(A), bridge = new Uint8Array(A);
   const kerb = new Uint8Array(A), plat = new Uint8Array(A), dblM = new Uint8Array(A), gorge = new Uint8Array(A);
-  const off = j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; };
+  const { off } = paintTools(S);
   const C = COINS.map(k => def.coins[k]);
   // the coins
   C.forEach(([cx, cy, r], k) => { for (let y = Math.max(0, cy - r); y <= Math.min(MH - 1, cy + r); y++) for (let x = Math.max(0, cx - r); x <= Math.min(MW - 1, cx + r); x++) if (Math.hypot(x + .5 - cx, y + .5 - cy) < r) coin[y * MW + x] = k + 1; });
@@ -168,10 +167,7 @@ export function* rainbowTerrain(S) {
 // painting, after the ground. S: { MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, r, critters, mudPix, RT }
 export function* paintRainbow(S) {
   const { MW, MH, def, d, set, setT, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, critters, mudPix, RT } = S, A = MW * MH, coin = RT.coin;
-  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); };
-  const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= MW || y >= MH) return; const i = (y * MW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
-  const solid = (x, y, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const X = Math.round(x + dx), Y = Math.round(y + dy); if (X >= 0 && Y >= 0 && X < MW && Y < MH) wallMask[Y * MW + X] = 1; } };
-  const off = j => { const i = near[j], p = path[i]; return (j % MW + .5 - p.x) * nrm[i].x + ((j / MW | 0) + .5 - p.y) * nrm[i].y; };
+  const { px, dk, solid, off } = paintTools(S);
   const C = COINS.map(k => def.coins[k]);
   const fn = (x, y, s) => vnoise(x / 14, y / 14, s) * .6 + vnoise(x / 5, y / 5, s + 1) * .4;
   const big = (x, y) => vnoise(x / 30, y / 30, sd + 11) * .6 + vnoise(x / 12, y / 12, sd + 12) * .3 + vnoise(x / 5, y / 5, sd + 13) * .1;
