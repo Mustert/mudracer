@@ -597,6 +597,9 @@ function drawToySky(cx, cy) {
 // ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
 /** @type {import('./_template.js').TrackHooks} */
 export const toyHooks = {
+  // parquet (30) is slippery like sheet ice, but only half as bad ("like in socks"); the soft road over the blanket (31) is a little slower
+  // (watercolour, 32, is a normal road)
+  surf: c => c.surf === 30 ? [1, 4.5 * c.def.turn * c.def.turn, .78, .8] : c.surf === 31 ? [.86, 8, .95] : null,
   init: initToys, events: { spielzeug: initToyEvents, saugroboter: initRobot }, update: toyUpdate, collisions: toyCollisions, lane: toyLane, ground: toyGround,
   respawn: toyRespawn, drawCar: drawToyCar, drawGround: drawToyGround, drawAbove: drawToyAbove, drawSky: drawToySky,
 };

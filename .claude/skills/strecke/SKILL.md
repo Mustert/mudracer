@@ -21,8 +21,8 @@ Gilt für neue Strecken und Überarbeitungen. Die Streckendesign-Grundsätze 1�
 |---|---|
 | Nummer und Cup | Strecke n gehört in Cup ⌈n/3⌉ (`cups.js` `CUPS`). Schwierigkeit steigt mit n (Grundsatz 1). |
 | Kartengröße | Standard 800×450; größer über `W`/`H` im `TRACK_DEFS`-Eintrag. Mehr Fläche heißt längere Bauzeit und Runde (T18, T19, T23). |
-| Boden-Codes | 0–17 sind gemeinsame Codes (Straße, Matsch, Wasser, Schlucht, Eis, Lava …, siehe Kommentar in `physics.js` `surfOf` und `trackfx.js`). Eigene Codes in einem eigenen Zehnerblock: belegt sind 30–32 (Spielzimmer) und 41–48 (Regenbogen), also ab 50 (ANALYSE.md T21). |
-| Felder in `T.ev` | mit dem Kürzel der Strecke beginnen (z. B. `toyRobot`), nie allgemeine Namen wie `wind`, `storm` oder `msg` (T22; `checkAll` listet, was doppelt ist). |
+| Boden-Codes | Die Liste aller vergebenen Codes steht über `physics.js` `surfOf`: 0–17 gemeinsam (Straße, Matsch, Wasser, Schlucht, Eis, Lava …), eigene Zehnerblöcke 30–32 (Spielzimmer) und 41–48 (Regenbogen). Eine neue Strecke nimmt 50–59, beantwortet ihre Codes im Hook `surf` und trägt sie in die Liste ein (ANALYSE.md T21). |
+| Felder in `T.ev` | mit dem Kürzel der Strecke beginnen (z. B. `toyRobot`), nie allgemeine Namen wie `wind`, `storm` oder `msg` (T22; `checkAll` listet, was doppelt ist). Der Kern liest aus `T.ev` nur `obst` (Hindernisse, denen die KI ausweicht, gewollt gemeinsam) und `wind` (Wüstenwind, `trackfx.js`). |
 | Ereignisse | Schlüssel in `def.events`, Schalter in `PREFS.events` (`state.js`), Anzeigename in `FX_NAMES` (`raceopts.js`), Start im Hook `events` der Strecke (`events: { spielzeug: initToyEvents }`, siehe Abschnitt 3). |
 | Lied | eigener Schlüssel in `SONGS` (`music.js`), `song` im `TRACK_DEFS`-Eintrag (Grundsatz 8). |
 | Überarbeitung | Ändert sich der Kurs, `rev` im `TRACK_DEFS`-Eintrag hochzählen: alte Rekorde bleiben, neue starten frisch (Grundregel „Spielstände bleiben gültig“). Name nie ändern. |

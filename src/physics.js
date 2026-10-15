@@ -11,9 +11,15 @@ import { reportError } from './errors.js';
 
 // ---------- physics ----------
 
+// The terrain codes (T.ter), one number row for all tracks (ANALYSE.md T21). Shared: 0 beside the road (grass, space), 1 road, 2 mud,
+// 3 shallow water (washes), 4 boost pad, 5 deep water (you sink), 6 cement, 7 gravel, 8 oil, 9 smeared oil (race circuit), 10 quicksand or
+// deep swamp, 11 gorge (no ground), 12 sheet ice, 13 ground of the moon, 14 swinging rope bridge, 15 lava, 16 crust over the lava stream,
+// 17 platform in zero gravity. Own blocks of ten: 30-32 kids' room (parquet, blanket road, watercolour; toymap.js), 41-48 rainbow (colour
+// lanes 41-46, asphalt 47, cloud hole 48; rainbowmap.js LANE, ASPH, HOLE). A new track takes the next free block (50-59) and answers
+// for its codes in its hook surf (_template.js); mudracer.checkAll() lists codes from 18 up that several tracks use.
 function surfOf(c) {
   const m = c.def.mud;
-  // the special tracks first: their own terrain codes (the rainbow), nothing beside the road in space (hooks.js)
+  // the special tracks first: their own terrain codes (kids' room, rainbow), nothing beside the road in space (hooks.js)
   const own = trackHooks(G.T).surf?.(c); if (own) return own;
   switch (c.surf) {
     // off the road is as slow as mud, but the car stays clean (only the Matschfahrt is made of rough ground)
@@ -23,10 +29,6 @@ function surfOf(c) {
     // a platform in zero gravity: full speed and full gas, but little grip to the side and slower steering (better than sheet ice);
     // nimble cars keep more grip
     case 17: return [1, 3 * c.def.turn * c.def.turn, .8, 1];
-    // kids' room (see toys.js): parquet is slippery like sheet ice, but only half as bad ("like in socks"); the soft road over the blanket
-    // is a little slower (watercolour, 32, is a normal road)
-    case 30: return [1, 4.5 * c.def.turn * c.def.turn, .78, .8];
-    case 31: return [.86, 8, .95];
     case 2: return [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
     // cement: very sticky, the speed is far lower than in mud (about a quarter of it)
     case 6: return [(MUD_A + MUD_B * m) / 3.8, 3.2 * m, Math.min(.8, .55 * m) * .75];
