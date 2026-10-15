@@ -219,19 +219,19 @@ Streckenereignis: Reifenstapel/Reifen liegen auf der Strecke und rollen gelegent
 Änderung: Mud ist Öl und schwarz.
 
 ## 8. Wüste
-Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `WUESTE`, Theme `wueste`, Musik `desert`, Streckenereignis Sandsturm `sandsturm`; Code in `src/desertmap.js` und `src/desert.js`, gemeinsame Bausteine in `src/trackfx.js`). Im Cup GOLD eingetragen.
+Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `WUESTE`, Theme `wueste`, Musik `desert`, Streckenereignis Sandsturm `sandsturm`; Code in `src/desertmap.js` und `src/desert.js`, gemeinsame Bausteine in `src/trackfx.js`). Im Cup GOLD eingetragen. **Rev 1** (Rework, 2026-10-16): Start auf der langen linken Geraden, S-Kurve rechts, Felsketten durch die Mitte, Oase in der oberen linken Kurve, neue Kakteen und Schlucht, Hitzeflimmern. Alte Rekorde der Wüste bleiben, die Strecke startet mit Rev 1 frisch.
 
-Abweichungen vom Vorschlag (erster Wurf): Die Strecke ist ein Rechteck mit runden Ecken. An der Oase gibt es keinen Matsch, nur flaches Wasser, das wäscht. Kein Hitzeflimmern.
+Abweichungen vom Vorschlag (erster Wurf): Die Strecke ist ein Rechteck mit runden Ecken. ✅ umgesetzt (Rev 1: S-Kurve rechts, Felsketten schließen die Mitte, noch kein Wadi mit Kämmen an beiden Rändern). An der Oase gibt es keinen Matsch, nur flaches Wasser, das wäscht. ✅ umgesetzt (Rev 1: Matschufer um die Oase). Kein Hitzeflimmern. ✅ umgesetzt (Rev 1: die Luft flimmert über den langen Geraden oben und unten).
 
 Idee: Die erste Rennstrecke mit **Sprüngen** und mit echtem Risiko: Wer zu langsam auf die Schanze kommt, fällt in die Schlucht. Dazu gibt es zum ersten Mal **zwei Wege**: den gefährlichen Sprung oder die langsame, sichere Hängebrücke.
 
 Rundenverlauf (Uhrzeigersinn, Start links, es geht zuerst nach oben):
-- 0–12 %: Start links an der **Oase** (Palmen, Wasserloch, ein paar Kamele liegen im Schatten). Der flache Rand des Wasserlochs reicht auf die Strecke und wäscht (wie eine Pfütze). Die tiefe Mitte ist tiefes Wasser wie im Garten.
+- 0–12 %: Start links auf der langen Geraden (die Aufstellung steht komplett gerade), dahinter die **Oase** in der oberen linken Kurve (Palmen, Wasserloch, ein paar Kamele liegen im Schatten, ein Matschufer um das Wasser). Der flache Rand des Wasserlochs reicht an die Kurve und wäscht (wie eine Pfütze). Die tiefe Mitte ist tiefes Wasser wie im Garten.
 - 12–28 %: oben die **Buckelpiste**: drei Dünen hintereinander, jeder Dünenkamm ist ein kleiner Sprung. Schnelle Autos fliegen weiter. Wer schräg abspringt, landet neben der Strecke im Sand.
 - 28–42 %: **durch die große Pyramide** oben rechts: Einfahrt an der Westseite, Ausfahrt an der Südseite, drinnen eine Kurve. Wer drinnen ist, sieht das Dach der Pyramide durchsichtig. Innen ist es dunkel, mit Fackeln an den Wänden und Scheinwerfern (wie im Wald, nur hier). Skarabäen krabbeln an den Wänden (nur Optik).
-- 42–58 %: rechts herunter der **Kakteenslalom**: Kakteen stehen versetzt auf der Fahrbahn.
-- 58–68 %: die **Schlucht** (Wadi), zwei Wege:
-  - **Sprung:** Die Strecke endet an einer Rampe aus Felsen, dahinter ist ein dunkler Abgrund, dann die Landung. Ab etwa 70 % der Höchstgeschwindigkeit fliegt man hinüber. Wer zu langsam ist (z. B. nach einem Kaktus), fällt hinein: 1,4 s weg, wird hinter der Schlucht abgesetzt und blinkt (wie beim Wasser im Garten). Das kostet etwa 2 s.
+- 42–58 %: rechts herunter der **Kakteenslalom**: drei Kakteen stehen versetzt auf der Fahrbahn, die Straße macht dabei eine S-Kurve. Danach etwa 136 px Anlauf bis zur Rampe.
+- 58–68 %: die **Schlucht** (Wadi, sie kommt als schmaler Riss unter einer Felswand mit trockenem Wasserfall und wird breiter, mit ausgefranstem Rand), zwei Wege:
+  - **Sprung:** Die Strecke endet an einer Rampe aus Felsen, dahinter ist ein dunkler Abgrund, dann die Landung. Ab etwa 70 % der Höchstgeschwindigkeit fliegt man hinüber. Wer schief landet, dreht sich und verliert Tempo. Wer zu langsam ist (z. B. nach einem Kaktus), fällt hinein: 1,4 s weg, wird hinter der Schlucht abgesetzt und blinkt (wie beim Wasser im Garten). Das kostet etwa 2 s.
   - **Hängebrücke:** daneben eine schmale, wackelige Brücke für ein Auto, sie wackelt sichtbar und bremst auf etwa 60 %. Sicher, aber langsamer als ein guter Sprung.
 - 68–85 %: unten **Treibsand**-Felder neben und zum Teil auf der Ideallinie.
 - 85–100 %: zurück nach links zur Oase und ins Ziel.
@@ -240,17 +240,18 @@ Oberflächen:
 - **Sandpiste** (Strecke): hell ockerfarben, Reifenspuren sind deutlich zu sehen.
 - **Dünen** (neben der Strecke): bremsen wie bisher das Gras, aber das Auto wird **sandig beige** (im Gegensatz zum Gras auf anderen Strecken, das sauber lässt).
 - **Matsch** gibt es nur am Rand der Oase (braun).
-- **Treibsand** (neues Terrain): runde Flecken mit einem Wirbelmuster, das sich langsam dreht. Treibsand bremst stark und **zieht zur Mitte** (Sog). In der Mitte sinkt das Auto ein (es wird kleiner gezeichnet, Sand rieselt) und ist nach 1,2 s verschwunden, dann wird es wie beim Wasser wieder abgesetzt, und zwar beige. Mit Vollgas kommt man am Rand wieder heraus. Matsch-Autos (Monster, Traktor) zieht der Sog weniger stark (Sog-Stärke durch `mud` geteilt).
-- **Kakteen**: feste Hindernisse. Wer hart dagegenfährt, dreht sich kurz, es fliegen Stacheln, Text „AUTSCH!“. Langsames Anrempeln schiebt nur zurück.
+- **Treibsand** (neues Terrain): unregelmäßige Mulden in den Dünen mit dunklem, feuchtem Rand und einem Wirbelmuster, das sich langsam dreht. Treibsand bremst stark und **zieht zur Mitte** (Sog, am Rand schwach und zur Mitte stärker). In der Mitte sinkt das Auto ein (es wird kleiner gezeichnet, Sand rieselt) und ist nach 1,2 s verschwunden, dann wird es wie beim Wasser wieder abgesetzt, und zwar beige. Mit Vollgas kommt man am Rand wieder heraus. Matsch-Autos (Monster, Traktor) zieht der Sog weniger stark (Sog-Stärke durch `mud` geteilt).
+- **Kakteen**: feste Hindernisse (groß, dunkelgrün, mit Steinkranz und langem Schatten). Wer hart dagegenfährt, dreht sich kurz, es fliegen Stacheln, Text „AUTSCH!“. Langsames Anrempeln schiebt nur zurück. Die kleinen, blassen Kakteen in den Dünen sind nur Deko, man fährt darüber.
+- **Felsketten**: Findlinge von der Oase über die kleinen Pyramiden und den Kopf der Schlucht bis zur großen Pyramide, fest. Man kann nicht durch die Mitte abkürzen.
 
 Streckenereignis **Sandsturm** (`sandsturm`):
 - Sobald du in Runde 2 gehst, zieht von rechts eine Sandwand heran (sie wandert in etwa 6 s über die Karte, wie die Flut am Strand) und bleibt bis zum Ende des Rennens.
 - **Sicht:** Das Bild wird ockerfarben eingetrübt. Jedes Auto sieht nur einen kurzen Kegel vor sich (die Scheinwerfertechnik aus dem Wald, in Sandfarbe), alles weiter weg ist nur schemenhaft zu sehen.
 - **Wind:** Der Wind drückt alle Autos nach links, in Böen stärker. Eine Böe kündigt sich 1 s vorher an (Windsack an der Strecke, Pfeil im HUD). In der Luft hat man keinen Grip, darum verweht der Wind Autos bei den Sprüngen am stärksten. Der Schluchtsprung wird im Sturm deutlich schwerer.
-- **Verwehungen:** Nacheinander weht an fünf Stellen Sand auf die Strecke (wie die Löcher im Wald-Regen). Verwehungen bremsen wie Matsch und machen beige.
-- **Steppenläufer** rollen mit dem Wind quer über die Strecke. Sie sind weich und geben nur einen kleinen Schubs (komisch, nicht gemein).
+- **Verwehungen:** Nacheinander weht an vier Stellen Sand auf die Strecke (wie die Löcher im Wald-Regen). Verwehungen bremsen wie Matsch und machen beige.
+- **Steppenläufer** rollen mit dem Wind quer über die Strecke. Sie schubsen kräftig und drehen ein schnelles Auto (komisch, aber spürbar). Kurz vor der Rampe kommt weder ein Steppenläufer noch kündigt sich eine Böe an: eine Gefahr nach der anderen.
 - Der Sturm verweht die Reifenspuren.
-- Die Computerautos: Auf leichter Schwierigkeit nehmen sie die Hängebrücke, auf schwerer springen sie. Sie fahren auch dann über die Brücke, wenn sie zu langsam für den Sprung sind. Die Mitte des Treibsands meiden sie immer.
+- Die Computerautos: Auf leichter Schwierigkeit nehmen sie die Hängebrücke, auf schwerer springen sie. Sie fahren auch dann über die Brücke, wenn sie zu langsam für den Sprung sind. Treibsand meiden sie immer, auch den Rand.
 
 Optik: drei Pyramiden (eine große als Tunnel, zwei kleine als Kulisse), Sphinx am Kartenrand, Felsen, Tierschädel, Palmen an der Oase, Kamele, Hitzeflimmern über der Sandpiste, ein Geier zieht seine Kreise (Schatten auf dem Boden).
 

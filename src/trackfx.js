@@ -4,7 +4,7 @@ import { LAPS, VH, VW, clamp, inRange } from './core.js';
 import { addP, drop, splash } from './particles.js';
 import { cam } from './state.js';
 
-// ---------- Cup 3 building blocks (desert and ice): jumps in a race, stretches that push the cars (slope, wind), falling into a gorge,
+// ---------- Cup 3 building blocks (desert and ice): jumps in a race, stretches that push the cars (slope), falling into a gorge,
 // sinking in quicksand, burning in lava (volcano). Terrain codes: 10 quicksand, 11 gorge (no ground), 12 sheet ice, 14 swinging rope bridge,
 // 15 lava, 16 the crust over the lava stream (lava while the stream breaks through, see volcano.js).
 // A jump: { x, y (the lip), tx, ty (the way you jump), lo, hi (how far to the side of the lip, along the normal -ty, tx), vz (speed upwards),
@@ -46,7 +46,7 @@ export function airborne(c, dt) {
 function land(c) {
   const T = G.T, j = clamp(c.y | 0, 0, T.H - 1) * T.W + clamp(c.x | 0, 0, T.W - 1), t = T.ter[j], v = loud(c, c.x, c.y), big = c.air > .7;
   c.z = 0; c.vz = 0;
-  if (t === 11) { fallCar(c, 'abyss', T.desert && T.desert.landI); return; }
+  if (t === 11) { fallCar(c, 'abyss', c.jumpLand); return; } // (the gorge of the desert: set down behind it, where the jump says)
   if (t === 15 || (t === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }
   if (t === 48 && T.rainbow) { fallCar(c, 'cloud', c.jumpLand); return; } // short of the far side: through the clouds
   if (t === 3 || t === 5) { splash(c.x, c.y, 24); SFX.splash(v); return; }
@@ -72,9 +72,9 @@ export function fallCar(c, kind, at) {
   const v = loud(c, c.x, c.y); if (v > .02) ({ abyss: SFX.fall, sand: SFX.sink, lava: SFX.burn, space: SFX.drift, cloud: SFX.fall }[kind] || SFX.sink)(v);
 }
 
-// the push of the slopes along the road, and the wind (desert storm) for everybody; in the air the wind blows twice as hard
+// the push of the slopes along the road (the wind of the desert storm is the business of the track itself, desert.js)
 export function pushCars(dt) {
-  const T = G.T, w = T.ev && T.ev.wind;
+  const T = G.T;
   G.jumpShake = Math.max(0, G.jumpShake - dt);
   for (const c of G.cars) {
     if (c.fall > 0) continue;
@@ -85,30 +85,30 @@ export function pushCars(dt) {
       if (!inRange(c.idx, P.i0, P.i1)) continue;
       const tg = T.tan[c.idx]; c.vx += tg.x * P.f * dt; c.vy += tg.y * P.f * dt; c.slope = P.f / 300;
     }
-    if (w && (w.x || w.y)) { const k = c.z > 0 ? 2.2 : 1; c.vx += w.x * k * dt; c.vy += w.y * k * dt; }
   }
 }
 
-// the ground of the Cup 3 tracks under a car (from update.js): quicksand pulls and swallows, the gorge has no ground
+// the ground of the Cup 3 tracks under a car (from update.js): lava burns, the deep swamp of the jungle pulls and swallows; the desert has its own
+// ground hook for the gorge and the quicksand (it uses sinkInSand)
 export function groundFx(c, sp, dt) {
   const T = G.T;
-  if (c.surf === 11) { fallCar(c, 'abyss', T.desert && T.desert.landI); return; }
   if (c.surf === 15 || (c.surf === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }
-  // quicksand (desert) and deep swamp (jungle, it pulls less and swallows more slowly)
-  const Q = T.desert || T.jungle;
-  if (c.surf === 10 && Q) {
-    const q = Q.quick.find(([x, y, r]) => Math.hypot(c.x - x, c.y - y) < r + 2), soft = !!T.jungle;
-    if (q) {
-      const dx = q[0] - c.x, dy = q[1] - c.y, d = Math.hypot(dx, dy) || 1, pull = (soft ? 85 : 150) / c.def.mud;
-      c.vx += dx / d * pull * dt; c.vy += dy / d * pull * dt;
-      c.dirt = Math.min(1, c.dirt + .5 * dt);
-      if (d < q[2] * .38) c.sink = (c.sink || 0) + dt * (soft ? .7 : 1); else c.sink = Math.max(0, (c.sink || 0) - dt * .8);
-      if (Math.random() < dt * 25) addP({ t: 'd', x: c.x + (Math.random() - .5) * 18, y: c.y + (Math.random() - .5) * 12, z: 4, vx: 0, vy: 0, vz: 10, col: (soft ? ['#4a6a2a', '#6a8a3a', '#3a5420'] : ['#e3c48c', '#c49a5c', '#f0d9a6'])[(Math.random() * 3) | 0], s: 1, life: .6, ml: .6 });
-      if (!c.ai && Math.random() < dt * 3) (soft ? SFX.blubb : SFX.trickle)();
-      if (c.sink > 1.2) fallCar(c, 'sand');
-      return;
-    }
-  }
-  if (c.sink) c.sink = Math.max(0, c.sink - dt * 2);
+  if (c.surf === 10 && T.jungle && sinkInSand(c, T.jungle.quick, true, dt)) return;
+  if (c.sink && c.surf !== 10) c.sink = Math.max(0, c.sink - dt * 2);
   if (c.surf === 14 && sp > 20 && !c.ai && Math.random() < dt * 2.5) SFX.creak();
+}
+
+// quicksand (desert) and deep swamp (jungle: soft, it pulls less and swallows more slowly) on terrain 10: true = the car is in a patch (pulled,
+// maybe gone; rim: weaker at the edge, so that a car that only brushes the rim gets out again); on the edge of it (still code 10, but outside the pull) it only slowly comes up again
+export function sinkInSand(c, quick, soft, dt, rim = false) {
+  const q = quick.find(([x, y, r]) => Math.hypot(c.x - x, c.y - y) < r + 2);
+  if (!q) { if (c.sink) c.sink = Math.max(0, c.sink - dt * 2); return false; }
+  const dx = q[0] - c.x, dy = q[1] - c.y, d = Math.hypot(dx, dy) || 1, pull = (soft ? 85 : 150) / c.def.mud * (rim ? clamp((q[2] + 2 - d) / (q[2] * .6), .15, 1) : 1); // (rim: the pull grows from the edge to the middle)
+  c.vx += dx / d * pull * dt; c.vy += dy / d * pull * dt;
+  c.dirt = Math.min(1, c.dirt + .5 * dt);
+  if (d < q[2] * .38) c.sink = (c.sink || 0) + dt * (soft ? .7 : 1); else c.sink = Math.max(0, (c.sink || 0) - dt * .8);
+  if (Math.random() < dt * 25) addP({ t: 'd', x: c.x + (Math.random() - .5) * 18, y: c.y + (Math.random() - .5) * 12, z: 4, vx: 0, vy: 0, vz: 10, col: (soft ? ['#4a6a2a', '#6a8a3a', '#3a5420'] : ['#e3c48c', '#c49a5c', '#f0d9a6'])[(Math.random() * 3) | 0], s: 1, life: .6, ml: .6 });
+  if (!c.ai && Math.random() < dt * 3) (soft ? SFX.blubb : SFX.trickle)();
+  if (c.sink > 1.2) fallCar(c, 'sand');
+  return true;
 }

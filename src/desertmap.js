@@ -2,8 +2,8 @@ import { HALF, TAU, clamp, hash, hex, mk, vnoise } from './core.js';
 import { nearestIdx, paintTools, startLine } from './bau.js';
 
 // ---------- Wueste: the oasis, the dunes to jump over, the big pyramid (a tunnel), cacti, the gorge with its ramp and rope bridge, quicksand ----------
-// Terrain: 1 sand road, 0 dunes (slow, they make the car sandy), 3 the shallow rim of the oasis (washes), 5 its deep middle,
-// 10 quicksand, 11 the gorge (no ground: you fall), 14 the swinging rope bridge over the gorge.
+// Terrain: 1 sand road, 0 dunes (slow, they make the car sandy), 2 the damp bank of the oasis (mud), 3 the shallow rim of the oasis (washes),
+// 5 its deep middle, 10 quicksand, 11 the gorge (no ground: you fall), 14 the swinging rope bridge over the gorge.
 
 const K = Object.fromEntries(Object.entries({
   sand: '#ecca8a', sand1: '#e2bf7c', sand2: '#f4d69e', sandD: '#d2ac6c', sandL: '#fae4b4',
@@ -18,36 +18,54 @@ const K = Object.fromEntries(Object.entries({
 
 // the middle line of the gorge wanders a little away from the road
 export const canyonX = (C, y) => C.x + Math.sin(y / 23) * 5 * clamp((Math.abs(y - 390) - 40) / 40, 0, 1);
+// half width of the gorge at (x, y): a thin crack at its head under the cliff, widening over 50 px, with a ragged edge along its whole length
+// (only calm where it crosses the road)
+export const canyonEdge = (C, x, y) => {
+  const t = clamp((y - C.y0) / 50, 0, 1), taper = .12 + .88 * t * t * (3 - 2 * t);
+  return C.hw * taper + (vnoise(x * .2, y * .2, 62) - .5) * 5 * clamp((Math.abs(y - 390) - 40) / 30, 0, 1) * (.4 + .6 * t);
+};
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N }
 export function* desertTerrain(S) {
-  const { MW, MH, def, ter, dist, path } = S, A = MW * MH, alt = new Uint8Array(A);
+  const { MW, MH, def, ter, dist, path } = S, A = MW * MH, alt = new Uint8Array(A), wet = new Uint8Array(A);
   yield;
-  // the oasis: the shallow rim washes (also on the road), the deep middle lies beside the road
+  // the oasis: the shallow rim washes (also on the road), the deep middle lies beside the road; round it the ground is damp (mud: the
+  // bank, where cars come out of the water with sand and wet on their wheels)
   if (def.oasis) {
     const [ox, oy, rx, ry] = def.oasis;
-    for (let y = Math.max(0, oy - ry - 6); y < Math.min(MH, oy + ry + 6); y++) for (let x = Math.max(0, ox - rx - 6); x < Math.min(MW, ox + rx + 6); x++) {
+    for (let y = Math.max(0, oy - ry - 14); y < Math.min(MH, oy + ry + 14); y++) for (let x = Math.max(0, ox - rx - 14); x < Math.min(MW, ox + rx + 14); x++) {
       const j = y * MW + x, e = ((x + .5 - ox) / rx) ** 2 + ((y + .5 - oy) / ry) ** 2, lim = .85 + .3 * vnoise(x * .12, y * .12, 61);
-      if (e >= lim) continue;
+      if (e >= lim) {
+        // the bank: a ragged damp band of mud, thinner where the road is dry
+        if (e < lim * 1.3 + .12 * vnoise(x * .25, y * .25, 66) && (ter[j] === 0 || ter[j] === 1)) ter[j] = 2;
+        continue;
+      }
       ter[j] = e < .42 && dist[j] > HALF + 6 ? 5 : 3;
     }
   }
   yield;
-  // the gorge: no ground; the rope bridge beside the ramp, with a short piece of road at both ends
+  // the gorge: no ground; the rope bridge beside the ramp, with a short piece of road at both ends. It begins as a crack under a cliff (the head)
+  // and the edge is ragged all along.
   const C = def.canyon;
   if (C) for (let y = C.y0; y < MH; y++) {
     const cx = canyonX(C, y), onB = Math.abs(y - C.bridge) <= C.bh;
     for (let x = Math.floor(cx - C.hw - 26); x <= cx + C.hw + 26; x++) {
-      const j = y * MW + x, dx = Math.abs(x + .5 - cx), edge = C.hw + (vnoise(x * .2, y * .2, 62) - .5) * 3 * clamp((Math.abs(y - 390) - 40) / 30, 0, 1);
+      const j = y * MW + x, dx = Math.abs(x + .5 - cx);
       if (onB) { alt[j] = 1; if (dx < C.hw + 1) ter[j] = 14; else if (ter[j] === 0) ter[j] = 1; continue; }
-      if (dx < edge) ter[j] = 11;
+      if (dx < canyonEdge(C, x, y)) ter[j] = 11;
     }
   }
   yield;
-  // quicksand: round patches beside and on the ideal line
-  for (const [qx, qy, qr] of def.quick || []) for (let y = qy - qr - 2; y <= qy + qr + 2; y++) for (let x = qx - qr - 2; x <= qx + qr + 2; x++) {
-    if (Math.hypot(x + .5 - qx, y + .5 - qy) < qr + (vnoise(x * .3, y * .3, 63) - .5) * 2) ter[y * MW + x] = 10;
-  }
+  // quicksand: lying in a hollow of the dunes, uneven patches (long across the road, ragged), round them damp sand that slowly turns firm
+  (def.quick || []).forEach(([qx, qy, qr], q) => {
+    const R = qr * 1.7;
+    for (let y = Math.max(0, Math.floor(qy - R)); y <= Math.min(MH - 1, qy + R); y++) for (let x = Math.max(0, Math.floor(qx - R)); x <= Math.min(MW - 1, qx + R); x++) {
+      const dx = x + .5 - qx, dy = y + .5 - qy, a = Math.atan2(dy, dx), j = y * MW + x;
+      const rr = qr * (.78 + .22 * vnoise(Math.cos(a) * 1.6 + q * 7, Math.sin(a) * 1.6, 63)) + (vnoise(x * .3, y * .3, 63) - .5) * 2, d = Math.hypot(dx * .94, dy);
+      if (d < rr) { if (ter[j] === 0 || ter[j] === 1 || ter[j] === 10) ter[j] = 10; }
+      else if (d < rr * 1.7) wet[j] = Math.max(wet[j], Math.round(255 * (1 - (d - rr) / (rr * .7))));
+    }
+  });
   yield;
   // jumps: the crests of the dunes (the whole width of the road) and the ramp in front of the gorge (only its lane)
   const jumps = [];
@@ -57,14 +75,15 @@ export function* desertTerrain(S) {
     const [y0, y1] = C.lane, ym = 390;
     jumps.push({ x: C.lip, y: ym, tx: -1, ty: 0, lo: ym - y1, hi: ym - y0, vz: 100 });
     rampI = nearestIdx(path, C.lip, ym); landI = nearestIdx(path, canyonX(C, ym) - C.hw - 30, ym);
+    jumps[jumps.length - 1].land = landI; // (short of the far side: set down behind the gorge)
   }
-  return { alt, jumps, rampI, landI, quick: def.quick || [] };
+  return { alt, jumps, rampI, landI, quick: def.quick || [], wet }; // (the patches are uneven, but never wider than their radius)
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, critters, darken, RT }
 export function* paintDesert(S) {
   const { MW, MH, def, d, set, setT, path, nrm, N, ter, dist, walls, wallMask, shore, sd, RT } = S, A = MW * MH, C = def.canyon;
-  const { px, dk, solid } = paintTools(S);
+  const { px, dk, solid } = paintTools(S), wet = RT.wet;
 
   yield;
   // ----- the ground: dunes with ripples, the sand road (tyre tracks show well on it), quicksand, the gorge -----
@@ -89,10 +108,12 @@ export function* paintDesert(S) {
       c = v < .4 ? K.qs1 : v > .7 ? K.qs2 : K.qs;
     } else if (t === 11 || t === 14) {
       // the gorge: a sunlit rim, rock layers on its sides, darkness deep down
-      const cx = canyonX(C, y), dd = C.hw - Math.abs(x + .5 - cx), east = x > cx;
+      const cx = canyonX(C, y), dd = (t === 14 ? C.hw : canyonEdge(C, x, y)) - Math.abs(x + .5 - cx), east = x > cx;
       c = dd < 2.5 ? (east ? K.rimD : K.rimL) : dd < 5 ? (((y + (east ? 0 : 3)) >> 2) & 1 ? K.rock : K.rockD) : dd < 9 ? K.deep1 : dd < 14 ? K.deep2 : K.deep3;
       if (dd >= 5 && dd < 9 && h < .1) c = K.rockD;
     } else continue;
+    // the hollow of a quicksand patch: the dunes (and the road) turn damp and dark towards it
+    if (wet[j] && (t === 0 || t === 1)) { const k = wet[j] / 255 * .7; c = [c[0] + (K.qs1[0] - c[0]) * k, c[1] + (K.qs1[1] - c[1]) * k, c[2] + (K.qs1[2] - c[2]) * k]; }
     set(j, c);
   }
   yield;
@@ -206,21 +227,77 @@ export function* paintDesert(S) {
   }
 
   yield;
-  // ----- cacti: the ones on the road are obstacles of their own (see desert.js), more of them out on the dunes -----
-  const cactus = (x, y, big) => {
-    const r0 = big ? 6 : 4;
-    for (let dy = -r0; dy <= r0 + 3; dy++) for (let dx = -r0; dx <= r0 + 5; dx++) if (dx > 0 && dy > 0 && Math.hypot(dx - 3, dy - 3) < r0) dk(x + dx, y + dy, .78);
-    const blob = (cx, cy, rr) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const dd = Math.hypot(dx, dy); if (dd > rr + .3) continue; px(cx + dx, cy + dy, dd > rr - 1 ? K.cacD : (dx + dy < -1 ? K.cacL : (Math.round(Math.atan2(dy, dx) * 3) & 1) ? K.cac : K.cacD)); } };
-    if (big) { blob(x - 7, y - 1, 2); blob(x + 6, y + 2, 2); for (let k = -7; k <= -3; k++) px(x + k, y - 1, K.cac); for (let k = 3; k <= 6; k++) px(x + k, y + 2, K.cac); }
-    blob(x, y, r0 - 1);
-    for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(x + Math.cos(a) * (r0 - 1), y + Math.sin(a) * (r0 - 1), K.spine); }
-    px(x, y, [255, 120, 160]);
+  // ----- rock: ridges of boulders (the middle of the loop is closed: from the oasis over the small pyramids to the head of the gorge and on to the
+  // big pyramid), and the cliff the gorge comes out of, with a dry waterfall -----
+  const boulder = (x, y, r) => {
+    for (let dy = 1; dy <= r + 6; dy++) for (let dx = 1; dx <= r + 8; dx++) if (Math.hypot((dx - r * .5) / 1.3, dy - r * .6) < r + 1) dk(x + dx, y + dy, .72);
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const d2 = Math.hypot(dx, dy * 1.1); if (d2 > r) continue;
+      const lit = (dx + dy) / (r * 1.4), h = hash(x + dx, y + dy, sd + 47);
+      px(x + dx, y + dy, d2 > r - 1.2 ? K.rockD : lit < -.35 ? (h < .15 ? K.rock : K.rockL) : lit > .35 ? K.rockD : (h < .12 ? K.rockD : K.rock));
+    }
   };
-  const cacti = (def.cacti || []).map(([x, y]) => { cactus(x, y, true); return { x, y, r: 7 }; });
+  for (const line of def.ridges || []) for (let s = 0; s + 1 < line.length; s++) {
+    const [x0, y0] = line[s], [x1, y1] = line[s + 1], n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / 7));
+    for (let k = 0; k <= n; k++) {
+      const u = k / n, h1 = hash(k, s + 3, sd + 48), h2 = hash(k, s + 3, sd + 49);
+      const x = Math.round(x0 + (x1 - x0) * u + (h1 - .5) * 4), y = Math.round(y0 + (y1 - y0) * u + (h2 - .5) * 4), r = 6 + ((h1 * 100) | 0) % 4;
+      const j = clamp(y, 0, MH - 1) * MW + clamp(x, 0, MW - 1);
+      if (ter[j] !== 0 || dist[j] < HALF + r + 2) continue;
+      boulder(x, y, r); walls.push({ x, y, r: r - 1.5 }); solid(x, y, r + 3);
+    }
+  }
+  if (C) {
+    const hx = C.x, hy = C.y0 - 18, rx = 38, ry = 26;
+    const inside = (x, y) => ((x - hx) / rx) ** 2 + ((y - hy) / ry) ** 2 < 1 + .5 * (vnoise(x * .11, y * .11, sd + 50) - .5) + (y < hy ? .12 * Math.sin(x * .45) : 0);
+    for (let y = hy - ry - 4; y <= hy + ry + 12; y++) for (let x = hx - rx - 4; x <= hx + rx + 14; x++) {
+      if (x < 0 || y < 0 || x >= MW || y >= MH) continue;
+      const j = y * MW + x;
+      if (!inside(x, y)) { if (inside(x - 3, y - 3) && ter[j] === 0) dk(x, y, .7); continue; } // (its shadow to the bottom right)
+      if (ter[j] !== 0 && ter[j] !== 11) continue;
+      const band = (Math.floor((y - (hy - ry)) / 4) + (hash(x >> 3, y >> 2, sd + 51) < .3 ? 1 : 0)) % 3, edge = !inside(x + 1, y + 1) || !inside(x - 1, y - 1);
+      const fall = Math.abs(x - hx - Math.sin(y * .3) * 1.5) < 5 && y < C.y0 + 1;
+      let c = edge ? K.rockD : fall ? ((y + (x >> 1)) % 6 < 2 ? K.sandL : K.st) : band === 0 ? K.rockL : band === 1 ? K.rock : K.rockD;
+      if (fall && Math.abs(x - hx - Math.sin(y * .3) * 1.5) > 3.6) c = K.stD; // the dry bed: pale stone, darker at its sides
+      if (hash(x, y, sd + 52) < .06) c = K.rockD;
+      px(x, y, c);
+    }
+    for (const [dx, r] of [[-14, 5], [13, 4], [-4, 3], [6, 3]]) boulder(hx + dx, C.y0 + 2 - (r > 3 ? 0 : 3), r); // the fallen rocks at its foot
+    for (let k = 0, n = 34; k < n; k++) {
+      const a = k / n * TAU, x = Math.round(hx + Math.cos(a) * (rx - 2)), y = Math.round(hy + Math.sin(a) * (ry - 2)), j = clamp(y, 0, MH - 1) * MW + clamp(x, 0, MW - 1);
+      if (ter[j] === 11 || dist[j] < HALF + 6) continue;
+      walls.push({ x, y, r: 5 });
+    }
+    solid(hx, hy, rx + 4);
+  }
+
+  yield;
+  // ----- cacti: the ones on the road are obstacles of their own (see desert.js), more of them out on the dunes -----
+  // The ones ON the road (obstacle: big, dark green, a ring of stones, a long shadow across the road, a pink flower) and the ones beside it
+  // (decoration: small, pale and dusty green, no stones, no flower) cannot be mistaken for each other (principle 10).
+  const blob = (cx, cy, rr, pal) => { for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) { const dd = Math.hypot(dx, dy); if (dd > rr + .3) continue; px(cx + dx, cy + dy, dd > rr - 1 ? pal[2] : (dx + dy < -1 ? pal[1] : (Math.round(Math.atan2(dy, dx) * 3) & 1) ? pal[0] : pal[2])); } };
+  const cactus = (x, y) => {
+    for (let dy = -8; dy <= 14; dy++) for (let dx = -8; dx <= 20; dx++) if (dx > 0 && dy > -2 && Math.hypot((dx - 6) / 1.5, dy - 4) < 8.5) dk(x + dx, y + dy, .66);
+    for (let k = 0; k < 11; k++) {
+      const a = k / 11 * TAU + .3, rr = 11 + (k % 2) * 1.5, sx = Math.round(x + Math.cos(a) * rr), sy = Math.round(y + Math.sin(a) * rr * .8);
+      for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(sx + dx, sy + dy, dy === 0 ? K.rockL : dy === 2 ? K.rockD : K.rock);
+    }
+    const C3 = [K.cac, K.cacL, K.cacD];
+    blob(x - 10, y - 2, 3, C3); blob(x + 9, y + 3, 3, C3); for (let k = -10; k <= -4; k++) px(x + k, y - 2, K.cac); for (let k = 4; k <= 9; k++) px(x + k, y + 3, K.cac);
+    blob(x, y, 7, C3);
+    for (let k = 0; k < 12; k++) { const a = k / 12 * TAU; px(x + Math.cos(a) * 6, y + Math.sin(a) * 6, K.spine); }
+    px(x, y, [255, 120, 160]); px(x + 1, y, [255, 120, 160]);
+  };
+  const deco = (x, y) => {
+    const P = [[134, 178, 120], [160, 200, 140], [104, 148, 98]];
+    for (let dy = -2; dy <= 5; dy++) for (let dx = 0; dx <= 7; dx++) if (Math.hypot(dx - 3, dy - 2) < 3.5) dk(x + dx, y + dy, .88);
+    blob(x - 3, y - 1, 1, P); blob(x + 3, y, 1, P); blob(x, y, 2, P);
+  };
+  const cacti = (def.cacti || []).map(([x, y]) => { cactus(x, y); return { x, y, r: 8 }; });
   const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= MW - 2 || Y >= MH - 2) return false; const j = Y * MW + X; if (ter[j] !== 0 || dist[j] < HALF + 8 || wallMask[j] || shore[j]) return false; } return true; };
   for (let k = 0, tries = 0; k < 16 && tries < 800; tries++) {
     const x = 6 + (S.r() * (MW - 12) | 0), y = 6 + (S.r() * (MH - 12) | 0); if (!okOff(x, y, 10)) continue;
-    cactus(x, y, true); walls.push({ x, y, r: 6 }); solid(x, y, 9); k++;
+    deco(x, y); solid(x, y, 5); k++; // (no wall: you drive over a little one)
   }
 
   yield;
@@ -271,6 +348,6 @@ export function* paintDesert(S) {
   const socks = [[34, 122], [735, 196], [404, 432], [350, 112]].map(([x, y]) => ({ x, y }));
   for (const s of socks) walls.push({ x: s.x, y: s.y, r: 2 });
 
-  return { jumps: RT.jumps, alt: RT.alt, quick: RT.quick, rampI: RT.rampI, landI: RT.landI, pyr, cacti, socks, canyon: C,
+  return { jumps: RT.jumps, alt: RT.alt, quick: RT.quick, rampI: RT.rampI, landI: RT.landI, pyr, cacti, socks, canyon: C, heat: def.heat || [],
     qsPix: (() => { const a = []; for (let j = 0; j < A; j++) if (ter[j] === 10 && hash(j % MW, j / MW | 0, 64) < .2) a.push(j); return a; })() };
 }
