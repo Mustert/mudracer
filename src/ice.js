@@ -7,7 +7,7 @@ import { snap } from './undo.js';
 import { addP } from './particles.js';
 import { cam } from './state.js';
 import { nearestIdx } from './bau.js';
-import { near } from './trackfx.js';
+import { inView, near } from './trackfx.js';
 
 // ---------- Eis while racing: the thin ice of the lake cracks under every car and breaks after about eight crossings (the hole freezes over
 // again after 20 s), the computer cars take the short cut while it is safe, steam over the hot spring, snowfall.
@@ -22,10 +22,10 @@ const cellOf = (x, y) => ((y / CELL) | 0) * 100 + ((x / CELL) | 0);
 
 function initIce(T) {
   const ev = T.ev;
-  ev.cells = new Map(); ev.iceHoles = []; ev.peng = []; ev.obst = []; ev.frost = null; ev.frostOn = false; ev.aval = null; ev.pengOn = false; ev.lakeSnap = false;
+  ev.iceCells = new Map(); ev.iceHoles = []; ev.icePeng = []; ev.obst = []; ev.iceFrost = null; ev.iceFrostOn = false; ev.iceAval = null; ev.icePengOn = false; ev.iceLakeSnap = false;
 }
 
-function cell(ev, k) { let c = ev.cells.get(k); if (!c) { c = { n: 0, hole: null }; ev.cells.set(k, c); } return c; }
+function cell(ev, k) { let c = ev.iceCells.get(k); if (!c) { c = { n: 0, hole: null }; ev.iceCells.set(k, c); } return c; }
 
 // a hole breaks open in the middle of the cell: dark water (deep, you fall in); it freezes over again, thin and light blue at first
 function paintHole(T, h, open) {
@@ -48,14 +48,19 @@ function iceUpdate(T, dt) {
   // steam over the hot spring
   const S = I.spring;
   if (S && near(S[0], S[1]) < 320 && Math.random() < dt * 14) addP({ t: 'smoke', x: S[0] + (Math.random() - .5) * S[2] * 1.6, y: S[1] + (Math.random() - .5) * S[3], vx: 4 + Math.random() * 6, vy: -10 - Math.random() * 8, life: 1.6, ml: 1.6 });
-  if (ev.frostOn) updateFrost(T, dt);
-  if (ev.pengOn) updatePenguins(T, dt);
-  ev.obst = ev.peng.filter(p => p.on);
+  if (ev.iceFrostOn) updateFrost(T, dt);
+  if (ev.icePengOn) updatePenguins(T, dt);
+  ev.obst = ev.icePeng.filter(p => p.on);
 }
 
 // the ground under a car: the lake ice cracks (every new cell it drives into counts once), steam and powder snow
 function iceGround(c, j, sp, dt) {
   const T = G.T, I = T.ice, ev = T.ev;
+  // a crooked landing after the big jump (trackfx.js land() spins the car): it ploughs into the snow bank and is snowed in, like by the avalanche
+  if (c.z > 0) c.iceAir = c.air; else if (c.iceAir) {
+    if (c.iceAir > .7 && c.stun > 0) { c.snowT = 1.05; c.shake = 1; c.vx = c.vy = 0; c.stun = 0; c.spin = 0; if (!c.ai) SFX.crash(); else if (near(c.x, c.y) < 260) SFX.crunch(.4); }
+    c.iceAir = 0;
+  }
   const onLake = !!I.lakeM[j];
   // fall through a hole: set down on the shore next to it
   c.respawnI = onLake ? nearestIdx(T.path, c.x, c.y) : null;
@@ -69,7 +74,7 @@ function iceGround(c, j, sp, dt) {
         if (v > .02 && C.n >= 3) SFX.crack(v * Math.min(1, C.n / BREAK));
         if (C.n >= BREAK) {
           const h = { x: ((k % 100) + .5) * CELL, y: (((k / 100) | 0) + .5) * CELL, t0: ev.t, open: true, cell: C };
-          if (!ev.lakeSnap) { ev.lakeSnap = true; const L = I.lake; snap(T, L[0] - L[2] - 10, L[1] - L[3] - 10, L[2] * 2 + 20, L[3] * 2 + 20); }
+          if (!ev.iceLakeSnap) { ev.iceLakeSnap = true; const L = I.lake; snap(T, L[0] - L[2] - 10, L[1] - L[3] - 10, L[2] * 2 + 20, L[3] * 2 + 20); }
           C.hole = h; ev.iceHoles.push(h); paintHole(T, h, true);
           if (v > .02) SFX.iceBreak(v);
         }
@@ -112,7 +117,7 @@ function iceTarget(c) {
   if (c.x < S.x1 + 14 || c.y > S.y + 34 || c.y < S.y - 70 || c.fall > 0) { c.short = false; return null; }
   // of three lines across the lake take the one with the most room to the holes (and to ice that is about to break) on the way ahead
   const tx = c.x - 60, risky = ev.iceHoles.map(h => [h.x, h.y]);
-  for (const [k, C] of ev.cells) if (!C.hole && C.n >= BREAK - 1) risky.push([((k % 100) + .5) * CELL, (((k / 100) | 0) + .5) * CELL]);
+  for (const [k, C] of ev.iceCells) if (!C.hole && C.n >= BREAK - 1) risky.push([((k % 100) + .5) * CELL, (((k / 100) | 0) + .5) * CELL]);
   let best = c.short, bs = -1;
   for (const ty of [c.short, S.y, S.y - 28, S.y - 52]) {
     let room = 99;
@@ -125,17 +130,17 @@ function iceTarget(c) {
 
 // ======================================================= event "frost": icy corners, avalanches, the polar light
 
-function initFrost(T) { T.ev.frostOn = true; }
+function initFrost(T) { T.ev.iceFrostOn = true; }
 
 function updateFrost(T, dt) {
   const ev = T.ev, I = T.ice;
-  if (!ev.frost) {
+  if (!ev.iceFrost) {
     if (!G.player || G.player.lap < 2) return;
-    ev.frost = { t: 0, done: I.frost.map(() => 0) };
+    ev.iceFrost = { t: 0, done: I.frost.map(() => 0) };
     snap(T, 0, 0, T.W, T.H); // icy corners and snow piles change the ground; this puts it back after the race
     SFX.frost();
   }
-  const f = ev.frost; f.t += dt;
+  const f = ev.iceFrost; f.t += dt;
   // ice flowers grow in from the edge of three corners, one after the other
   const b = T.base.getContext('2d');
   I.frost.forEach((F, k) => {
@@ -159,11 +164,11 @@ function updateFrost(T, dt) {
 // the avalanche: rumble and a shadow first, then a snowball rolls down and grows; where it bursts a heap of deep snow stays on the road
 function updateAvalanche(T, dt) {
   const ev = T.ev, A = T.ice.avalanche; if (!A) return;
-  const t = ev.frost.t - AVAL.first, k = Math.floor(t / AVAL.per), u = t - k * AVAL.per;
-  if (t < 0) { ev.aval = null; return; }
+  const t = ev.iceFrost.t - AVAL.first, k = Math.floor(t / AVAL.per), u = t - k * AVAL.per;
+  if (t < 0) { ev.iceAval = null; return; }
   const [[ax, ay], [bx, by]] = A, ox = (hash(k, 1, 79) - .5) * 30, ex = bx + ox, ey = by + (hash(k, 2, 79) - .5) * 20;
-  if (!ev.aval || ev.aval.k !== k) { ev.aval = { k, hit: new Set(), burst: false }; if (near(ex, ey) < 500) SFX.rumble(); }
-  const a = ev.aval;
+  if (!ev.iceAval || ev.iceAval.k !== k) { ev.iceAval = { k, hit: new Set(), burst: false }; if (near(ex, ey) < 500) SFX.rumble(); }
+  const a = ev.iceAval;
   a.warn = u < AVAL.warn; a.p = clamp((u - AVAL.warn) / AVAL.roll, 0, 1);
   a.x = ax + (ex - ax) * a.p; a.y = ay + (ey - ay) * a.p + Math.sin(a.p * Math.PI) * 10; a.r = 6 + 12 * a.p; a.on = u >= AVAL.warn && a.p < 1;
   if (a.p >= 1 && !a.burst) {
@@ -182,22 +187,23 @@ function updateAvalanche(T, dt) {
 
 // ======================================================= event "pinguine"
 
-function initPenguins(T) { T.ev.pengOn = true; }
+function initPenguins(T) { T.ev.icePengOn = true; }
 
-// a group of three crosses the road from the colony and back (every 9 s), one slides across the lake on its belly (every 11 s)
+// a group of three waddles from the colony in its bay over the road down to the lake and back (every 10 s), one slides across the lake on its belly
+// (every 11 s). The colony is far from the avalanche slope on the right, so the two never come at the same place.
 function updatePenguins(T, dt) {
   const ev = T.ev, C = T.ice.colony; if (!C) return;
-  if (!ev.peng.length) for (let k = 0; k < 4; k++) ev.peng.push({ k, x: 0, y: 0, on: false, slide: k === 3, cool: 0, quack: 0, face: 1 });
-  for (const p of ev.peng) {
+  if (!ev.icePeng.length) for (let k = 0; k < 4; k++) ev.icePeng.push({ k, x: 0, y: 0, on: false, slide: k === 3, cool: 0, quack: 0, face: 1 });
+  for (const p of ev.icePeng) {
     p.cool = Math.max(0, p.cool - dt); p.quack = Math.max(0, p.quack - dt);
     if (p.slide) {
       const L = T.ice.lake, u = ((ev.t + 3) % 11) / 3.2; p.on = u < 1;
       p.x = L[0] - L[2] * .7 + u * L[2] * 1.4; p.y = L[1] - L[3] * .4 + u * L[3] * .9; p.face = 1; continue;
     }
-    // 0..4 s over to the other side, a second there, 5..9 s back home
-    const per = 9, u = ((ev.t - p.k * .45) % per + per) % per, go = u < 4 ? u / 4 : u < 5 ? 1 : 1 - (u - 5) / 4;
-    const x0 = C.x - 36, x1 = 552, y = C.y - 10 + p.k * 9;
-    p.x = x0 + (x1 - x0) * go; p.y = y + Math.sin(ev.t * 9 + p.k); p.face = u >= 5 ? 1 : -1;
+    // 0..4 s down to the lake, a second there, 5..9 s back home
+    const per = 10, u = ((ev.t - p.k * .45) % per + per) % per, go = u < 4 ? u / 4 : u < 5 ? 1 : u < 9 ? 1 - (u - 5) / 4 : 0;
+    const x = C.x - 24 + p.k * 16, y0 = C.y + 6, y1 = T.ice.lake[1] - T.ice.lake[3] + 6;
+    p.y = y0 + (y1 - y0) * go; p.x = x + Math.sin(ev.t * 9 + p.k) * 1.5; p.face = u >= 5 ? 1 : -1;
     p.on = go > .05;
   }
 }
@@ -205,13 +211,13 @@ function updatePenguins(T, dt) {
 // cars and the snowball, cars and penguins
 function iceCollisions() {
   const ev = G.T.ev; if (!ev) return;
-  const a = ev.aval;
+  const a = ev.iceAval;
   if (a && a.on) for (const c of G.cars) {
     if (c.fall > 0 || c.z > 0 || c.snowT > 0 || c.ghost > 0 || a.hit.has(c) || Math.hypot(c.x - a.x, c.y - a.y) > a.r + 10) continue;
     a.hit.add(c); c.snowT = 1.05; c.vx = c.vy = 0; c.stun = 0; c.boost = 0; c.shake = 1;
     if (!c.ai) { SFX.crash(); } else if (near(c.x, c.y) < 260) SFX.crunch(.4);
   }
-  for (const p of ev.peng) if (p.on) for (const c of G.cars) {
+  for (const p of ev.icePeng) if (p.on) for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
     const dx = c.x - p.x, dy = c.y - p.y, d = Math.hypot(dx, dy), mn = 14; if (d >= mn || d === 0) continue;
     const nx = dx / d, ny = dy / d, vn = c.vx * nx + c.vy * ny;
@@ -236,7 +242,7 @@ function drawPenguin(x, y, f, slide, k) {
 // on the ground: cracks in the lake ice, the penguins and their colony, the cable of the ski lift with its gondolas
 function drawIceGround() {
   const T = G.T, I = T.ice, ev = T.ev;
-  if (ev && ev.cells) for (const [k, C] of ev.cells) {
+  if (ev && ev.iceCells) for (const [k, C] of ev.iceCells) {
     if (!C.n || C.hole) continue;
     const cx = ((k % 100) + .5) * CELL, cy = (((k / 100) | 0) + .5) * CELL;
     if (Math.abs(cx - cam.x - VW / 2) > VW / 2 + 20 || Math.abs(cy - cam.y - VH / 2) > VH / 2 + 20) continue;
@@ -252,15 +258,15 @@ function drawIceGround() {
     const x = I.colony.x - 18 + (k % 3) * 16 + Math.sin(G.time + k) * 2, y = I.colony.y - 6 + (k >> 1) * 7 - (k % 2) * 4;
     drawPenguin(x, y, k % 2 ? 1 : -1, false, k);
   }
-  if (ev && ev.peng) for (const p of ev.peng) if (p.on && near(p.x, p.y) < 340) drawPenguin(p.x, p.y, p.face, p.slide, p.k);
+  if (ev && ev.icePeng) for (const p of ev.icePeng) if (p.on && near(p.x, p.y) < 340) drawPenguin(p.x, p.y, p.face, p.slide, p.k);
   // the snowball's shadow while it is still up the slope: it warns where it will come down
-  const a = ev && ev.aval;
+  const a = ev && ev.iceAval;
   if (a && (a.warn || a.on)) { ctx.globalAlpha = a.warn ? .15 + .15 * Math.abs(Math.sin(G.time * 8)) : .3; ell(Math.round(a.x + 3), Math.round(a.y + a.r * .6), Math.round(a.r + 4), Math.round(a.r * .5 + 2), '#304860'); ctx.globalAlpha = 1; }
 }
 
 // above the cars: the snowball, "LAWINE!", the gondolas of the ski lift, the polar light over the lake in the last lap, the penguins' "QUAEK!"
 function drawIceAbove() {
-  const T = G.T, I = T.ice, ev = T.ev, a = ev && ev.aval;
+  const T = G.T, I = T.ice, ev = T.ev, a = ev && ev.iceAval;
   if (a && a.on) {
     const x = Math.round(a.x), y = Math.round(a.y), r = Math.round(a.r), rot = a.p * 20;
     disc(x, y, r + 1, '#9fb2c6'); disc(x, y, r, '#f4f8fc'); disc(x - Math.round(r * .3), y - Math.round(r * .3), Math.round(r * .45), '#ffffff');
@@ -268,7 +274,7 @@ function drawIceAbove() {
     if (Math.random() < .6) addP({ t: 'd', x: a.x + (Math.random() - .5) * a.r * 2, y: a.y + a.r * .5, z: 3, vx: (Math.random() - .5) * 40, vy: -20, vz: 30, col: '#ffffff', s: 2, life: .5, ml: .5 });
   }
   if (a && a.warn && G.player && near(a.x, a.y) < 420 && ((G.time * 4) | 0) % 2 === 0) text('LAWINE!', Math.round(G.player.x), Math.round(G.player.y - 40), 8, '#ff6b6b', 'center');
-  if (ev && ev.peng) for (const p of ev.peng) if (p.quack > 0) text('QUAEK!', Math.round(p.x), Math.round(p.y - 14 - (1.1 - p.quack) * 8), 8, '#ffffff', 'center');
+  if (ev && ev.icePeng) for (const p of ev.icePeng) if (p.quack > 0) text('QUAEK!', Math.round(p.x), Math.round(p.y - 14 - (1.1 - p.quack) * 8), 8, '#ffffff', 'center');
   // ski lift
   const L = I.lift, len = L.y1 - L.y0;
   if (cam.x < 60) {
@@ -278,21 +284,42 @@ function drawIceAbove() {
       R1(x, y - 4, 1, 4, '#3a3a40'); R1(x - 3, y, 7, 6, '#1b120c'); R1(x - 2, y + 1, 5, 4, ['#d83a2c', '#2f6fd8', '#f2c230', '#3aa845'][k % 4]); R1(x - 2, y + 1, 5, 1, '#9fd6ff');
     }
   }
-  // the polar light: green and violet curtains over the lake, their mirror image in the ice
-  if (ev && ev.frost && G.player && G.player.lap >= LAPS && I.lake) {
-    const [lx, ly, rx, ry] = I.lake, fade = clamp(G.player.lap >= LAPS ? 1 : 0, 0, 1);
-    for (let k = 0; k < 3; k++) for (let x = lx - rx; x < lx + rx; x += 2) {
-      const w = Math.sin(x * .03 + G.time * (.6 + k * .2) + k * 2) * 10 + Math.sin(x * .011 - G.time * .4) * 8, y = ly - ry - 34 + k * 9 + w, h = 16 + 8 * Math.sin(x * .05 + G.time + k);
-      ctx.globalAlpha = .1 * fade; ctx.fillStyle = k === 1 ? '#b36bff' : '#6bffb0'; ctx.fillRect(x, Math.round(y), 2, Math.round(h));
-      ctx.globalAlpha = .06 * fade; ctx.fillRect(x, Math.round(ly + ry * .2 - w * .5), 2, Math.round(h * .8));
-    }
-    ctx.globalAlpha = 1;
+  // the snowed-in lump over a car (the shaking shows while it is held)
+  for (const c of G.cars) if (c.snowT > 0 && inView(c.x, c.y, 30)) {
+    const X = Math.round(c.x), Y = Math.round(c.y), w = Math.round(Math.sin(G.time * 40) * (c.shake || 0) * 2);
+    ell(X + w, Y, 16, 12, '#9fb2c6'); ell(X + w, Y - 1, 15, 11, '#eef4fa'); ell(X - 4 + w, Y - 4, 8, 5, '#ffffff');
   }
+  if (ev && ev.iceFrost && G.player && G.player.lap >= LAPS && I.lake) drawAurora(ev, I.lake);
+}
+
+// the polar light of the last lap: three curtains hang in the sky over the glacier north of the lake (violet at the top, green at the lower edge, vertical rays that flicker and
+// sway), and the lake ice mirrors them (flipped at the north shore, a little squeezed, with a green glow on the ice, fainter, rippling, only inside the lake)
+const AURORA = Array.from({ length: 5 }, (_, i) => { const m = (a, b) => Math.round(a + (b - a) * i / 4); return 'rgb(' + m(150, 40) + ',' + m(80, 240) + ',' + m(255, 140) + ')'; });
+function drawAurora(ev, [lx, ly, rx, ry]) {
+  if (!inView(lx, ly - ry * .5, rx + 40) && !inView(lx, ly - ry - 140, rx + 40)) return;
+  if (ev.iceAuroraT0 === undefined) ev.iceAuroraT0 = G.time;
+  const fade = clamp((G.time - ev.iceAuroraT0) / 3, 0, 1), ym = ly - ry * .9, N = 5;
+  for (const mirror of [false, true]) {
+    ctx.save();
+    if (mirror) { ctx.beginPath(); ctx.ellipse(lx, ly, rx * .96, ry * .96, 0, 0, TAU); ctx.clip(); ctx.globalAlpha = .08 * fade; ctx.fillStyle = '#5cffb4'; ctx.fillRect(lx - rx, ly - ry, rx * 2, ry * 2); }
+    for (let k = 0; k < 3; k++) for (let x = lx - rx - 40; x < lx + rx + 40; x += 3) {
+      const sway = Math.sin(x * .028 + G.time * (.5 + k * .17) + k * 2.2) * 9 + Math.sin(x * .011 - G.time * .35) * 7;
+      const yb = ly - ry - 135 - k * 14 + sway, h = 46 + 18 * Math.sin(x * .05 + G.time * .8 + k) + k * 6;
+      const flick = (.5 + .5 * Math.sin(x * .31 + G.time * 2.3 + k * 1.7)) ** 2, taper = clamp(Math.min(x - (lx - rx - 40), lx + rx + 40 - x) / 60, 0, 1), a = (.1 + .42 * flick) * taper * fade * (mirror ? .6 : 1);
+      for (let i = 0; i < N; i++) {
+        const y0 = yb - h + h * i / N, y1 = yb - h + h * (i + 1) / N, d = mirror ? ym + (ym - y1) * .7 : y0, e = mirror ? (y1 - y0) * .7 : y1 - y0;
+        ctx.globalAlpha = a * Math.pow((i + 1) / N, 1.5); ctx.fillStyle = AURORA[i];
+        ctx.fillRect(x + (mirror ? Math.round(Math.sin(y0 * .2 + G.time * 2) * 1.5) : 0), Math.round(d), 3, Math.max(1, Math.round(e)));
+      }
+    }
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
 }
 
 // snow falling over the whole screen: light in lap 1, thick with the frost
 function drawIceSky(cx, cy) {
-  const ev = G.T.ev, n = ev && ev.frost ? 170 : 60;
+  const ev = G.T.ev, n = ev && ev.iceFrost ? 170 : 60;
 
   for (let i = 0; i < n; i++) {
     const sp = 18 + hash(i, 1, 86) * 26, x = ((hash(i, 2, 86) * (VW + 40) + Math.sin(G.time * .8 + i) * 10 - cx * .4) % (VW + 40) + VW + 40) % (VW + 40) - 20;

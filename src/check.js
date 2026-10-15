@@ -99,10 +99,11 @@ function shortcuts(T) {
 
 // a whole race: every car by the computer (yours at full throttle), counts laps, falls, cars that are stuck
 function simulate(T, o) {
-  const keep = { mode: G.mode, track: PREFS.selTrack, count: PREFS.selCount, gain: AU.m ? AU.m.gain.value : null, music: AU.music };
+  const keep = { mode: G.mode, track: PREFS.selTrack, count: PREFS.selCount, fx: PREFS.selFx, kids: PREFS.kids, gain: AU.m ? AU.m.gain.value : null, music: AU.music };
   if (AU.m) AU.m.gain.value = 0;
   AU.music = false;
   G.mode = 'single'; PREFS.selTrack = TRACKS.indexOf(T); PREFS.selCount = 9;
+  PREFS.selFx = o.fx; PREFS.kids = false; // (startRace reads these: without them the events would not start at all)
   for (const s of raceSets(T, singleField())) completeSet(s);
   startRace();
   G.raceDiff = o.diff; G.fx = o.fx;
@@ -129,7 +130,7 @@ function simulate(T, o) {
   }
   const evKeys = Object.keys(T.ev || {}).filter(k => !BASE_EV.has(k));
   const res = { t, info, events, evKeys, done: G.cars.filter(c => c.finished).length, field };
-  G.mode = keep.mode; PREFS.selTrack = keep.track; PREFS.selCount = keep.count; AU.music = keep.music;
+  G.mode = keep.mode; PREFS.selTrack = keep.track; PREFS.selCount = keep.count; PREFS.selFx = keep.fx; PREFS.kids = keep.kids; AU.music = keep.music;
   if (AU.m && keep.gain !== null) AU.m.gain.value = keep.gain;
   G.player.ai = false;
   setState('main');

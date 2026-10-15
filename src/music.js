@@ -318,7 +318,9 @@ const SONGS = {
       'G6:0:4 B6:4:4 E7:8:8', 'D7:0:4 C#7:4:4 A#6:8:8', 'B6:0:8 D7:8:4 F#7:12:4', 'B6:0:16']) },
     lead(M, m, t, d) { M.celesta(hz(m - 12), t, d); M.glock(hz(m), t + 3 * M.sd, .5); },
     band(M, s, t, bi, ch, sec) {
-      const P = G.player, lap = P && !G.T.run && (G.state === 'race' || G.state === 'finish') ? P.lap : 1, frost = lap >= 2, last = lap >= LAPS, ev = G.T && G.T.ev;
+      const P = G.player, ev = G.T && G.T.ev, lap = P && !G.T.run && (G.state === 'race' || G.state === 'finish') ? P.lap : 1;
+      // the fast layers belong to the event frost: without it (switched off) the winter song stays soft in every lap
+      const frost = lap >= 2 && !!(ev && ev.iceFrostOn), last = frost && lap >= LAPS;
       if (s === 0) M.pad(ch.n, t, 16 * M.sd, frost ? .012 : .018);
       if (s % 2 === 0) M.sleigh(t, s % 4 === 0 ? 1 : .55);
       if (!frost) { if (s === 0 && bi % 2 === 0) M.bassWarm(hz(ch.r - 12), t, 14 * M.sd); }
@@ -335,7 +337,7 @@ const SONGS = {
         if (s === 0 || (s === 8 && bi % 2)) M.timp(hz(ch.r), t);
       }
       // a low roll before the avalanche
-      if (ev && ev.aval && ev.aval.warn) M.timp(hz(ch.r - 12), t, .45);
+      if (ev && ev.iceAval && ev.iceAval.warn) M.timp(hz(ch.r - 12), t, .45);
       if (s === 0 && bi === 0) M.crash(t);
     } },
 };

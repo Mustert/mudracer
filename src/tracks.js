@@ -188,19 +188,25 @@ const TRACK_DEFS = [
   // penguins on the way down, the frozen lake (the road goes round it, the short cut across the thin ice cracks and breaks), a wooden bridge over
   // the glacier stream, then the icy run down to the line past the hot spring (see icemap.js, ice.js).
   // jump = lip [x, y] and the speed upwards; landing = the icy slope after it; slopes = [x0, y0, x1, y1 of the stretch, push]; bob = road from [x, y] to [x, y];
-  // lake = [x, y, rx, ry]; spring = hot spring [x, y, rx, ry]; frost = the three corners that freeze from lap 2; colony = penguins [x, y];
-  // avalanche = from [x, y] to [x, y]; village = the ski hut [x, y]
-  { name: 'EIS', seed: 9, theme: 'eis', song: 'ice', events: ['frost', 'pinguine'], wall: [], wash: null, ice: true,
-    poly: [[70, 330, 0], [70, 55, 50], [745, 55, 50], [745, 165, 50], [600, 165, 40], [600, 395, 45], [520, 395, 40], [520, 262, 40], [280, 262, 40], [280, 395, 40], [70, 395, 50]],
+  // lake = [x, y, rx, ry]; spring = hot spring [x, y, rx, ry]; frost = the three corners that freeze from lap 2; colony = penguins [x, y] (in the bay of the glacier);
+  // avalanche = from [x, y] to [x, y]; village = the ski hut [x, y]; the start line is on the straight at the left, rev 1 (the start moved up, the infield is a glacier)
+  { name: 'EIS', rev: 1, seed: 9, theme: 'eis', song: 'ice', events: ['frost', 'pinguine'], wall: [], wash: null, ice: true,
+    poly: [[70, 135, 0], [70, 55, 50], [745, 55, 50], [745, 165, 50], [600, 165, 40], [600, 395, 45], [520, 395, 40], [520, 262, 40], [280, 262, 40], [280, 395, 40], [70, 395, 50]],
     mud: [], water: [], ponds: [],
     boostAt: [[168, 55]], jump: [246, 55, 190], landing: [[392, 55], [540, 55]],
     slopes: [[392, 55, 540, 55, 46], [262, 395, 70, 345, 34]],
     bob: [[592, 55], [612, 165]],
-    mudAt: [[586, 248, 20, 13], [616, 318, 22, 12], [440, 262, 18, 12]],
+    // deep snow grows in from the outside of two bends (drifts = [x, y of the bend, half length in path points, depth in px, a point on the outer side])
+    drifts: [[280, 262, 38, 20, 250, 232], [520, 262, 38, 20, 548, 238]],
     lake: [400, 372, 118, 72],
-    rivers: [[[196, 112, 7], [208, 180, 9], [216, 250, 10], [219, 320, 11], [218, 400, 12], [220, 462, 12]]],
+    // the stream starts in the ice gate at the foot of the glacier
+    rivers: [[[206, 238, 6], [210, 270, 8], [214, 320, 10], [217, 380, 11], [218, 400, 12], [220, 462, 12]]], gate: [206, 236],
+    // glacier = the solid infield (rects [x0, y0, x1, y1, wobble of the lower edge]; bay = the notch for the colony); ridges = [x0, y0, x1, y1, half width];
+    // slope = the steep face under the ridge on the right, outcrops = rocks in it
+    glacier: { rects: [[100, 90, 740, 138], [100, 90, 575, 238, 12]], bay: [400, 214, 42, 22] },
+    ridges: [[560, 198, 560, 366, 6], [642, 208, 800, 208, 7]], slope: [640, 213, 800, 330], outcrops: [[700, 236], [764, 262], [668, 292], [776, 304]],
     spring: [148, 428, 26, 15],
-    frost: [[70, 55], [600, 395], [70, 395]], colony: [700, 300], avalanche: [[790, 214], [548, 252]],
+    frost: [[70, 55], [600, 395], [70, 395]], colony: [400, 214], avalanche: [[790, 222], [590, 248]],
     village: [150, 300] },
   // The volcano: up the flank in a serpentine, along the crater rim (the short cut over a crust that breaks through, or the long way over a stone
   // bridge), down past the steam geyser (it throws you over a lava ditch, or you take the bend), through a lava tube, over the lava ford (one of

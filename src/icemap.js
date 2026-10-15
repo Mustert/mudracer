@@ -4,6 +4,8 @@ import { nearestIdx, paintTools, startLine } from './bau.js';
 // ---------- Eis: the ski jump, the bob run, the frozen lake with the short cut, the hot spring, the village ----------
 // Terrain: 1 packed snow, 0 snow beside the road, 2 deep snow (like mud, it makes the car white), 3 the hot spring (washes),
 // 5 the glacier stream (deep water, the road crosses it on a wooden bridge), 12 sheet ice (the bob run, the landing slope, the lake).
+// The infield north of the lake is one big glacier (solid, a ring of circles along its cliff); its tongue ends in the ice gate where the stream
+// starts. Rock ridges close the gap between the two legs on the right and the slope of the avalanche: nobody cuts through the middle.
 
 const K = Object.fromEntries(Object.entries({
   snow: '#eef4fa', snow1: '#e3ebf4', snow2: '#f9fbfe', snowB: '#cddbea', snowD: '#b7c8da', glit: '#ffffff',
@@ -30,10 +32,34 @@ export function* iceTerrain(S) {
     }
   }
   yield;
+  // the glacier fills the infield (it is solid, see paintIce); the bay at its foot is the penguin colony. Only where there is room beside the road
+  const glac = new Uint8Array(A);
+  if (def.glacier) {
+    const { rects, bay } = def.glacier;
+    for (const [x0, y0, x1, y1, wave] of rects) for (let y = y0; y <= y1 + (wave || 0); y++) for (let x = x0; x <= x1; x++) {
+      const j = y * MW + x;
+      if (ter[j] !== 0 || dist[j] < HALF + 8) continue;
+      if (wave && y > y1 + (vnoise(x * .05, 3, 74) - .5) * wave) continue;
+      if (bay && ((x - bay[0]) / bay[2]) ** 2 + ((y - bay[1]) / bay[3]) ** 2 < 1 + .25 * (vnoise(x * .1, y * .1, 75) - .5)) continue;
+      glac[j] = 1;
+    }
+  }
+  yield;
   // the bob run and the landing slope of the ski jump: sheet ice on the road
   const seg = ([a, b]) => range(N, nearestIdx(path, a[0], a[1]), nearestIdx(path, b[0], b[1]));
   const bob = def.bob ? seg(def.bob) : new Uint8Array(N), land = def.landing ? seg(def.landing) : new Uint8Array(N);
   for (let j = 0; j < A; j++) if (dist[j] < HALF && (bob[near[j]] || land[near[j]]) && ter[j] === 1) ter[j] = 12;
+  // snow drifts on the outside of a bend: deep snow that grows in from the edge of the road, the inner line stays clean
+  const driftM = new Uint8Array(A);
+  for (const [dx, dy, len, depth, sx, sy] of def.drifts || []) {
+    const i0 = nearestIdx(path, dx, dy), q = nearestIdx(path, sx, sy), side = Math.sign((sx - path[q].x) * S.nrm[q].x + (sy - path[q].y) * S.nrm[q].y) || 1;
+    for (let y = Math.max(0, dy - 2 * len - HALF - 6); y < Math.min(MH, dy + 2 * len + HALF + 6); y++) for (let x = Math.max(0, dx - 2 * len - HALF - 6); x < Math.min(MW, dx + 2 * len + HALF + 6); x++) {
+      const j = y * MW + x; if (ter[j] !== 1) continue;
+      const i = near[j], k = ((i - i0 + N + N / 2) % N) - N / 2; if (Math.abs(k) > len) continue;
+      const n = S.nrm[i], p = path[i], w = (x + .5 - p.x) * n.x + (y + .5 - p.y) * n.y, u = Math.sin(Math.PI * (k + len) / (2 * len)) ** .7;
+      if (w * side > HALF - depth * u * (.75 + .5 * vnoise(x * .12, y * .12, 77))) { ter[j] = 2; driftM[j] = 1; }
+    }
+  }
   yield;
   // the hot spring: steaming water that reaches onto the road (it washes the snow off and never freezes)
   if (def.spring) {
@@ -57,7 +83,7 @@ export function* iceTerrain(S) {
     px.sort((a, b) => key(a) - key(b));
     return { px, x, y };
   });
-  return { alt, lakeM, bob, jumps, pushes, frost };
+  return { alt, lakeM, glac, driftM, bob, jumps, pushes, frost };
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, isBridge, sd, th, r, critters, darken, RT }
@@ -79,12 +105,16 @@ export function* paintIce(S) {
     if (bridgeMask[j] || shore[j]) continue;
     let c;
     if (t === 0) {
-      if (dist[j] < HALF + 3) c = dist[j] < HALF + 1.5 ? K.snowD : K.snowB; // a snow bank along the road
+      if (dist[j] < HALF + 3) c = dist[j] < HALF + 1.5 ? K.snowB : K.snow1; // a flat, pale snow bank along the road (you drive over it; solid things are dark and cast a shadow)
       else { const dr = vnoise(x / 40, y / 30, sd + 42); c = dr < .3 ? K.snow1 : dr > .7 ? K.snow2 : K.snow; if (v < .2) c = K.snow1; if (h < .006) c = K.glit; }
     } else if (t === 1 || t === 4) {
       if (t === 4) continue;
       c = v < .33 ? K.road1 : v > .7 ? K.road2 : K.road;
       if (dist[j] > HALF - 3) c = K.roadE; else if (Math.abs(dist[j] - 13) < 1.5 && h > .3) c = K.rut;
+    } else if (t === 2 && RT.driftM[j]) {
+      // a wind-blown drift: ripples across it, a soft edge towards the clean road
+      let e = false; for (const q of [j - 2, j + 2, j - 2 * MW, j + 2 * MW]) if (q >= 0 && q < A && ter[q] === 1) e = true;
+      c = e ? K.snowB : Math.sin((x * .8 + y * .5) + vnoise(x / 10, y / 10, sd + 43) * 6) > .55 ? K.snow2 : v < .3 ? K.snow1 : K.snow;
     } else if (t === 12) {
       const lake = RT.lakeM[j];
       if (lake) { let e = false; for (const q of [j - 1, j + 1, j - MW, j + MW]) if (q >= 0 && q < A && ter[q] !== 12) e = true; c = e ? K.lakeE : iceCol(x, y, h, true); }
@@ -149,6 +179,84 @@ export function* paintIce(S) {
   }
 
   yield;
+  // ----- the glacier: blue-white ice with crevasses, a dark cliff face all round it, a ring of solid circles along the cliff -----
+  const GL = RT.glac, isG = (x, y) => x >= 0 && y >= 0 && x < MW && y < MH && GL[y * MW + x] === 1;
+  for (let j = 0; j < A; j++) {
+    if (j % 40000 === 39999) yield;
+    if (!GL[j]) continue;
+    const x = j % MW, y = j / MW | 0, h = hash(x, y, sd + 60), v = vnoise(x / 7, y / 7, sd + 61);
+    wallMask[j] = 1;
+    // how far from the edge (1..4 px): the cliff face
+    let e = 9; for (let q = 1; q <= 4 && e > q; q++) if (!isG(x - q, y) || !isG(x + q, y) || !isG(x, y - q) || !isG(x, y + q)) e = q;
+    let c;
+    if (e <= 4) c = e === 1 ? K.rockD : e === 2 ? K.bobWD : (x + y) & 1 ? K.bobW : K.bobWD; // the cliff, darker at the foot
+    else {
+      const cre = Math.abs(vnoise(x / 17, y / 11, sd + 62) - .5), st = Math.sin((x * .6 - y * .9) * .22 + vnoise(x / 25, y / 25, sd + 63) * 5);
+      c = cre < .014 ? K.bobWD : cre < .03 ? K.ice1 : st > .94 ? K.ice2 : v < .3 ? K.ice1 : v > .72 ? K.ice2 : K.ice; // crevasses, lighter ridges, snow dust on the ice
+      if (h < .01) c = K.iceL;
+    }
+    set(j, c);
+    // a shadow on the snow south and east of the cliff
+  }
+  for (let y = 1; y < MH - 1; y++) for (let x = 1; x < MW - 1; x++) {
+    if (GL[y * MW + x] || ter[y * MW + x] !== 0 || dist[y * MW + x] < HALF + 3) continue;
+    let sh = 0; for (let q = 1; q <= 4; q++) if (isG(x - q, y - q)) { sh = 1 - q / 5; break; }
+    if (sh) dk(x, y, 1 - .28 * sh);
+  }
+  yield;
+  // the ring of circles along the cliff (a block of 3 px holds at most one circle, so the circles are 5.5 px apart)
+  const placed = new Map(), spaced = (x, y) => { for (let by = (y / 3 | 0) - 2; by <= (y / 3 | 0) + 2; by++) for (let bx = (x / 3 | 0) - 2; bx <= (x / 3 | 0) + 2; bx++) { const o = placed.get(by * 1000 + bx); if (o && (o[0] - x) ** 2 + (o[1] - y) ** 2 < 30) return false; } return true; };
+  for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
+    if (!GL[y * MW + x]) continue;
+    if (isG(x - 1, y) && isG(x + 1, y) && isG(x, y - 1) && isG(x, y + 1)) continue;
+    if (!spaced(x, y)) continue;
+    placed.set((y / 3 | 0) * 1000 + (x / 3 | 0), [x, y]); walls.push({ x: x + .5, y: y + .5, r: 5 });
+  }
+  yield;
+  // the ice gate where the glacier stream starts: a dark arch in the cliff above the first bit of water
+  if (def.gate) {
+    const [gx, gy] = def.gate;
+    for (let dy = -9; dy <= 6; dy++) for (let dx = -12; dx <= 12; dx++) {
+      const d2 = (dx / 12) ** 2 + (dy / 10) ** 2; if (d2 > 1) continue;
+      const j = (gy + dy) * MW + gx + dx; if (!GL[j] && ter[j] !== 5) continue;
+      set(j, dy > 1 ? K.lakeE : d2 > .62 ? K.iceL : d2 > .38 ? K.bobWD : [24, 52, 84]);
+    }
+    for (let k = -3; k <= 3; k++) { px(gx + k * 3, gy - 9 + Math.abs(k) * 1.3, K.iceL); px(gx + k * 3, gy - 8 + Math.abs(k) * 1.3, K.ice2); } // icicles on the arch
+  }
+  yield;
+  // ----- rock ridges: solid grey rock capped with snow (shadow on the south side), with a row of solid circles -----
+  for (const [x0, y0, x1, y1, w] of def.ridges || []) {
+    const len = Math.hypot(x1 - x0, y1 - y0), n = Math.ceil(len / 5.5);
+    for (let k = 0; k <= n; k++) walls.push({ x: x0 + (x1 - x0) * k / n, y: y0 + (y1 - y0) * k / n, r: w });
+    const ux = (x1 - x0) / len, uy = (y1 - y0) / len;
+    for (let a = -3; a <= len + 3; a++) {
+      const wob = (vnoise(a * .09, 5, sd + 64) - .5) * 3;
+      for (let b = -w - 6; b <= w + 6; b++) {
+        const X = x0 + ux * a - uy * (b + wob), Y = y0 + uy * a + ux * (b + wob), t = Math.abs(b);
+        if (t > w + 5) continue;
+        if (t <= w) solid(X, Y, 1);
+        if (t <= w) px(X, Y, t > w - 1.5 ? K.rockD : hash(a, b, sd + 65) < .35 ? K.rockL : b < -1 ? K.snow2 : b > w * .4 ? K.rockD : K.rock);
+        else if (b > 0) dk(X, Y, .84 - .02 * (t - w)); // shadow to one side
+      }
+    }
+    for (let a = 4; a < len - 3; a += 9) { const b = (hash(a, 7, sd + 66) - .5) * 3, X = x0 + ux * a - uy * b, Y = y0 + uy * a + ux * b; px(X, Y, K.snow2); px(X + 1, Y, K.snow2); }
+  }
+  yield;
+  // ----- the slope of the avalanche: the steep face south of the ridge on the right, shaded, with contour lines and rock outcrops -----
+  if (def.slope) {
+    const [sx0, sy0, sx1, sy1] = def.slope;
+    for (let y = sy0; y < sy1; y++) for (let x = sx0; x < sx1; x++) {
+      const j = y * MW + x; if (x < 0 || y < 0 || x >= MW || y >= MH || ter[j] !== 0 || dist[j] < HALF + 6 || wallMask[j]) continue;
+      const f = 1 - (y - sy0) / (sy1 - sy0), cont = Math.sin((y + vnoise(x / 30, y / 14, sd + 67) * 9) * .55) > .93;
+      dk(x, y, 1 - .22 * f); if (cont) dk(x, y, .93);
+    }
+    for (const [ox, oy] of def.outcrops || []) walls.push({ x: ox, y: oy, r: 6 });
+    for (const [ox, oy] of def.outcrops || []) for (let dy = -5; dy <= 5; dy++) for (let dx = -8; dx <= 8; dx++) {
+      if ((dx / 8) ** 2 + (dy / 5) ** 2 > 1 + .3 * (vnoise(ox + dx, oy + dy, sd + 68) - .5)) continue;
+      px(ox + dx, oy + dy, dy < -2 ? K.rockL : dy > 1 ? K.rockD : K.rock); wallMask[(oy + dy) * MW + ox + dx] = 1;
+    }
+  }
+  yield;
   // ----- the village at the start: a ski hut with warm windows (roof on the top layer), a snowman, a sledge at the fence -----
   const snowman = (x, y) => {
     walls.push({ x, y, r: 5 }); solid(x, y, 7);
@@ -170,7 +278,7 @@ export function* paintIce(S) {
     for (let x = x0 + 4; x < x0 + w - 4; x += 8) for (let k = 0; k < 3; k++) setT(x + k, y0 + h, K.win), setT(x + k, y0 + h + 1, K.winD);
     for (let yy = -4; yy <= 0; yy++) for (let xx = 0; xx < 5; xx++) setT(x0 + w - 10 + xx, y0 + 6 + yy, xx === 0 || xx === 4 ? [90, 60, 40] : [140, 90, 60]); // chimney
     for (let k = -w / 2 + 4; k <= w / 2 - 4; k += 8) for (const s of [-1, 1]) walls.push({ x: hx + k, y: hy + s * (h / 2 - 4), r: 6 });
-    snowman(hx + 32, hy - 24); snowman(hx - 30, hy - 70);
+    snowman(hx + 32, hy - 24); snowman(hx + 38, hy + 44);
     // the sledge at a fence
     for (let k = 0; k < 30; k++) { px(hx - 20 + k, hy + 26, K.woodD); if (k % 6 === 0) for (let q = -2; q <= 1; q++) px(hx - 20 + k, hy + 26 + q, K.wood); }
     for (let k = 0; k < 12; k++) { px(hx - 14 + k, hy + 29, K.red); px(hx - 14 + k, hy + 32, K.red); if (k % 4 === 0) for (let q = 29; q <= 32; q++) px(hx - 14 + k, hy + q, K.woodL); }
@@ -181,16 +289,16 @@ export function* paintIce(S) {
   for (let k = 0, tries = 0; k < 4 && tries < 500; tries++) { const x = 8 + (S.r() * (MW - 16) | 0), y = 8 + (S.r() * (MH - 16) | 0); if (okOff(x, y, 9)) { snowman(x, y); k++; } }
 
   yield;
-  // ----- the penguin colony: an ice floe with rocks (the penguins are drawn while racing) -----
+  // ----- the penguin colony: an ice floe with rocks in the bay at the foot of the glacier (the penguins are drawn while racing) -----
   let colony = null;
   if (def.colony) {
     const [cx, cy] = def.colony;
-    for (let y = cy - 22; y <= cy + 22; y++) for (let x = cx - 34; x <= cx + 34; x++) {
-      const j = y * MW + x; if (x < 0 || y < 0 || x >= MW || y >= MH || ter[j] !== 0 || dist[j] < HALF + 6) continue;
-      const e = ((x - cx) / 34) ** 2 + ((y - cy) / 22) ** 2; if (e > .9 + .2 * vnoise(x * .2, y * .2, 74)) continue;
+    for (let y = cy - 24; y <= cy + 24; y++) for (let x = cx - 40; x <= cx + 40; x++) {
+      const j = y * MW + x; if (x < 0 || y < 0 || x >= MW || y >= MH || ter[j] !== 0 || dist[j] < HALF + 6 || GL[j]) continue;
+      const e = ((x - cx) / 38) ** 2 + ((y - cy) / 17) ** 2; if (e > .9 + .2 * vnoise(x * .2, y * .2, 74)) continue;
       set(j, e > .8 ? K.iceD : iceCol(x, y, hash(x, y, 75), false)); wallMask[j] = 1;
     }
-    for (const [dx, dy] of [[-22, -10], [18, 8], [26, -12]]) for (let yy = -4; yy <= 4; yy++) for (let xx = -5; xx <= 5; xx++) if (xx * xx / 25 + yy * yy / 16 <= 1) px(cx + dx + xx, cy + dy + yy, yy < -1 ? K.rockL : yy > 1 ? K.rockD : K.rock);
+    for (const [dx, dy] of [[-26, -8], [22, 4], [30, -10]]) for (let yy = -4; yy <= 4; yy++) for (let xx = -5; xx <= 5; xx++) if (xx * xx / 25 + yy * yy / 16 <= 1) px(cx + dx + xx, cy + dy + yy, yy < -1 ? K.rockL : yy > 1 ? K.rockD : K.rock);
     colony = { x: cx, y: cy };
   }
   yield;

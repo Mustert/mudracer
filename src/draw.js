@@ -53,10 +53,6 @@ function drawCar(c) {
   }
   ctx.globalAlpha = .3; ctx.drawImage(F.shadow[rot], x + 3, y + 4 + c.bump); ctx.globalAlpha = 1;
   ctx.drawImage(F.frames[lv][rot], x, y);
-  if (c.snowT > 0) { // snowed in: a white lump of snow over the car
-    const X = Math.round(c.x), Y = Math.round(c.y), w = Math.round(Math.sin(G.time * 40) * (c.shake || 0) * 2);
-    ell(X + w, Y, 16, 12, '#9fb2c6'); ell(X + w, Y - 1, 15, 11, '#eef4fa'); ell(X - 4 + w, Y - 4, 8, 5, '#ffffff');
-  }
 }
 
 

@@ -276,7 +276,9 @@ Streckenereignis: Sandsturm (nach Runde 1) schränkt die Sicht ein und schiebt A
 ## 9. Eis
 Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `EIS`, Theme `eis`, Musik `ice`, Streckenereignisse Frost `frost` und Pinguine `pinguine`; Code in `src/icemap.js` und `src/ice.js`, gemeinsame Bausteine in `src/trackfx.js`). Im Cup GOLD eingetragen.
 
-Abweichungen vom Vorschlag (erster Wurf): Die Bobbahn ist eine Haarnadel oben rechts. Die Lawinen gehören zum Ereignis Frost. Das Polarlicht ist ein schlichter Farbschleier über dem See. Die Musikschichten wechseln mit der Runde, nicht mit dem Ereignis.
+Abweichungen vom Vorschlag (erster Wurf): Die Bobbahn ist eine Haarnadel oben rechts. Die Lawinen gehören zum Ereignis Frost. Das Polarlicht war im ersten Wurf ein schlichter Farbschleier, die Musikschichten wechselten mit der Runde, nicht mit dem Ereignis (beides behoben, siehe Überarbeitung).
+
+**Überarbeitung 2026-10-16** (`rev` 1, Strecke und Rekorde neu): Die Startlinie liegt jetzt auf der langen linken Geraden (y 135, 200 px Gerade dahinter, 3°). Das Innenfeld ist ein fester **Gletscher** (Klippe mit Schatten, Spalten), daher kein Abkürzen durch die Mitte; sein Fuß hat eine Bucht für die **Pinguinkolonie**, und der **Gletscherbach** entspringt einem Gletschertor am Fuß des Gletschers. Ein Felsgrat schließt die Lücke zwischen den beiden Beinen rechts, ein zweiter bildet die Oberkante des **Lawinenhangs** (schattierter Hang mit Felsbrocken, die Lawine endet auf der Straße). Der Tiefschnee liegt als zwei **Schneewehen** an der Außenseite der U-Kurven und wächst von dort herein, die Ideallinie bleibt frei. Der Wall am Straßenrand ist flach und blass (befahrbar), alles Feste ist dunkel mit Schatten. Die Pinguine watscheln von der Bucht über die U-Strecke zum See. Eine schräge Landung nach der Schanze schneit das Auto ein. Die Breakbeat-Schicht des Liedes kommt nur mit dem Ereignis Frost.
 
 Idee: Die wildeste Strecke von Cup 3. Es geht um **Kontrolle**: rutschen, fliegen, einbrechen. Man springt von einer Skischanze, fährt durch eine Bobbahn, kann über einen zugefrorenen See abkürzen, der immer brüchiger wird, und ab Runde 2 friert die Strecke zu.
 
@@ -284,7 +286,7 @@ Rundenverlauf (Uhrzeigersinn, Start links, es geht zuerst nach oben):
 - 0–12 %: Start links am **Bergdorf**: Skihütte mit warmen Fenstern, Schneemann, Rodel am Zaun. Die Strecke ist hier festgefahrener Schnee.
 - 12–28 %: oben die **Skisprungschanze**: ein blau markierter Anlauf mit Boost-Pad, dann der Schanzentisch und ein **großer Sprung** (etwa 1 s in der Luft, viel weiter als die Dünen in der Wüste). Die Landung ist ein vereister Hang, man rutscht nach dem Aufsetzen weiter. Ein Absturz ist hier nicht möglich, es geht nur darum, gerade zu landen.
 - 28–45 %: oben rechts die **Bobbahn**: eine Eisrinne mit hohen Wänden, eine 180°-Kurve, eng und glatt. Die Bande **federt**: Wer sie streift, gleitet an ihr entlang, ohne Tempo zu verlieren. Wer außen an der Bande fährt, ist hier schnell.
-- 45–62 %: rechts hinunter durch **Tiefschnee**-Felder (neben der Ideallinie) und an der **Pinguinkolonie** vorbei.
+- 45–62 %: rechts hinunter am **Lawinenhang** vorbei zur Frostkurve unten rechts; dann das U nach oben und links, mit zwei **Schneewehen** außen in den Kurven und der **Pinguinkolonie** in der Bucht am Gletscherfuß (die Pinguine queren hier die Strecke zum See).
 - 62–80 %: unten der **zugefrorene See**:
   - Die Hauptstrecke führt außen um den See herum.
   - **Abkürzung** quer über das Eis: Es ist Glatteis, und das Eis ist dünn. Bei jedem Auto, das darüberfährt, bekommt die Stelle **Risse** (sichtbar, mit Knacken). Nach etwa acht Überfahrten an einer Stelle bricht dort ein **Loch** auf: Wer hineinfährt, ist 1,4 s weg (Spritzer, Auto sauber) und wird am Ufer abgesetzt. Ein Loch friert nach etwa 20 s wieder zu (zuerst dünn und hellblau). Die Abkürzung lohnt sich also am Anfang des Rennens sehr und wird zum Ende hin immer gefährlicher.
@@ -302,7 +304,7 @@ Streckenereignis **Frost** (`frost`):
 - Runde 1: leichter Schneefall, die Strecke ist griffig.
 - Sobald du in Runde 2 gehst, setzt Frost ein: An drei Kurven wachsen nacheinander **Eisblumen** vom Rand über die Strecke (wie das Umfärben beim Regen und bei der Flut), danach sind diese Kurven Glatteis. Der Schneefall wird dichter.
 - **Lawine:** Ab Runde 2 löst sich am Hang rechts etwa alle 20 s eine Lawine. Eine **Schneekugel** rollt den Hang hinunter, wird dabei größer und quert die Strecke. Vorher kündigen sie ein Grollen, ihr Schatten und der Text „LAWINE!“ an. Wer getroffen wird, ist **eingeschneit**: Das Auto steckt als weißer Klumpen fest, bis es sich freigerüttelt hat (etwa 1 s; wer dabei wiederholt Gas gibt, ist schneller frei). Danach ist es weiß. Wo die Kugel zerplatzt, bleibt ein Haufen Tiefschnee auf der Strecke liegen.
-- **Letzte Runde:** Über dem See leuchtet ein Polarlicht, das sich im Eis spiegelt (nur Optik, aber der große Moment des Cups).
+- **Letzte Runde:** Über dem See leuchtet ein Polarlicht, das sich im Eis spiegelt (nur Optik, aber der große Moment des Cups). ✅ umgesetzt (Eis überarbeitet: drei Vorhänge mit senkrechten Strahlen über dem Gletscher, gespiegelt und grün leuchtend im Seeeis).
 
 Streckenereignis **Pinguine** (`pinguine`):
 - Eine Pinguinkolonie steht an der rechten Seite. Alle paar Sekunden watschelt eine kleine Gruppe über die Strecke, oder ein Pinguin rutscht auf dem Bauch quer über das Eis des Sees (zeitgesteuert).
