@@ -12,7 +12,7 @@ Nur wenn der Nutzer im Prompt ausdrücklich sagt, dass es ohne Commit/Push erfol
 - `npm run dev` startet den Dev-Server (Port 5177), `npm run build` erzeugt **eine** Datei `dist/index.html` (vite-plugin-singlefile).
 - `dist/` und `node_modules/` sind nicht im Repo. Nach dem Klonen `npm install`.
 - `npm run lint` (ESLint), `npm test` (Vitest, Tests in `test/`) und `npm run typecheck` (TypeScript prüft die JS-Dateien) laufen vor jedem Commit und müssen sauber sein.
-- Nichts Schweres beim Start berechnen: Strecken und Auto-Sprites entstehen in Häppchen (`src/idle.js`), die Spielphysik läuft in festen Schritten (`src/clock.js`). Im Dev-Server gibt es `window.mudracer` mit `frameAt(now)`, um Frames ohne sichtbares Vorschaufenster zu rechnen.
+- Nichts Schweres beim Start berechnen: Strecken und Auto-Sprites entstehen in Häppchen (`src/idle.js`), die Spielphysik läuft in festen Schritten (`src/clock.js`). Im Dev-Server gibt es `window.mudracer` mit `frameAt(now)`, um Frames ohne sichtbares Vorschaufenster zu rechnen, und mit der Streckenprüfung `check`, `checkAll`, `checkPic` (`src/check.js`, nur im Dev-Server, nicht im Build).
 
 ## Doku und Analyse aktuell halten (Pflicht bei jeder Änderung)
 
@@ -47,6 +47,8 @@ Regeln für die Obsidian-Doku:
 ## Streckendesign-Grundsätze
 
 Gelten für jede neue Strecke und jede Überarbeitung. Vor dem Abschluss einer Strecke alle Punkte prüfen.
+
+Für jede Arbeit an einer Strecke zuerst den Skill `strecke` laden (`.claude/skills/strecke/SKILL.md`: Ablauf, Einhängepunkte, Boden-Codes). Die Grundsätze 4, 5, 7 und 8 und ein ganzes Rennen prüft im Dev-Server `mudracer.check('NAME')` (`src/check.js`), die Übersicht über alle Strecken `mudracer.checkAll({ sim: true })`.
 
 1. **Steigerung:** Je höher die Nummer der Strecke, desto anspruchsvoller darf sie sein. Eine Strecke soll nicht schwerer sein als spätere.
 2. **Nichts Unlogisches oder Halbfertiges:** Ein Fluss endet nicht im Nichts (er kommt vom Kartenrand oder aus einer Quelle und fließt in einen See oder zum Rand), eine Schlucht hört nicht plötzlich auf, Brücken führen über etwas, Tunnel durch etwas. Keine harten Rechtecke, wo Natur sein soll.

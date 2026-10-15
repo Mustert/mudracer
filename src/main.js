@@ -98,4 +98,4 @@ addEventListener('pointerup', audioInit);
 setInputHandlers({ touch: audioInit });
 
 // dev server only: a handle for the browser console and for checks (the module instances the game really uses)
-if (import.meta.env.DEV) Promise.all([import('./race.js'), import('./tracks.js'), import('./cars.js'), import('./clock.js')]).then(([race, tracks, cars, clockM]) => { /** @type {any} */ (window).mudracer = { G, UI, PREFS, cam, race, tracks, cars, clock: clockM, frameAt }; });
+if (import.meta.env.DEV) Promise.all([import('./race.js'), import('./tracks.js'), import('./cars.js'), import('./clock.js'), import('./check.js')]).then(([race, tracks, cars, clockM, chk]) => { /** @type {any} */ (window).mudracer = { G, UI, PREFS, cam, race, tracks, cars, clock: clockM, frameAt, check: chk.check, checkAll: chk.checkAll, checkPic: chk.checkPic }; });

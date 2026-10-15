@@ -480,6 +480,9 @@ SONGS.rainbowStorm = { ...SONGS.rainbow, swap: null, dark: true,
 SONGS.rainbowFinal = { ...SONGS.rainbow, swap: null, fin: true, order: ['B'], up: () => 2,
   lead(M, m, t, d) { M.supersaw(hz(m - 12), t, d, 1); M.bellLead(hz(m), t, d, .8); M.glock(hz(m + 12), t, .4); } };
 
+// is there a song with this name (the track check, check.js)
+export const hasSong = name => !!SONGS[name];
+
 export const Music = {
   init() {
     const A = AU.a;

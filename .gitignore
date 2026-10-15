@@ -1,4 +1,6 @@
-.claude/
+# Claude: only the project skills are shared (.claude/skills), the rest stays local
+.claude/*
+!.claude/skills/
 .impeccable/
 node_modules/
 dist/
