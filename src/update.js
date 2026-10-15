@@ -9,16 +9,9 @@ import { CONF, RAINBOW, WATC, addP, drop, mudBurst, splash } from './particles.j
 import { aiTarget, guardCar, physics, updateProgress } from './physics.js';
 import { score } from './rank.js';
 import { eventCollisions, updateEvents } from './events.js';
-import { ringCountdown, ringGo, ringGround, ringStackHit, ringUpdate } from './ring.js';
+import { ringCountdown, ringGo, ringStackHit, ringUpdate } from './ring.js';
 import { airborne, groundFx, pushCars } from './trackfx.js';
-import { desertGround } from './desert.js';
-import { iceGround, iceStuck } from './ice.js';
-import { volcanoGround } from './volcano.js';
-import { jungleGround, jungleStuck } from './jungle.js';
-import { spaceGround, spaceRespawn } from './space.js';
-import { suessGround } from './suess.js';
-import { toyGround, toyRespawn } from './toys.js';
-import { rainbowGround, rainbowRespawn, rainbowThrottle } from './rainbow.js';
+import { trackHooks } from './hooks.js';
 import { moveCamera } from './race.js';
 import { updateJumps } from './run.js';
 import { nearObstacles } from './grid.js';
@@ -38,17 +31,18 @@ function sinkCar(c) {
 
 function respawn(c) {
   // the gorge sets you down behind it, a hole in the ice on the shore next to it (respawnI)
-  const T = G.T, N = T.N, i0 = c.respawnI != null ? c.respawnI : ((c.safe || c.idx) - 5 + N) % N;
+  const T = G.T, H = trackHooks(T), N = T.N, i0 = c.respawnI != null ? c.respawnI : ((c.safe || c.idx) - 5 + N) % N;
   c.respawnI = null; c.fallKind = null; c.sink = 0;
-  // never onto lava, the gorge or deep water (the middle of the road can be lava, e.g. between the bridges of the ford): further back or to the side
-  const bad = (x, y) => { const t = T.ter[clamp(y | 0, 0, T.H - 1) * T.W + clamp(x | 0, 0, T.W - 1)]; return t === 15 || t === 11 || t === 5 || (t === 16 && T.volcano && T.volcano.hot) || (t === 0 && !!T.space) || (t === 48 && !!T.rainbow); };
+  // never onto lava, the gorge or deep water (the middle of the road can be lava, e.g. between the bridges of the ford), nor where the
+  // track says no (hook noRespawn: the crust of the volcano, space beside the road, cloud holes): further back or to the side
+  const bad = (x, y) => { const t = T.ter[clamp(y | 0, 0, T.H - 1) * T.W + clamp(x | 0, 0, T.W - 1)]; return t === 15 || t === 11 || t === 5 || !!H.noRespawn?.(t, T); };
   let i = i0, o = 0;
   search: for (let k = 0; k < 90; k += 3) for (const q of [0, -16, 16, -22, 22]) {
     const j = (i0 - k + N) % N, p = T.path[j]; if (!bad(p.x + T.nrm[j].x * q, p.y + T.nrm[j].y * q)) { i = j; o = q; break search; }
   }
   const p = T.path[i], tg = T.tan[i];
   c.x = p.x + T.nrm[i].x * o; c.y = p.y + T.nrm[i].y * o; c.ang = Math.atan2(tg.y, tg.x); c.vx = c.vy = 0; c.idx = i; c.surf = 1; c.ghost = 2.4;
-  if (T.space) spaceRespawn(c); else if (T.toys) toyRespawn(c); else if (T.rainbow) rainbowRespawn(c); else splash(c.x, c.y, 8);
+  if (H.respawn) H.respawn(c); else splash(c.x, c.y, 8);
 }
 
 
@@ -58,13 +52,13 @@ function updateRace(dt) {
   updateEvents(dt);
   ringUpdate(dt);
   if (G.T.jumps) pushCars(dt);
+  const H = trackHooks(G.T);
   for (const c of G.cars) {
     let thr = 0, tgt = null;
     c.brake = false;
     c.ghost = Math.max(0, c.ghost - dt);
     if (c.fall > 0) { c.fall -= dt; c.vx = c.vy = 0; if (c.fall <= 0) respawn(c); continue; } // sunk in the water, comes back on the track in a moment
-    if (c.snowT > 0) { iceStuck(c, dt, racing); continue; } // snowed in by the avalanche: stuck until shaken free
-    if (c.flatT > 0) { jungleStuck(c, dt); continue; } // flattened by the stone ball: a moment flat on the ground
+    if (H.stuck?.(c, dt, racing)) continue; // snowed in by the avalanche, flattened by the stone ball ...
     if (c.stun > 0) {
       c.stun -= dt; c.ang += c.spin * dt; c.spin *= Math.exp(-2 * dt); if (c.stun <= 0) c.stun = 0;
     } else if (racing && !(G.T.run && c.finished)) {
@@ -91,7 +85,7 @@ function updateRace(dt) {
         // on the platforms in space a little less
         else if (c.surf === 17 && !c.ringWay && tgt !== null && Math.abs(angDiff(tgt, c.ang)) > .35) thr *= .65;
         // up the rainbow arch at full throttle (the jump over its gap needs speed)
-        if (G.T.rainbow) thr = rainbowThrottle(c, thr);
+        if (H.throttle) thr = H.throttle(c, thr);
         // opponents far ahead lift off a little, ones far behind push harder; never above full throttle (on SCHWER less of both)
         if (c.ai && !c.finished && !G.player.finished) {
           const D = DIFFS[G.raceDiff || 0], diff = score(c) - score(G.player);
@@ -181,16 +175,8 @@ function updateRace(dt) {
       c.ang += Math.sin(G.time * 9 + c.seed) * 1.8 * dt * Math.min(1, sp / 100);
       if (sp > 20 && Math.random() < dt * 10) mudBurst(c, 1);
     }
-    if (G.T.ring) ringGround(c, j, sp, dt);
     if (G.T.jumps) { groundFx(c, sp, dt); if (c.fall > 0) continue; }
-    if (G.T.desert) desertGround(c, sp, dt);
-    if (G.T.ice) { iceGround(c, j, sp, dt); if (c.fall > 0) continue; }
-    if (G.T.volcano) volcanoGround(c, sp, dt);
-    if (G.T.jungle) jungleGround(c, sp, dt);
-    if (G.T.space) { spaceGround(c, j, sp, dt); if (c.fall > 0) continue; }
-    if (G.T.suess) suessGround(c, j, sp, dt);
-    if (G.T.toys) { toyGround(c, j, sp, dt); if (c.fall > 0) continue; }
-    if (G.T.rainbow) { rainbowGround(c, j, sp, dt); if (c.fall > 0) continue; }
+    if (H.ground) { H.ground(c, j, sp, dt); if (c.fall > 0) continue; }
     if (c.boost > 0 && Math.random() < dt * 40) drop(c.x - Math.cos(c.ang) * 14, c.y - Math.sin(c.ang) * 14, c.ang + Math.PI + (Math.random() - .5) * .8, 20 + Math.random() * 30, 20 + Math.random() * 30, pick(RAINBOW), .8, false);
     if (c.washing) {
       c.dirt = Math.max(0, c.dirt - 3 * dt);

@@ -3,14 +3,7 @@ import { SFX } from './audio.js';
 import { ACC, LAPS, MAXS, MUD_A, MUD_B, angDiff, clamp } from './core.js';
 import { DIFFS } from './diff.js';
 import { steerAround } from './events.js';
-import { ringPitTarget } from './ring.js';
-import { desertLane } from './desert.js';
-import { iceTarget } from './ice.js';
-import { volcanoLane, volcanoTarget } from './volcano.js';
-import { jungleLane, jungleTarget } from './jungle.js';
-import { spaceLane, spaceTarget } from './space.js';
-import { toyLane } from './toys.js';
-import { rainbowLane, rainbowSurf, rainbowTarget } from './rainbow.js';
+import { trackHooks } from './hooks.js';
 import { setState } from './state.js';
 import { finishRace } from './race.js';
 import { ttLap } from './timetrial.js';
@@ -20,11 +13,11 @@ import { reportError } from './errors.js';
 
 function surfOf(c) {
   const m = c.def.mud;
-  if (G.T.rainbow && c.surf >= 41) return rainbowSurf(c); // the rainbow: its colour lanes, the asphalt of the gold coin, cloud holes (see rainbow.js)
+  // the special tracks first: their own terrain codes (the rainbow), nothing beside the road in space (hooks.js)
+  const own = trackHooks(G.T).surf?.(c); if (own) return own;
   switch (c.surf) {
     // off the road is as slow as mud, but the car stays clean (only the Matschfahrt is made of rough ground)
-    // in space there is nothing beside the road: no grip, no gas (the car drifts off, see space.js)
-    case 0: return G.T.run ? [.6, 7, .9] : G.T.space ? [1, .3, .15, 0] : [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
+    case 0: return G.T.run ? [.6, 7, .9] : [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
     // the ground of the moon beside the road: slow like grass, it stays clean
     case 13: return [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
     // a platform in zero gravity: full speed and full gas, but little grip to the side and slower steering (better than sheet ice);
@@ -96,12 +89,8 @@ export function guardCar(c) {
 
 
 export function aiTarget(c) {
-  // race circuit: a dirty car goes through the pit lane (the box washes it)
-  // ice: the short cut across the frozen lake
-  // volcano: the long way round the crust when the stream is about to break through
-  // space: the short way over the ring of the planet
-  // rainbow: the double rainbow in the last lap, the wormhole
-  const pt = (G.T.ring && ringPitTarget(c)) || (G.T.ice && iceTarget(c)) || (G.T.volcano && volcanoTarget(c)) || (G.T.jungle && jungleTarget(c)) || (G.T.space && spaceTarget(c)) || (G.T.rainbow && rainbowTarget(c));
+  // a special track can send the car somewhere else (the pit lane, the short cut across the frozen lake, the double rainbow ...)
+  const H = trackHooks(G.T), pt = H.target?.(c);
   if (pt) { const [tx, ty] = steerAround(c, pt[0], pt[1]); return Math.atan2(ty - c.y, tx - c.x); }
   const sp = Math.hypot(c.vx, c.vy), i = (c.idx + 18 + Math.round(sp / 8)) % G.T.N, p = G.T.path[i], n = G.T.nrm[i];
   // on the flooded pier there is no room to wander across the track
@@ -109,27 +98,17 @@ export function aiTarget(c) {
   const D = DIFFS[G.raceDiff || 0];
   // at a narrow place built from cones everybody squeezes through the middle
   const N = G.T.N, tight = G.T.tight && G.T.tight.some(t => Math.abs(((i - t + N + N / 2) % N) - N / 2) < 45);
-  // on the ice they wander less
-  let lane = Math.sin(G.time * .4 + c.seed) * (G.T.ev && G.T.ev.pier ? 1.5 : tight ? 1 : D.wander * (G.T.ice ? .5 : 1));
+  // on the ice they wander less (hook wander)
+  let lane = Math.sin(G.time * .4 + c.seed) * (G.T.ev && G.T.ev.pier ? 1.5 : tight ? 1 : D.wander * (H.wander || 1));
   // every car drives its own way: cars that are bad in mud (mud < 1.15) steer around mud and cement puddles if there is room,
   // the off-roaders (monster, tractor, ...) plough straight through. How often they think of it depends on the difficulty.
-  // Oil and gravel (race circuit) are bad for every car.
-  if ((c.def.mud < 1.15 || G.T.ring) && D.avoid && !tight && !(G.T.ev && G.T.ev.pier) && (c.seed * 7.31) % 1 < D.avoid) {
+  // Oil and gravel (race circuit, hook avoidAll) are bad for every car.
+  if ((c.def.mud < 1.15 || H.avoidAll) && D.avoid && !tight && !(G.T.ev && G.T.ev.pier) && (c.seed * 7.31) % 1 < D.avoid) {
     const sticky = l => { const x = (p.x + n.x * l) | 0, y = (p.y + n.y * l) | 0; if (x < 0 || y < 0 || x >= G.T.W || y >= G.T.H) return true; const t = G.T.ter[y * G.T.W + x]; return t === 2 || t === 6 || t === 0 || t === 5 || t === 7 || t === 8; };
     if (sticky(lane)) for (const l of [lane + 12, lane - 12, lane + 22, lane - 22, 0]) if (Math.abs(l) < 26 && !sticky(l)) { lane = l; break; }
   }
-  // desert: everybody keeps away from the middle of the quicksand; at the gorge they choose the jump or the rope bridge
-  if (G.T.desert) lane = desertLane(c, i, lane);
-  // volcano: the open bridge of the ford, away from the lava on the serpentine and from where a lava bomb will land
-  if (G.T.volcano) lane = volcanoLane(c, i, lane);
-  // jungle: the liana or the log bridge at the gorge, the boardwalk in the swamp, away from fallen trees when slow
-  if (G.T.jungle) lane = jungleLane(c, i, lane);
-  // space: the wormhole, a little outside on the curve round the planet, never at the edge of a platform
-  if (G.T.space) lane = spaceLane(c, i, lane);
-  // kids' room: the middle of the ruler and the pillow, past the eraser, the clean way round the paint box, waiting at the barriers
-  if (G.T.toys) lane = toyLane(c, i, lane);
-  // rainbow: the red side of the road, away from lightning, the wormhole
-  if (G.T.rainbow) lane = rainbowLane(c, i, lane);
+  // the special tracks: away from quicksand and lava, the rope bridge or the jump, the middle of the ruler ... (hook lane)
+  if (H.lane) lane = H.lane(c, i, lane);
   const [tx, ty] = steerAround(c, p.x + n.x * lane, p.y + n.y * lane);
   return Math.atan2(ty - c.y, tx - c.x);
 }

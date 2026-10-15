@@ -55,7 +55,7 @@ const SND = {
   plink: () => { for (const [t, f] of [[0, 1568], [.08, 2093], [.16, 2637]]) voice({ t, f, a: .002, d: .25, vol: .05 }); },
 };
 
-export function initToys(T) {
+function initToys(T) {
   const ev = T.ev, S = T.toys;
   ev.toyOn = false; ev.robotOn = false; ev.gate = S.cross.map(() => 0); ev.knock = S.cross.map(() => [0, 0]); ev.closed = S.cross.map(() => false);
   // the train waits at its station at the top of the loop (that is where it stays when the event is off)
@@ -64,20 +64,20 @@ export function initToys(T) {
   ev.dark = 0; ev.darkOn = false; ev.msg = null; ev.msgT = 0; ev.pops = []; ev.obst = [];
 }
 
-export function initToyEvents(T) {
+function initToyEvents(T) {
   const ev = T.ev, S = T.toys; ev.toyOn = true;
   ev.windup = { x: S.wind.start[0], y: S.wind.start[1], a: 0, run: WIND.run, wind: 0, key: 0, n: 0 };
   ev.domino = { st: 'up', t: 0, gone: [] };
 }
 
-export function initRobot(T) {
+function initRobot(T) {
   const [x, y] = T.toys.robot.dock;
   T.ev.robotOn = true; T.ev.robot = { x: Math.max(x + 4, T.toys.robot.box[0] + 6), y, a: 0, out: false, n: 0, chew: 0, humT: 0, eaten: 0 };
 }
 
 // ======================================================= every step (before the physics)
 
-export function toyUpdate(T, dt) {
+function toyUpdate(T, dt) {
   const ev = T.ev, S = T.toys;
   for (const c of G.cars) {
     // the level and the height on the lap; inside the marble run a level of its own
@@ -240,7 +240,7 @@ function updateRobot(T, dt) {
 
 // ======================================================= collisions (after the walls)
 
-export function toyCollisions() {
+function toyCollisions() {
   const T = G.T, ev = T.ev, S = T.toys; if (!ev || !S) return;
   // the train throws a car round (softer than the real one)
   if (ev.toyOn) for (const p of trainPieces(S, ev.train)) for (const c of G.cars) {
@@ -298,7 +298,7 @@ export function toyCollisions() {
 
 // ======================================================= the ground under a car (from update.js)
 
-export function toyGround(c, j, sp, dt) {
+function toyGround(c, j, sp, dt) {
   const T = G.T, S = T.toys, N = T.N, ev = T.ev;
   // the marble run: in at the top (from the desk), two fast turns in the spiral, out at the bottom with a push
   if (!c.tube && c.lvl === 3 && c.idx >= S.t0 && c.idx < S.t0 + 14) { c.tube = { f: 0 }; c.lvl = 4; SND.tube(c.ai ? vol(c.x, c.y, .5) : 1); }
@@ -343,7 +343,7 @@ export function toyGround(c, j, sp, dt) {
 }
 
 // back on the road after a fall; a car the robot swallowed is spat out behind it, dusty grey
-export function toyRespawn(c) {
+function toyRespawn(c) {
   const R = c.spit;
   if (R) {
     c.spit = null;
@@ -359,7 +359,8 @@ export function toyRespawn(c) {
 
 // ======================================================= the computer cars
 
-export function toyLane(c, i, lane) {
+// the middle of the ruler and the pillow, past the eraser, the clean way round the paint box, waiting at the barriers
+function toyLane(c, i, lane) {
   const T = G.T, S = T.toys, ev = T.ev, N = T.N, sp = Math.hypot(c.vx, c.vy);
   const inR = (a, b) => ((c.idx - a + N) % N) <= ((b - a + N) % N);
   // the ruler, the run-up on the pillow: right in the middle
@@ -385,7 +386,7 @@ export function toyLane(c, i, lane) {
 
 // cars up on the bed or the desk are bigger, their shadow lies further away; inside the marble run they are drawn later (over it); a car the
 // robot swallows shrinks into it. True when the car is drawn here.
-export function drawToyCar(c, F, rot, lv) {
+function drawToyCar(c, F, rot, lv) {
   if (c.tube) return true;
   if (c.fall > 0 && c.fallKind === 'suck') {
     const t = Math.min(1, (c.fallT0 - c.fall) / .4), R = c.spit; if (t >= 1 || !R) return true;
@@ -415,7 +416,7 @@ function barrier(cr, k, s, ev) {
 }
 
 // on the ground (under the cars): the train, the barriers, the wind-up car, the marbles, the dominoes, the robot vacuum and its dock
-export function drawToyGround() {
+function drawToyGround() {
   const T = G.T, S = T.toys, ev = T.ev; if (!ev) return;
   for (let k = 0; k < S.cross.length; k++) { const cr = S.cross[k]; if (inView(cr.x, cr.y, 70)) for (const s of [0, 1]) barrier(cr, k, s, ev); }
   // the wooden train: a red engine with a chimney, a blue and a yellow wagon, round black wheels
@@ -487,7 +488,7 @@ export function drawToyGround() {
 
 // above the cars: the cars in the marble run, a marble coming down the spiral, the brushes of the car wash, the keys while the countdown runs,
 // little words
-export function drawToyAbove() {
+function drawToyAbove() {
   const T = G.T, S = T.toys, ev = T.ev; if (!ev) return;
   const [tx, ty, tr] = S.tower;
   // cars in the spiral: round and round and down, smaller and smaller
@@ -548,7 +549,7 @@ function veil(cx, cy, k) {
 }
 
 // on the screen: the light from the window by day, the night with the projected stars, the messages
-export function drawToySky(cx, cy) {
+function drawToySky(cx, cy) {
   const T = G.T, S = T.toys, ev = T.ev; if (!ev) return;
   const k = ev.dark;
   if (k < 1) {
@@ -594,3 +595,10 @@ export function drawToySky(cx, cy) {
     ell(Math.round(x), Math.round(y), 5, 5, '#4ab8ff');
   }
 }
+
+// ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
+/** @type {import('./_template.js').TrackHooks} */
+export const toyHooks = {
+  init: initToys, events: { spielzeug: initToyEvents, saugroboter: initRobot }, update: toyUpdate, collisions: toyCollisions, lane: toyLane, ground: toyGround,
+  respawn: toyRespawn, drawCar: drawToyCar, drawGround: drawToyGround, drawAbove: drawToyAbove, drawSky: drawToySky,
+};

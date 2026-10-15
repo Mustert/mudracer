@@ -47,7 +47,7 @@ export const SX = {
   sprinkle: () => { for (let k = 0; k < 8; k++) voice({ t: k * .05, f: 1568 * Math.pow(2, k / 12 * 2), a: .002, d: .2, vol: .04 }); },
 };
 
-export function initSuess(T) {
+function initSuess(T) {
   const ev = T.ev, S = T.suess;
   ev.bubbles = S.gum.map(([x, y], k) => ({ x, y, t: (k * 2.9) % BUB.cyc, r: 0, pop: 0 }));
   ev.obst = []; ev.pops = []; ev.msg = null; ev.schoko = null; ev.watte = null; ev.sprinkle = false;
@@ -62,9 +62,9 @@ export function initSuess(T) {
   for (const J of T.jumps) { J.sq = 0; J.snd = v => { J.sq = .45; SX.boing(v); }; }
 }
 
-export function initSchoko(T) { T.ev.schoko = { t: -1 }; }
+function initSchoko(T) { T.ev.schoko = { t: -1 }; }
 
-export function initWatte(T) {
+function initWatte(T) {
   const ev = T.ev; ev.watte = { clouds: [], n: 0, next: 4, puffT: 0 };
   for (let k = 0; k < CLOUD.lap1; k++) ev.watte.clouds.push(newCloud(T, ev.watte.n++, null));
 }
@@ -78,7 +78,7 @@ function newCloud(T, n, from) {
 
 // ======================================================= every frame
 
-export function suessUpdate(T, dt) {
+function suessUpdate(T, dt) {
   const ev = T.ev, S = T.suess;
   for (const J of T.jumps) J.sq = Math.max(0, J.sq - dt);
   // bubblegum: rest, grow for 3 s, burst
@@ -126,7 +126,7 @@ export function suessUpdate(T, dt) {
 }
 
 // the ground under a car (from update.js): caramel sticks, gum holds, candyfloss scraps, fizz, lemonade
-export function suessGround(c, j, sp, dt) {
+function suessGround(c, j, sp, dt) {
   const T = G.T, S = T.suess, fx = Math.cos(c.ang), fy = Math.sin(c.ang), v = loud(c);
   const inCara = c.surf === 2 && !!S.cara[j] && !S.chocoM[j];
   if (c.surf === 2) c.cem = inCara; // golden (the second set, see race.js) or brown
@@ -168,7 +168,7 @@ export function suessGround(c, j, sp, dt) {
 }
 
 // the bubbles are solid while they grow: a soft bounce
-export function suessCollisions() {
+function suessCollisions() {
   const ev = G.T.ev; if (!ev || !ev.bubbles) return;
   for (const b of ev.bubbles) {
     if (b.r < 3) continue;
@@ -249,7 +249,7 @@ function drawTramp(J) {
 }
 
 // on the ground (under the cars): the chocolate streams, glossy glints, the trampolines, the caramel threads
-export function drawSuessGround() {
+function drawSuessGround() {
   const T = G.T, S = T.suess, k = Math.floor(G.time * 5);
   for (const st of S.streams) if (st.k > 0) ctx.drawImage(st.c, st.x0, st.y0);
   for (let q = 0; q < 14 && S.caraPix.length; q++) { const p = S.caraPix[(hash(q, k, 171) * S.caraPix.length) | 0]; R1(p % T.W, (p / T.W) | 0, 2, 1, '#fff2c0'); }
@@ -283,7 +283,7 @@ function drawCloud(cl) {
 }
 
 // above the cars: the bubbles, the fountains, gummy bears and gingerbread men, what sticks to the cars, sprinkles, the clouds
-export function drawSuessAbove() {
+function drawSuessAbove() {
   const T = G.T, S = T.suess, ev = T.ev;
   // the chocolate fountain in the lake: three tiers, chocolate runs down in curtains
   const [fx, fy] = S.lake;
@@ -351,9 +351,16 @@ export function drawSuessAbove() {
 }
 
 // on the screen: the messages of the events; a pink veil while you are under a cloud
-export function drawSuessSky() {
+function drawSuessSky() {
   const ev = G.T.ev; if (!ev) return;
   if (G.player && G.player.inCloud) { ctx.fillStyle = 'rgba(255,170,210,.18)'; ctx.fillRect(0, 0, VW, VH); }
   if (ev.msg && ((G.time * 4) | 0) % 2) text(ev.msg.s, VW / 2, 34, 8, ev.msg.col, 'center');
 }
 
+
+// ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
+/** @type {import('./_template.js').TrackHooks} */
+export const suessHooks = {
+  init: initSuess, events: { schoko: initSchoko, zuckerwatte: initWatte }, update: suessUpdate, collisions: suessCollisions, ground: suessGround,
+  drawGround: drawSuessGround, drawAbove: drawSuessAbove, drawSky: drawSuessSky,
+};

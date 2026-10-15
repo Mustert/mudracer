@@ -23,27 +23,27 @@ Gilt für neue Strecken und Überarbeitungen. Die Streckendesign-Grundsätze 1�
 | Kartengröße | Standard 800×450; größer über `W`/`H` im `TRACK_DEFS`-Eintrag. Mehr Fläche heißt längere Bauzeit und Runde (T18, T19, T23). |
 | Boden-Codes | 0–17 sind gemeinsame Codes (Straße, Matsch, Wasser, Schlucht, Eis, Lava …, siehe Kommentar in `physics.js` `surfOf` und `trackfx.js`). Eigene Codes in einem eigenen Zehnerblock: belegt sind 30–32 (Spielzimmer) und 41–48 (Regenbogen), also ab 50 (ANALYSE.md T21). |
 | Felder in `T.ev` | mit dem Kürzel der Strecke beginnen (z. B. `toyRobot`), nie allgemeine Namen wie `wind`, `storm` oder `msg` (T22; `checkAll` listet, was doppelt ist). |
-| Ereignisse | Schlüssel in `def.events`, Schalter in `PREFS.events` (`state.js`), Anzeigename in `FX_NAMES` (`raceopts.js`), Start in der Tabelle in `events.js` (`spielzeug: initToyEvents`). |
+| Ereignisse | Schlüssel in `def.events`, Schalter in `PREFS.events` (`state.js`), Anzeigename in `FX_NAMES` (`raceopts.js`), Start im Hook `events` der Strecke (`events: { spielzeug: initToyEvents }`, siehe Abschnitt 3). |
 | Lied | eigener Schlüssel in `SONGS` (`music.js`), `song` im `TRACK_DEFS`-Eintrag (Grundsatz 8). |
 | Überarbeitung | Ändert sich der Kurs, `rev` im `TRACK_DEFS`-Eintrag hochzählen: alte Rekorde bleiben, neue starten frisch (Grundregel „Spielstände bleiben gültig“). Name nie ändern. |
 
 ## 3. Wo eine Sonderstrecke eingehängt wird
 
-Neue Dateien: `src/<name>map.js` (Gelände und Bild beim Bau, Generatoren mit `yield`) und `src/<name>.js` (Laufzeit: Ereignisse, Physik-Sonderfälle, Zeichnen). Dazu der Schalter `<flag>: true` im `TRACK_DEFS`-Eintrag; daraus wird `G.T.<flag>`.
+Neue Dateien: `src/<name>map.js` (Gelände und Bild beim Bau, Generatoren mit `yield`) und `src/<name>.js` (Laufzeit: Ereignisse, Physik-Sonderfälle, Zeichnen). Dazu der Schalter `<flag>: true` im `TRACK_DEFS`-Eintrag; daraus wird `G.T.<flag>` (was `paint*` zurückgibt).
 
-Die Einhängepunkte findet man über die Vorlage: `grep -n "G.T.toys\|T.toys\|toymap\|toys.js" src/*.js` und an jeder Fundstelle dasselbe für die neue Strecke ergänzen. Stand heute:
+Der Kern fragt nicht mehr nach einzelnen Strecken (`if (G.T.toys) …`), sondern ruft Hooks auf: `trackHooks(G.T).ground?.(c, j, sp, dt)`. Eine neue Strecke wird an genau diesen Stellen eingehängt:
 
 | Datei | Stelle |
 |---|---|
-| `tracks.js` | `THEMES` (Farben, `goo`), `TRACK_DEFS` (Eintrag), `buildTrack`: `*Terrain` vor dem Malen, `paint*` im `decor`-Zweig, die Variable in der `let`-Liste, im Rückgabeobjekt und in den Ketten für `jumps`/`pushes`/`alt` |
-| `events.js` | `setupEvents` (`init*`), Ereignistabelle (`spielzeug: …`), `updateEvents` (`*Update`), `eventCollisions` (`*Collisions`) |
-| `physics.js` | `surfOf` (eigene Boden-Codes), `aiTarget` (`*Target`, `*Lane`) |
-| `update.js` | `respawn` (`*Respawn`), Bodeneffekte in `updateRace` (`*Ground`), Gas der KI (`*Throttle`) |
-| `draw.js` | `drawCar` (Sonderdarstellung), `draw*Ground`, `draw*Above`, `draw*Sky`, `draw*Fall` |
+| `src/_template.js` | **Vorlage**: alle Hooks mit Signatur und je einer Zeile, wann der Kern sie aufruft (`init`, `events`, `update`, `collisions`, `surf`, `target`, `wander`, `avoidAll`, `lane`, `throttle`, `stuck`, `ground`, `noRespawn`, `respawn`, `drawCar`, `drawFall`, `drawGround`, `drawAbove`, `drawSky`). In `src/<name>.js` am Ende ein Objekt `export const <name>Hooks = { … }` mit nur den Hooks, die die Strecke braucht (Beispiele: Ende von `toys.js`, `rainbow.js`). |
+| `hooks.js` | `HOOKS`: Schalter → Hook-Objekt (eine Zeile, plus Import) |
+| `tracks.js` | `MAPS`: Schalter, `decor`, `terrain`, `paint` aus `<name>map.js` (eine Zeile, plus Import); dazu `THEMES` (Farben, `goo`, `landCol`) und `TRACK_DEFS` (Eintrag). `paint` gibt den Zustand der Strecke zurück, darin optional `jumps`, `pushes`, `alt` (Bausteine aus `trackfx.js`). |
 | `cars.js` / `race.js` | eigener Schmutz-Satz (`goo`, `goo2`: Liste `KINDS` und `newSet`) |
 | `audio.js` | eigene Geräusche in `SFX` |
 | `music.js` | `SONGS.<lied>` (Wechsel über `swap`, wie Vulkan, Spielzimmer, Regenbogen) |
 | `state.js`, `raceopts.js`, `cups.js` | `PREFS.events`, `FX_NAMES`, Cup-Eintrag |
+
+Nicht über Hooks, weil die Streckenmodule sie selbst importieren (Import-Kreis): `trackfx.js` liest Daten aus dem Streckenzustand (`T.desert.landI`, `T.volcano.hot`, `quick`), `music.js` fragt in den Liedern nach `G.T.<flag>`. Braucht eine neue Strecke dort etwas, lieber Daten im Streckenzustand oder im Theme ablegen als eine neue Abfrage.
 
 Hilfen, die es schon gibt (nicht neu schreiben): `core.js` (`hash`, `vnoise`, `rng`, `hex`, `clamp`, `mk`), `bau.js` `nearestIdx`, `trackfx.js` (Sprünge `jumps`, Schübe `pushes`, `fallCar`, Landung), `grid.js` (Hindernisse), `particles.js` (`addP`, `drop`, `splash`, `mudBurst`).
 

@@ -81,7 +81,7 @@ function boxPose(R) {
 // ground under a car (from update.js): kerbs rattle, gravel throws up dust and stones, the pit lane has a speed limit.
 // The pit stop: in the middle of the box the car stops for a moment, the crew rushes in, washes it and changes the wheels.
 const STOP = 1;
-export function ringGround(c, j, sp, dt) {
+function ringGround(c, j, sp, dt) {
   const R = G.T.ring; if (!R) return;
   c.kerb = !!R.kerb[j]; c.oilT = Math.max(0, c.oilT - dt);
   const pit = !!R.pitMask[j], B = boxPose(R);
@@ -105,7 +105,7 @@ export function ringGround(c, j, sp, dt) {
 }
 
 // computer cars that are dirty turn into the pit lane (and follow it to the end)
-export function ringPitTarget(c) {
+function ringPitTarget(c) {
   const R = G.T.ring; if (!R || !R.pit) return null;
   const P = R.pit.pts, N = G.T.N;
   if (!c.pitting) {
@@ -131,7 +131,7 @@ export function ghostUp(gh) {
 // ======================================================= event "reifen": tyres
 
 // a tyre rolls across the road from outside, the marshal next to it waves the yellow flag 2 s before
-export function initReifen(T) {
+function initReifen(T) {
   const ev = T.ev;
   ev.tyres = [];
   ev.rollers = (T.def.rollers || []).map(([x, y, per, t0], k) => {
@@ -271,7 +271,7 @@ export function drawMarshals(ev) {
 // ======================================================= drawing
 
 // on the ground, below the cars: the oil shines, the pit crew waits next to the box
-export function drawRingGround() {
+function drawRingGround() {
   const R = G.T.ring; if (!R) return;
   const k = Math.floor(G.time * 4);
   for (let q = 0; q < 10 && R.oilPix.length; q++) { const p = R.oilPix[(hash(q, k, 79) * R.oilPix.length) | 0]; R1(p % G.T.W, (p / G.T.W) | 0, 1, 1, ['#7a5ab8', '#3fa0aa', '#b08a4a'][q % 3]); }
@@ -338,7 +338,7 @@ function drawCrew(R) {
 }
 
 // above the cars: the start gantry with its lamps, slipstream streaks, messages over your car, a sign at the pit lane
-export function drawRingAbove() {
+function drawRingAbove() {
   const R = G.T.ring; if (!R) return;
   drawCrew(R);
   const p = G.T.path[0], n = G.T.nrm[0], lit = G.state === 'countdown' ? Math.min(5, Math.floor(G.stateTime / .5)) : 0;
@@ -381,3 +381,7 @@ export function drawStartLights() {
     for (const r of [0, 1]) { const cy = y0 + 13 + r * 21; disc(x + 7, cy, 7, '#140c0c'); disc(x + 7, cy, 6, k < lit ? '#ff2d2d' : '#3a1010'); if (k < lit) { R1(x + 4, cy - 4, 3, 2, '#ffb0b0'); ctx.globalAlpha = .25; disc(x + 7, cy, 10, '#ff4040'); ctx.globalAlpha = 1; } }
   }
 }
+
+// ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
+/** @type {import('./_template.js').TrackHooks} */
+export const ringHooks = { events: { reifen: initReifen }, target: ringPitTarget, avoidAll: true, ground: ringGround, drawGround: drawRingGround, drawAbove: drawRingAbove };

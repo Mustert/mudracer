@@ -28,7 +28,7 @@ const inRange = (i, a, b) => a <= b ? i >= a && i <= b : i >= a || i <= b;
 const lap = () => G.player && !G.T.run ? G.player.lap : 0;
 const lead = () => G.cars.reduce((m, c) => Math.max(m, c.lap), 0);
 
-export function initRainbow(T) {
+function initRainbow(T) {
   const ev = T.ev, def = T.def;
   Object.assign(ev, { unis: [], trail: [], uniOn: false, uniN: 0, uniNext: 3.5, stormOn: false, storm: null, sun: null, bolts: [], flash: 0, fw: [], fwNext: 0, texts: [], obst: [], msg: null, dblT: 0 });
   // the two cows of the bronze coin (like on the meadow, only slower)
@@ -43,8 +43,8 @@ export function initRainbow(T) {
   }
 }
 
-export function initUnicorns(T) { T.ev.uniOn = true; }
-export function initThunder(T) { T.ev.stormOn = true; }
+function initUnicorns(T) { T.ev.uniOn = true; }
+function initThunder(T) { T.ev.stormOn = true; }
 
 // how strongly a lane works: 1 normally; in the storm the colours go grey (red and blue keep a little); in the sun twice as strong
 function laneK(ln) {
@@ -55,7 +55,7 @@ function laneK(ln) {
 }
 
 // the ground under a car (physics.js): the lanes, the asphalt of the gold coin, a cloud hole (no grip, no gas)
-export function rainbowSurf(c) {
+function rainbowSurf(c) {
   const t = c.surf;
   if (t === ASPH) return [1.03, 10, 1];
   if (t === HOLE) return [1, .3, .15, 0];
@@ -69,7 +69,7 @@ export function rainbowSurf(c) {
 
 // ======================================================= always: the wormhole, the shower, the arch
 
-export function rainbowUpdate(T, dt) {
+function rainbowUpdate(T, dt) {
   const ev = T.ev, R = T.rainbow, P = R.portals;
   for (const c of G.cars) {
     c.warpT = Math.max(0, (c.warpT || 0) - dt);
@@ -94,7 +94,7 @@ export function rainbowUpdate(T, dt) {
 
 // the ground under a car (update.js): falling through a hole, the brown mud of the bronze coin, the arch, kerbs, the shower and the glitter
 // trail, the rain of the storm, sparks after a lightning strike
-export function rainbowGround(c, j, sp, dt) {
+function rainbowGround(c, j, sp, dt) {
   const T = G.T, R = T.rainbow, ev = T.ev, N = T.N, A = R.arch, Rp = R.ramp;
   if (c.surf === HOLE) {
     c.holeT = (c.holeT || 0) + dt;
@@ -120,7 +120,7 @@ export function rainbowGround(c, j, sp, dt) {
 }
 
 // back from a cloud hole: the unicorn sets the car down, it glitters
-export function rainbowRespawn(c) {
+function rainbowRespawn(c) {
   for (let k = 0; k < 18; k++) { const a = k / 18 * TAU; addP({ t: 'glit', x: c.x + Math.cos(a) * 16, y: c.y + Math.sin(a) * 12, vx: -Math.cos(a) * 24, vy: -Math.sin(a) * 24, life: .7, ml: .7, col: RB[k % 6] }); }
   if (!c.ai || near(c.x, c.y) < 260) SFX.neigh(c.ai ? .3 : 1);
 }
@@ -160,7 +160,7 @@ function updateUnicorns(T, dt) {
 }
 
 // a car rams a unicorn: thrown aside like by a cow
-export function rainbowCollisions() {
+function rainbowCollisions() {
   const ev = G.T.ev; if (!ev || !ev.unis) return;
   for (const u of ev.unis) for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0 || c.ghost > 0 || u.hits.includes(c)) continue;
@@ -276,7 +276,7 @@ function updateSun(T, dt) {
 // ======================================================= the computer cars
 
 // the double rainbow (in the last lap, from MITTEL on) and the wormhole (some of them)
-export function rainbowTarget(c) {
+function rainbowTarget(c) {
   const T = G.T, R = T.rainbow, ev = T.ev, N = T.N; if (!R || c.finished || G.state !== 'race' || !ev) return null;
   const P = R.portals, wa = (P.ia - c.idx + N) % N;
   if (c.warpTry && wa > 0 && wa < 50 && c.warpT <= 0) return [P.a.x, P.a.y];
@@ -298,7 +298,7 @@ export function rainbowTarget(c) {
 
 // on the rainbow they keep to the red side (in left bends it is inside, in right bends they stay outside); away from lightning circles;
 // some of them aim for the wormhole
-export function rainbowLane(c, i, lane) {
+function rainbowLane(c, i, lane) {
   const T = G.T, R = T.rainbow, ev = T.ev, N = T.N, p = T.path[i], n = T.nrm[i];
   const P = R.portals, ahead = (P.ia - c.idx + N) % N;
   if (ahead > 40 && ahead < 90 && c.warpLap !== c.lap) { c.warpLap = c.lap; c.warpTry = (c.seed * 3.3 + c.lap * .41) % 1 < [.12, .25, .4][G.raceDiff || 0]; }
@@ -313,7 +313,7 @@ export function rainbowLane(c, i, lane) {
 }
 
 // up the arch nearly everybody goes at full throttle (a few do not, and fall through the gap)
-export function rainbowThrottle(c, thr) {
+function rainbowThrottle(c, thr) {
   const A = G.T.rainbow.arch;
   if (inRange(c.idx, A.a0, A.g0) && (c.seed * 7.7 + c.lap * .31) % 1 > .12) return Math.max(thr, .97);
   return thr;
@@ -337,7 +337,7 @@ function drawUnicorn(x, y, f, k, alpha = 1) {
 }
 
 // a car that fell through a cloud hole: it gets smaller and fades into the deep, then a unicorn swoops down and carries it up
-export function drawRainbowFall(c, F, lv) {
+function drawRainbowFall(c, F, lv) {
   const t = c.fallT0 - c.fall;
   if (t < .55) {
     const s = 1 - t / .55 * .7, S = Math.max(4, Math.round(SS * s));
@@ -363,7 +363,7 @@ const FAR = [[34, .3, '#b2bff0'], [20, .55, '#d8e0ff']];
 
 // on the ground (under the cars): the grey or glowing lanes, the storm clouds of the storm, the double rainbow, unicorn trails, lightning
 // circles, the wormhole, far clouds in the holes, glitter on the rainbow
-export function drawRainbowGround() {
+function drawRainbowGround() {
   const T = G.T, R = T.rainbow, ev = T.ev;
   const x0 = clamp(Math.round(cam.x) - 20, 0, T.W - 1), y0 = clamp(Math.round(cam.y) - 20, 0, T.H - 1), w = Math.min(VW + 40, T.W - x0), h = Math.min(VH + 40, T.H - y0);
   for (const L of FAR) {
@@ -416,7 +416,7 @@ export function drawRainbowGround() {
 }
 
 // above the cars: the unicorns, the little rain cloud of the shower with the sun, balloons and birds, lightning, sparks, glitter, texts
-export function drawRainbowAbove() {
+function drawRainbowAbove() {
   const T = G.T, R = T.rainbow, ev = T.ev;
   // hot-air balloons in rainbow colours drift over the clouds
   for (let q = 0; q < 3; q++) {
@@ -473,7 +473,7 @@ export function drawRainbowAbove() {
 }
 
 // on the screen: the sunrise (lap 1), the dark front and the darkness of the storm, lightning flashes, the sun, fireworks, messages
-export function drawRainbowSky() {
+function drawRainbowSky() {
   const T = G.T, ev = T.ev; if (!ev) return;
   if (ev.stormOn && !ev.storm && !ev.sun) {
     // sunrise: golden light from the top left, slow beams
@@ -510,3 +510,13 @@ export function drawRainbowSky() {
     if (ev.sun) text('DOPPELTER REGENBOGEN!', VW / 2, 46, 8, RB[((G.time * 6) | 0) % 6], 'center');
   }
 }
+
+// ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
+/** @type {import('./_template.js').TrackHooks} */
+export const rainbowHooks = {
+  init: initRainbow, events: { einhorn: initUnicorns, gewitter: initThunder }, update: rainbowUpdate, collisions: rainbowCollisions,
+  surf: c => c.surf >= 41 ? rainbowSurf(c) : null, // its colour lanes, the asphalt of the gold coin, cloud holes
+  target: rainbowTarget, lane: rainbowLane, throttle: rainbowThrottle, ground: rainbowGround, noRespawn: t => t === 48, respawn: rainbowRespawn,
+  drawFall(c, F, lv) { if (c.fallKind !== 'cloud') return false; drawRainbowFall(c, F, lv); return true; }, // through a cloud hole, then a unicorn catches it
+  drawGround: drawRainbowGround, drawAbove: drawRainbowAbove, drawSky: drawRainbowSky,
+};

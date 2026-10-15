@@ -25,7 +25,7 @@ const STARS = [[46, .25, '#5a6090'], [30, .45, '#a8b0e0'], [16, .65, '#ffffff']]
 const inView = (x, y, m = 40) => x > cam.x - m && x < cam.x + VW + m && y > cam.y - m && y < cam.y + VH + m;
 const lastLap = () => !!G.player && G.player.lap >= LAPS;
 
-export function initSpace(T) {
+function initSpace(T) {
   const ev = T.ev;
   ev.asts = []; ev.astOn = false; ev.astN = 0; ev.astNext = 4; ev.holeOn = false; ev.hole = null; ev.holeMsg = 0; ev.swings = []; ev.obst = []; ev.humT = 0;
   const S = T.space; S.ax = S.portals.a.x; S.ay = S.portals.a.y; // (where the purple mouth is)
@@ -33,12 +33,12 @@ export function initSpace(T) {
   if (!S.astIdx) { S.astIdx = []; for (let i = 0; i < T.N; i += 2) { const p = T.path[i], j = (p.y | 0) * T.W + (p.x | 0), kd = S.kind[j]; if (kd !== 1 && kd !== 2) S.astIdx.push(i); } }
 }
 
-export function initAsteroids(T) { T.ev.astOn = true; }
-export function initHole(T) { T.ev.holeOn = true; }
+function initAsteroids(T) { T.ev.astOn = true; }
+function initHole(T) { T.ev.holeOn = true; }
 
 // ======================================================= always: gravity, the wormhole
 
-export function spaceUpdate(T, dt) {
+function spaceUpdate(T, dt) {
   const ev = T.ev, S = T.space, P = S.portals, ia = P.ia;
   const [px, py] = S.planet, h = ev.hole, hk = h ? Math.min(1, h.t / HOLE.open) * (lastLap() ? HOLE.last : 1) : 0;
   for (const c of G.cars) {
@@ -69,7 +69,7 @@ export function spaceUpdate(T, dt) {
 
 // the ground under a car (from update.js): over nothing it drifts off; on the ring the swing-by; thruster puffs; glowing tracks; moon dust;
 // the airlock
-export function spaceGround(c, j, sp, dt) {
+function spaceGround(c, j, sp, dt) {
   const T = G.T, S = T.space;
   if (c.surf === 0) { c.voidT = (c.voidT || 0) + dt; if (c.voidT > VOID_T) { c.voidT = 0; c.orbit = 0; fallCar(c, 'space'); return; } } else c.voidT = 0;
   // the swing-by: onto the ring by the first way, past its middle, off by the second way
@@ -100,7 +100,7 @@ export function spaceGround(c, j, sp, dt) {
 }
 
 // back from space: the tractor beam sets the car down on the road
-export function spaceRespawn(c) {
+function spaceRespawn(c) {
   for (let k = 0; k < 16; k++) { const a = k / 16 * TAU; addP({ t: 'warp', x: c.x + Math.cos(a) * 14, y: c.y + Math.sin(a) * 14, vx: -Math.cos(a) * 26, vy: -Math.sin(a) * 26, life: .5, ml: .5, col: '#8fd8ff' }); }
   if (!c.ai || near(c.x, c.y) < 260) SFX.tractor(c.ai ? .3 : 1);
 }
@@ -140,7 +140,7 @@ function updateAsteroids(T, dt) {
 }
 
 // asteroids hit the cars: thrown round like by a cow; a big one breaks into two small ones, a small one into dust
-export function spaceCollisions() {
+function spaceCollisions() {
   const ev = G.T.ev; if (!ev || !ev.asts) return;
   const add = [];
   for (const a of ev.asts) for (const c of G.cars) {
@@ -177,7 +177,7 @@ function updateHole(T, dt) {
 // ======================================================= the computer cars
 
 // the short way over the planet's ring: some of them try it (the more on a higher difficulty)
-export function spaceTarget(c) {
+function spaceTarget(c) {
   const T = G.T, S = T.space, P = S.ringPts, N = T.N; if (!P || c.finished || G.state !== 'race') return null;
   // the wormhole: right at its mouth
   const wa = (S.portals.ia - c.idx + N) % N;
@@ -198,7 +198,8 @@ export function spaceTarget(c) {
   return [t.x, t.y];
 }
 
-export function spaceLane(c, i, lane) {
+// the wormhole, a little outside on the curve round the planet, never at the edge of a platform
+function spaceLane(c, i, lane) {
   const T = G.T, S = T.space, N = T.N, p = T.path[i], n = T.nrm[i];
   if (c.idx < S.ringI - 30 && c.ringNo === S.ringI) c.ringNo = -1; // a new lap: decide again
   // the wormhole: some of them steer onto its little platform beside the road (the more on a higher difficulty)
@@ -221,7 +222,7 @@ export function spaceLane(c, i, lane) {
 // ======================================================= drawing
 
 // a car that drifted off: it turns and gets smaller (it floats away), then the tractor beam pulls it back; near the open black hole it spirals
-export function drawSpaceFall(c, F, lv) {
+function drawSpaceFall(c, F, lv) {
   const t = c.fallT0 - c.fall, h = G.T.ev && G.T.ev.hole, S = G.T.space;
   let x = c.fx0 + (c.dvx || 0) * .45 * t * (1 - t / 2.6), y = c.fy0 + (c.dvy || 0) * .45 * t * (1 - t / 2.6);
   if (h && h.r > 4) {
@@ -255,7 +256,7 @@ function swirl(x, y, r, col, col2, rot) {
 
 // on the ground (under the cars): stars far away that move slower than the map, glowing edges, the wormhole, where asteroids will fly, the
 // black hole, the lamps on the moon, glowing tyre tracks
-export function drawSpaceGround() {
+function drawSpaceGround() {
   const T = G.T, S = T.space, ev = T.ev, [plx, ply, , , pr1] = S.planet, [ex, ey, er] = S.earth;
   // the parallax stars: three layers, the far ones move least
   for (const L of STARS) {
@@ -308,7 +309,7 @@ export function drawSpaceGround() {
 
 // above the cars: the roof of the glass tube, the turning ring of the station, the asteroids, falling cars in the tractor beam, the
 // astronaut and the UFO, thruster puffs, the mist of the airlock, "SWING-BY!"
-export function drawSpaceAbove() {
+function drawSpaceAbove() {
   const T = G.T, S = T.space, ev = T.ev, tb = S.tube;
   ctx.drawImage(tb.c, tb.x, tb.y);
   // the turning ring of the station: spokes and modules on its rim
@@ -359,7 +360,7 @@ export function drawSpaceAbove() {
 }
 
 // on the screen: red arrows at the edge where an asteroid comes from, the message when the black hole opens, its violet shimmer
-export function drawSpaceSky() {
+function drawSpaceSky() {
   const T = G.T, ev = T.ev, P = G.player; if (!ev) return;
   if (ev.asts) for (const a of ev.asts) {
     if (a.t > AST.warn || !P) continue;
@@ -377,3 +378,13 @@ export function drawSpaceSky() {
   if (h && P) { const d = Math.hypot(P.x - T.space.hole[0], P.y - T.space.hole[1]); if (d < 340) { ctx.fillStyle = 'rgba(70,20,120,' + (.16 * (1 - d / 340)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }
   if (ev.holeMsg > 0 && ((G.time * 4) | 0) % 2) text('SCHWARZES LOCH!', VW / 2, 34, 8, '#c8a0ff', 'center');
 }
+
+// ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
+/** @type {import('./_template.js').TrackHooks} */
+export const spaceHooks = {
+  init: initSpace, events: { asteroiden: initAsteroids, schwarzesloch: initHole }, update: spaceUpdate, collisions: spaceCollisions,
+  surf: c => c.surf === 0 ? [1, .3, .15, 0] : null, // nothing beside the road: no grip, no gas (the car drifts off)
+  target: spaceTarget, lane: spaceLane, ground: spaceGround, noRespawn: t => t === 0, respawn: spaceRespawn,
+  drawFall(c, F, lv) { if (c.fallKind !== 'space') return false; drawSpaceFall(c, F, lv); return true; }, // drifting off, then the tractor beam
+  drawGround: drawSpaceGround, drawAbove: drawSpaceAbove, drawSky: drawSpaceSky,
+};

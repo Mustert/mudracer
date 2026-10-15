@@ -20,7 +20,7 @@ const cellOf = (x, y) => ((y / CELL) | 0) * 100 + ((x / CELL) | 0);
 
 // ======================================================= always: the lake, steam, snowfall
 
-export function initIce(T) {
+function initIce(T) {
   const ev = T.ev;
   ev.cells = new Map(); ev.iceHoles = []; ev.peng = []; ev.obst = []; ev.frost = null; ev.frostOn = false; ev.aval = null; ev.pengOn = false; ev.lakeSnap = false;
 }
@@ -41,7 +41,7 @@ function paintHole(T, h, open) {
   b.putImageData(img, x0, y0);
 }
 
-export function iceUpdate(T, dt) {
+function iceUpdate(T, dt) {
   const ev = T.ev, I = T.ice;
   for (const h of ev.iceHoles) if (h.open && ev.t - h.t0 > REFREEZE) { h.open = false; paintHole(T, h, false); h.cell.n = BREAK - 3; h.cell.hole = null; }
   ev.iceHoles = ev.iceHoles.filter(h => h.open);
@@ -54,7 +54,7 @@ export function iceUpdate(T, dt) {
 }
 
 // the ground under a car: the lake ice cracks (every new cell it drives into counts once), steam and powder snow
-export function iceGround(c, j, sp, dt) {
+function iceGround(c, j, sp, dt) {
   const T = G.T, I = T.ice, ev = T.ev;
   const onLake = !!I.lakeM[j];
   // fall through a hole: set down on the shore next to it
@@ -82,7 +82,7 @@ export function iceGround(c, j, sp, dt) {
 }
 
 // snowed in: stuck until shaken free (about a second); every new press of the gas shakes it a little faster
-export function iceStuck(c, dt, racing) {
+function iceStuck(c, dt, racing) {
   c.vx = c.vy = 0;
   let k = 1;
   if (!c.ai && racing) { const g = dirHeld(); if (g && !c.gasPrev) { k = 0; c.snowT -= .14; c.shake = 1; } c.gasPrev = g; }
@@ -98,7 +98,7 @@ export function iceStuck(c, dt, racing) {
 // ======================================================= the computer cars: the short cut over the lake
 
 // while there is no hole on the way they go straight across the ice (on SCHWER also past holes); they leave it at the other side
-export function iceTarget(c) {
+function iceTarget(c) {
   const T = G.T, S = T.ice.short, ev = T.ev; if (!S || c.finished || G.state !== 'race') return null;
   const N = T.N, ahead = (S.a - c.idx + N) % N;
   if (!c.short) {
@@ -125,7 +125,7 @@ export function iceTarget(c) {
 
 // ======================================================= event "frost": icy corners, avalanches, the polar light
 
-export function initFrost(T) { T.ev.frostOn = true; }
+function initFrost(T) { T.ev.frostOn = true; }
 
 function updateFrost(T, dt) {
   const ev = T.ev, I = T.ice;
@@ -182,7 +182,7 @@ function updateAvalanche(T, dt) {
 
 // ======================================================= event "pinguine"
 
-export function initPenguins(T) { T.ev.pengOn = true; }
+function initPenguins(T) { T.ev.pengOn = true; }
 
 // a group of three crosses the road from the colony and back (every 9 s), one slides across the lake on its belly (every 11 s)
 function updatePenguins(T, dt) {
@@ -203,7 +203,7 @@ function updatePenguins(T, dt) {
 }
 
 // cars and the snowball, cars and penguins
-export function iceCollisions() {
+function iceCollisions() {
   const ev = G.T.ev; if (!ev) return;
   const a = ev.aval;
   if (a && a.on) for (const c of G.cars) {
@@ -234,7 +234,7 @@ function drawPenguin(x, y, f, slide, k) {
 }
 
 // on the ground: cracks in the lake ice, the penguins and their colony, the cable of the ski lift with its gondolas
-export function drawIceGround() {
+function drawIceGround() {
   const T = G.T, I = T.ice, ev = T.ev;
   if (ev && ev.cells) for (const [k, C] of ev.cells) {
     if (!C.n || C.hole) continue;
@@ -259,7 +259,7 @@ export function drawIceGround() {
 }
 
 // above the cars: the snowball, "LAWINE!", the gondolas of the ski lift, the polar light over the lake in the last lap, the penguins' "QUAEK!"
-export function drawIceAbove() {
+function drawIceAbove() {
   const T = G.T, I = T.ice, ev = T.ev, a = ev && ev.aval;
   if (a && a.on) {
     const x = Math.round(a.x), y = Math.round(a.y), r = Math.round(a.r), rot = a.p * 20;
@@ -291,7 +291,7 @@ export function drawIceAbove() {
 }
 
 // snow falling over the whole screen: light in lap 1, thick with the frost
-export function drawIceSky(cx, cy) {
+function drawIceSky(cx, cy) {
   const ev = G.T.ev, n = ev && ev.frost ? 170 : 60;
 
   for (let i = 0; i < n; i++) {
@@ -302,3 +302,11 @@ export function drawIceSky(cx, cy) {
   }
   ctx.globalAlpha = 1;
 }
+
+// ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
+/** @type {import('./_template.js').TrackHooks} */
+export const iceHooks = {
+  init: initIce, events: { frost: initFrost, pinguine: initPenguins }, update: iceUpdate, collisions: iceCollisions, target: iceTarget, wander: .5,
+  stuck(c, dt, racing) { if (!(c.snowT > 0)) return false; iceStuck(c, dt, racing); return true; }, // snowed in by the avalanche: stuck until shaken free
+  ground: iceGround, drawGround: drawIceGround, drawAbove: drawIceAbove, drawSky: drawIceSky,
+};

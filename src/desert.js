@@ -17,13 +17,13 @@ const STORM = { wall: 6, gusts: 1.6 };
 
 // ======================================================= always: cacti, dusty dunes
 
-export function initDesert(T) {
+function initDesert(T) {
   const ev = T.ev;
   ev.cacti = T.desert.cacti.map(c => ({ x: c.x, y: c.y, r: c.r, cool: 0, ouch: 0 }));
   ev.tumble = []; ev.obst = ev.cacti.slice(); ev.storm = null; ev.wind = { x: 0, y: 0 }; ev.gust = 0; ev.warn = 0;
 }
 
-export function desertUpdate(T, dt) {
+function desertUpdate(T, dt) {
   const ev = T.ev, D = T.desert;
   for (const k of ev.cacti) { k.cool = Math.max(0, k.cool - dt); k.ouch = Math.max(0, k.ouch - dt); }
   // the pyramid: is your car inside (then its roof is see-through)
@@ -34,7 +34,7 @@ export function desertUpdate(T, dt) {
 }
 
 // on the dunes the car gets sandy (and throws up sand)
-export function desertGround(c, sp, dt) {
+function desertGround(c, j, sp, dt) {
   if (c.surf === 0 && c.z <= 0) {
     c.dirt = Math.min(1, c.dirt + .16 * dt * (sp > 8 ? 1 : .2));
     if (sp > 25 && Math.random() < dt * 18) drop(c.x - Math.cos(c.ang) * 12, c.y - Math.sin(c.ang) * 12, c.ang + Math.PI + (Math.random() - .5) * 1.4, 20 + Math.random() * 40, 30 + Math.random() * 40, ['#e3c48c', '#d4b074', '#f0d9a6'][(Math.random() * 3) | 0], .9, false);
@@ -43,7 +43,7 @@ export function desertGround(c, sp, dt) {
 
 // cacti on the road: a hard hit makes you spin (spines fly, "AUTSCH!"), a slow touch only pushes you back.
 // Tumbleweeds are soft: a little push, nothing more.
-export function desertCollisions() {
+function desertCollisions() {
   const ev = G.T.ev; if (!ev || !ev.cacti) return;
   for (const k of ev.cacti) for (const c of G.cars) {
     if (c.z > 3 || c.fall > 0 || c.ghost > 0) continue;
@@ -68,8 +68,9 @@ export function desertCollisions() {
 
 // ======================================================= the computer cars: quicksand and the gorge
 
-// lane (offset from the centre line) for a computer car looking at point i of the centre line
-export function desertLane(c, i, lane) {
+// lane (offset from the centre line) for a computer car looking at point i of the centre line: everybody keeps away from the middle of
+// the quicksand; at the gorge they choose the jump or the rope bridge
+function desertLane(c, i, lane) {
   const T = G.T, D = T.desert, N = T.N, C = D.canyon, p = T.path[i], n = T.nrm[i];
   // the gorge: decide for the jump or the rope bridge in time (easy: bridge, hard: jump; too slow: bridge), then stick to it
   const ahead = (D.rampI - c.idx + N) % N, past = (c.idx - D.rampI + N) % N;
@@ -92,7 +93,7 @@ export function desertLane(c, i, lane) {
 
 // ======================================================= event "sandsturm"
 
-export function initStorm(T) { T.ev.stormOn = true; }
+function initStorm(T) { T.ev.stormOn = true; }
 
 function updateStorm(T, dt) {
   const ev = T.ev;
@@ -151,7 +152,7 @@ function paintDrift(T, [cx, cy, r]) {
 // ======================================================= drawing
 
 // on the ground: the quicksand turns, the rope bridge swings, the windsocks, the tumbleweeds
-export function drawDesertGround() {
+function drawDesertGround() {
   const T = G.T, D = T.desert, ev = T.ev;
   for (const [qx, qy, qr] of D.quick) {
     if (Math.abs(qx - cam.x - VW / 2) > VW / 2 + 30 || Math.abs(qy - cam.y - VH / 2) > VH / 2 + 30) continue;
@@ -192,7 +193,7 @@ export function drawDesertGround() {
 }
 
 // above the cars: the roof of the pyramid (see-through from inside, dark inside with torches), the vulture, "AUTSCH!"
-export function drawDesertAbove(cx, cy) {
+function drawDesertAbove(cx, cy) {
   const T = G.T, D = T.desert, ev = T.ev, py = D.pyr;
   if (py) {
     if (D.inside) {
@@ -238,7 +239,7 @@ export function drawDesertAbove(cx, cy) {
 
 // the sandstorm on the screen: an ochre wall that comes in from the right, then you only see near your car; an arrow warns of gusts
 const fog = mk(VW, VH), fctx = fog.getContext('2d');
-export function drawStorm(cx, cy) {
+function drawStorm(cx, cy) {
   const ev = G.T.ev, s = ev && ev.storm; if (!s) return;
   const p = Math.min(1, s.t / STORM.wall), wx = Math.round(G.T.W + 40 - p * (G.T.W + 80) - cx);
   if (wx >= VW) return;
@@ -271,3 +272,10 @@ export function drawStorm(cx, cy) {
     text('WIND!', x, y + 10, 8, '#ffd23f', 'center');
   }
 }
+
+// ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
+/** @type {import('./_template.js').TrackHooks} */
+export const desertHooks = {
+  init: initDesert, events: { sandsturm: initStorm }, update: desertUpdate, collisions: desertCollisions, lane: desertLane, ground: desertGround,
+  drawGround: drawDesertGround, drawAbove: drawDesertAbove, drawSky: drawStorm,
+};

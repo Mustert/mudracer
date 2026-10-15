@@ -15,7 +15,7 @@ import { near } from './trackfx.js';
 
 const LIANA = { per: 6, x: 562, y: 22 }, TREE = { creak: 2.2, fall: .6 }, BALL = { every: 15, speed: 60 }, CROC = { per: 5, snap: .7 };
 
-export function initJungle(T) {
+function initJungle(T) {
   const ev = T.ev, J = T.jungle;
   J.jumps.length = J.baseJumps; // the trunks of the last race are gone
   ev.trees = []; ev.crocs = []; ev.swimmer = null; ev.ball = null; ev.ballOn = false; ev.logs = []; ev.obst = []; ev.snaps = []; ev.plops = []; ev.parrots = 0;
@@ -25,7 +25,7 @@ export function initJungle(T) {
 // where the end of the liana is (it swings over the gorge from the west bank to the east bank and back)
 const lianaAng = t => Math.sin(t / LIANA.per * TAU);
 
-export function jungleUpdate(T, dt) {
+function jungleUpdate(T, dt) {
   const ev = T.ev, J = T.jungle, P = G.player, t = ev.t;
   // the liana: on the west bank (your side when you come) it catches the cars that get to the edge in its lane
   J.lianaA = lianaAng(t); J.jumps[0].off = J.lianaA > -.55;
@@ -60,7 +60,7 @@ export function jungleUpdate(T, dt) {
 }
 
 // the ground under a car: fallen trunks shake slow cars and brake them hard (fast ones hop over, see the jumps); the swamp makes it green
-export function jungleGround(c, sp, dt) {
+function jungleGround(c, j, sp, dt) {
   const ev = G.T.ev;
   for (const L of ev.logs) {
     const a = (c.x - L.x) * L.nx + (c.y - L.y) * L.ny, along = (c.x - L.x) * L.tx + (c.y - L.y) * L.ty, side = Math.sign(a), k = 'log' + L.k;
@@ -71,7 +71,7 @@ export function jungleGround(c, sp, dt) {
 }
 
 // flattened by the stone ball: a moment flat on the ground, then it pops back ("PLOPP")
-export function jungleStuck(c, dt) {
+function jungleStuck(c, dt) {
   c.vx = c.vy = 0; c.flatT -= dt;
   if (c.flatT <= 0) { c.flatT = 0; G.T.ev.plops.push({ x: c.x, y: c.y, t: .9 }); if (!c.ai || near(c.x, c.y) < 250) SFX.plopp(); }
 }
@@ -79,7 +79,7 @@ export function jungleStuck(c, dt) {
 // ======================================================= the computer cars
 
 // the dry detour under the canopy: cars that are bad in mud (and not too brave) take it
-export function jungleTarget(c) {
+function jungleTarget(c) {
   const T = G.T, J = T.jungle, P = J.detour, N = T.N; if (!P || c.finished || G.state !== 'race') return null;
   if (!c.detour) {
     const ahead = (J.detourI - c.idx + N) % N; if (ahead < 3 || ahead > 24) return null;
@@ -94,7 +94,8 @@ export function jungleTarget(c) {
   return [t.x, t.y];
 }
 
-export function jungleLane(c, i, lane) {
+// the liana or the log bridge at the gorge, the boardwalk in the swamp, away from fallen trees when slow
+function jungleLane(c, i, lane) {
   const T = G.T, J = T.jungle, N = T.N, p = T.path[i], n = T.nrm[i], g = J.gorge;
   // the gorge: the liana lane if it will hang on our side when we get there, otherwise the log bridge (it is narrow: aim at its middle)
   const ahead = (J.gorgeI - c.idx + N) % N, past = (c.idx - J.gorgeI + N) % N;
@@ -117,7 +118,7 @@ export function jungleLane(c, i, lane) {
 
 // ======================================================= event "baeume": falling trees and the stone ball
 
-export function initTrees(T) {
+function initTrees(T) {
   const ev = T.ev; ev.treesOn = true; ev.ballOn = true;
   ev.trees = T.jungle.trees.map(tr => ({ ...tr, state: 0, p: 0, shown: false }));
 }
@@ -149,7 +150,7 @@ function updateTrees(T, dt) {
 
 // ======================================================= event "kroko"
 
-export function initCrocs(T) {
+function initCrocs(T) {
   const ev = T.ev; ev.crocsOn = true;
   ev.crocs = T.jungle.crocs.map(([x, y], k) => ({ x, y, k, open: 0, face: k % 2 ? 1 : -1 }));
   const F = T.jungle.ford.rect; ev.swimmer = { x: (F[0] + F[2]) / 2, y: F[1], on: false, r: 8 };
@@ -175,7 +176,7 @@ function updateCrocs(T, dt) {
 }
 
 // cars and the stone ball (it flattens slower cars), cars and the swimming crocodile (it pushes them away)
-export function jungleCollisions() {
+function jungleCollisions() {
   const ev = G.T.ev; if (!ev) return;
   const b = ev.ball;
   if (b && b.s >= 0) for (const c of G.cars) {
@@ -207,7 +208,7 @@ function drawCroc(x, y, f, open, up) {
 }
 
 // on the ground: the swamp bubbles, crocodiles, fallen trunks, standing rotten trees (their shadow first), the camp fire, the water in the temple hall
-export function drawJungleGround() {
+function drawJungleGround() {
   const T = G.T, J = T.jungle, ev = T.ev, k = Math.floor(G.time * 3);
   for (let q = 0; q < 8 && J.swampPix.length; q++) { const p = J.swampPix[(hash(q, k, 114) * J.swampPix.length) | 0]; R1(p % T.W, (p / T.W) | 0, 2, 2, '#8aa83a'); }
   for (const [qx, qy, qr] of J.quick) if (inView(qx, qy)) { const ph = (G.time * 1.3 + qx) % 1; ctx.globalAlpha = 1 - ph; disc(Math.round(qx + Math.sin(qx + Math.floor(G.time * 1.3)) * qr * .5), Math.round(qy), Math.round(1 + ph * 3), '#6a8a3a'); ctx.globalAlpha = 1; }
@@ -240,7 +241,7 @@ export function drawJungleGround() {
 
 // above the cars: the liana, standing and falling trees, the stone ball, the temple roof (dark inside), the canopy (see-through round your car), texts
 let dark = null, leaves = null;
-export function drawJungleAbove() {
+function drawJungleAbove() {
   const T = G.T, J = T.jungle, ev = T.ev, P = G.player;
   // the liana: a thick vine from a branch over the gorge; a car that swings on it hangs at its end
   const ax = LIANA.x, ay = LIANA.y, flying = G.cars.find(c => c.z > 0 && c.lianaRide);
@@ -303,7 +304,15 @@ export function drawJungleAbove() {
 }
 
 // on the screen: sun beams through the leaves (the vignette of the forest comes with the theme)
-export function drawJungleSky() {
+function drawJungleSky() {
   const J = G.T.jungle;
   if (J.inTemple) { ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.fillRect(0, 0, VW, VH); }
 }
+
+// ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
+/** @type {import('./_template.js').TrackHooks} */
+export const jungleHooks = {
+  init: initJungle, events: { baeume: initTrees, kroko: initCrocs }, update: jungleUpdate, collisions: jungleCollisions, target: jungleTarget, lane: jungleLane,
+  stuck(c, dt) { if (!(c.flatT > 0)) return false; jungleStuck(c, dt); return true; }, // flattened by the stone ball: a moment flat on the ground
+  ground: jungleGround, drawGround: drawJungleGround, drawAbove: drawJungleAbove, drawSky: drawJungleSky,
+};

@@ -7,15 +7,8 @@ import { addP, drop, mudBurst, splash, WATC } from './particles.js';
 import { cam, onState } from './state.js';
 import { bctx, eventOn, snap } from './undo.js';
 import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
-import { drawMarshals, drawTyres, initReifen, tyreCollisions, updateReifen } from './ring.js';
-import { desertCollisions, desertUpdate, initDesert, initStorm } from './desert.js';
-import { iceCollisions, iceUpdate, initFrost, initIce, initPenguins } from './ice.js';
-import { initEruption, initVolcano, volcanoUpdate } from './volcano.js';
-import { initCrocs, initJungle, initTrees, jungleCollisions, jungleUpdate } from './jungle.js';
-import { initAsteroids, initHole, initSpace, spaceCollisions, spaceUpdate } from './space.js';
-import { initSchoko, initSuess, initWatte, suessCollisions, suessUpdate } from './suess.js';
-import { initRobot, initToyEvents, initToys, toyCollisions, toyUpdate } from './toys.js';
-import { initRainbow, initThunder, initUnicorns, rainbowCollisions, rainbowUpdate } from './rainbow.js';
+import { drawMarshals, drawTyres, tyreCollisions, updateReifen } from './ring.js';
+import { TRACK_EVENTS, trackHooks } from './hooks.js';
 
 // ---------- track events: the map changes while you race ----------
 // Wiese: a herd of cows grazes on and next to the track (they are obstacles, they moo).
@@ -104,13 +97,7 @@ export function eventCollisions() {
   koiCollisions();
   truckCollisions();
   tyreCollisions();
-  if (G.T.desert) desertCollisions();
-  if (G.T.ice) iceCollisions();
-  if (G.T.jungle) jungleCollisions();
-  if (G.T.space) spaceCollisions();
-  if (G.T.suess) suessCollisions();
-  if (G.T.toys) toyCollisions();
-  if (G.T.rainbow) rainbowCollisions();
+  trackHooks(G.T).collisions?.();
   const ev = G.T.ev; if (!ev) return;
   for (const w of ev.cows) for (const c of G.cars) {
     if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
@@ -507,8 +494,8 @@ function drawLights(T) {
 
 // ======================================================= setup, update, drawing
 
-const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, reifen: initReifen, zug: () => {}, sandsturm: initStorm, frost: initFrost, pinguine: initPenguins, ausbruch: initEruption, baeume: initTrees, kroko: initCrocs, asteroiden: initAsteroids, schwarzesloch: initHole, schoko: initSchoko, zuckerwatte: initWatte,
-  spielzeug: initToyEvents, saugroboter: initRobot, einhorn: initUnicorns, gewitter: initThunder };
+// (the events of the special tracks come with their hooks, hooks.js)
+const INIT = { kuehe: initCows, regen: initRain, flut: initFlood, kois: initKois, kipper: initKipper, zug: () => {}, ...TRACK_EVENTS };
 
 // dev server only (ANALYSE.md T12): some events have fixed places on the map (holes, koi leaps, rolling tyres, falling trees,
 // dump trucks). They are checked against the built track, so a changed course line that moves the road away is noticed at once.
@@ -531,15 +518,8 @@ export function setupEvents(T) {
   if (import.meta.env.DEV) checkSpots(T);
   resetAllEvents();
   T.ev = { t: 0, cows: [], holes: [], rain: null, flood: null, pier: false, kois: [], kipper: [] };
-  // the desert, the ice, the volcano, the jungle, space and the rainbow have things that are always there (cacti, cracking lake ice, gravity ...) besides their events
-  if (T.desert) initDesert(T);
-  if (T.ice) initIce(T);
-  if (T.volcano) initVolcano(T);
-  if (T.jungle) initJungle(T);
-  if (T.space) initSpace(T);
-  if (T.suess) initSuess(T);
-  if (T.toys) initToys(T);
-  if (T.rainbow) initRainbow(T);
+  // the special tracks have things that are always there (cacti, cracking lake ice, gravity ...) besides their events
+  trackHooks(T).init?.(T);
   for (const name of T.def.events || []) if (eventOn(name)) INIT[name](T);
 }
 
@@ -549,14 +529,7 @@ export function updateEvents(dt) {
   updateMixer(T, dt);
   const ev = T.ev; if (!ev) return;
   ev.t += dt;
-  if (T.desert) desertUpdate(T, dt);
-  if (T.ice) iceUpdate(T, dt);
-  if (T.volcano) volcanoUpdate(T, dt);
-  if (T.jungle) jungleUpdate(T, dt);
-  if (T.space) spaceUpdate(T, dt);
-  if (T.suess) suessUpdate(T, dt);
-  if (T.toys) toyUpdate(T, dt);
-  if (T.rainbow) rainbowUpdate(T, dt);
+  trackHooks(T).update?.(T, dt);
   if (ev.cows.length) updateCows(T, dt);
   if (ev.holes.length) updateRain(T, dt);
   if (ev.kois.length) updateKois(T, dt);

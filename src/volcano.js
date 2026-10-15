@@ -20,7 +20,7 @@ const BOMB = { warn: 1.5, r: 20, spot: 5, sr: 8 }, TONGUE = { per: 8, warn: 2, o
 
 const phase = (t, per, off = 0) => ((t + off) % per + per) % per;
 
-export function initVolcano(T) {
+function initVolcano(T) {
   const ev = T.ev, V = T.volcano;
   ev.lanes = V.lanes.map((L, k) => ({ flood: k ? 1 : 0, wet: !!k }));
   V.lanes.forEach((L, k) => { for (const j of L.pix) T.ter[j] = k ? 15 : 1; });
@@ -30,7 +30,7 @@ export function initVolcano(T) {
 
 // ======================================================= always: crust, geyser, ford, rumbling
 
-export function volcanoUpdate(T, dt) {
+function volcanoUpdate(T, dt) {
   const ev = T.ev, V = T.volcano, t = ev.t;
   // the crust
   const per = ev.erupt ? CRUST.perErupt : CRUST.per, u = phase(t, per, 5), hotAt = per - CRUST.hot, warnAt = hotAt - CRUST.warn;
@@ -63,7 +63,7 @@ export function volcanoUpdate(T, dt) {
 }
 
 // the ground under a car: heat (close to lava it gets hot, water cools), ash dust; a hot car smokes and is slower
-export function volcanoGround(c, sp, dt) {
+function volcanoGround(c, j, sp, dt) {
   const V = G.T.volcano, gi = ((clamp(c.y | 0, 0, G.T.H - 1)) >> 2) * V.GW + (clamp(c.x | 0, 0, G.T.W - 1) >> 2), fire = c.def.id === 'feuerwehr';
   c.heat = c.heat || 0;
   if (V.heat[gi] || c.surf === 16) c.heat = Math.min(1, c.heat + dt * (fire ? .15 : .3)); else c.heat = Math.max(0, c.heat - dt * .06);
@@ -85,7 +85,7 @@ export function volcanoGround(c, sp, dt) {
 // ======================================================= the computer cars
 
 // the long way round the crust: when the stream will break through about the time they get there (they see the glow like you)
-export function volcanoTarget(c) {
+function volcanoTarget(c) {
   const T = G.T, V = T.volcano, P = V.bypass, N = T.N; if (!P || c.finished || G.state !== 'race') return null;
   if (!c.bypass) {
     const ahead = (V.bypassI - c.idx + N) % N; if (ahead < 3 || ahead > 26) return null;
@@ -103,7 +103,8 @@ export function volcanoTarget(c) {
   return [t.x, t.y];
 }
 
-export function volcanoLane(c, i, lane) {
+// the open bridge of the ford, away from the lava on the serpentine and from where a lava bomb will land
+function volcanoLane(c, i, lane) {
   const T = G.T, V = T.volcano, ev = T.ev, N = T.N, p = T.path[i], n = T.nrm[i];
   // the ford: the bridge that will be open when they get there
   const ahead = (V.fordI - c.idx + N) % N, past = (c.idx - V.fordI + N) % N;
@@ -125,7 +126,7 @@ export function volcanoLane(c, i, lane) {
 
 // ======================================================= event "ausbruch"
 
-export function initEruption(T) { T.ev.eruptOn = true; }
+function initEruption(T) { T.ev.eruptOn = true; }
 
 function updateEruption(T, dt) {
   const ev = T.ev;
@@ -207,7 +208,7 @@ function lavaPic(T, pix) {
 
 const inView = (x, y, m = 40) => x > cam.x - m && x < cam.x + VW + m && y > cam.y - m && y < cam.y + VH + m;
 
-export function drawVolcanoGround() {
+function drawVolcanoGround() {
   const T = G.T, V = T.volcano, ev = T.ev, k = Math.floor(G.time * 4);
   // the lava shimmers, the cracks in the road glow on and off
   for (let q = 0; q < 50 && V.lavaPix.length; q++) { const p = V.lavaPix[(hash(q, k, 102) * V.lavaPix.length) | 0]; R1(p % T.W, (p / T.W) | 0, 2, 1, q % 3 ? '#ffe27a' : '#fff4c0'); }
@@ -265,7 +266,7 @@ export function drawVolcanoGround() {
 
 // above the cars: the roof of the lava tube (dark inside, glowing cracks), the flying lava bombs, the smoke over the crater, the helicopter, "AUA, HEISS!"
 let tubeDark = null;
-export function drawVolcanoAbove() {
+function drawVolcanoAbove() {
   const T = G.T, V = T.volcano, ev = T.ev, P = G.player, tb = V.tube;
   if (tb) {
     const inT = i => tb.i0 <= tb.i1 ? i >= tb.i0 && i <= tb.i1 : i >= tb.i0 || i <= tb.i1;
@@ -320,7 +321,7 @@ export function drawVolcanoAbove() {
 }
 
 // on the screen: the red sky and the ash rain of the eruption, and your heat
-export function drawVolcanoSky(cx, cy) {
+function drawVolcanoSky(cx, cy) {
   const ev = G.T.ev, P = G.player;
   if (ev && ev.erupt) {
     ctx.fillStyle = 'rgba(110,24,0,' + Math.min(.2, ev.erupt.t * .1).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH);
@@ -340,3 +341,11 @@ export function drawVolcanoSky(cx, cy) {
     if (P.hot) text('HEISS', x + 10, y + hgt - 4, 8, hot ? '#ffffff' : '#e8452c');
   }
 }
+
+// ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
+/** @type {import('./_template.js').TrackHooks} */
+export const volcanoHooks = {
+  init: initVolcano, events: { ausbruch: initEruption }, update: volcanoUpdate, target: volcanoTarget, lane: volcanoLane, ground: volcanoGround,
+  noRespawn: (t, T) => t === 16 && T.volcano.hot, // the crust while the stream breaks through
+  drawGround: drawVolcanoGround, drawAbove: drawVolcanoAbove, drawSky: drawVolcanoSky,
+};

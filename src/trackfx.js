@@ -47,7 +47,7 @@ function land(c) {
   if (t === 15 || (t === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }
   if (t === 48 && T.rainbow) { fallCar(c, 'cloud', c.jumpLand); return; } // short of the far side: through the clouds
   if (t === 3 || t === 5) { splash(c.x, c.y, 24); SFX.splash(v); return; }
-  const col = T.th.landCol || (T.th.decor === 'eis' || T.rainbow ? ['#ffffff', '#e6eef6', '#cfdcea'] : ['#e8d2a8', '#d9b878', '#c9a263']);
+  const col = T.th.landCol || ['#e8d2a8', '#d9b878', '#c9a263']; // (the theme can bring its own: snow, sweets, clouds)
   for (let i = 0; i < (big ? 22 : 10); i++) drop(c.x + (Math.random() - .5) * 20, c.y + (Math.random() - .5) * 14, Math.random() * 6.3, 20 + Math.random() * 50, 30 + Math.random() * 50, col[(Math.random() * col.length) | 0], .8, false);
   if (v > .02) SFX.land(v * (big ? 1 : .6));
   if (big && !c.ai) G.jumpShake = .35;
