@@ -60,6 +60,7 @@ export function openBug() {
   try { img = cv.toDataURL('image/jpeg', .85); } catch (e) {}
   cur = { meta, img, was: G.state, kind: 'bug' };
   releaseKeys();
+  AU.hold = true;
   if (AU.a && AU.a.state === 'running') { AU.a.suspend(); cur.sound = true; }
   box.info.textContent = [meta.strecke, meta.runde && 'RUNDE ' + meta.runde, meta.platz && 'PLATZ ' + meta.platz, meta.modus, meta.bildschirm].filter(Boolean).join(' · ');
   box.text.value = ''; box.msg.textContent = '';
@@ -71,6 +72,7 @@ export function openBug() {
 function close() {
   if (!cur) return;
   box.hidden = true;
+  AU.hold = false;
   if (cur.sound) AU.a.resume();
   const was = cur.was; cur = null;
   // a race does not go on by itself: the pause menu waits (ESC = WEITER)

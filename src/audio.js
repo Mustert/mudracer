@@ -9,7 +9,8 @@ import { TRAIN } from './trainsprite.js';
 
 // ---------- audio: everything is synthesised live, no sound files ----------
 
-export const AU = { a: null, muted: false, music: true, rev: 0, wave: 2 };
+// hold: the sound stays suspended (the F8 window, bugreport.js), a touch or key does not wake it
+export const AU = { a: null, muted: false, music: true, rev: 0, wave: 2, hold: false };
 
 
 try { AU.music = getItem('mudracer-music') !== '0'; } catch (e) {}
@@ -19,6 +20,7 @@ function makeCurve(k) { const n = 1024, c = new Float32Array(n); for (let i = 0;
 
 
 export function audioInit() {
+  if (AU.hold) return;
   if (AU.a) { if (AU.a.state === 'suspended') AU.a.resume(); return; }
   const AC = window.AudioContext || /** @type {any} */ (window).webkitAudioContext; if (!AC) return;
   try {
