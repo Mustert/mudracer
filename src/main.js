@@ -1,6 +1,5 @@
 import { G, PREFS, UI } from './g.js';
 import { audioInit } from './audio.js';
-import { bugOpen } from './bugreport.js';
 import { makeClock } from './clock.js';
 import { FONT, VH, VW, angDiff, ctx } from './core.js';
 import { drawRace } from './draw.js';
@@ -16,6 +15,8 @@ import fontUrl from '@fontsource/press-start-2p/files/press-start-2p-latin-400-n
 
 // ---------- main loop: fixed steps (clock.js), drawn in between ----------
 
+/** @type {any} */
+let bug = null;
 const clock = makeClock(), MOVING = new Set(['countdown', 'race', 'finish', 'pause']);
 
 // where the cars and the camera were before the step, so a fast screen can draw them in between two steps
@@ -65,7 +66,7 @@ function loop(now) {
 function frameAt(now) {
   // the first rAF timestamp can be earlier than `last`, so never let time run backwards
   const frame = Math.max(0, now - G.last) / 1000; G.last = Math.max(G.last, now);
-  if (bugOpen()) return; // the game stands still while a bug is being written down
+  if (bug && bug.bugOpen()) return; // the game stands still while a bug or an idea is being written down (F8, dev server)
   try {
     const a = clock.advance(frame, tick);
     drawBetween(a, drawFrame);
@@ -98,6 +99,9 @@ audioInit();
 
 addEventListener('pointerup', audioInit);
 setInputHandlers({ touch: audioInit });
+
+// dev server only: F8 writes down a bug or an idea (bugreport.js)
+if (import.meta.env.DEV) import('./bugreport.js').then(m2 => { bug = m2; });
 
 // dev server only: a handle for the browser console and for checks (the module instances the game really uses)
 if (import.meta.env.DEV) Promise.all([import('./race.js'), import('./tracks.js'), import('./cars.js'), import('./clock.js'), import('./check.js')]).then(([race, tracks, cars, clockM, chk]) => { /** @type {any} */ (window).mudracer = { G, UI, PREFS, cam, race, tracks, cars, clock: clockM, frameAt, check: chk.check, checkAll: chk.checkAll, checkPic: chk.checkPic }; });

@@ -2,9 +2,11 @@ import { G, PREFS, UI } from './g.js';
 import { LAPS } from './core.js';
 import { placeOf } from './rank.js';
 
-// ---------- what a bug report knows about the moment it was written ----------
+// ---------- what a bug report or an idea knows about the moment it was written ----------
 // bugMeta() takes a snapshot of the game (screen, mode, track, lap, place, every car); bugText() turns a report into Markdown,
-// the same text the dev server writes to bugs/ and the copy button puts on the clipboard. No DOM here, so it can be tested.
+// the text the dev server writes to feedback/ (bugreport.js). No DOM here, so it can be tested.
+
+const KIND_NAMES = { bug: 'Bug', feature: 'Idee' };
 
 const MODE_NAMES = { gp: 'GRAND PRIX', single: 'EINZELSTRECKE', tt: 'ZEITFAHREN', run: 'MATSCHFAHRT' };
 const DIFF_NAMES = ['LEICHT', 'MITTEL', 'SCHWER'];
@@ -46,10 +48,10 @@ export function bugMeta(extra = {}) {
   return m;
 }
 
-/** a report as Markdown: the text of the player, the snapshot as a table, the cars as a table */
+/** a report { id, kind: 'bug' | 'feature', text, meta, img } as Markdown: the text, the snapshot as a table, the cars as a table */
 export function bugText(r) {
   const m = { ...r.meta }, cars = m.autos; delete m.autos;
-  const out = ['# Bug ' + r.id, '', r.text.trim() || '(ohne Text)', '', '## Stand', '', '| Feld | Wert |', '|---|---|'];
+  const out = ['# ' + (KIND_NAMES[r.kind] || 'Bug') + ' ' + r.id, '', r.text.trim() || '(ohne Text)', '', '## Stand', '', '| Feld | Wert |', '|---|---|'];
   for (const [k, v] of Object.entries(m)) out.push('| ' + k + ' | ' + String(v).replace(/\|/g, '/') + ' |');
   if (cars && cars.length) {
     const cols = [...new Set(cars.flatMap(c => Object.keys(c)))];
@@ -60,9 +62,9 @@ export function bugText(r) {
   return out.join('\n') + '\n';
 }
 
-/** a file name for the report: date, time and track, e.g. 2026-10-16_14-03-22_WUESTE */
-export function bugId(meta) {
+/** a file name for the report: kind, date, time and track, e.g. bug_2026-10-16_14-03-22_WUESTE */
+export function bugId(meta, kind = 'bug') {
   const d = new Date(meta.zeit), p = n => String(n).padStart(2, '0');
   const day = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '_' + p(d.getHours()) + '-' + p(d.getMinutes()) + '-' + p(d.getSeconds());
-  return day + (meta.strecke ? '_' + meta.strecke.split(' ')[0].replace(/[^A-Z0-9]/gi, '') : '');
+  return kind + '_' + day + (meta.strecke ? '_' + meta.strecke.split(' ')[0].replace(/[^A-Z0-9]/gi, '') : '');
 }

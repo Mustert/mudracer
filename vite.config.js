@@ -3,11 +3,11 @@ import fs from 'fs';
 import { defineConfig } from 'vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
-// the commit the game is built from; a bug report names it (bugreport.js)
+// the commit the game runs from; a bug report names it (bugreport.js)
 let commit = '?';
 try { commit = execSync('git rev-parse --short HEAD').toString().trim() + (execSync('git status --porcelain').toString().trim() ? '+' : ''); } catch (e) {}
 
-// dev server only: the bug window (F8, bugreport.js) posts its report here, it lands in bugs/<id>.md and bugs/<id>.jpg
+// dev server only: the F8 window (bugreport.js) posts a bug or an idea here, it lands in feedback/<id>.md and feedback/<id>.jpg
 function bugInbox() {
   return {
     name: 'mudracer-bugs',
@@ -20,10 +20,10 @@ function bugInbox() {
           try {
             const { id, md, img } = JSON.parse(body);
             if (!/^[\w-]{1,80}$/.test(id) || typeof md !== 'string') return answer({ ok: false, error: 'UNGUELTIG' });
-            fs.mkdirSync('bugs', { recursive: true });
-            fs.writeFileSync('bugs/' + id + '.md', md);
-            if (typeof img === 'string' && img.startsWith('data:image/jpeg;base64,')) fs.writeFileSync('bugs/' + id + '.jpg', Buffer.from(img.slice(23), 'base64'));
-            answer({ ok: true, file: 'bugs/' + id + '.md' });
+            fs.mkdirSync('feedback', { recursive: true });
+            fs.writeFileSync('feedback/' + id + '.md', md);
+            if (typeof img === 'string' && img.startsWith('data:image/jpeg;base64,')) fs.writeFileSync('feedback/' + id + '.jpg', Buffer.from(img.slice(23), 'base64'));
+            answer({ ok: true, file: 'feedback/' + id + '.md' });
           } catch (e) { answer({ ok: false, error: String(e.message || e).slice(0, 60) }); }
         });
       });

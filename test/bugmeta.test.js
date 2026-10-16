@@ -36,9 +36,10 @@ describe('bug report', () => {
 
   it('writes Markdown with the text, the snapshot and the cars', () => {
     race();
-    const meta = bugMeta(), r = { id: bugId(meta), text: 'Auto haengt | fest', meta, img: 'data:x' };
-    expect(r.id).toMatch(/^\d{4}-\d\d-\d\d_\d\d-\d\d-\d\d_WUESTE$/);
+    const meta = bugMeta(), r = { id: bugId(meta, 'feature'), kind: 'feature', text: 'Auto haengt | fest', meta, img: 'data:x' };
+    expect(r.id).toMatch(/^feature_\d{4}-\d\d-\d\d_\d\d-\d\d-\d\d_WUESTE$/);
     const md = bugText(r);
+    expect(md).toContain('# Idee ' + r.id);
     expect(md).toContain('Auto haengt | fest');
     expect(md).toContain('| strecke | WUESTE (rev 1) |');
     expect(md).toContain('| 2 | MONSTER |');
