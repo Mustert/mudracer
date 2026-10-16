@@ -6,6 +6,7 @@
 > - Matschfahrt: Autowahl → Matschfahrt.
 > - Werkstatt: Auto wählen, Lackfarbe wählen (11 Farben).
 > - Rundenzahl ist überall fest 3 (`LAPS`), eine Rundenwahl gibt es noch nicht (`ANALYSE.md` M12).
+> - Bug melden (seit 2026-10-16): F8 öffnet überall ein Fenster, in das man den Fehler schreibt; das Spiel steht so lange still, ein Rennen geht danach ins Pause-Menü. Gespeichert werden Text, Bild und Stand (Strecke, Runde, Platz, Modus, Lage aller Autos), im Dev-Server als Datei in `bugs/`, im veröffentlichten Spiel im Spielstand (Knöpfe KOPIEREN und DATEI im Fenster).
 > - Ladebildschirm: Die Strecken werden nicht beim Start gebaut, sondern im Hintergrund, während ein Menü zu sehen ist; bis dahin zeigen die Menüs nur die Form der Strecke. Ist eine Strecke beim Rennstart noch nicht fertig, erscheint kurz „STRECKE WIRD GEBAUT“ mit Balken.
 
 **Hauptmenü** => kann so bleiben

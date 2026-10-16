@@ -27,6 +27,7 @@ export const held = g => KEYS[g].some(k => keys[k]);
 
 
 addEventListener('keydown', e => {
+  if (e.target instanceof Element && e.target.closest('#bug')) return; // typing in the bug window (bugreport.js) is not driving
   if (e.key.startsWith('Arrow') || e.key === ' ' || e.key === 'Backspace') e.preventDefault();
   H.touch();
   touchOn = false;
@@ -38,7 +39,9 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => { keys[e.key] = false; });
 
 
-addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+/** lets go of every key (focus lost, or the bug window takes the keyboard) */
+export function releaseKeys() { for (const k in keys) keys[k] = false; }
+addEventListener('blur', releaseKeys);
 
 
 addEventListener('pointerdown', e => { if (e.pointerType === 'touch') touchOn = true; }, true);

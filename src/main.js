@@ -1,5 +1,6 @@
 import { G, PREFS, UI } from './g.js';
 import { audioInit } from './audio.js';
+import { bugOpen } from './bugreport.js';
 import { makeClock } from './clock.js';
 import { FONT, VH, VW, angDiff, ctx } from './core.js';
 import { drawRace } from './draw.js';
@@ -64,6 +65,7 @@ function loop(now) {
 function frameAt(now) {
   // the first rAF timestamp can be earlier than `last`, so never let time run backwards
   const frame = Math.max(0, now - G.last) / 1000; G.last = Math.max(G.last, now);
+  if (bugOpen()) return; // the game stands still while a bug is being written down
   try {
     const a = clock.advance(frame, tick);
     drawBetween(a, drawFrame);

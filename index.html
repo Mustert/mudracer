@@ -47,6 +47,20 @@
     box-sizing: border-box; border: 2px solid var(--btn-edge); border-radius: 50%; background: var(--btn-on);
   }
   #sb.on #sk { background: var(--ink); }
+  /* bug window (F8, src/bugreport.js) */
+  #bug { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(27, 18, 12, .65); padding: 16px; }
+  #bug[hidden] { display: none; }
+  #bug .bugwin { width: min(560px, 100%); box-sizing: border-box; padding: 16px; background: #2a1c12; border: 3px solid #e8a860; border-radius: 6px; color: var(--ink); font: 10px/1.6 "Press Start 2P", monospace; user-select: text; -webkit-user-select: text; }
+  #bug h2 { margin: 0 0 8px; font-size: 14px; font-weight: normal; color: #ffd23f; }
+  #bug .bugmeta { color: #d8c4a8; margin-bottom: 8px; }
+  #bug textarea { width: 100%; box-sizing: border-box; resize: vertical; padding: 8px; background: #1b120c; color: var(--ink); border: 2px solid #6b4e36; border-radius: 4px; font: 12px/1.5 system-ui, sans-serif; touch-action: auto; }
+  #bug textarea:focus { outline: none; border-color: #e8a860; }
+  #bug .bugrow { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; }
+  #bug .bugrow.small { font-size: 8px; }
+  #bug .bugmsg { flex: 1; color: #d8c4a8; }
+  #bug button { font: inherit; padding: 8px 10px; background: #3a2a1c; color: var(--ink); border: 2px solid #6b4e36; border-radius: 4px; cursor: pointer; }
+  #bug button:hover, #bug button:focus-visible { background: #e8a860; color: #1b120c; outline: none; }
+  .bugflash { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 10; padding: 8px 12px; background: #2a1c12; border: 2px solid #e8a860; color: var(--ink); font: 8px "Press Start 2P", monospace; pointer-events: none; }
 </style>
 
 <div id="wrap"><canvas id="game" width="480" height="270" aria-label="Mudracer Spielfeld"></canvas></div>

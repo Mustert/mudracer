@@ -81,7 +81,7 @@ function optionsKey(k) {
 }
 
 
-function openPause() { UI.pauseFrom = G.state; UI.pauseT = G.stateTime; UI.pauseSel = 0; setState('pause'); SFX.click(); }
+export function openPause() { UI.pauseFrom = G.state; UI.pauseT = G.stateTime; UI.pauseSel = 0; setState('pause'); SFX.click(); }
 
 
 function pauseAct(i) { if (i === 0) { G.state = UI.pauseFrom; G.stateTime = UI.pauseT; SFX.select(); } else { SFX.click(); setState('main'); } }
