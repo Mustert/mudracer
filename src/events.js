@@ -402,16 +402,14 @@ function koiCollisions() {
   }
 }
 
-// rings spreading on the water where the koi will come out, smaller ones where it will land: it leaps about half a second later
+// rings spreading on the water where the koi will come out: it leaps about half a second later (the landing only splashes when it lands)
 function drawKoiWarning(f) {
   ctx.save(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
-  for (const [end, size] of [[-1, 1], [1, .6]]) {
-    const x = Math.round(f.x + Math.cos(f.ang) * f.half * end), y = Math.round(f.y + Math.sin(f.ang) * f.half * end);
-    for (let k = 0; k < 2; k++) {
-      const q = (f.warn + k * .5) % 1;
-      ctx.globalAlpha = (1 - q) * .85;
-      ctx.beginPath(); ctx.ellipse(x, y, (3 + q * 10) * size + 2, (1.5 + q * 5) * size + 1, 0, 0, TAU); ctx.stroke();
-    }
+  const x = Math.round(f.x - Math.cos(f.ang) * f.half), y = Math.round(f.y - Math.sin(f.ang) * f.half);
+  for (let k = 0; k < 2; k++) {
+    const q = (f.warn + k * .5) % 1;
+    ctx.globalAlpha = (1 - q) * .85;
+    ctx.beginPath(); ctx.ellipse(x, y, 5 + q * 10, 2.5 + q * 5, 0, 0, TAU); ctx.stroke();
   }
   ctx.restore();
 }

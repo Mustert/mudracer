@@ -148,13 +148,13 @@ const TRACK_DEFS = [
     mixer: { x: 322, y: 96 }, crane: { x: 588, y: 128, pipe0: 552, pipeLen: 72, pipeD: 20, pipeY: 75 },
     // [x, y, side, seconds between two visits, first arrival]: the truck stands beside the road, outside
     kipper: [[75, 160, -1, 23, 12], [470, 75, -1, 26, 3], [725, 130, -1, 29, 8], [620, 375, -1, 25, 14]] },
-  { name: 'GARTEN', rev: 1, seed: 5, theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: null,
+  { name: 'GARTEN', rev: 2, seed: 5, theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: null,
     pts: [[688,335], [678,368], [654,392], [620,402], [560,403], [500,403], [440,402], [412,401], [386,396], [374,380], [370,355], [370,335],
       [360,322], [345,317], [300,316], [260,318], [232,328], [212,350], [205,376], [204,392], [194,404], [170,408], [142,397], [117,372], [102,336], [100,290],
       [100,252], [103,224], [125,204], [170,198], [235,198], [300,198], [332,187], [344,159], [332,131], [305,120], [240,120], [180,120], [148,108], [134,80],
       [148,52], [180,40], [250,40], [320,40], [392,42], [424,52], [444,80], [447,125], [458,168], [484,198], [515,211], [546,198], [572,168], [583,125],
       [585,90], [595,62], [620,43], [642,38], [665,43], [690,62], [700,90], [706,140], [700,200], [692,255], [690,282], [690,300]],
-    mud: [[.09, 0, 30, 34], [.285, 0, 30, 34], [.555, 0, 30, 34], [.615, 0, 30, 34], [.905, 0, 30, 34]], water: [[.17, 0, 26, 34], [.43, 0, 28, 34], [.70, 0, 26, 34], [.80, 0, 26, 34]], ponds: [],
+    mud: [[.045, 0, 30, 34], [.285, 0, 30, 34], [.555, 0, 30, 34], [.615, 0, 30, 34], [.905, 0, 30, 34]], water: [[.205, 10, 26, 26], [.43, 0, 28, 34], [.70, 0, 26, 34], [.80, 0, 26, 34]], ponds: [],
     // deep water: rivers and ponds as chains of circles [x, y, radius]. The river from the top runs into the pool and the pond inside the first U, the second river crosses the
     // lower road twice and feeds the lake in the middle (a channel), the lake drains to the south. You fall into deep water, roads over it are bridges.
     rivers: [
@@ -163,12 +163,13 @@ const TRACK_DEFS = [
       [[508, 350, 11], [462, 351, 10], [420, 352, 10], [372, 352, 10], [336, 360, 12]],
       [[264, 378, 24], [312, 378, 24]], [[288, 378, 26], [288, 378, 26]],
       [[288, 400, 12], [288, 462, 13]]],
-    // stepping stones: the short cut across the pool at the top and the one across the channel and the lake in the middle (from the pond beside the bridge to the west road; the bridge rail blocks the way from the bridge itself)
-    stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10], [329, 352, 9], [307, 362, 9], [285, 371, 9], [265, 378, 9], [246, 381, 9]],
+    // stepping stones: the short cut across the pool at the top and the one across the lake at the bottom (from the corner after the slanted bridge
+    // straight west to the left road; a koi leaps over it)
+    stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10], [320, 391, 9], [298, 393, 9], [276, 392, 9], [255, 388, 9]],
     // clipped hedges that keep you from cutting across the garden: [x1, y1, x2, y2]
     hedges: [[12, 159, 333, 159], [172, 80, 396, 80], [135, 258, 396, 258], [396, 78, 396, 300], [396, 300, 520, 314], [642, 98, 642, 290], [152, 260, 152, 376]],
     pagodas: [[765, 142, 4, 1.15], [758, 388, 4, 1.15], [452, 262, 3, .85]],
-    koi: [[515, 140, 11, 9], [288, 380, 36, 11], [515, 84, 14, 10], [655, 303, 40, 3]] },
+    koi: [[515, 140, 11, 9], [288, 366, 20, 6], [515, 104, 14, 5], [655, 303, 40, 3]] },
   // The race circuit: an 8 on asphalt, the road crosses itself on a bridge (first over it, later underneath). Kerbs inside the corners, gravel
   // outside, oil instead of mud, a pit lane along the start straight whose box washes the car, barriers all around (see ringmap.js, ring.js).
   // oilAt = [x, y, half length, half width]; gravel and stacks (tyre walls) = [x, y, radius]; pit = lane points, half width, box (y from, to),

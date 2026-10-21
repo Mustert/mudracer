@@ -2,7 +2,7 @@
 
 Die eine Liste für alles, was am Spiel noch zu tun ist. Sie ersetzt `ANALYSE.md`, `VERBESSERUNGEN.md` und die Einzelmeldungen aus `feedback/`. Nichts davon existiert mehr gesondert; die alten Stände liegen in der Git-Historie (`git show 8fb323f:ANALYSE.md`).
 
-Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-21, Commit „STRAND Rev 3“ (1S3-4 bis 7 erledigt: Dusche verschoben, Pfeiler bei Flut, Beachvolleyball-Abkürzung, Meer bremst mehr; 1S3-8 neu; Boden-Codes 50–52 vergeben, neue Strecken nehmen 60–69); davor „WALD Rev 3“ (1S2-2 und 1S2-3 erledigt: kein Slalom nach dem Regen, Pfützen wachsen mit dem Regen); davor „Baustelle Rev 3“ (1S5-1 bis 3 erledigt, Startgerade); davor „Strand Rev 2“ (1S3-1 bis 3 erledigt, Start gerade, Dusche für 1A-2); davor „Wüste Rev 2“ (1S8-1 erledigt, 1S8-2 teilweise, 1S8-4 neu, 1A-2 und 1A-5 für die Wüste). Davor: Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
+Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-21, Commit „GARTEN Rev 2“ (1S6-4 bis 7 neu und erledigt: kein Matsch unter Brücken, zweite Abkürzung funktioniert, Kois nicht über Steinen, Ankündigung nur am Absprung); davor „STRAND Rev 3“ (1S3-4 bis 7 erledigt: Dusche verschoben, Pfeiler bei Flut, Beachvolleyball-Abkürzung, Meer bremst mehr; 1S3-8 neu; Boden-Codes 50–52 vergeben, neue Strecken nehmen 60–69); davor „WALD Rev 3“ (1S2-2 und 1S2-3 erledigt: kein Slalom nach dem Regen, Pfützen wachsen mit dem Regen); davor „Baustelle Rev 3“ (1S5-1 bis 3 erledigt, Startgerade); davor „Strand Rev 2“ (1S3-1 bis 3 erledigt, Start gerade, Dusche für 1A-2); davor „Wüste Rev 2“ (1S8-1 erledigt, 1S8-2 teilweise, 1S8-4 neu, 1A-2 und 1A-5 für die Wüste). Davor: Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
 
 ## Die drei Phasen
 
@@ -47,7 +47,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 3: Beachvolleyball-Abkürzung, Pfeiler bei Flut, Dusche vor der Ziellinie) | offen |
 | 4 | ZUG | 2 | 1120×630 | umgesetzt (Rev 1: größer, Sprungschanze, Zug öfter je Runde; im Spiel noch nicht abgenommen) | offen |
 | 5 | BAUSTELLE | 2 | 800×450 | umgesetzt (Rev 3: keine Pfützen, zwei Schläuche, Zementumfahrung, Erdhaufen auf der Fahrbahn, Startgerade) | offen |
-| 6 | GARTEN | 2 | 800×450 | umgesetzt (Rev 1: Startgerade, zweite Abkürzung, Koi-Ankündigung; im Spiel noch nicht abgenommen) | offen |
+| 6 | GARTEN | 2 | 800×450 | umgesetzt (Rev 2: kein Matsch unter Brücken, zweite Abkürzung am Südrand des Sees, Koi-Ankündigung nur am Absprung; im Spiel noch nicht abgenommen) | offen |
 | 7 | RENNSTRECKE | 3 | 800×450 | Prototyp, überarbeitet (Rev 2: Boxenregel, Box in der letzten Runde zu, Reifen später, Startgerade) | offen |
 | 8 | WUESTE | 3 | 800×560 | überarbeitet (Rev 2) | offen |
 | 9 | EIS | 3 | 800×450 | überarbeitet (Rev 1) | offen |
@@ -111,9 +111,13 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 ### 1S6 GARTEN
 | ID | Prio | Status | Aufgabe | Herkunft |
 |---|---|---|---|---|
-| 1S6-1 | H | erledigt (Garten Rev 1: Wasserkreise 0,6 s vor jedem Sprung, groß am Start, klein an der Landung) | Die springenden Kois brauchen eine Ankündigung (etwa 0,5 s vorher Kreise im Wasser) | M9, Meldung GARTEN 00:11:41 |
+| 1S6-1 | H | erledigt (Garten Rev 1: Wasserkreise 0,6 s vor jedem Sprung; seit Rev 2 nur am Absprung, 1S6-7) | Die springenden Kois brauchen eine Ankündigung (etwa 0,5 s vorher Kreise im Wasser) | M9, Meldung GARTEN 00:11:41 |
 | 1S6-2 | M | erledigt (Garten Rev 1: Waschstreifen entfernt, Matsch und Pfütze liegen nicht mehr übereinander; 1A-2) | Die halb/halb-Pfütze am Ende sieht merkwürdig aus; bei so vielen Pfützen braucht es keine Waschstraße (1A-2) | Meldung GARTEN 00:11:58 |
 | 1S6-3 | M | erledigt (Garten Rev 1: zweite Trittsteinreihe vom Teich neben der Brücke über den See zur Westseite, ein Koi springt darüber; Grundsatz 4 und 6 geprüft) | Eine zweite Abkürzung (die Idee der ersten ist gut), mit Risiko; Grundsatz 4 und 6 mitprüfen | Meldung GARTEN 00:12:34 |
+| 1S6-4 | H | erledigt (Garten Rev 2: Matsch von 0,09 auf 0,045 vor die untere Brücke, Pfütze von 0,17 auf 0,205 und 10 px nach Norden, saubere Spur am Seeufer) | Matsch und Pfützen liegen unter den Brücken versteckt | Meldung GARTEN 2026-10-21 22:55 |
+| 1S6-5 | H | erledigt (Garten Rev 2: vier Steine am Südrand des Sees, von der Kurve nach der schrägen Brücke gerade nach Westen; Testfahrt kommt trocken an, die Runde zählt, `check` sauber auf LEICHT, MITTEL, SCHWER) | Die zweite Abkürzung geht gar nicht (die Steine begannen hinter dem Brückengeländer) | Meldung GARTEN 2026-10-21 22:55 |
+| 1S6-6 | M | erledigt (Garten Rev 2: schwimmende Kois nur, wenn Kopf, Mitte und Schwanz über offenem Wasser sind; ihre Kreise in See und Teich neben die Steine gelegt) | Kleine Kois schwimmen wieder über den Steinen | Meldung GARTEN 2026-10-21 22:56 |
+| 1S6-7 | M | erledigt (Garten Rev 2: Kreise nur noch am Absprung, an der Landung nur der Spritzer beim Aufkommen) | Die Ankündigung an der Landestelle ist unnötig, der Spritzer beim Landen reicht | Meldung GARTEN 2026-10-21 22:58 |
 
 ### 1S7 RENNSTRECKE
 | ID | Prio | Status | Aufgabe | Herkunft |
