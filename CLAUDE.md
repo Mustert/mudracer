@@ -14,24 +14,27 @@ Nur wenn der Nutzer im Prompt ausdrücklich sagt, dass es ohne Commit/Push erfol
 - `npm run lint` (ESLint), `npm test` (Vitest, Tests in `test/`) und `npm run typecheck` (TypeScript prüft die JS-Dateien) laufen vor jedem Commit und müssen sauber sein.
 - Nichts Schweres beim Start berechnen: Strecken und Auto-Sprites entstehen in Häppchen (`src/idle.js`), die Spielphysik läuft in festen Schritten (`src/clock.js`). Im Dev-Server gibt es `window.mudracer` mit `frameAt(now)`, um Frames ohne sichtbares Vorschaufenster zu rechnen, und mit der Streckenprüfung `check`, `checkAll`, `checkPic` (`src/check.js`, nur im Dev-Server, nicht im Build).
 
-## Doku und Analyse aktuell halten (Pflicht bei jeder Änderung)
+## Roadmap und Doku aktuell halten (Pflicht bei jeder Änderung)
 
-Jede Änderung am Spiel wird vor dem Commit mit `ANALYSE.md` und der Obsidian-Doku abgeglichen. Das ist Teil der Änderung, nicht optional, und gehört in denselben Commit.
+Jede Änderung am Spiel wird vor dem Commit mit `ROADMAP.md` und der Obsidian-Doku abgeglichen. Das ist Teil der Änderung, nicht optional, und gehört in denselben Commit.
 
-**`ANALYSE.md`** (Repo-Wurzel) ist die eine Liste aller Schwachstellen, offenen Punkte und Ideen, mit IDs (T, M, D, G, B, I), Schwere und Status. Eine eigene `VERBESSERUNGEN.md` gibt es nicht mehr, sie steckt dort im Abschnitt I.
-1. Vor der Arbeit: in `ANALYSE.md` nachsehen, welche Punkte den Bereich betreffen, und sie beim Umsetzen berücksichtigen.
+**`ROADMAP.md`** (Repo-Wurzel) ist die eine Liste für alles, was noch zu tun ist: drei Phasen (1 Map_Pack, 2 Cars & Customizations, 3 Game_Modes), dazu „Offene Entscheidungen“ und „Nach dem Release“. Es gibt keine zweite Liste: `ANALYSE.md`, `VERBESSERUNGEN.md` und einzelne Fehler- oder Ideenlisten existieren nicht mehr (alte Stände in der Git-Historie, letzter Stand `git show 8fb323f:ANALYSE.md`). Code-Kommentare mit „ANALYSE.md T21“ o. ä. meinen diesen alten Stand.
+1. Vor der Arbeit: in `ROADMAP.md` die Punkte des Bereichs nachsehen (`grep -n "WUESTE\|1A-" ROADMAP.md`) und beim Umsetzen berücksichtigen. Gearbeitet wird an der Phase, die dran ist, nicht an späteren.
 2. Vor dem Commit:
-   - erledigte Punkte auf `erledigt (<commit oder Kurzbeschreibung>)` setzen, teilweise erledigte auf `teilweise` mit kurzer Bemerkung;
-   - neu entdeckte Schwächen oder neue Ideen mit der nächsten freien ID anhängen;
-   - Befunde, die durch die Änderung falsch geworden sind (Zahlen, Fundstellen, Stand), korrigieren;
+   - erledigte Punkte auf `erledigt (<commit oder Kurzbeschreibung>)` setzen, teilweise erledigte auf `teilweise (…)`;
+   - neu entdeckte Schwächen oder Ideen mit der nächsten freien ID im passenden Block der passenden Phase anhängen (IDs `<Phase><Block>-<Nr>`, nie wiederverwenden); Großes ohne Platz in den drei Phasen kommt nach „Nach dem Release“;
+   - Angaben, die durch die Änderung falsch geworden sind (Zahlen, Fundstellen, Stand, Tabelle „Strecken im Überblick“), korrigieren;
    - die Zeile „Zuletzt abgeglichen“ oben auf Datum und Commit nachziehen.
-3. Die Grundregel „Spielstände bleiben gültig“ in `ANALYSE.md` gilt für jede Änderung.
+3. Die Grundregel „Spielstände bleiben gültig“ in `ROADMAP.md` gilt für jede Änderung.
+4. Jede Phase hat einen Block `…T` mit technischen Aufgaben (Skills, `CLAUDE.md`, Prüfskripte, Tests). Ändert sich eine Arbeitsweise, wird dieser Block und diese Datei im selben Schritt angepasst.
+
+**Eingang (F8):** Meldungen aus dem Dev-Server landen wie bisher in `feedback/` (`bug_…`, `feature_…`, mit Bild). Sie bleiben dort liegen. Nur wenn der Nutzer es sagt („sichte den Eingang“), ordnet Claude sie nach dem Skill `roadmap` in `ROADMAP.md` ein und löscht die verarbeiteten Dateien. Nichts wird von sich aus eingeordnet oder gelöscht.
 
 **Obsidian-Doku** unter `Obsidian/Mudracer/` (Obsidian-Vault des Nutzers, im Git; nur das Fensterlayout `.obsidian/workspace*.json` ist ignoriert):
 - `Strecken.md`: Plan aller Strecken und Cups (Cup 1 bis 5, Strecken 1 bis 15) mit Thema, Ereignis und Ideen; Grundlage für neue Strecken, zusammen mit den Streckendesign-Grundsätzen unten.
 - `Autos.md`: alle Autos mit Freischaltung, Sternen, Feinwerten (`speed`, `mud`, `acc`, `turn`, `engine`), Hupe und Änderungswünschen; dazu die Füllautos.
 - `Spielmodi.md`: Menüfluss und Bildschirme (Hauptmenü, Autowahl, Cup-Wahl, Einzelstrecke, Zeitfahren, Matschfahrt) mit Mockups.
-- Ideen und offene Punkte gehören nicht in den Vault, sondern in `ANALYSE.md`.
+- Ideen und offene Punkte gehören nicht in den Vault, sondern in `ROADMAP.md`. (Verweise auf `ANALYSE.md` im Vault meinen den alten Stand in der Git-Historie.)
 - Bilder liegen in `Bilder/` und direkt im Vault; nicht anfassen.
 
 Regeln für die Obsidian-Doku:
@@ -61,6 +64,9 @@ Für jede Arbeit an einer Strecke zuerst den Skill `strecke` laden (`.claude/ski
 9. **Nicht zu viel auf einmal:** Mehrere Dinge auf einer Strecke sind gut, aber nicht gleichzeitig und nicht zu dicht hintereinander. Gefahren kündigen sich an (Schatten, Blinken, Ton, Text), sodass man reagieren kann.
 10. **Wege sind sichtbar:** Was durchfahrbar ist, sieht deutlich anders aus als das, was ein Auto aufhält (z. B. Deko-Zäune flach und blass, feste Zäune und Wände kräftig mit Schatten). Hindernisse auf der Fahrbahn unterscheiden sich klar von gleichartiger Deko daneben.
 11. **Nicht kindgerecht:** Kindgerechtes Design ist kein Kriterium für neue Strecken. Darum kümmert sich der Kindermodus. Das Spiel hat die Kinderspielschuhe hinter sich gelassen.
+12. **Matsch ist eine Entscheidung:** Matsch und Pfützen sind selten unausweichlich, aber auch nicht nie: an mehreren Stellen eine kürzere Linie durch Matsch gegen eine längere saubere Linie (Ideallinie gegen außen herum). Die Menge richtet sich nach dem Thema der Strecke (die Wiese darf viel haben).
+13. **Ein verständliches Wasch-Konzept:** Jede Strecke hat genau eine erkennbare Art, sauber zu werden (Dusche, Waschanlage, Box, Oase, Schlauchstelle). Sie wäscht nicht sofort, kündigt sich an, die Computerautos nutzen sie nur, wenn sie dreckig sind. Wo es viele Pfützen gibt, braucht es keine zusätzliche Waschstraße.
+14. **Ziellinie und Start sind immer sichtbar:** Nichts (Schnee, Frost, Sand, Wolken, Schatten) überdeckt die Ziellinie oder die Startaufstellung.
 
 ## Feature-Abschluss und Publish
 

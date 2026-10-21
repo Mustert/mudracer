@@ -9,7 +9,7 @@ Gilt für neue Strecken und Überarbeitungen. Die Streckendesign-Grundsätze 1�
 
 ## 1. Lesen, aber gezielt
 
-- `ANALYSE.md`: nur die Zeilen zur Strecke und zu den berührten Themen (`grep -n "NAME\|T21\|T22\|D7" ANALYSE.md`).
+- `ROADMAP.md`: den Block der Strecke (`1S<Nr>`) und den Querschnitt `1A` (`grep -n "1S8\|^| 1A-" ROADMAP.md`), dazu die Zeile der Strecke in „Strecken im Überblick“.
 - `Obsidian/Mudracer/Strecken.md`: nur den Abschnitt der Strecke (Plan, Wünsche, Ereignis).
 - Als Vorlage **eine** ähnliche, neuere Strecke lesen, nicht alle. Spielzimmer (`toymap.js` + `toys.js`) und Regenbogen (`rainbowmap.js` + `rainbow.js`) sind die vollständigsten Beispiele für eine Sonderstrecke.
 - `tracks.js` ist groß: nur mit `grep -n` und Zeilenbereichen lesen (`TRACK_DEFS`-Eintrag, `THEMES`-Eintrag, die Stellen in `buildTrack`).
@@ -20,7 +20,7 @@ Gilt für neue Strecken und Überarbeitungen. Die Streckendesign-Grundsätze 1�
 | Was | Regel |
 |---|---|
 | Nummer und Cup | Strecke n gehört in Cup ⌈n/3⌉ (`cups.js` `CUPS`). Schwierigkeit steigt mit n (Grundsatz 1). |
-| Kartengröße | Standard 800×450; größer über `W`/`H` im `TRACK_DEFS`-Eintrag. Mehr Fläche heißt längere Bauzeit und Runde (T18, T19, T23). |
+| Kartengröße | Standard 800×450; größer über `W`/`H` im `TRACK_DEFS`-Eintrag. Mehr Fläche heißt längere Bauzeit und Runde (`ROADMAP.md` 1P). |
 | Boden-Codes | Die Liste aller vergebenen Codes steht über `physics.js` `surfOf`: 0–17 gemeinsam (Straße, Matsch, Wasser, Schlucht, Eis, Lava …), eigene Zehnerblöcke 30–32 (Spielzimmer) und 41–48 (Regenbogen). Eine neue Strecke nimmt 50–59, beantwortet ihre Codes im Hook `surf` und trägt sie in die Liste ein (ANALYSE.md T21). |
 | Felder in `T.ev` | mit dem Kürzel der Strecke beginnen (z. B. `toyRobot`), nie allgemeine Namen wie `wind`, `storm` oder `msg` (T22; `checkAll` listet, was doppelt ist). Der Kern liest aus `T.ev` nur `obst` (Hindernisse, denen die KI ausweicht, gewollt gemeinsam); Kräfte wie den Wüstenwind wendet die Strecke selbst an (`desert.js`, Hook `update`; die Wüste trägt das Kürzel `ds`). |
 | Ereignisse | Schlüssel in `def.events`, Schalter in `PREFS.events` (`state.js`), Anzeigename in `FX_NAMES` (`raceopts.js`), Start im Hook `events` der Strecke (`events: { spielzeug: initToyEvents }`, siehe Abschnitt 3). |
@@ -73,6 +73,6 @@ Die Grundsätze 2, 3, 6, 9, 10, 11 prüft kein Skript: einmal das `checkPic`-Bil
 
 1. `npm run lint`, `npm test`, `npm run typecheck`.
 2. `mudracer.check('NAME')` ohne Hinweise (oder jeder verbleibende Hinweis ist gewollt und begründet).
-3. `ANALYSE.md`: berührte Punkte nachziehen, neue Funde mit nächster freier ID, Abschnitt „…-Prototyp“ mit Größe, Bauzeit, Rundenzeit aus dem Bericht, Zeile „Zuletzt abgeglichen“.
+3. `ROADMAP.md`: Punkte des Blocks `1S<Nr>` und `1A` abhaken, neue Funde mit nächster freier ID, die Zeile der Strecke in „Strecken im Überblick“ (Stand, Größe, Abnahme) und „Zuletzt abgeglichen“ nachziehen. Die **Abnahme** ist erst gesetzt, wenn Grundsätze 1–14 geprüft sind, `check` auf LEICHT, MITTEL und SCHWER sauber ist, die Strecke von Hand gefahren und das Lied angehört wurde.
 4. `Obsidian/Mudracer/Strecken.md`: Status, Ereignis, Lied der Strecke; Wünsche nur als `✅ umgesetzt (<commit>)` markieren, nie umschreiben.
 5. Preview schließen, committen, pushen, dann fragen: „Ist das ein Feature-Abschluss?“
