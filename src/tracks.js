@@ -116,8 +116,12 @@ const TRACK_DEFS = [
     mud: B2([[.165, 0, 18, 18], [.72, 0, 14, 18], [.8, 4, 6, 7]]), water: [], ponds: [[300, 240, 44, 26]], wash: null,
     // small beach showers that run all the time, each one leaves a mini puddle (t along the track, offset from the centre line); none on the lower part that gets flooded
     showers: [[.05, 15], [.105, -15], [.77, -15]] },
-  { name: 'ZUG', seed: 4, events: ['zug'], theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 365, y: 190, ang: 0 }], tunnels: [{ x: 365, y: 190, hw: 117, portals: [300, 430] }], pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
-    mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[560, 255, 40, 22]], rail: { x: 430, lines: [430, 300] }, wash: .94 },
+  // Rev 1 (1S4-1): a bigger map, the start on the straight left side; a ramp on the outer half of the road before the lower crossing
+  // (jump = [x, y, speed upwards]) lets you jump over the train; the train comes more often from lap to lap (train.js)
+  { name: 'ZUG', rev: 1, seed: 4, W: 1120, H: 630, events: ['zug'], theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 511, y: 300, ang: 0 }], tunnels: [{ x: 511, y: 300, hw: 164, portals: [420, 602] }],
+    pts: [[180, 240], [180, 160], [240, 112], [364, 112], [602, 123], [840, 112], [980, 182], [994, 420], [896, 518], [602, 507], [350, 518], [260, 548], [180, 500], [180, 400], [180, 320]],
+    mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[784, 330, 56, 31]], rail: { x: 602, lines: [602, 420] }, wash: 0, washAt: [290, 520],
+    jump: [650, 508, 100] },
   // The building site: the road is packed earth. Everything inside the ring road is yard (solid, see bau.js), the road narrows at barriers, a crane
   // holds a concrete pipe over the road, a cement mixer leaks a grey puddle onto it, and dump trucks tip earth beside it (event kipper).
   // poly = [x, y, curve radius] (rounded corners), mudAt/waterAt/cement = [x, y, half length along the road, half width across]
@@ -800,6 +804,18 @@ function* buildTrack(def, ti) {
       else { px(x, y, RL); if (th.fence === 'log') px(x + Math.round(nrm[i].x * s), y + Math.round(nrm[i].y * s), RL2); }
     }
   }
+  // the ramp over the railway (ZUG): wooden planks on the outer half of the road, yellow and black stripes at the lip, a shadow behind it;
+  // whoever takes it flies over the rails (the train does not hit cars in the air, train.js). Optional: the inner half stays flat.
+  const ramps = [];
+  if (def.jump && !decorMap) {
+    const [jx, jy, vz] = def.jump, i = nearestIdx(path, jx, jy), p = path[i], t = tan[i], nx = -t.y, ny = t.x;
+    ramps.push({ x: p.x, y: p.y, tx: t.x, ty: t.y, lo: -HALF - 4, hi: -3, vz });
+    const WD = [hex('#a8743e'), hex('#c08a50'), hex('#8a5a2e')], YE = hex('#f2c230'), BK = hex('#2a2420'), SH = hex('#6a5034');
+    for (let a = -26; a <= 3; a++) for (let l = -HALF + 2; l <= -3; l++) {
+      const x = Math.round(p.x + t.x * a + nx * l), y = Math.round(p.y + t.y * a + ny * l);
+      px(x, y, a > 0 ? SH : a >= -2 ? (((l >> 2) & 1) ? YE : BK) : l === -3 || l === -HALF + 2 ? WD[2] : (a & 3) === 0 ? WD[2] : (a & 1) ? WD[1] : WD[0]);
+    }
+  }
   yield .76;
   // tunnel hills: a rocky hill with a grassy top on the wall line, the train disappears into it (the hill lies on the top layer, so it covers the train). Solid for cars.
   for (const { x: hx, y: hy, hw, portals } of def.tunnels || []) {
@@ -1115,7 +1131,7 @@ function* buildTrack(def, ti) {
   return { W: MW, H: MH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: solid, grid: obstacleGrid(solid, MW, MH), critters, windmill, shoreY, boat: { x: 60 }, base, top, mudPix, watPix, starPix, rail,
     washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ...special,
     // Cup 3 building blocks (see trackfx.js): ramps to jump from, stretches that push the cars, where a second way runs beside the road
-    jumps: (decorMap && special[decorMap.flag] || {}).jumps || [], pushes: (decorMap && special[decorMap.flag] || {}).pushes || [], alt: (decorMap && special[decorMap.flag] || {}).alt || null };
+    jumps: (decorMap && special[decorMap.flag] || {}).jumps || ramps, pushes: (decorMap && special[decorMap.flag] || {}).pushes || [], alt: (decorMap && special[decorMap.flag] || {}).alt || null };
 }
 
 

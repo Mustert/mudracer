@@ -8,6 +8,9 @@ import { TRAIN } from './trainsprite.js';
 
 // ---------- train ----------
 
+// the pause between two trains shrinks from lap to lap (lap 1, 2, 3): 7-12 s, then about 4.5-8 s, then 3-5.5 s (1S4-1)
+const PAUSE = [1, .65, .45];
+
 export function updateTrain(dt) {
   const R = G.T.rail; if (!R || !eventOn('zug')) return; // train switched off: the line stays empty
   const tr = R.train;
@@ -27,6 +30,7 @@ export function updateTrain(dt) {
       addP({ t: 'smoke', x: R.x + (Math.random() - .5) * 4, y: cy, vx: 10 + Math.random() * 12, vy: -tr.dir * 25 + (Math.random() - .5) * 10, life: 1.4, ml: 1.4 });
     }
     for (const c of G.cars) {
+      if (c.z > 3) continue; // over the train on the ramp (tracks.js): nothing happens
       if (Math.abs(c.x - R.x) < 14 + 9 && c.y > tr.y - 9 && c.y < tr.y + TRAIN.LEN + 9 && !c.stun) {
         // bonk! the car is thrown aside, spins and sees stars for a moment
         const side = Math.sign(c.x - R.x) || 1;
@@ -36,7 +40,7 @@ export function updateTrain(dt) {
       }
     }
     if ((tr.dir > 0 && tr.y > G.T.H + 40) || (tr.dir < 0 && tr.y + TRAIN.LEN < -40)) { tr.phase = 'clear'; tr.t = .8; }
-  } else if (tr.phase === 'clear' && tr.t <= 0) { tr.phase = 'wait'; tr.t = 7 + (G.ttRand || Math.random)() * 5; tr.dir *= -1; }
+  } else if (tr.phase === 'clear' && tr.t <= 0) { tr.phase = 'wait'; tr.t = (7 + (G.ttRand || Math.random)() * 5) * PAUSE[clamp((G.player ? G.player.lap : 1) - 1, 0, 2)]; tr.dir *= -1; }
   R.sw += ((R.x === R.lines[0] ? -1 : 1) - R.sw) * Math.min(1, dt * 7);
   R.signal = tr.phase === 'warn' || tr.phase === 'run';
   R.gate += ((R.signal ? 1 : 0) - R.gate) * Math.min(1, dt * 2.5);
