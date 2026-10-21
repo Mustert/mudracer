@@ -145,6 +145,30 @@ function drawCritters() {
       R1(x - 4, y - 2, 8, 5, '#1b120c'); R1(x - 3, y - 1, 6, 3, '#5a4632');
       for (let q = -3; q < 3; q += 2) R1(x + q, y - 1 + (q & 1), 1, 1, '#2e2418');
       R1(x + dir * 4 - (dir > 0 ? 0 : 1), y, 2, 2, '#d8b89a'); R1(x + dir * 5 - (dir > 0 ? 0 : 1), y, 1, 1, '#1b120c');
+    } else if (c.type === 'cow') {
+      // ZUG: Fleckvieh (brown and white) or black and white cows stroll a few steps, stop and graze (head down), stroll back
+      const p = G.time * .12 + c.ph, walk = Math.sin(p), x = Math.round(c.x + walk * c.range), dir = Math.cos(p) >= 0 ? 1 : -1, y = Math.round(c.y);
+      const graze = Math.abs(Math.cos(p)) < .5, B = c.brown ? '#9a4f24' : '#1f1f22';
+      ctx.globalAlpha = .22; R1(x - 5, y + 4, 12, 2, '#000'); ctx.globalAlpha = 1;
+      R1(x - 6, y - 3, 13, 7, '#1b120c'); R1(x - 5, y - 2, 11, 5, '#f4f0e8'); R1(x - 4 + (c.ph * 3 | 0) % 3, y - 2, 4, 3, B); R1(x + 1, y, 3, 2, B);
+      const hx = x + dir * 7 - (dir > 0 ? 0 : 3), hy = y - (graze ? 0 : 3);
+      R1(hx - 1, hy - 1, 5, 5, '#1b120c'); R1(hx, hy, 3, 3, c.brown ? '#f4f0e8' : B); R1(hx + (dir > 0 ? 2 : 0), hy + 2, 1, 1, '#e8a6a0');
+      R1(hx, hy - 1, 1, 1, '#d8d0c0'); R1(hx + 2, hy - 1, 1, 1, '#d8d0c0');
+      if (((G.time * 2 + c.ph) | 0) % 6 === 0) R1(x - dir * 7, y - 1 + ((G.time * 8) | 0) % 2, 1, 3, '#1b120c'); // the tail swishes
+    } else if (c.type === 'hens') {
+      for (let k = 0; k < 4; k++) {
+        const a = G.time * .4 + c.ph + k * 1.7, x = Math.round(c.x + Math.cos(a) * (10 + k * 4)), y = Math.round(c.y + Math.sin(a * 1.3) * 6), peck = ((G.time * 3 + k) | 0) % 3 === 0;
+        R1(x - 2, y - 1, 5, 4, '#1b120c'); R1(x - 1, y, 3, 2, k === 3 ? '#a8642c' : '#f6f2ea'); R1(x + 1, y - (peck ? -1 : 1), 2, 2, k === 3 ? '#a8642c' : '#f6f2ea'); R1(x + 1, y - (peck ? 0 : 2), 1, 1, '#e2332f');
+      }
+    } else if (c.type === 'tractor') {
+      // a green tractor ploughs the field: along a row, turn, back along the next one (the earth behind it is darker)
+      const span = c.x1 - c.x0, rows = Math.max(1, Math.floor((c.y1 - c.y0) / 24)), s = (G.time * 14 + c.ph * 40) % (span * 2 * rows), row = Math.floor(s / (span * 2) * 2) % (rows * 2);
+      const f = (s % span) / span, dir = row % 2 ? -1 : 1, x = Math.round(dir > 0 ? c.x0 + f * span : c.x1 - f * span), y = Math.round(c.y0 + Math.floor(row / 2) * 24 + (row % 2) * 12);
+      ctx.globalAlpha = .3; R1(Math.min(x, x - dir * 40), y - 2, 40, 5, '#3b2512'); ctx.globalAlpha = .22; R1(x - 6, y + 4, 14, 2, '#000'); ctx.globalAlpha = 1;
+      R1(x - dir * 10 - 2, y - 3, 4, 7, '#6e6e68'); // the plough behind it
+      R1(x - 6, y - 4, 13, 9, '#1b120c'); R1(x - 5, y - 3, 11, 7, '#3d8b3d'); R1(x - 5 + (dir > 0 ? 0 : 6), y - 3, 5, 7, '#2f6d2f'); R1(x + (dir > 0 ? -4 : 1), y - 2, 3, 5, '#bfe0ff');
+      R1(x - 5, y - 5, 4, 2, '#1b120c'); R1(x - 5, y + 4, 4, 2, '#1b120c'); R1(x + 3, y - 4, 3, 1, '#1b120c'); R1(x + 3, y + 4, 3, 1, '#1b120c');
+      if (((G.time * 6) | 0) % 2) R1(x + dir * 2, y - 6, 1, 1, '#9a9a96'); // a puff from the exhaust
     }
   }
 }
@@ -228,7 +252,7 @@ function drawCrossings(R) {
     const p = G.T.path[cr.i], tg = G.T.tan[cr.i], nm = G.T.nrm[cr.i];
     for (const s of [-1, 1]) {
       const bx = p.x + tg.x * s * 30 + nm.x * s * (HALF + 7), by = p.y + tg.y * s * 30 + nm.y * s * (HALF + 7);
-      const act = cr.x === R.x, sig = R.signal && act, len = 5 + (2 * HALF + 4) * (act ? R.gate : 0);
+      const tr = R.trains.find(q => q.x === cr.x), sig = tr.signal, len = 5 + (2 * HALF + 4) * tr.gate; // (every line has its own train)
       for (const pass of [0, 1]) for (let k = 0; k < len; k++) {
         const x = Math.round(bx - nm.x * s * k), y = Math.round(by - nm.y * s * k);
         ctx.fillStyle = pass ? ((k >> 2) & 1 ? '#ffffff' : '#e53935') : '#1b120c';
@@ -241,18 +265,12 @@ function drawCrossings(R) {
       ctx.fillStyle = sig && !flash ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px + 1, py + 1, 3, 3);
       if (sig) { ctx.globalAlpha = .35; disc(px + (flash ? -2 : 2), py + (flash ? -2 : 2), 5, '#ff4040'); ctx.globalAlpha = 1; }
     }
-  }  // the switch stand (Weiche) between the two lines: the lever points to the line the next train will take, the lamp over it is green
-  if (R.lines.length > 1) {
-    const sx = Math.round((R.lines[0] + R.lines[1]) / 2), sy = 36, a = Math.round(R.sw * 14);
-    ctx.fillStyle = '#1b120c'; ctx.fillRect(sx - 14, sy - 7, 29, 15); ctx.fillStyle = '#6b6f78'; ctx.fillRect(sx - 13, sy - 6, 27, 13); ctx.fillStyle = '#8d939d'; ctx.fillRect(sx - 13, sy - 6, 27, 2);
-    ctx.fillStyle = '#1b120c'; ctx.fillRect(Math.min(sx, sx + a) - 1, sy - 1, Math.abs(a) + 3, 5); ctx.fillStyle = '#ffd23f'; ctx.fillRect(Math.min(sx, sx + a), sy, Math.abs(a) + 1, 3);
-    ctx.fillStyle = R.sw < 0 ? '#5fe36a' : '#7a1c1c'; ctx.fillRect(sx - 11, sy - 4, 4, 4); ctx.fillStyle = R.sw > 0 ? '#5fe36a' : '#7a1c1c'; ctx.fillRect(sx + 8, sy - 4, 4, 4);
   }
 }
 
 
-function drawTrain(R) {
-  const tr = R.train, x = R.x - 15, y = Math.round(tr.y);
+function drawTrain(tr) {
+  const x = tr.x - 15, y = Math.round(tr.y);
   ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x + 5, y + 6, 28, TRAIN.LEN);
   if (tr.dir > 0) ctx.drawImage(TRAIN.c, x, y);
   else { ctx.save(); ctx.translate(x, y + TRAIN.LEN); ctx.scale(1, -1); ctx.drawImage(TRAIN.c, 0, 0); ctx.restore(); }
@@ -295,7 +313,7 @@ export function drawRace() {
   const order = [...G.cars].sort((a, b) => a.y - b.y);
   for (const c of order) if (!deck || c.lvl !== 1) drawCar(c);
   if (deck) { ctx.drawImage(deck.c, deck.x, deck.y); if (ghUp) drawGhost(); for (const c of order) if (c.lvl === 1) drawCar(c); }
-  if (R && R.train.phase === 'run') drawTrain(R);
+  if (R) for (const tr of R.trains) if (tr.phase === 'run') drawTrain(tr);
   drawParticles();
   drawSmoke();
   if (G.T.run) drawRunLayer('top', cx, cy, cx, cy); else ctx.drawImage(G.T.top, cx, cy, VW, VH, cx, cy, VW, VH);

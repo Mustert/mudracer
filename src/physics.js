@@ -120,7 +120,8 @@ export function aiTarget(c) {
 
 export function crossingAhead(c) {
   const R = G.T.rail; if (!R) return Infinity;
-  let best = Infinity; for (const cr of R.cross) if (cr.x === R.x) best = Math.min(best, (cr.i - c.idx + G.T.N) % G.T.N);
+  // only the crossings whose train is coming (lights flashing)
+  let best = Infinity; for (const cr of R.cross) if (R.trains.some(tr => tr.x === cr.x && tr.signal)) best = Math.min(best, (cr.i - c.idx + G.T.N) % G.T.N);
   return best;
 }
 

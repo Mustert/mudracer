@@ -10,7 +10,7 @@ import { setState } from './state.js';
 import { POINTS, score, standings } from './rank.js';
 import { cam } from './state.js';
 import { loadRecord, saveRecord, ttLap, ttSample } from './timetrial.js';
-import { TRACKS, tctx, trimTracks, useTrack } from './tracks.js';
+import { TRACKS, newTrains, tctx, trimTracks, useTrack } from './tracks.js';
 
 // the Grand Prix field: your car, every other unlocked car, then plain cars up to eight (the custom cup: as many as chosen)
 // the difficulty is fixed for the whole cup when it starts
@@ -71,7 +71,7 @@ export function startRace() {
     c.idx = i; return c;
   });
   G.player = G.cars[0];
-  if (G.T.rail) Object.assign(G.T.rail, { x: G.T.rail.lines[0], sw: -1, gate: 0, signal: false, train: { phase: 'wait', t: 6, dir: 1, y: -9999 } });
+  if (G.T.rail) Object.assign(G.T.rail, { signal: false, trains: newTrains(G.T.rail.lines) });
   // time trial: the train keeps a fixed timetable so every run (and the ghost) meets it at the same moment
   G.ttRand = G.mode === 'tt' ? rng(2024) : null;
   G.tt = G.mode === 'tt' ? { t: 0, lapStart: 0, laps: [], rec: [], recT: 0, rec0: loadRecord(G.T, G.player.def), delta: null, deltaT: 0, done: false, newBest: false } : null;
