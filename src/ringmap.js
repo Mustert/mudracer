@@ -83,9 +83,9 @@ export function* ringTerrain(S) {
   return { kc, cross, kerb, pitMask, pitD, pitK, pit, hatch };
 }
 
-// painting, after the ground: S: { def, d, set, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, th, RT }
+// painting, after the ground: S: { def, d, set, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, sd, th, RT }
 export function* paintRing(S) {
-  const { MW, MH, def, d, set, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, sd, th, RT } = S, A = MW * MH;
+  const { MW, MH, def, d, set, path, tan, nrm, N, ter, dist, near, walls, wallMask, sd, th, RT } = S, A = MW * MH;
   const { kc, cross, kerb, pitD, pit } = RT, oilPix = [];
   const GR = th.grass.map(hex), GE = hex(th.grassEdge), TU = hex(th.tuft);
   const inPit = j => pit && pitD[j] < pit.half && dist[j] >= HALF - 1;
@@ -141,7 +141,6 @@ export function* paintRing(S) {
     const [b0, b1] = pit.box;
     for (let j = 0; j < A; j++) {
       const y = j / MW | 0; if (y < b0 || y > b1 || !inPit(j) || pitD[j] > pit.half - 1) continue;
-      washMask[j] = 1;
       if (y - b0 < 2 || b1 - y < 2 || pitD[j] > pit.half - 3) set(j, K.yel);
       else if ((y - b0) % 10 < 1) set(j, K.line);
     }
