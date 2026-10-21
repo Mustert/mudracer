@@ -2,7 +2,7 @@
 
 Die eine Liste für alles, was am Spiel noch zu tun ist. Sie ersetzt `ANALYSE.md`, `VERBESSERUNGEN.md` und die Einzelmeldungen aus `feedback/`. Nichts davon existiert mehr gesondert; die alten Stände liegen in der Git-Historie (`git show 8fb323f:ANALYSE.md`).
 
-Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-22, Commit „CLAUDE.md: keine Feature-Abschluss-Frage bei offener Roadmap“ (1T-8 neu und erledigt); davor „ZUG: doppelt so viele und unterschiedlich lange Züge“ (1S4-4 und 1S4-5 neu und erledigt, 1S4-3 angepasst); davor „STRAND Rev 3: Feinschliff“ (1S3-9 bis 11 erledigt: Volleyball-Abkürzung schwerer, Steg breiter, Flut niedriger); davor „ZUG Rev 2“ (1S4-2 erledigt: Matsch neu verteilt, zweite graue Schanze, Waschanlage auf der linken Geraden, ein Zug je Linie, bayerisches Dorf als Kulisse; 1S4-3 neu); davor „GARTEN Rev 2“ (1S6-4 bis 7 neu und erledigt: kein Matsch unter Brücken, zweite Abkürzung funktioniert, Kois nicht über Steinen, Ankündigung nur am Absprung); davor „STRAND Rev 3“ (1S3-4 bis 7 erledigt: Dusche verschoben, Pfeiler bei Flut, Beachvolleyball-Abkürzung, Meer bremst mehr; 1S3-8 neu; Boden-Codes 50–52 vergeben, neue Strecken nehmen 60–69); davor „WALD Rev 3“ (1S2-2 und 1S2-3 erledigt: kein Slalom nach dem Regen, Pfützen wachsen mit dem Regen); davor „Baustelle Rev 3“ (1S5-1 bis 3 erledigt, Startgerade); davor „Strand Rev 2“ (1S3-1 bis 3 erledigt, Start gerade, Dusche für 1A-2); davor „Wüste Rev 2“ (1S8-1 erledigt, 1S8-2 teilweise, 1S8-4 neu, 1A-2 und 1A-5 für die Wüste). Davor: Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
+Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-22, Commit „Abnahme WIESE, WALD, STRAND, BAUSTELLE“ (Strecken 1, 2, 3 und 5 abgenommen, 1S3-8 erledigt); davor „CLAUDE.md: keine Feature-Abschluss-Frage bei offener Roadmap“ (1T-8 neu und erledigt); davor „ZUG: doppelt so viele und unterschiedlich lange Züge“ (1S4-4 und 1S4-5 neu und erledigt, 1S4-3 angepasst); davor „STRAND Rev 3: Feinschliff“ (1S3-9 bis 11 erledigt: Volleyball-Abkürzung schwerer, Steg breiter, Flut niedriger); davor „ZUG Rev 2“ (1S4-2 erledigt: Matsch neu verteilt, zweite graue Schanze, Waschanlage auf der linken Geraden, ein Zug je Linie, bayerisches Dorf als Kulisse; 1S4-3 neu); davor „GARTEN Rev 2“ (1S6-4 bis 7 neu und erledigt: kein Matsch unter Brücken, zweite Abkürzung funktioniert, Kois nicht über Steinen, Ankündigung nur am Absprung); davor „STRAND Rev 3“ (1S3-4 bis 7 erledigt: Dusche verschoben, Pfeiler bei Flut, Beachvolleyball-Abkürzung, Meer bremst mehr; 1S3-8 neu; Boden-Codes 50–52 vergeben, neue Strecken nehmen 60–69); davor „WALD Rev 3“ (1S2-2 und 1S2-3 erledigt: kein Slalom nach dem Regen, Pfützen wachsen mit dem Regen); davor „Baustelle Rev 3“ (1S5-1 bis 3 erledigt, Startgerade); davor „Strand Rev 2“ (1S3-1 bis 3 erledigt, Start gerade, Dusche für 1A-2); davor „Wüste Rev 2“ (1S8-1 erledigt, 1S8-2 teilweise, 1S8-4 neu, 1A-2 und 1A-5 für die Wüste). Davor: Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
 
 ## Die drei Phasen
 
@@ -42,11 +42,11 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 
 | Nr | Strecke | Cup | Größe | Stand | Abnahme |
 |---|---|---|---|---|---|
-| 1 | WIESE | 1 | 800×450 | umgesetzt (Rev 2) | offen (von Hand fahren, Lied anhören) |
-| 2 | WALD | 1 | 800×450 | umgesetzt (Rev 3: Pfützen wachsen mit dem Regen) | offen |
-| 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 3: Beachvolleyball-Abkürzung, Pfeiler bei Flut, Dusche vor der Ziellinie, Steg breiter, Flut niedriger) | offen |
+| 1 | WIESE | 1 | 800×450 | umgesetzt (Rev 2) | **abgenommen** (Nutzer 2026-10-22) |
+| 2 | WALD | 1 | 800×450 | umgesetzt (Rev 3: Pfützen wachsen mit dem Regen) | **abgenommen** (Nutzer 2026-10-22) |
+| 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 3: Beachvolleyball-Abkürzung, Pfeiler bei Flut, Dusche vor der Ziellinie, Steg breiter, Flut niedriger) | **abgenommen** (Nutzer 2026-10-22) |
 | 4 | ZUG | 2 | 1120×630 | umgesetzt (Rev 2: zwei graue Schanzen, Matsch nur halbseitig, ein Zug je Linie, bayerisches Dorf als Kulisse; Runde ca. 16 s; im Spiel noch nicht abgenommen) | offen |
-| 5 | BAUSTELLE | 2 | 800×450 | umgesetzt (Rev 3: keine Pfützen, zwei Schläuche, Zementumfahrung, Erdhaufen auf der Fahrbahn, Startgerade) | offen |
+| 5 | BAUSTELLE | 2 | 800×450 | umgesetzt (Rev 3: keine Pfützen, zwei Schläuche, Zementumfahrung, Erdhaufen auf der Fahrbahn, Startgerade) | **abgenommen** (Nutzer 2026-10-22) |
 | 6 | GARTEN | 2 | 800×450 | umgesetzt (Rev 2: kein Matsch unter Brücken, zweite Abkürzung am Südrand des Sees, Koi-Ankündigung nur am Absprung; im Spiel noch nicht abgenommen) | offen |
 | 7 | RENNSTRECKE | 3 | 800×450 | Prototyp, überarbeitet (Rev 2: Boxenregel, Box in der letzten Runde zu, Reifen später, Startgerade) | offen |
 | 8 | WUESTE | 3 | 800×560 | überarbeitet (Rev 2) | offen |
@@ -97,7 +97,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | 1S3-9 | M | erledigt (Rev 3: Sandspur 76 % statt 84 % Tempo, Netz bremst auf 40 %, öfter Schmetterbälle; ohne Treffer etwa gleich schnell, eher langsamer) | Die Volleyball-Abkürzung ist beim Fahren von Hand schneller als außen herum: einen Tick schwieriger machen | Nutzer 2026-10-21 |
 | 1S3-10 | M | erledigt (Rev 3: Steg 24 px statt 16 px breit) | Über den Holzsteg zu fahren soll etwas einfacher werden: breiter | Nutzer 2026-10-21 |
 | 1S3-11 | H | erledigt (Rev 3: die Flut steigt nur noch bis y 310 statt 284; die Schlenkerkurve im Südosten bleibt mindestens 31 px breit trocken, der Steg schließt an beiden Enden an) | Die Flut darf nur so hoch steigen, dass man in der Schlenkerkurve im Südosten nicht zwingend durchs Wasser muss (sonst ist der Weg über den Steg im Nachteil) | Nutzer 2026-10-21 |
-| 1S3-8 | N | offen | Die Ausfahrt der Volleyball-Abkürzung mündet in die Matschstelle der linken Kurve (gewollt als Preis der Abkürzung); beim Fahren von Hand prüfen, ob das zu hart ist, sonst die Matschstelle nach außen rücken | Rev 3 |
+| 1S3-8 | N | erledigt (Abnahme STRAND 2026-10-22: bleibt so) | Die Ausfahrt der Volleyball-Abkürzung mündet in die Matschstelle der linken Kurve (gewollt als Preis der Abkürzung); beim Fahren von Hand prüfen, ob das zu hart ist, sonst die Matschstelle nach außen rücken | Rev 3 |
 
 ### 1S4 ZUG
 | ID | Prio | Status | Aufgabe | Herkunft |

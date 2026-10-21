@@ -10,7 +10,7 @@ Stand 2026-10-14, Branch `map_pack`. Die Strecken 1 bis 6 sind umgesetzt, 7 bis 
 **Cups:** Die Strecken sind in Cups 1-5 eingeteilt. Das kindliche Zielpublikum ist mit Cup 1 gut bedient, ab Cup 2 können und sollen die Strecken immer aufwendiger und verrückter werden (Sprungschanzen etc.) selbst im Modus ohne Streckenereignis, während der Ursprung des Spiels natürlich nicht verloren geht.
 # Cup 1
 ## 1. Wiese
-Status: **umgesetzt** (Streckenereignis Kühe)
+Status: **umgesetzt** (Streckenereignis Kühe), **abgenommen** (2026-10-22)
 
 Vorher:
 ![[Pasted image 20261006220058.png]]
@@ -32,7 +32,7 @@ Rev 2 (1S1-1, 1A-1, 1A-4): Die Startlinie liegt jetzt weiter oben auf der verlä
 Offen: nichts aus der Änderungsliste.
 
 ## 2. Wald
-Status: **umgesetzt** (dunkle Strecke mit Scheinwerfern, Streckenereignis Regen)
+Status: **umgesetzt** (dunkle Strecke mit Scheinwerfern, Streckenereignis Regen), **abgenommen** (2026-10-22)
 
 Vorher (die roten Markierungen sind die Löcher, die Vorlage für den Regen):
 ![[Pasted image 20261006220109.png]]
@@ -57,7 +57,7 @@ Rev 3 (Wunsch aus `Screenshots/WALD_Improvements.jpg`, nach dem Regen kein Slalo
 Offen: nichts aus der Änderungsliste. Die Auswahl- und Vorschaubilder zeigen die Strecke noch hell.
 
 ## 3. Strand
-Status: **umgesetzt** (Strandduschen, Flut), Rev 2 (2026-10-21): Start auf der geraden Oberkante (5° statt 101°, Strecke oben geradegezogen, Rundenrichtung gleich), Matsch wie nasser Sand, die Eckpfütze rechts liegt im Trockenen und die kleine Pfütze auf der gefluteten Gerade ist weg (drei statt vier Pfützen), die Duschen waschen etwa doppelt so lange. Rekorde starten neu (`-r2`).
+Status: **umgesetzt** (Strandduschen, Flut), **abgenommen** (2026-10-22, Stand Rev 3). Rev 2 (2026-10-21): Start auf der geraden Oberkante (5° statt 101°, Strecke oben geradegezogen, Rundenrichtung gleich), Matsch wie nasser Sand, die Eckpfütze rechts liegt im Trockenen und die kleine Pfütze auf der gefluteten Gerade ist weg (drei statt vier Pfützen), die Duschen waschen etwa doppelt so lange. Rekorde starten neu (`-r2`).
 Rev 3 (2026-10-21): Beachvolleyballfeld statt der Lagune mit schmaler Abkürzung mitten über das Feld, die Dusche hinter der Ziellinie steht jetzt links vor ihr an der oberen Geraden, die Pfeiler am Steg bleiben bei der Flut stehen, Meer und Flut bremsen etwas mehr. Rekorde starten neu (`-r3`).
 
 Vorher (die roten Linien zeigen, wo der Steg bleiben soll):
@@ -111,7 +111,7 @@ Streckenereignis: Der Zug (schon im Spiel).
 ![[Pasted image 20261007173448.png]]
 
 ## 5. Baustelle
-Status: **umgesetzt** (Streckenname `BAUSTELLE`, Streckenereignis Kipplaster `kipper`, neue Oberfläche „Zement“). Im Cup SILBER eingetragen (Zug, Baustelle, Garten). Zeitfahr-Revision 3 (`rev: 3`, Baustelle Rev 3: Startgerade links, keine Pfützen mehr, zwei Wasserschläuche, Zementumfahrung, Erdhaufen als Matsch auf der Fahrbahn).
+Status: **umgesetzt** (Streckenname `BAUSTELLE`, Streckenereignis Kipplaster `kipper`, neue Oberfläche „Zement“), **abgenommen** (2026-10-22, Stand Rev 3). Im Cup SILBER eingetragen (Zug, Baustelle, Garten). Zeitfahr-Revision 3 (`rev: 3`, Baustelle Rev 3: Startgerade links, keine Pfützen mehr, zwei Wasserschläuche, Zementumfahrung, Erdhaufen als Matsch auf der Fahrbahn).
 
 Umsetzung: Die Strecke ist ein Erdweg (Matsch und Pfützen bleiben wie gehabt, drei Matschstellen, seit Rev 3 keine Pfützen mehr). Fahrtrichtung im Uhrzeigersinn, Start links, es geht zuerst nach oben. Wie im Garten ist die Strecke ein Ring mit Ausbuchtungen: oben ein U nach unten (um das Betonwerk), rechts ein Zickzack (Haarnadel nach links und wieder zurück), unten ein ∩ nach oben (um die Baugrube). Alles innerhalb des Rings sind **Baustellenhöfe**: feste Fläche, die niemand betreten kann (ein Ring aus festen Kreisen am Rand, dadurch gibt es keine Abkürzungen). Die Höfe sind nur Kulisse: Rohbau mit Säulen und Aufzugschacht, Materiallager mit Betonrohren, Ziegelpaletten, Sand und Kies, Bauwagen und Dixis, Baugrube mit Bagger, Betonwerk mit Silos, Containerdorf, Fundament mit Armierung, Holzstapel. Außerhalb der Strecke liegen Schutt, Bretter, Fässer, Reifen und Pylonen. Der Rand der Strecke ist mit orangem Bauzaun gesäumt.
 - **Engstellen:** An drei Stellen ragt eine Betonleitwand (orange-weiß, fest) von einer Seite in die Fahrbahn, davor und dahinter Pylonen (fest), dazu eine blinkende Warnlampe. Die Fahrbahn wird dort auf etwa drei Viertel schmal.
