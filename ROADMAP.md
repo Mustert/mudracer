@@ -32,7 +32,7 @@ Jede Phase endet mit einem Feature-Abschluss (siehe `CLAUDE.md`: Build, Publish 
 
 **Fertig, wenn:**
 1. Alle 15 Strecken haben ihre Abnahme (Tabelle „Strecken im Überblick“): Streckendesign-Grundsätze 1–14 geprüft, `mudracer.check('NAME')` sauber auf LEICHT, MITTEL und SCHWER, von Hand im Spiel gefahren, Lied angehört, Doku in `Obsidian/Mudracer/Strecken.md` abgeglichen.
-2. Alle 5 Cups, Supercup und Superdupercup sind spielbar, ihre Freischaltung steht, Siegerehrung und Freischaltungen sind zuverlässig (Block C).
+2. Alle 5 Cups, Supercup und Superdupercup sind spielbar, Siegerehrung, Pokale und Platzberechnung sind zuverlässig (Block 1C). Die Freischaltung der Cups und Strecken untereinander (E1) kommt zu Beginn von Phase 2 (2C-0).
 3. Performance-Ziele (Block P) sind gemessen und erreicht.
 4. Technik-Block 1T erledigt, `map_pack` ist auf `main` zusammengeführt und als Artifact veröffentlicht.
 
@@ -190,7 +190,7 @@ Rev 2 (2026-10-21, aus den Meldungen vom 2026-10-17): Karte 800×560, Oase oben 
 
 | ID | Prio | Status | Aufgabe | Herkunft |
 |---|---|---|---|---|
-| 1C-1 | H | offen | **Freischaltung der Strecken und Cups festlegen und bauen** (siehe Entscheidung E1). Heute: Cup 1–5 immer offen, Supercup nach Cup 1–4, Superdupercup nach Cup 5, Cup 5 ohne eigene Bedingung | M1 |
+| 1C-1 | H | verschoben nach Phase 2 (2C-0) | Freischaltung der Strecken und Cups: Entscheidung E1 fällt am Anfang von Phase 2 (Nutzer, 2026-10-21). Bis dahin bleibt es wie heute: Cup 1–5 immer offen, Supercup nach Cup 1–4, Superdupercup nach Cup 5 | M1 |
 | 1C-2 | H | offen | **Siegerehrung vorzeitig beenden darf nichts kosten:** Wer die Siegerehrung wegklickt, bekommt trotzdem Pokal und neues Auto (Ergebnis und Freischaltung beim Rennende speichern, nicht beim Verlassen des Bildschirms) | Meldung STRAND 00:04:22 (mit Bild 00:04:11) |
 | 1C-3 | H | offen | Platzberechnung im Grand Prix prüfen: Platz 41 und 45 am Ende (Ursache vermutlich der nie laufende Reset von `finCount`, behoben in `845bdaa`, im Spiel nicht nachgeprüft). Test mit Wurmloch, Schwarzem Loch, Respawn: Rang nur aus Runde und Fortschritt | M14, M15, M16 |
 | 1C-4 | M | offen | Mit 15 Strecken: Custom Cup (`CUSTOM_MAX` 12), Supercup und Superdupercup (Streckenzahl, Dauer), Cup-Wahl und Anzeige prüfen | neu |
@@ -200,8 +200,8 @@ Rev 2 (2026-10-21, aus den Meldungen vom 2026-10-17): Karte 800×560, Oase oben 
 
 | ID | Prio | Status | Aufgabe | Herkunft |
 |---|---|---|---|---|
-| 1P-1 | H | offen | **Ziele festlegen und messen** (Entscheidung E2): Bildrate auf einem schwachen Gerät, Bauzeit je Strecke (Weltall 0,8 s, Süß 0,8 s, Regenbogen etwa 2 s), Speicher (Regenbogen zwei Überlagerungen je 4,7 MB), Größe von `dist/index.html`. Dev-Hilfe `mudracer.perf` | T18, T19, T23 |
-| 1P-2 | M | offen | **Streckenlänge:** Rennen auf den großen Karten dauern 60–85 s (Weltall 80, Spielzimmer 85, Regenbogen 80); Zielspanne festlegen und bei Überschreitung kürzen oder die Rundenzahl pro Strecke anpassen | T18 |
+| 1P-1 | H | offen | **Ziel (E2, entschieden): flüssige 60 fps im Browser auf Mobilgerät und Desktop-PC; messen auf beiden.** Außerdem messen: Bauzeit je Strecke (Weltall 0,8 s, Süß 0,8 s, Regenbogen etwa 2 s), Speicher (Regenbogen zwei Überlagerungen je 4,7 MB), Größe von `dist/index.html`. Dev-Hilfe `mudracer.perf` | T18, T19, T23 |
+| 1P-2 | M | offen | **Rundenlänge (E2, entschieden):** je nach Schwierigkeit der Strecke zwischen 20 s (frühe Strecken) und 60–90 s (späte Strecken), steigend mit der Streckennummer. Aktuell liegen die Runden bei etwa 13–30 s (Wüste 13–16, Süß 21, Weltall und Regenbogen 25–30, Spielzimmer 26–28); Wiese bis Strand, Zug bis Garten und die Prototypen 7–11 sind zu messen. Zu kurze Runden verlängern (Wüste, Eis …), zu lange kürzen. Die Länge je Strecke steht in der Tabelle „Strecken im Überblick“ | T18 |
 | 1P-3 | M | offen | Regenbogen: Überlagerungen nur für die Straßen-Rechtecke halten; Schleifen über alle Pixel in `rainbowTerrain` beschleunigen | T23 |
 | 1P-4 | N | offen | Reifenspuren landen jedes Frame auf einer dauerhaften Ebene: Deckung begrenzen, damit sie nicht zum dunklen Band wird (auch Optik, siehe 3E-6) | G6 |
 
@@ -261,6 +261,7 @@ Rev 2 (2026-10-21, aus den Meldungen vom 2026-10-17): Karte 800×560, Oase oben 
 
 | ID | Prio | Status | Aufgabe | Herkunft |
 |---|---|---|---|---|
+| 2C-0 | H | offen | **Als Erstes: E1 klären und bauen** (Freischaltung der Cups und Strecken untereinander; aus 1C-1 hierher verschoben). Cup 5 bekommt dabei seine Bedingung | M1, 1C-1 |
 | 2C-1 | H | offen | **Tabelle Cup × Stufe → Belohnung** festlegen (5 Cups × 4 Stufen, plus Supercup, Superdupercup): Autos, Lacke, Aufkleber …. Bestehende Autofreischaltung (1. Sieg in Cup 1–5) bleibt gültig | M1, I7, D4 |
 | 2C-2 | H | offen | **Zentrale Freischalt-Tabelle im Code** (z. B. `unlocks.js`): Bedingung als Funktion, Belohnung, Text; speist Autowahl, Werkstatt, Siegerehrung und Achievements. Gespeichert wird nur über `save.js`; die vorhandenen Trophäen-Schlüssel `mudracer-gp-<cup>-d<stufe>-<auto>` (Stufe 3 = PRO) bleiben die Quelle | T13 |
 | 2C-3 | M | offen | Weitere Ziele (nicht nur Cups): Zeitfahren unter X s, alle Strecken sauber beenden, 3× Waschanlage, Matschfahrt-Ziele; Kindermodus schaltet für das normale Spiel nichts frei (bleibt) | I7, M10, M11 |
@@ -365,8 +366,8 @@ Diese Punkte entscheidet der Nutzer, bevor die Phase beginnt oder der betroffene
 
 | ID | Phase | Frage | Empfehlung |
 |---|---|---|---|
-| E1 | 1 | Wie schalten sich Cups und Strecken untereinander frei? (Cup n+1 nach Cup n? Einzelstrecke/Zeitfahren erst, wenn die Strecke im Grand Prix gefahren wurde? Gilt jede Stufe, oder reicht LEICHT?) | Cups der Reihe nach (Cup n+1 nach erstem Sieg von Cup n auf beliebiger Stufe), Strecken in Einzelstrecke und Zeitfahren offen, sobald der Cup freigeschaltet ist; Kindermodus öffnet alles |
-| E2 | 1 | Performance-Ziele: welches Gerät, welche Bildrate, welche Ladezeit, welche Rennlänge je Strecke? | 60 fps auf einem Mittelklasse-Handy; Bau einer Strecke unter 1 s im Hintergrund; Rennen 60–90 s |
+| E1 | 2 (Beginn) | Wie schalten sich Cups und Strecken untereinander frei? (Cup n+1 nach Cup n? Einzelstrecke/Zeitfahren erst, wenn die Strecke im Grand Prix gefahren wurde? Gilt jede Stufe, oder reicht LEICHT?) | Cups der Reihe nach (Cup n+1 nach erstem Sieg von Cup n auf beliebiger Stufe), Strecken in Einzelstrecke und Zeitfahren offen, sobald der Cup freigeschaltet ist; Kindermodus öffnet alles |
+| E2 | 1 | **Entschieden (2026-10-21):** flüssige 60 fps im Browser auf Mobil und Desktop-PC; Rundenlänge je nach Schwierigkeit der Strecke zwischen 20 s und 60–90 s. Offen bleibt nur die Ladezeit (Vorschlag: Bau einer Strecke unter 1 s im Hintergrund) | – |
 | E3 | 2 | Wie viele spielbare Autos? Heute 10 spielbar und 7 Füllautos. Das Startgitter fasst 10 Autos | 10 bis 14: die Füllautos werden nicht alle ausgebaut; Gegner kommen aus den spielbaren |
 | E4 | 2 | Gibt es Drift/Handbremse mit Mini-Boost (I6)? | Nein im ersten Schritt; zuerst Masse, Grip, Radius; Drift später, falls es sich anbietet |
 | E5 | 2 | Welche Anpassungen: Aufkleber, Felgen, Spoiler, Hupe, Startnummer, Spur-Effekt, Fahrer? Upgrades (Variante A) ja oder nein? | Nur kosmetisch (Farben, Aufkleber, Felgen, Hupen, Spur-Effekt), keine Upgrades |
