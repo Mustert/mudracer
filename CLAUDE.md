@@ -73,6 +73,8 @@ Für jede Arbeit an einer Strecke zuerst den Skill `strecke` laden (`.claude/ski
 Nach jeder Umsetzung (neues Feature, größere Änderung) fragt Claude den Nutzer:
 „Ist das ein Feature-Abschluss?“
 
+**Ausnahme:** Solange in `ROADMAP.md` für die Phase des aktuellen Branches (z. B. `map_pack` = Phase 1) noch Punkte offen oder teilweise sind, wird nicht nach dem Feature-Abschluss gefragt und nicht publisht. Gefragt wird erst, wenn dort alles erledigt ist, oder wenn der Nutzer selbst einen Publish verlangt.
+
 - **Ja:** erst `npm run build`, dann `dist/index.html` als Artifact auf claude.ai veröffentlichen (Artifact-Tool, `file_path` = `dist/index.html`).
   Gab es schon ein Artifact für dieses Projekt, mit dessen `url` aktualisieren statt ein neues anzulegen, damit der Link gleich bleibt.
 - **Nein:** nichts publishen, weiterarbeiten.
