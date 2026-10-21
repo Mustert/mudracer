@@ -45,7 +45,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | 1 | WIESE | 1 | 800×450 | umgesetzt | offen |
 | 2 | WALD | 1 | 800×450 | umgesetzt | offen |
 | 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 1) | offen |
-| 4 | ZUG | 2 | 800×450 | umgesetzt, Rework geplant | offen |
+| 4 | ZUG | 2 | 1120×630 | umgesetzt (Rev 1: größer, Sprungschanze, Zug öfter je Runde; im Spiel noch nicht abgenommen) | offen |
 | 5 | BAUSTELLE | 2 | 800×450 | umgesetzt (Rev 2) | offen |
 | 6 | GARTEN | 2 | 800×450 | umgesetzt | offen |
 | 7 | RENNSTRECKE | 3 | 800×450 | Prototyp | offen |
@@ -92,7 +92,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 ### 1S4 ZUG
 | ID | Prio | Status | Aufgabe | Herkunft |
 |---|---|---|---|---|
-| 1S4-1 | H | offen | **Mehr Eskalation:** die Strecke wird insgesamt größer; die Zugfrequenz steigt mit der Rundenzahl; zusätzlich eine optionale Sprungschanze, über die man die Züge überspringen kann; eventuell Weichen vor und nach dem Tunnel, damit eine Überraschung entsteht, auf welcher Bahn der Zug fährt. Neue `rev`, Startgerade (1A-4) und Grundsatz 9 mitprüfen | Meldung ZUG |
+| 1S4-1 | H | erledigt (ZUG Rev 1: Karte 1120×630, Runde ca. 17 s; Pause zwischen zwei Zügen sinkt je Runde auf 65 % und 45 %; Sprungschanze auf der Außenhälfte vor dem rechten unteren Bahnübergang, Autos in der Luft trifft der Zug nicht; die Weiche gab es schon, sie wird weiter erst mit der Warnung gestellt; Startaufstellung jetzt 7° auf der linken Geraden (ZUG-Teil von 1A-4); Grundsatz 9: Pfiff, Glocke, Schranken und „ZUG KOMMT“ 2,5 s vorher wie bisher; check LEICHT/MITTEL/SCHWER sauber) | **Mehr Eskalation:** die Strecke wird insgesamt größer; die Zugfrequenz steigt mit der Rundenzahl; zusätzlich eine optionale Sprungschanze, über die man die Züge überspringen kann; eventuell Weichen vor und nach dem Tunnel, damit eine Überraschung entsteht, auf welcher Bahn der Zug fährt. Neue `rev`, Startgerade (1A-4) und Grundsatz 9 mitprüfen | Meldung ZUG |
 
 ### 1S5 BAUSTELLE
 | ID | Prio | Status | Aufgabe | Herkunft |

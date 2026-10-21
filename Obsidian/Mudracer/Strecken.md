@@ -82,9 +82,10 @@ Offen: nichts aus der Änderungsliste. Die Auswahl- und Vorschaubilder zeigen de
 ## Cup 2
 
 ## 4. Zug
-Status: **umgesetzt** (Tunnel, Weiche mit zweiter Bahnlinie, Autos halten nicht mehr an der Bahn).
+Status: **umgesetzt, Rev 1** (Tunnel, Weiche mit zweiter Bahnlinie, Autos halten nicht mehr an der Bahn; seit Rev 1 größer, Startgerade, Sprungschanze, Zug kommt von Runde zu Runde öfter).
+- **Rev 1 (Mehr Eskalation, ROADMAP 1S4-1):** Karte 1120×630 statt 800×450 (Runde ca. 17 s statt 14 s). Start auf der langen Geraden links (Startaufstellung 7° statt 85°), die Waschanlage liegt jetzt unten links zwischen Teich und Bahn. Der Zug kommt von Runde zu Runde öfter: Pause zwischen zwei Zügen in Runde 1 7–12 s, Runde 2 etwa 4,5–8 s, Runde 3 etwa 3–5,5 s. Neue **Sprungschanze** (Holzrampe mit gelb-schwarzer Kante) auf der äußeren Hälfte der unteren Geraden kurz vor dem rechten Bahnübergang: wer mit Schwung (ab etwa 160 px/s) drüberfährt, springt über den Zug; wer langsam ist (z. B. direkt aus dem Matsch davor), wird erwischt. Die innere Hälfte bleibt flach, die Schanze ist freiwillig.
 - Statt der Wand mit Schranke liegt in der Mitte ein Berg mit Tunnelportalen (Nord- und Südseite). Der Zug verschwindet im Berg und kommt auf der anderen Seite wieder heraus. Der Berg ist fest, links und rechts davon bleibt die Absperrung.
-- **Weiche:** Es gibt jetzt zwei Bahnlinien (x=430 und x=300) mit je einem Tunnel. Vor jeder Zugfahrt wird die Weiche gestellt (Zufall, im Zeitfahren fest). Das Weichenhäuschen oben zwischen den Linien zeigt mit Hebel und grüner Lampe, welche Linie der nächste Zug nimmt, und nur dort blinken die Bahnübergänge und gehen die Schranken zu.
+- **Weiche:** Es gibt jetzt zwei Bahnlinien (seit Rev 1 x=602 und x=420) mit je einem Tunnel. Vor jeder Zugfahrt wird die Weiche gestellt (Zufall, im Zeitfahren fest). Das Weichenhäuschen oben zwischen den Linien zeigt mit Hebel und grüner Lampe, welche Linie der nächste Zug nimmt, und nur dort blinken die Bahnübergänge und gehen die Schranken zu.
 - Die Computerautos halten nicht mehr an der Bahn an, sie können vom Zug erwischt werden. Die Warnung „ZUG KOMMT“ für dich bleibt.
 - Der Teich im Infield ist nach rechts gewandert (Platz für die zweite Linie).
 ![[Pasted image 20261006220149.png]]
