@@ -12,6 +12,7 @@ import { paintSpace, spaceTerrain } from './spacemap.js';
 import { paintSuess, suessTerrain } from './suessmap.js';
 import { paintToys, toyTerrain } from './toymap.js';
 import { paintRainbow, rainbowTerrain } from './rainbowmap.js';
+import { paintVillage } from './bahnmap.js';
 
 // ---------- tracks (800x450 world) ----------
 
@@ -119,11 +120,14 @@ const TRACK_DEFS = [
     // small beach showers that run all the time, each one leaves a mini puddle (t along the track, offset from the centre line); none on the lower part that gets flooded
     showers: [[.05, 15], [.105, -15], [.77, -15]] },
   // Rev 1 (1S4-1): a bigger map, the start on the straight left side; a ramp on the outer half of the road before the lower crossing
-  // (jump = [x, y, speed upwards]) lets you jump over the train; the train comes more often from lap to lap (train.js)
-  { name: 'ZUG', rev: 1, seed: 4, W: 1120, H: 630, events: ['zug'], theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 511, y: 300, ang: 0 }], tunnels: [{ x: 511, y: 300, hw: 164, portals: [420, 602] }],
+  // (jumps = [x, y, speed upwards, side: -1 outer half, 1 inner half]) lets you jump over the train; the train comes more often from lap to lap (train.js)
+  // Rev 2 (1S4-2): the mud moved (one between the crossings on top, a new one on the outer half, the right one split into two halves, one straight
+  // before the first ramp), a second ramp on the inner half before the left crossing, both ramps of grey concrete, the car wash on the left
+  // straight behind the grid, no pond and no puddle in the lower left bend; a Bavarian village around the track (bahnmap.js); a train on each line
+  { name: 'ZUG', rev: 2, seed: 4, W: 1120, H: 630, events: ['zug'], theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 511, y: 300, ang: 0 }], tunnels: [{ x: 511, y: 300, hw: 164, portals: [420, 602] }],
     pts: [[180, 240], [180, 160], [240, 112], [364, 112], [602, 123], [840, 112], [980, 182], [994, 420], [896, 518], [602, 507], [350, 518], [260, 548], [180, 500], [180, 400], [180, 320]],
-    mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[784, 330, 56, 31]], rail: { x: 602, lines: [602, 420] }, wash: 0, washAt: [290, 520],
-    jump: [650, 508, 100] },
+    mud: [[.182, 12, 28, 22], [.254, -15, 24, 16], [.452, -15, 26, 16], [.487, 15, 26, 16], [.641, -16, 22, 15]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36]], ponds: [], rail: { x: 602, lines: [602, 420] }, wash: 0, washAt: [180, 482],
+    jumps: [[650, 508, 100, -1], [470, 508, 105, 1]], village: true },
   // The building site: the road is packed earth. Everything inside the ring road is yard (solid, see bau.js), the road narrows at barriers, a crane
   // holds a concrete pipe over the road, a cement mixer leaks a grey puddle onto it, and dump trucks tip earth beside it (event kipper).
   // poly = [x, y, curve radius] (rounded corners), mudAt/waterAt/cement = [x, y, half length along the road, half width across]
@@ -372,6 +376,11 @@ const TRACK_DEFS = [
 ];
 
 
+// every line of the railway has its own train (ZUG Rev 2: twice as many trains, now and then one on each line at the same time, train.js);
+// the first one comes after 6 s, the second a little later from the other end, after that each runs on its own clock
+export const newTrains = lines => lines.map((x, k) => ({ x, phase: 'wait', t: 6 + k * 3.5, dir: k ? -1 : 1, y: -9999, smokeT: 0, signal: false, gate: 0 }));
+
+
 // the centre line with rounded corners: [x, y, r] (r = 0: plain point), a circle-like curve of size r at every corner, straight in between
 function roundedPath(poly) {
   const raw = [], n = poly.length, k = .5523;
@@ -539,7 +548,7 @@ function* buildTrack(def, ti) {
     for (const RX of lines) for (let y = 0; y < MH; y++) for (let x = RX - 18; x <= RX + 18; x++) { const j = y * MW + x; if (ter[j] >= 2) ter[j] = dist[j] < HALF ? 1 : 0; }
     const cross = [];
     for (const RX of lines) for (let i = 0; i < N; i++) { const a = path[i], b = path[(i + 1) % N]; if ((a.x - RX) * (b.x - RX) <= 0 && !cross.some(c => c.x === RX && Math.abs(c.i - i) < 30)) cross.push({ i, x: RX, y: (a.y + b.y) / 2 }); }
-    rail = { x: def.rail.x, lines, sw: -1, cross, gate: 0, signal: false, bellT: 0, chuffT: 0, chuffN: 0, smokeT: 0, train: { phase: 'wait', t: 6, dir: 1, y: -9999 } };
+    rail = { x: def.rail.x, lines, cross, signal: false, bellT: 0, chuffT: 0, chuffN: 0, trains: newTrains(lines) };
   }
   const yard = siteYards(def, ter, dist, MW, MH), cemPix = [];
   const shore = new Uint8Array(A);
@@ -813,16 +822,17 @@ function* buildTrack(def, ti) {
       else { px(x, y, RL); if (th.fence === 'log') px(x + Math.round(nrm[i].x * s), y + Math.round(nrm[i].y * s), RL2); }
     }
   }
-  // the ramp over the railway (ZUG): wooden planks on the outer half of the road, yellow and black stripes at the lip, a shadow behind it;
-  // whoever takes it flies over the rails (the train does not hit cars in the air, train.js). Optional: the inner half stays flat.
+  // the ramps over the railway (ZUG): grey concrete on one half of the road (side -1 outer, 1 inner), yellow and black stripes at the lip, a shadow
+  // behind it; whoever takes one flies over the rails (the train does not hit cars in the air, train.js). Optional: the other half stays flat.
   const ramps = [];
-  if (def.jump && !decorMap) {
-    const [jx, jy, vz] = def.jump, i = nearestIdx(path, jx, jy), p = path[i], t = tan[i], nx = -t.y, ny = t.x;
-    ramps.push({ x: p.x, y: p.y, tx: t.x, ty: t.y, lo: -HALF - 4, hi: -3, vz });
-    const WD = [hex('#a8743e'), hex('#c08a50'), hex('#8a5a2e')], YE = hex('#f2c230'), BK = hex('#2a2420'), SH = hex('#6a5034');
-    for (let a = -26; a <= 3; a++) for (let l = -HALF + 2; l <= -3; l++) {
+  if (def.jumps && !decorMap) for (const [jx, jy, vz, side] of def.jumps) {
+    const i = nearestIdx(path, jx, jy), p = path[i], t = tan[i], nx = -t.y, ny = t.x, l0 = side < 0 ? -HALF + 2 : 3, l1 = side < 0 ? -3 : HALF - 2;
+    ramps.push({ x: p.x, y: p.y, tx: t.x, ty: t.y, lo: side < 0 ? -HALF - 4 : 3, hi: side < 0 ? -3 : HALF + 4, vz });
+    const CO = [hex('#a4a8ad'), hex('#b6babf'), hex('#70757c')], YE = hex('#f2c230'), BK = hex('#2a2420'), SH = hex('#5e5040');
+    for (let a = -26; a <= 3; a++) for (let l = l0; l <= l1; l++) {
       const x = Math.round(p.x + t.x * a + nx * l), y = Math.round(p.y + t.y * a + ny * l);
-      px(x, y, a > 0 ? SH : a >= -2 ? (((l >> 2) & 1) ? YE : BK) : l === -3 || l === -HALF + 2 ? WD[2] : (a & 3) === 0 ? WD[2] : (a & 1) ? WD[1] : WD[0]);
+      // concrete gets lighter towards the lip (it rises), seams every 8 px, a dark rim on both long edges
+      px(x, y, a > 0 ? SH : a >= -2 ? (((l >> 2) & 1) ? YE : BK) : l === l0 || l === l1 ? CO[2] : (a & 7) === 0 ? CO[2] : a > -12 || hash(x, y, 31) < .2 ? CO[1] : CO[0]);
     }
   }
   yield .76;
@@ -1076,6 +1086,8 @@ function* buildTrack(def, ti) {
     special[decorMap.flag] = yield* decorMap.paint({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, deep, bridgeMask, isBridge,
       stoneMask, sd, th, r, critters, darken, starPix, mudPix, watPix, RT: decorMap === map ? RT : null });
   } else if (th.decor === 'farm') {
+    // ZUG: the Bavarian village first (bahnmap.js), the flowers, hay bales and trees keep out of it
+    if (def.village) { const left = paintVillage({ MW, MH, d, set, ter, dist, walls, wallMask, critters, rail, r, sd }); if (left.length && import.meta.env.DEV) console.warn('Dorf: kein Platz für', left.join(' ')); }
     flowers(160, ['#ff5a7a', '#ffe14d', '#ffffff'].map(hex));
     scatter(30, 4, (x, y) => { const Y = hex('#ffcf1f'), B = hex('#5a3a1f'); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; px(Math.round(x + Math.cos(a) * 3), Math.round(y + Math.sin(a) * 3), Y); } for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) px(x + dx, y + dy, B); });
     scatter(14, 7, (x, y) => { for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const dd = Math.hypot(dx, dy); if (dd > 6) continue; px(x + dx, y + dy, dd > 5.2 ? hex('#a8863a') : (Math.round(dd) % 2 ? hex('#e3c16f') : hex('#cfa84f'))); } });

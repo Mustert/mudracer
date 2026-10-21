@@ -11,37 +11,36 @@ import { TRAIN } from './trainsprite.js';
 // the pause between two trains shrinks from lap to lap (lap 1, 2, 3): 7-12 s, then about 4.5-8 s, then 3-5.5 s (1S4-1)
 const PAUSE = [1, .65, .45];
 
+
 export function updateTrain(dt) {
-  const R = G.T.rail; if (!R || !eventOn('zug')) return; // train switched off: the line stays empty
-  const tr = R.train;
-  tr.t -= dt;
-  const vol = () => { const cxm = cam.x + VW / 2, cym = cam.y + VH / 2; let dm = 1e9; for (const cr of R.cross) dm = Math.min(dm, Math.hypot(cr.x - cxm, cr.y - cym)); return clamp(1 - dm / 600, .35, 1); };
-  if (tr.phase === 'wait' && tr.t <= 0) {
-    // the switch (Weiche) is thrown: this time the train takes one of the lines
-    if (R.lines.length > 1) R.x = R.lines[(G.ttRand || Math.random)() < .5 ? 0 : 1];
-    tr.phase = 'warn'; tr.t = 2.5; SFX.whistle(vol() * .6);
-  }
-  else if (tr.phase === 'warn' && tr.t <= 0) { tr.phase = 'run'; tr.y = tr.dir > 0 ? -TRAIN.LEN - 40 : G.T.H + 40; SFX.whistle(vol()); }
-  else if (tr.phase === 'run') {
-    tr.y += tr.dir * TRAIN_SPEED * dt;
-    if ((R.smokeT -= dt) <= 0) {
-      R.smokeT = .07;
-      const cy = tr.dir > 0 ? tr.y + TRAIN.chim : tr.y + TRAIN.LEN - TRAIN.chim;
-      addP({ t: 'smoke', x: R.x + (Math.random() - .5) * 4, y: cy, vx: 10 + Math.random() * 12, vy: -tr.dir * 25 + (Math.random() - .5) * 10, life: 1.4, ml: 1.4 });
-    }
-    for (const c of G.cars) {
-      if (c.z > 3) continue; // over the train on the ramp (tracks.js): nothing happens
-      if (Math.abs(c.x - R.x) < 14 + 9 && c.y > tr.y - 9 && c.y < tr.y + TRAIN.LEN + 9 && !c.stun) {
-        // bonk! the car is thrown aside, spins and sees stars for a moment
-        const side = Math.sign(c.x - R.x) || 1;
-        c.x = R.x + side * 25; c.vx = side * 230; c.vy = tr.dir * 120; c.spin = 16; c.stun = 1.6; c.boost = 0;
-        if (!c.ai) SFX.crash(); else SFX.bump();
-        mudBurst(c, 10);
+  const R = G.T.rail; if (!R || !eventOn('zug')) return; // train switched off: the lines stay empty
+  const cxm = cam.x + VW / 2, cym = cam.y + VH / 2;
+  for (const tr of R.trains) {
+    tr.t -= dt;
+    const vol = () => { let dm = 1e9; for (const cr of R.cross) if (cr.x === tr.x) dm = Math.min(dm, Math.hypot(cr.x - cxm, cr.y - cym)); return clamp(1 - dm / 600, .35, 1); };
+    if (tr.phase === 'wait' && tr.t <= 0) { tr.phase = 'warn'; tr.t = 2.5; SFX.whistle(vol() * .6); }
+    else if (tr.phase === 'warn' && tr.t <= 0) { tr.phase = 'run'; tr.y = tr.dir > 0 ? -TRAIN.LEN - 40 : G.T.H + 40; SFX.whistle(vol()); }
+    else if (tr.phase === 'run') {
+      tr.y += tr.dir * TRAIN_SPEED * dt;
+      if ((tr.smokeT -= dt) <= 0) {
+        tr.smokeT = .07;
+        const cy = tr.dir > 0 ? tr.y + TRAIN.chim : tr.y + TRAIN.LEN - TRAIN.chim;
+        addP({ t: 'smoke', x: tr.x + (Math.random() - .5) * 4, y: cy, vx: 10 + Math.random() * 12, vy: -tr.dir * 25 + (Math.random() - .5) * 10, life: 1.4, ml: 1.4 });
       }
-    }
-    if ((tr.dir > 0 && tr.y > G.T.H + 40) || (tr.dir < 0 && tr.y + TRAIN.LEN < -40)) { tr.phase = 'clear'; tr.t = .8; }
-  } else if (tr.phase === 'clear' && tr.t <= 0) { tr.phase = 'wait'; tr.t = (7 + (G.ttRand || Math.random)() * 5) * PAUSE[clamp((G.player ? G.player.lap : 1) - 1, 0, 2)]; tr.dir *= -1; }
-  R.sw += ((R.x === R.lines[0] ? -1 : 1) - R.sw) * Math.min(1, dt * 7);
-  R.signal = tr.phase === 'warn' || tr.phase === 'run';
-  R.gate += ((R.signal ? 1 : 0) - R.gate) * Math.min(1, dt * 2.5);
+      for (const c of G.cars) {
+        if (c.z > 3) continue; // over the train on a ramp (tracks.js): nothing happens
+        if (Math.abs(c.x - tr.x) < 14 + 9 && c.y > tr.y - 9 && c.y < tr.y + TRAIN.LEN + 9 && !c.stun) {
+          // bonk! the car is thrown aside, spins and sees stars for a moment
+          const side = Math.sign(c.x - tr.x) || 1;
+          c.x = tr.x + side * 25; c.vx = side * 230; c.vy = tr.dir * 120; c.spin = 16; c.stun = 1.6; c.boost = 0;
+          if (!c.ai) SFX.crash(); else SFX.bump();
+          mudBurst(c, 10);
+        }
+      }
+      if ((tr.dir > 0 && tr.y > G.T.H + 40) || (tr.dir < 0 && tr.y + TRAIN.LEN < -40)) { tr.phase = 'clear'; tr.t = .8; }
+    } else if (tr.phase === 'clear' && tr.t <= 0) { tr.phase = 'wait'; tr.t = (7 + (G.ttRand || Math.random)() * 5) * PAUSE[clamp((G.player ? G.player.lap : 1) - 1, 0, 2)]; tr.dir *= -1; }
+    tr.signal = tr.phase === 'warn' || tr.phase === 'run';
+    tr.gate += ((tr.signal ? 1 : 0) - tr.gate) * Math.min(1, dt * 2.5);
+  }
+  R.signal = R.trains.some(tr => tr.signal);
 }

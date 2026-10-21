@@ -351,15 +351,17 @@ export function ambience(dt) {
     noise({ t: 1.7, type: 'highpass', f: 2500, a: .3, d: 1.6, vol: .025 });
   }
   const R = G.T.rail; if (!R) return;
-  const cxm = cam.x + VW / 2, cym = cam.y + VH / 2, tr = R.train;
+  const cxm = cam.x + VW / 2, cym = cam.y + VH / 2;
   if (R.signal && (R.bellT -= dt) <= 0) {
     R.bellT = .42;
-    let dm = 1e9; for (const cr of R.cross) dm = Math.min(dm, Math.hypot(cr.x - cxm, cr.y - cym));
+    let dm = 1e9; for (const cr of R.cross) if (R.trains.some(tr => tr.x === cr.x && tr.signal)) dm = Math.min(dm, Math.hypot(cr.x - cxm, cr.y - cym));
     bell(1350, 0, .08 * clamp(1 - dm / 450, .2, 1));
   }
-  if (tr.phase === 'run' && (R.chuffT -= dt) <= 0) {
+  // one chuff for all running trains, as loud as the nearest one
+  let v = -1;
+  for (const tr of R.trains) if (tr.phase === 'run') { const ty = clamp(cym, tr.y, tr.y + TRAIN.LEN); v = Math.max(v, clamp(1 - Math.hypot(tr.x - cxm, ty - cym) / 520, 0, 1)); }
+  if (v >= 0 && (R.chuffT -= dt) <= 0) {
     R.chuffT = .19; R.chuffN++;
-    const ty = clamp(cym, tr.y, tr.y + TRAIN.LEN), v = clamp(1 - Math.hypot(R.x - cxm, ty - cym) / 520, 0, 1);
     noise({ type: R.chuffN % 2 ? 'lowpass' : 'bandpass', f: R.chuffN % 2 ? 700 : 1600, d: .14, vol: .3 * v + .02 });
     if (R.chuffN % 4 === 0) { voice({ type: 'square', f: 1900, d: .015, vol: .05 * v }); voice({ t: .06, type: 'square', f: 1700, d: .015, vol: .05 * v }); }
   }
