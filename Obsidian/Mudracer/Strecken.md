@@ -58,6 +58,7 @@ Offen: nichts aus der Änderungsliste. Die Auswahl- und Vorschaubilder zeigen di
 
 ## 3. Strand
 Status: **umgesetzt** (Strandduschen, Flut), Rev 2 (2026-10-21): Start auf der geraden Oberkante (5° statt 101°, Strecke oben geradegezogen, Rundenrichtung gleich), Matsch wie nasser Sand, die Eckpfütze rechts liegt im Trockenen und die kleine Pfütze auf der gefluteten Gerade ist weg (drei statt vier Pfützen), die Duschen waschen etwa doppelt so lange. Rekorde starten neu (`-r2`).
+Rev 3 (2026-10-21): Beachvolleyballfeld statt der Lagune mit schmaler Abkürzung mitten über das Feld, die Dusche hinter der Ziellinie steht jetzt links vor ihr an der oberen Geraden, die Pfeiler am Steg bleiben bei der Flut stehen, Meer und Flut bremsen etwas mehr. Rekorde starten neu (`-r3`).
 
 Vorher (die roten Linien zeigen, wo der Steg bleiben soll):
 ![[Pasted image 20261006220122.png]]
@@ -80,6 +81,13 @@ Streckenereignis **Flut** (`flut`):
 - Reifenspuren und Schlamm im überfluteten Bereich werden weggespült. Auf dem Steg fahren die Computerautos mittig, damit sie nicht ins Wasser geraten.
 ![[Strand Flut.jpg]]
 ![[Strand Flut Steg.jpg]]
+
+Rev 3 (Wunsch aus `Screenshots/STRAND_Improvements.jpg` und F8-Meldungen):
+- Die Dusche direkt hinter der Ziellinie verschieben (nach links an die obere Gerade). ✅ umgesetzt (STRAND Rev 3, ROADMAP 1S3-4)
+- Holzpfeiler verschwinden bei steigendem Wasser und sammeln sich bei voller Flut in der ersten Kurve. ✅ umgesetzt (STRAND Rev 3, ROADMAP 1S3-5, 1S3-6)
+- Wo der (unlogische) See ist, eine Abkürzung über ein Beachvolleyballfeld mit Pixelspielern: schmale Strecke mitten über den Platz, das Netz bremst, der Ball trifft beim Seitenwechsel; das Meer bremst einen Tick mehr. ✅ umgesetzt (STRAND Rev 3, ROADMAP 1S3-7)
+
+Beachvolleyball (immer, kein Ereignis): Vier Spieler spielen über das Netz, jeder Ball wechselt die Seite, ab und zu schmettert einer auf die Sandspur (der Schatten zeigt vorher, wo er landet). Ein tiefer Ball trifft ein Auto: es wird zur Seite geschleudert und gebremst. Das Netz bremst jedes Auto einmal, der Sand neben der Spur ist langsam. Die Abkürzung ist etwa gleich schnell wie außen herum; sie spart den Steg bei Flut, mündet aber in die Matschstelle der linken Kurve. Die Computerautos nehmen sie manchmal (öfter auf SCHWER und bei Flut).
 
 Offen: nichts aus der Änderungsliste. Die Auswahl- und Vorschaubilder zeigen den Strand noch ohne Flut (gewollt, so sieht man die saubere Strecke).
 

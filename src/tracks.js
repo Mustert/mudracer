@@ -12,6 +12,7 @@ import { paintSpace, spaceTerrain } from './spacemap.js';
 import { paintSuess, suessTerrain } from './suessmap.js';
 import { paintToys, toyTerrain } from './toymap.js';
 import { paintRainbow, rainbowTerrain } from './rainbowmap.js';
+import { beachTerrain, paintBeach } from './strandmap.js';
 
 // ---------- tracks (800x450 world) ----------
 
@@ -85,6 +86,7 @@ export const THEMES = {
 // It runs from where the track first dips below the line y (a wavy line, the same as the later shoreline, at the mud) to where it
 // comes back up shortly before the finish, and bridges the dry stretch in between. 2 x half wide.
 export const PIER = { half: 8, y: 284 };
+export const PILE = [[138, 100, 64], [59, 37, 18]]; // a pile beside the pier: its lit top, the dark wood
 export const PIER_WAVE = x => Math.sin(x / 40) * 5 + Math.sin(x / 13) * 2;
 export function pierColor(d, nr, x, y) {
   if (hash(x, y, 53) < .03) return [118, 82, 40];
@@ -114,10 +116,13 @@ const TRACK_DEFS = [
   // Revision 2: the start line moved to the long straight on top (the grid stands straight; the control points are rotated, the t values moved by -.327),
   // the big mud on the right corner sits higher (the flood line cut it in half), the small mud on the flooded lower road moved to the left bend,
   // the mud looks like wet sand, the showers wash more slowly (update.js).
-  { name: 'STRAND', rev: 2, events: ['flut'], pier: true, theme: 'strand', song: 'beach', wallStyle: 'bar', wall: [{ x: 330, y: 190, ang: 0 }], pts: S2([[250, 50], [322, 52], [358, 96], [335, 152], [262, 135], [205, 178], [120, 184], [52, 160], [60, 105], [112, 52], [180, 50]]),
-    mud: B2([[.165, 0, 18, 18], [.72, 0, 14, 18], [.8, 4, 6, 7]]), water: [], ponds: [[300, 240, 44, 26]], wash: null,
+  // Revision 3: the lagoon in the infield is a beach volleyball court with a narrow short cut through it (volley: the lane, its half width,
+  // the court [cx, cy, half width, half height]; strandmap.js, strand.js), the shower behind the finish line moved up the top straight (before the line).
+  { name: 'STRAND', rev: 3, events: ['flut'], pier: true, beach: true, theme: 'strand', song: 'beach', wallStyle: 'bar', wall: [{ x: 330, y: 190, ang: 0 }], pts: S2([[250, 50], [322, 52], [358, 96], [335, 152], [262, 135], [205, 178], [120, 184], [52, 160], [60, 105], [112, 52], [180, 50]]),
+    mud: B2([[.165, 0, 18, 18], [.72, 0, 14, 18], [.8, 4, 6, 7]]), water: [], ponds: [], wash: null,
+    volley: { pts: [[530, 268, 0], [462, 252, 40], [300, 250, 0], [196, 251, 40], [146, 236, 26], [126, 200, 0]], half: 12, court: [300, 250, 66, 36] },
     // small beach showers that run all the time, each one leaves a mini puddle (t along the track, offset from the centre line); none on the lower part that gets flooded
-    showers: [[.05, 15], [.105, -15], [.77, -15]] },
+    showers: [[.89, -15], [.105, -15], [.77, -15]] },
   // Rev 1 (1S4-1): a bigger map, the start on the straight left side; a ramp on the outer half of the road before the lower crossing
   // (jump = [x, y, speed upwards]) lets you jump over the train; the train comes more often from lap to lap (train.js)
   { name: 'ZUG', rev: 1, seed: 4, W: 1120, H: 630, events: ['zug'], theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 511, y: 300, ang: 0 }], tunnels: [{ x: 511, y: 300, hw: 164, portals: [420, 602] }],
@@ -438,6 +443,8 @@ const MAPS = [
   { flag: 'suess', decor: 'suess', terrain: suessTerrain, paint: paintSuess },
   { flag: 'toys', decor: 'spielzimmer', terrain: toyTerrain, paint: paintToys },
   { flag: 'rainbow', decor: 'regenbogen', terrain: rainbowTerrain, paint: paintRainbow },
+  // the beach keeps its decor in buildTrack (th.decor 'strand') and paints only the volleyball court on top of it
+  { flag: 'beach', decor: 'strand', terrain: beachTerrain, paint: paintBeach },
 ];
 function* buildTrack(def, ti) {
   // the size of the map: WW x WH unless the track brings its own (W, H)
@@ -629,7 +636,7 @@ function* buildTrack(def, ti) {
   }
   yield .7;
   // the pier: planks across the track and piles on both sides (still normal ground for the cars)
-  let pier = null;
+  let pier = null; const piles = [];
   if (def.pier) {
     let a = -1, b = -1;
     for (let i = Math.floor(.3 * N); i < N; i++) { const p = path[i]; if (p.y >= PIER.y + PIER_WAVE(p.x)) { if (a < 0) a = i; b = i; } }
@@ -639,11 +646,13 @@ function* buildTrack(def, ti) {
       if (dist[j] >= PIER.half || near[j] < pier[0] || near[j] > pier[1]) continue;
       ter[j] = 1; set(j, pierColor(dist[j], near[j], x, y));
     }
+    // the piles are kept (piles): the rising flood paints exactly these again (events.js paintFloodRows)
     for (let i = pier[0]; i <= pier[1]; i += 7) {
       const p = path[i];
       for (const s of [-1, 1]) {
         const x = Math.round(p.x + nrm[i].x * s * (PIER.half + 2)), y = Math.round(p.y + nrm[i].y * s * (PIER.half + 2));
-        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (x + dx >= 0 && y + dy >= 0 && x + dx < MW && y + dy < MH) set((y + dy) * MW + x + dx, dy === -1 && dx === 0 ? [138, 100, 64] : [59, 37, 18]);
+        piles.push([x, y]);
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (x + dx >= 0 && y + dy >= 0 && x + dx < MW && y + dy < MH) set((y + dy) * MW + x + dx, dy === -1 && dx === 0 ? PILE[0] : PILE[1]);
       }
     }
   }
@@ -997,6 +1006,7 @@ function* buildTrack(def, ti) {
       }
     });
     scatter(7, 8, (x, y) => critters.push({ type: 'crab', x, y, ph: r() * TAU, range: 8 + r() * 18 }));
+    if (decorMap && map === decorMap) special[decorMap.flag] = yield* decorMap.paint({ MW, MH, def, d, set, setT, ter, dist, walls, wallMask, RT });
   } else if (th.decor === 'garten') {
     const rc = (x0, y0, w, h, c) => { for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) setT(x0 + xx, y0 + yy, c); };
     const GR = ['#2f6b3a', '#3f8a47', '#58a85a', '#e8a6c0', '#ffffff'].map(hex);
@@ -1139,7 +1149,7 @@ function* buildTrack(def, ti) {
   const wp = path[wi], solid = trees.concat(walls);
   return { W: MW, H: MH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: solid, grid: obstacleGrid(solid, MW, MH), critters, windmill, shoreY, boat: { x: 60 }, base, top, mudPix, watPix, starPix, rail,
     grow: growing.length ? { sd, at: def.grow, patches: growing } : null,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hoses, tight, ...special,
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, piles, stone: stoneMask, bridges, lights, mixer, cemPix, hoses, tight, ...special,
     // Cup 3 building blocks (see trackfx.js): ramps to jump from, stretches that push the cars, where a second way runs beside the road
     jumps: (decorMap && special[decorMap.flag] || {}).jumps || ramps, pushes: (decorMap && special[decorMap.flag] || {}).pushes || [], alt: (decorMap && special[decorMap.flag] || {}).alt || null };
 }

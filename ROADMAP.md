@@ -2,7 +2,7 @@
 
 Die eine Liste für alles, was am Spiel noch zu tun ist. Sie ersetzt `ANALYSE.md`, `VERBESSERUNGEN.md` und die Einzelmeldungen aus `feedback/`. Nichts davon existiert mehr gesondert; die alten Stände liegen in der Git-Historie (`git show 8fb323f:ANALYSE.md`).
 
-Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-21, Commit „WALD Rev 3“ (1S2-2 und 1S2-3 erledigt: kein Slalom nach dem Regen, Pfützen wachsen mit dem Regen); davor „Baustelle Rev 3“ (1S5-1 bis 3 erledigt, Startgerade); davor „Strand Rev 2“ (1S3-1 bis 3 erledigt, Start gerade, Dusche für 1A-2); davor „Wüste Rev 2“ (1S8-1 erledigt, 1S8-2 teilweise, 1S8-4 neu, 1A-2 und 1A-5 für die Wüste). Davor: Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
+Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-21, Commit „STRAND Rev 3“ (1S3-4 bis 7 erledigt: Dusche verschoben, Pfeiler bei Flut, Beachvolleyball-Abkürzung, Meer bremst mehr; 1S3-8 neu; Boden-Codes 50–52 vergeben, neue Strecken nehmen 60–69); davor „WALD Rev 3“ (1S2-2 und 1S2-3 erledigt: kein Slalom nach dem Regen, Pfützen wachsen mit dem Regen); davor „Baustelle Rev 3“ (1S5-1 bis 3 erledigt, Startgerade); davor „Strand Rev 2“ (1S3-1 bis 3 erledigt, Start gerade, Dusche für 1A-2); davor „Wüste Rev 2“ (1S8-1 erledigt, 1S8-2 teilweise, 1S8-4 neu, 1A-2 und 1A-5 für die Wüste). Davor: Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
 
 ## Die drei Phasen
 
@@ -44,7 +44,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 |---|---|---|---|---|---|
 | 1 | WIESE | 1 | 800×450 | umgesetzt (Rev 2) | offen (von Hand fahren, Lied anhören) |
 | 2 | WALD | 1 | 800×450 | umgesetzt (Rev 3: Pfützen wachsen mit dem Regen) | offen |
-| 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 2) | offen |
+| 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 3: Beachvolleyball-Abkürzung, Pfeiler bei Flut, Dusche vor der Ziellinie) | offen |
 | 4 | ZUG | 2 | 1120×630 | umgesetzt (Rev 1: größer, Sprungschanze, Zug öfter je Runde; im Spiel noch nicht abgenommen) | offen |
 | 5 | BAUSTELLE | 2 | 800×450 | umgesetzt (Rev 3: keine Pfützen, zwei Schläuche, Zementumfahrung, Erdhaufen auf der Fahrbahn, Startgerade) | offen |
 | 6 | GARTEN | 2 | 800×450 | umgesetzt (Rev 1: Startgerade, zweite Abkürzung, Koi-Ankündigung; im Spiel noch nicht abgenommen) | offen |
@@ -90,6 +90,11 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | 1S3-1 | M | erledigt (Rev 2: Matsch wie nasser Sand statt dunkler Klumpen) | Die Matschpfütze unter dem Auto wirkt kaum und sieht hässlich aus: Wirkung und Optik überarbeiten | Meldung STRAND 00:00:04 |
 | 1S3-2 | M | erledigt (Rev 2: Dusche wäscht etwa doppelt so lange, nur kleiner Spritzer beim Einfahren) | Duschen waschen nicht sofort, sondern mindestens 30 % länger (Teil von 1A-2) | Meldung STRAND 00:00:47 |
 | 1S3-3 | M | erledigt (Rev 2: Eckpfütze liegt im Trockenen, die kleine auf der gefluteten Gerade ist weg) | Der untere, geflutete Abschnitt: keine halb geflutete Matschpfütze (sieht schlecht aus), die Pfütze etwas höher setzen | Meldung STRAND 00:01:21 |
+| 1S3-4 | M | erledigt (Rev 3: die Dusche hinter der Ziellinie steht jetzt links davor an der oberen Geraden) | Die Dusche direkt hinter der Ziellinie verschieben (nach links an die obere Gerade) | Screenshot `STRAND_Improvements.jpg` |
+| 1S3-5 | H | erledigt (Rev 3: die Flut malt genau die Pfeiler des Stegs neu, die sie gerade überspült; Liste `T.piles`) | Die Holzpfeiler links und rechts vom Steg verschwinden bei steigendem Wasser | Meldung F8 2026-10-21 22:49 |
+| 1S3-6 | H | erledigt (Rev 3: keine Pfeiler mehr außerhalb des Stegs) | Bei voller Flut sammeln sich Holzpfeiler mitten in der ersten Kurve | Meldung F8 2026-10-21 22:50 |
+| 1S3-7 | M | erledigt (Rev 3: Beachvolleyballfeld statt der Lagune; schmale Sandspur mitten über das Feld als Abkürzung, Netz bremst einmal, der Ball trifft und schleudert, Schatten kündigt Schmetterbälle an; Meer und Flut bremsen etwas mehr; Computerautos nehmen die Abkürzung manchmal, öfter auf SCHWER und bei Flut; etwa gleich schnell wie außen herum) | Statt des unlogischen Sees ein Beachvolleyballfeld mit Abkürzung: Spieler, Netz bremst, Ball trifft beim Seitenwechsel; das Meer bremst etwas mehr | Idee F8 2026-10-21 22:51 |
+| 1S3-8 | N | offen | Die Ausfahrt der Volleyball-Abkürzung mündet in die Matschstelle der linken Kurve (gewollt als Preis der Abkürzung); beim Fahren von Hand prüfen, ob das zu hart ist, sonst die Matschstelle nach außen rücken | Rev 3 |
 
 ### 1S4 ZUG
 | ID | Prio | Status | Aufgabe | Herkunft |

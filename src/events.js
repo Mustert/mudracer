@@ -6,7 +6,7 @@ import { R1, disc, text } from './gfx.js';
 import { addP, drop, mudBurst, splash, WATC } from './particles.js';
 import { cam, onState } from './state.js';
 import { bctx, eventOn, snap } from './undo.js';
-import { PIER, PIER_WAVE, TRACKS, pierColor, tctx } from './tracks.js';
+import { PIER, PIER_WAVE, PILE, TRACKS, pierColor, tctx } from './tracks.js';
 import { drawMarshals, drawTyres, tyreCollisions, updateReifen } from './ring.js';
 import { TRACK_EVENTS, trackHooks } from './hooks.js';
 import { near } from './trackfx.js';
@@ -316,13 +316,10 @@ function paintFloodRows(T, f, yTop, yBot) {
     }
   }
   b.putImageData(img, 0, yTop);
-  // piles on both sides of the pier
-  for (let i = 0; i < T.N; i += 7) {
-    const p = T.path[i]; if (p.y < yTop || p.y > yBot || p.y < f.yf + WAVE(p.x) + 4) continue;
-    for (const s of [-1, 1]) {
-      const x = Math.round(p.x + T.nrm[i].x * s * (FLOOD.pier + 2)), y = Math.round(p.y + T.nrm[i].y * s * (FLOOD.pier + 2));
-      b.fillStyle = '#3b2512'; b.fillRect(x - 1, y - 1, 3, 3); b.fillStyle = '#8a6440'; b.fillRect(x, y - 1, 1, 1);
-    }
+  // the piles on both sides of the pier (the same ones as on the dry beach, tracks.js): painted again wherever the water just covered their rows
+  for (const [x, y] of T.piles || []) {
+    if (y + 1 < yTop || y - 1 > yBot || y + 1 < f.yf + WAVE(x)) continue;
+    b.fillStyle = `rgb(${PILE[1]})`; b.fillRect(x - 1, y - 1, 3, 3); b.fillStyle = `rgb(${PILE[0]})`; b.fillRect(x, y - 1, 1, 1);
   }
   tctx.clearRect(0, yTop, T.W, h); // tyre tracks and mud splashes are washed away
 }

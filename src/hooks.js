@@ -7,6 +7,7 @@ import { spaceHooks } from './space.js';
 import { suessHooks } from './suess.js';
 import { toyHooks } from './toys.js';
 import { rainbowHooks } from './rainbow.js';
+import { strandHooks } from './strand.js';
 
 // ---------- the special tracks: the flag in their TRACK_DEFS entry (desert: true ...) -> the hooks of their runtime module ----------
 // What each hook does and when it is called: _template.js. G.T.<flag> is what the map module built (tracks.js MAPS), a track has one flag at most.
@@ -15,7 +16,7 @@ import { rainbowHooks } from './rainbow.js';
 /** @typedef {import('./_template.js').TrackHooks} TrackHooks */
 
 /** @type {Record<string, TrackHooks>} */
-const HOOKS = { ring: ringHooks, desert: desertHooks, ice: iceHooks, volcano: volcanoHooks, jungle: jungleHooks, space: spaceHooks, suess: suessHooks, toys: toyHooks, rainbow: rainbowHooks };
+const HOOKS = { ring: ringHooks, desert: desertHooks, ice: iceHooks, volcano: volcanoHooks, jungle: jungleHooks, space: spaceHooks, suess: suessHooks, toys: toyHooks, rainbow: rainbowHooks, beach: strandHooks };
 const NONE = /** @type {TrackHooks} */ ({});
 
 /** @returns {TrackHooks} the hooks of track T (an empty object for the plain tracks) */
