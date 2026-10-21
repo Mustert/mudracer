@@ -200,8 +200,8 @@ Rev 2 (2026-10-21, aus den Meldungen vom 2026-10-17): Karte 800×560, Oase oben 
 
 | ID | Prio | Status | Aufgabe | Herkunft |
 |---|---|---|---|---|
-| 1P-1 | H | offen | **Ziel (E2, entschieden): flüssige 60 fps im Browser auf Mobilgerät und Desktop-PC; messen auf beiden.** Außerdem messen: Bauzeit je Strecke (Weltall 0,8 s, Süß 0,8 s, Regenbogen etwa 2 s), Speicher (Regenbogen zwei Überlagerungen je 4,7 MB), Größe von `dist/index.html`. Dev-Hilfe `mudracer.perf` | T18, T19, T23 |
-| 1P-2 | M | offen | **Rundenlänge (E2, entschieden):** je nach Schwierigkeit der Strecke zwischen 20 s (frühe Strecken) und 60–90 s (späte Strecken), steigend mit der Streckennummer. Aktuell liegen die Runden bei etwa 13–30 s (Wüste 13–16, Süß 21, Weltall und Regenbogen 25–30, Spielzimmer 26–28); Wiese bis Strand, Zug bis Garten und die Prototypen 7–11 sind zu messen. Zu kurze Runden verlängern (Wüste, Eis …), zu lange kürzen. Die Länge je Strecke steht in der Tabelle „Strecken im Überblick“ | T18 |
+| 1P-1 | H | offen | **Ziel (E2, entschieden): flüssige 60 fps im Browser auf Mobilgerät und Desktop-PC; messen auf beiden.** Ladezeit-Ziel: Bau einer Strecke im Hintergrund unter 1 s. Außerdem messen: Bauzeit je Strecke (Weltall 0,8 s, Süß 0,8 s, Regenbogen etwa 2 s), Speicher (Regenbogen zwei Überlagerungen je 4,7 MB), Größe von `dist/index.html`. Dev-Hilfe `mudracer.perf` | T18, T19, T23 |
+| 1P-2 | M | offen | **Rundenlänge (E2, entschieden):** je nach Schwierigkeit der Strecke zwischen 20 s (frühe Strecken) und 60–90 s (späte Strecken), steigend mit der Streckennummer. Gemessen wird erst später (Nutzer, 2026-10-21), nicht jetzt. Bekannte Werte aus früheren Prüfungen: Wüste 13–16 s, Süß 21, Weltall und Regenbogen 25–30, Spielzimmer 26–28. Zu kurze Runden verlängern (Wüste, Eis …), zu lange kürzen. Die Länge je Strecke steht in der Tabelle „Strecken im Überblick“ | T18 |
 | 1P-3 | M | offen | Regenbogen: Überlagerungen nur für die Straßen-Rechtecke halten; Schleifen über alle Pixel in `rainbowTerrain` beschleunigen | T23 |
 | 1P-4 | N | offen | Reifenspuren landen jedes Frame auf einer dauerhaften Ebene: Deckung begrenzen, damit sie nicht zum dunklen Band wird (auch Optik, siehe 3E-6) | G6 |
 
@@ -367,7 +367,7 @@ Diese Punkte entscheidet der Nutzer, bevor die Phase beginnt oder der betroffene
 | ID | Phase | Frage | Empfehlung |
 |---|---|---|---|
 | E1 | 2 (Beginn) | Wie schalten sich Cups und Strecken untereinander frei? (Cup n+1 nach Cup n? Einzelstrecke/Zeitfahren erst, wenn die Strecke im Grand Prix gefahren wurde? Gilt jede Stufe, oder reicht LEICHT?) | Cups der Reihe nach (Cup n+1 nach erstem Sieg von Cup n auf beliebiger Stufe), Strecken in Einzelstrecke und Zeitfahren offen, sobald der Cup freigeschaltet ist; Kindermodus öffnet alles |
-| E2 | 1 | **Entschieden (2026-10-21):** flüssige 60 fps im Browser auf Mobil und Desktop-PC; Rundenlänge je nach Schwierigkeit der Strecke zwischen 20 s und 60–90 s. Offen bleibt nur die Ladezeit (Vorschlag: Bau einer Strecke unter 1 s im Hintergrund) | – |
+| E2 | 1 | **Entschieden (2026-10-21):** flüssige 60 fps im Browser auf Mobil und Desktop-PC; Rundenlänge je nach Schwierigkeit der Strecke zwischen 20 s und 60–90 s. Ladezeit: der Bau einer Strecke dauert im Hintergrund unter 1 s (Regenbogen mit etwa 2 s liegt noch darüber, 1P-3). Damit ist E2 vollständig entschieden | – |
 | E3 | 2 | Wie viele spielbare Autos? Heute 10 spielbar und 7 Füllautos. Das Startgitter fasst 10 Autos | 10 bis 14: die Füllautos werden nicht alle ausgebaut; Gegner kommen aus den spielbaren |
 | E4 | 2 | Gibt es Drift/Handbremse mit Mini-Boost (I6)? | Nein im ersten Schritt; zuerst Masse, Grip, Radius; Drift später, falls es sich anbietet |
 | E5 | 2 | Welche Anpassungen: Aufkleber, Felgen, Spoiler, Hupe, Startnummer, Spur-Effekt, Fahrer? Upgrades (Variante A) ja oder nein? | Nur kosmetisch (Farben, Aufkleber, Felgen, Hupen, Spur-Effekt), keine Upgrades |
