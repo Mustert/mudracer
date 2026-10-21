@@ -107,8 +107,10 @@ const TRACK_DEFS = [
     // rev 2: the start moved up the straight on the left (the grid stands straight); mud and puddles sit on the inside of the bends (the short line),
     // the outside stays clean (the long line): [t, offset from the centre line (+ = inside), half length, half width]
     mud: [[.097, 16, 52, 19], [.418, 16, 58, 19], [.661, 15, 48, 18]], water: [[.253, -14, 34, 19], [.525, 17, 40, 19], [.778, 14, 32, 18]], ponds: [[400, 226, 46, 26]], wash: .865 },
-  { name: 'WALD', rev: 2, events: ['regen'], theme: 'wald', song: 'forest', wallStyle: 'logs', wall: [{ x: 410, y: 248, ang: 0 }], pts: S2([[58.6, 80], [59.4, 66], [72, 48], [150, 42], [205, 98], [262, 42], [345, 58], [360, 150], [292, 192], [205, 150], [125, 193], [80, 214], [50, 206], [52.5, 170], [54.5, 140], [56.1, 116], [57.6, 94]]),
-    mud: B2([[.1, 0, 18, 18], [.35, 0, 15, 18], [.55, 5, 12, 12], [.76, 0, 20, 18]]), water: B2([[.22, -5, 10, 9], [.64, 0, 14, 18], [.86, 4, 10, 8]]), ponds: [], wash: .94 },
+  // rev 3: mud on the top left and top right only on the outer side (on the inside the line stays clean), the mud on the lower left only on
+  // the lower edge; mud and puddles are half full (grow: half the area) until the rain fills them up (events.js growPuddles)
+  { name: 'WALD', rev: 3, grow: .5, events: ['regen'], theme: 'wald', song: 'forest', wallStyle: 'logs', wall: [{ x: 410, y: 248, ang: 0 }], pts: S2([[58.6, 80], [59.4, 66], [72, 48], [150, 42], [205, 98], [262, 42], [345, 58], [360, 150], [292, 192], [205, 150], [125, 193], [80, 214], [50, 206], [52.5, 170], [54.5, 140], [56.1, 116], [57.6, 94]]),
+    mud: B2([[.104, -7, 14, 10], [.35, -8, 15, 9], [.55, 5, 12, 12], [.754, -10, 13, 8]]), water: B2([[.22, -5, 10, 9], [.64, 0, 14, 18], [.86, 4, 10, 8]]), ponds: [], wash: .94 },
   // Revision 2: the start line moved to the long straight on top (the grid stands straight; the control points are rotated, the t values moved by -.327),
   // the big mud on the right corner sits higher (the flood line cut it in half), the small mud on the flooded lower road moved to the left bend,
   // the mud looks like wet sand, the showers wash more slowly (update.js).
@@ -469,15 +471,22 @@ function* buildTrack(def, ti) {
     shoreY[x] = 412 + Math.sin(x / 40) * 5 + Math.sin(x / 13) * 2;
     for (let y = Math.ceil(shoreY[x]); y < MH; y++) { ter[y * MW + x] = 3; sea[y * MW + x] = 1; }
   }
-  const stamp = (cx, cy, tg, nm, rx, ry, type) => {
-    const R = Math.ceil(Math.max(rx, ry) * 1.25) + 2;
+  // grow (def.grow, the Wald): mud and puddles are only stamped up to that share of their size (q = 0 middle .. 1 rim; .5 = half the area),
+  // all their pixels are kept with q, and the rain fills the rest (events.js growPuddles)
+  const growing = [];
+  const stamp = (cx, cy, tg, nm, rx, ry, type, grow) => {
+    const R = Math.ceil(Math.max(rx, ry) * 1.25) + 2, g = grow ? { type, px: [], q: [] } : null;
     for (let y = Math.max(0, Math.floor(cy - R)); y <= Math.min(MH - 1, cy + R); y++)
       for (let x = Math.max(0, Math.floor(cx - R)); x <= Math.min(MW - 1, cx + R); x++) {
         const dx = x + .5 - cx, dy = y + .5 - cy, a = dx * tg.x + dy * tg.y, c = dx * nm.x + dy * nm.y;
-        if ((a / rx) ** 2 + (c / ry) ** 2 < .8 + .4 * vnoise(x * .14, y * .14, sd + type)) ter[y * MW + x] = type;
+        const q = ((a / rx) ** 2 + (c / ry) ** 2) / (.8 + .4 * vnoise(x * .14, y * .14, sd + type));
+        if (q >= 1) continue;
+        if (g) { g.px.push(y * MW + x); g.q.push(q); if (q >= grow) continue; }
+        ter[y * MW + x] = type;
       }
+    if (g) growing.push(g);
   };
-  const onPath = (t, off, rx, ry, type) => { const i = Math.floor(t * N) % N, p = path[i]; stamp(p.x + nrm[i].x * off, p.y + nrm[i].y * off, tan[i], nrm[i], rx, ry, type); };
+  const onPath = (t, off, rx, ry, type) => { const i = Math.floor(t * N) % N, p = path[i]; stamp(p.x + nrm[i].x * off, p.y + nrm[i].y * off, tan[i], nrm[i], rx, ry, type, def.grow); };
   // deep water (type 5): rivers, pools and lakes next to the road. A road over it stays road = a bridge. Stepping stones are road again.
   const deep = new Uint8Array(A), stoneMask = new Uint8Array(A), bridgeMask = new Uint8Array(A), isBridge = new Uint8Array(N), bridges = [];
   const capsule = (c0, c1) => {
@@ -509,9 +518,9 @@ function* buildTrack(def, ti) {
   def.water.forEach(m => onPath(m[0], m[1], m[2], m[3], 3));
   def.ponds.forEach(p => stamp(p[0], p[1], { x: 1, y: 0 }, { x: 0, y: 1 }, p[2], p[3], 3));
   // puddles at fixed places: the direction of the road is taken from the nearest point of the centre line
-  const stampAt = (m, type) => { const i = nearestIdx(path, m[0], m[1]); stamp(m[0], m[1], tan[i], nrm[i], m[2], m[3], type); };
-  (def.mudAt || []).forEach(m => stampAt(m, 2));
-  (def.waterAt || []).forEach(m => stampAt(m, 3));
+  const stampAt = (m, type, grow) => { const i = nearestIdx(path, m[0], m[1]); stamp(m[0], m[1], tan[i], nrm[i], m[2], m[3], type, grow); };
+  (def.mudAt || []).forEach(m => stampAt(m, 2, def.grow));
+  (def.waterAt || []).forEach(m => stampAt(m, 3, def.grow));
   (def.cement || []).forEach(m => stampAt(m, 6));
   const showers = (def.showers || []).map(([t, off]) => {
     const i = Math.floor(t * N) % N, p = path[i], x = p.x + nrm[i].x * off, y = p.y + nrm[i].y * off, s = Math.sign(off) || 1;
@@ -1129,6 +1138,7 @@ function* buildTrack(def, ti) {
   const top = toCanvas(outlineImg(new ImageData(tp, MW, MH), MW, MH, C[3]));
   const wp = path[wi], solid = trees.concat(walls);
   return { W: MW, H: MH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: solid, grid: obstacleGrid(solid, MW, MH), critters, windmill, shoreY, boat: { x: 60 }, base, top, mudPix, watPix, starPix, rail,
+    grow: growing.length ? { sd, at: def.grow, patches: growing } : null,
     washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hoses, tight, ...special,
     // Cup 3 building blocks (see trackfx.js): ramps to jump from, stretches that push the cars, where a second way runs beside the road
     jumps: (decorMap && special[decorMap.flag] || {}).jumps || ramps, pushes: (decorMap && special[decorMap.flag] || {}).pushes || [], alt: (decorMap && special[decorMap.flag] || {}).alt || null };

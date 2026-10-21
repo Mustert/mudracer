@@ -2,7 +2,7 @@
 
 Die eine Liste für alles, was am Spiel noch zu tun ist. Sie ersetzt `ANALYSE.md`, `VERBESSERUNGEN.md` und die Einzelmeldungen aus `feedback/`. Nichts davon existiert mehr gesondert; die alten Stände liegen in der Git-Historie (`git show 8fb323f:ANALYSE.md`).
 
-Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-21, Commit „Baustelle Rev 3“ (1S5-1 bis 3 erledigt, Startgerade); davor „Strand Rev 2“ (1S3-1 bis 3 erledigt, Start gerade, Dusche für 1A-2); davor „Wüste Rev 2“ (1S8-1 erledigt, 1S8-2 teilweise, 1S8-4 neu, 1A-2 und 1A-5 für die Wüste). Davor: Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
+Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-21, Commit „WALD Rev 3“ (1S2-2 und 1S2-3 erledigt: kein Slalom nach dem Regen, Pfützen wachsen mit dem Regen); davor „Baustelle Rev 3“ (1S5-1 bis 3 erledigt, Startgerade); davor „Strand Rev 2“ (1S3-1 bis 3 erledigt, Start gerade, Dusche für 1A-2); davor „Wüste Rev 2“ (1S8-1 erledigt, 1S8-2 teilweise, 1S8-4 neu, 1A-2 und 1A-5 für die Wüste). Davor: Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
 
 ## Die drei Phasen
 
@@ -43,7 +43,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | Nr | Strecke | Cup | Größe | Stand | Abnahme |
 |---|---|---|---|---|---|
 | 1 | WIESE | 1 | 800×450 | umgesetzt (Rev 2) | offen (von Hand fahren, Lied anhören) |
-| 2 | WALD | 1 | 800×450 | umgesetzt | offen |
+| 2 | WALD | 1 | 800×450 | umgesetzt (Rev 3: Pfützen wachsen mit dem Regen) | offen |
 | 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 2) | offen |
 | 4 | ZUG | 2 | 1120×630 | umgesetzt (Rev 1: größer, Sprungschanze, Zug öfter je Runde; im Spiel noch nicht abgenommen) | offen |
 | 5 | BAUSTELLE | 2 | 800×450 | umgesetzt (Rev 3: keine Pfützen, zwei Schläuche, Zementumfahrung, Erdhaufen auf der Fahrbahn, Startgerade) | offen |
@@ -81,6 +81,8 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | ID | Prio | Status | Aufgabe | Herkunft |
 |---|---|---|---|---|
 | 1S2-1 | M | erledigt (Rev 2: Schleier 50 %, Vignette .28, Matsch mit hellem Rand und Glanz) | Nachtschleier 64 % und Vignette: dunkler Matsch auf brauner Straße kaum lesbar; Matsch mit hellem Rand/Glanz, Schleier etwa 50 % | G7 |
+| 1S2-2 | M | erledigt (Rev 3: Matsch oben links/rechts nur außen, unten links nur am unteren Rand; zwei Löcher auf die Ideallinie; check LEICHT/MITTEL/SCHWER sauber) | Nach dem Regen fährt man Slalom: Matsch oben links (Anfang und Innenseite) und oben rechts (Innenseite) verkleinern, unten links den markierten Teil weg, die Löcher in der Mitte unten und auf der Startgeraden auf die Ideallinie | Screenshot WALD_Improvements |
+| 1S2-3 | M | erledigt (Rev 3: `grow: .5` in `TRACK_DEFS`, `growPuddles` in `events.js`; ohne Regen bleiben sie halb) | Alle Matsch- und Wasserpfützen sind bis zum Regen nur halb gefüllt und wachsen mit dem Regen auf ihre volle Größe | Wunsch Nutzer 2026-10-21 |
 
 ### 1S3 STRAND
 | ID | Prio | Status | Aufgabe | Herkunft |

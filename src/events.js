@@ -147,8 +147,9 @@ function drawCow(w) {
 
 // ======================================================= Wald: holes that the rain fills with mud
 
-// the dark holes as marked on the map (x, y, radius); they are moved onto the road if they lie beside it
-const HOLES = [[193, 94, 7], [534, 98, 6], [713, 156, 6], [381, 299, 9], [728, 311, 6], [89, 331, 6], [235, 384, 7]];
+// the dark holes as marked on the map (x, y, radius); they are moved onto the road if they lie beside it.
+// Rev 3: the one in the lower middle lies on the inner edge of the hump, the one on the start straight on the right half (both on the ideal line)
+const HOLES = [[193, 94, 7], [534, 98, 6], [713, 156, 6], [390, 319, 9], [728, 311, 6], [116, 331, 6], [235, 384, 7]];
 
 function paintHole(T, h) {
   blob(T, h.x, h.y, h.r, h.r * .85, 31, rel => rel > .8 ? hex('#7a5a3a') : rel > .55 ? hex('#3b2512') : hex(hash(h.x + rel * 50 | 0, h.y, 4) < .2 ? '#2c1a0d' : '#1d1209'));
@@ -191,7 +192,75 @@ function updateRain(T, dt) {
   r.t += dt;
   if ((r.snd -= dt) <= 0) { r.snd = 7; SFX.rain(); }
   ev.holes.forEach((h, k) => { if (!h.filled && r.t > 1.3 + k * .55) { h.filled = true; fillHole(T, h); } });
+  growPuddles(T, r);
 }
+
+// The mud and the puddles are only half full until the rain comes (tracks.js def.grow): one after the other they spread to their full size
+// within a few seconds. The rim is painted again on every step, the same way the ground was painted (tracks.js buildTrack).
+const GROW = { start: 1, gap: .45, dur: 3.5, step: .12 };
+
+function growPuddles(T, r) {
+  const gw = T.grow; if (!gw) return;
+  const th = T.th, sd = gw.sd, W = T.W, H = T.H, ter = T.ter;
+  // (how far each patch is lives in the rain of this race: the undo puts the half full patches back for the next race)
+  const st = r.grow || (r.grow = gw.patches.map(() => ({ last: -1, done: false })));
+  gw.patches.forEach((p, k) => {
+    const f = clamp((r.t - GROW.start - k * GROW.gap) / GROW.dur, 0, 1), s = st[k];
+    if (f <= 0 || s.done || (f < 1 && s.last >= 0 && r.t - s.last < GROW.step)) return;
+    const lim = gw.at + (1 - gw.at) * f, M = p.type === 3 ? 4 : 1;
+    if (!p.box) {
+      let x0 = W, y0 = H, x1 = 0, y1 = 0;
+      for (const j of p.px) { const x = j % W, y = (j / W) | 0; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+      p.box = [clamp(x0 - M, 0, W - 1), clamp(y0 - M, 0, H - 1), clamp(x1 + M, 0, W - 1), clamp(y1 + M, 0, H - 1)];
+    }
+    if (s.last < 0) snap(T, p.box[0], p.box[1], p.box[2] - p.box[0] + 1, p.box[3] - p.box[1] + 1);
+    s.last = r.t;
+    const fresh = [];
+    p.px.forEach((j, n) => { if (p.q[n] < lim && (ter[j] === 0 || ter[j] === 1)) { ter[j] = p.type; fresh.push(j); } });
+    if (p.type === 2) T.mudPix = T.mudPix.concat(fresh); else T.watPix = T.watPix.concat(fresh);
+    paintPatch(T, p, th, sd);
+    if (f >= 1) s.done = true;
+  });
+}
+
+// the colours of the ground painting for mud (2) and puddles (3) inside the box of a patch, with the bank around a puddle
+function paintPatch(T, p, th, sd) {
+  const W = T.W, H = T.H, ter = T.ter, [x0, y0, x1, y1] = p.box, w = x1 - x0 + 1, h = y1 - y0 + 1;
+  const b = bctx(T), img = b.getImageData(x0, y0, w, h), d = img.data, mine = new Set(p.px);
+  const ed = (x, y, type, mr) => {
+    for (let rr = 1; rr <= mr; rr++) for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== rr) continue;
+      const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+      if (ter[yy * W + xx] !== type) return rr;
+    }
+    return mr + 1;
+  };
+  const wetNear = (x, y) => {
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
+      const xx = x + dx, yy = y + dy, k = yy * W + xx;
+      if (dx * dx + dy * dy <= 10 && xx >= 0 && yy >= 0 && xx < W && yy < H && ter[k] === 3 && mine.has(k)) return true;
+    }
+    return false;
+  };
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const j = y * W + x, t = ter[j], nv = vnoise(x / 9, y / 9, sd), hh = hash(x, y, sd);
+    let col = null;
+    if (t === p.type && mine.has(j)) {
+      if (t === 2) {
+        const e = ed(x, y, 2, 1), v = nv * .6 + hh * .4;
+        col = e === 1 ? th.mudEdge : hh < .025 ? th.mudHi : th.mud[v < .38 ? 1 : v > .66 ? 2 : 0];
+      } else {
+        const e = ed(x, y, 3, 4);
+        col = th.water[e === 1 ? 0 : e <= 3 ? 1 : nv > .55 ? 3 : 2];
+        if (th.leafWater && e > 2 && hash(x, y, sd + 5) < .012) { const c = [[224, 138, 44], [217, 180, 58], [181, 86, 42]][(hh * 3) | 0]; set(d, (y - y0) * w + x - x0, c); continue; }
+      }
+    } else if (p.type === 3 && t !== 3 && t !== 5 && wetNear(x, y)) col = th.shore[hh < .5 ? 0 : 1];
+    if (col) set(d, (y - y0) * w + x - x0, hex(col));
+  }
+  b.putImageData(img, x0, y0);
+}
+
+const set = (d, n, c) => { d[n * 4] = c[0]; d[n * 4 + 1] = c[1]; d[n * 4 + 2] = c[2]; d[n * 4 + 3] = 255; };
 
 export function drawRain() {
   const ev = G.T.ev, r = ev && ev.rain; if (!r) return;

@@ -49,7 +49,10 @@ Streckenereignis **Regen** (`regen`):
 - Von Anfang an liegen sieben dunkle Löcher auf der Strecke, an den markierten Stellen. Sie sind nur ein Hinweis und bremsen nicht.
 - Sobald du in Runde 2 gehst, setzen Donner und Regen ein. Nacheinander füllen sich die Löcher mit Schlamm (wirklicher Schlamm: bremst, macht dreckig).
 - Der Regen setzt langsam ein und dauert bis zum Ende des Rennens, ebenso das Rauschen.
+- Seit Rev 3 sind alle Matschflecken und Wasserpfützen bis zum Regen nur halb gefüllt (halbe Fläche). Mit dem Regen wachsen sie nacheinander innerhalb weniger Sekunden auf ihre volle Größe. Ohne Regen (Ereignis aus) bleiben sie halb. ✅ umgesetzt (WALD Rev 3, ROADMAP 1S2-3)
 ![[Wald Regen.jpg]]
+
+Rev 3 (Wunsch aus `Screenshots/WALD_Improvements.jpg`, nach dem Regen kein Slalom mehr): Matsch oben links und oben rechts nur noch an der Außenseite (innen bleibt die Linie sauber, oben links auch der Anfang weg), Matsch unten links nur noch am unteren Rand, das Loch in der Mitte unten liegt am Innenrand des Buckels, das Loch auf der Startgeraden auf der rechten Hälfte (beide auf der Ideallinie). ✅ umgesetzt (WALD Rev 3, ROADMAP 1S2-2)
 
 Offen: nichts aus der Änderungsliste. Die Auswahl- und Vorschaubilder zeigen die Strecke noch hell.
 
