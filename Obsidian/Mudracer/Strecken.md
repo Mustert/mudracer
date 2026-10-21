@@ -52,7 +52,7 @@ Streckenereignis **Regen** (`regen`):
 Offen: nichts aus der Änderungsliste. Die Auswahl- und Vorschaubilder zeigen die Strecke noch hell.
 
 ## 3. Strand
-Status: **umgesetzt** (Strandduschen, Flut)
+Status: **umgesetzt** (Strandduschen, Flut), Rev 2 (2026-10-21): Start auf der geraden Oberkante (5° statt 101°, Strecke oben geradegezogen, Rundenrichtung gleich), Matsch wie nasser Sand, die Eckpfütze rechts liegt im Trockenen und die kleine Pfütze auf der gefluteten Gerade ist weg (drei statt vier Pfützen), die Duschen waschen etwa doppelt so lange. Rekorde starten neu (`-r2`).
 
 Vorher (die roten Linien zeigen, wo der Steg bleiben soll):
 ![[Pasted image 20261006220122.png]]

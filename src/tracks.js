@@ -23,7 +23,7 @@ export const THEMES = {
   wiese:  { ...MUDDY, grass: ['#63c24a', '#55b03e', '#74d05a'], grassEdge: '#4a9a36', tuft: '#3e8e2e', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#2f6d24', decor: 'wiese', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 26, fence: 'picket', ambient: 'butterfly' },
   gelaende: { ...MUDDY, grass: ['#6cbf4a', '#5eae3f', '#7ccc58'], grassEdge: '#4f9a36', tuft: '#468a30', track: ['#b98b58', '#aa7e4d', '#c79a66'], trackEdge: '#8a6440', trail: '#2f6d24', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], ambient: 'butterfly' },
   wald:   { ...MUDDY, water: ['#1f4a5e', '#2a6078', '#35708a', '#4f8ea6'], leafWater: true, dark: true, fence: 'log', ambient: 'firefly', grass: ['#3f8d3c', '#367c33', '#4a9c47'], grassEdge: '#2f6e2c', tuft: '#27612a', track: ['#a9815a', '#9b744f', '#b68e65'], trackEdge: '#7b583a', trail: '#1f4a1f', decor: 'wald', tree: 'pine', treeCol: ['#1b573a', '#277048', '#3d9160', '#0d2e1e'], trees: 170, treeGap: 17, treeEdge: true },
-  strand: { ...MUDDY, water: ['#1d8fb3', '#2bb3cc', '#48cfd9', '#8aeee6'], shore: ['#c9a060', '#bf9655'],
+  strand: { ...MUDDY, mud: ['#7d6038', '#6e522f', '#8b6c40'], mudEdge: '#5a4226', mudHi: '#b39566', mudP: ['#7d6038', '#8b6c40', '#6e522f', '#a58552'], water: ['#1d8fb3', '#2bb3cc', '#48cfd9', '#8aeee6'], shore: ['#c9a060', '#bf9655'],
     grass: ['#f3d995', '#ebcc81', '#f8e6b0'], grassEdge: '#dcb96c', tuft: '#e2c275', track: ['#bb8c5a', '#ae8050', '#c69864'], trackEdge: '#8f6a42', trail: '#b89656',
     decor: 'strand', tree: 'palm', treeCol: ['#2a8a3c', '#3cac4e', '#74d66c', '#18521f'], trees: 18, sea: true, fence: 'rope', ambient: 'gull' },
   garten: { ...MUDDY, water: ['#2a7184', '#34899b', '#43a0ae', '#7ccfd2'], shore: ['#8d8f86', '#777970'], grass: ['#6fb85a', '#62a84e', '#7ec766'], grassEdge: '#54944a', tuft: '#4d8a42',
@@ -107,10 +107,13 @@ const TRACK_DEFS = [
     mud: B2([[.14, 0, 16, 18], [.47, 5, 20, 18], [.72, -4, 14, 17]]), water: B2([[.3, -7, 11, 9], [.58, 0, 13, 18], [.84, 6, 9, 9]]), ponds: [[400, 226, 46, 26]], wash: .93 },
   { name: 'WALD', rev: 1, events: ['regen'], theme: 'wald', song: 'forest', wallStyle: 'logs', wall: [{ x: 410, y: 248, ang: 0 }], pts: S2([[60, 72], [150, 42], [205, 98], [262, 42], [345, 58], [360, 150], [292, 192], [205, 150], [125, 193], [48, 166]]),
     mud: B2([[.1, 0, 18, 18], [.35, 0, 15, 18], [.55, 5, 12, 12], [.76, 0, 20, 18]]), water: B2([[.22, -5, 10, 9], [.64, 0, 14, 18], [.86, 4, 10, 8]]), ponds: [], wash: .94 },
-  { name: 'STRAND', rev: 1, events: ['flut'], pier: true, theme: 'strand', song: 'beach', wallStyle: 'bar', wall: [{ x: 330, y: 190, ang: 0 }], pts: S2([[60, 105], [112, 48], [200, 62], [282, 40], [352, 78], [335, 152], [262, 135], [205, 178], [120, 184], [52, 160]]),
-    mud: B2([[.18, 0, 14, 18], [.5, 0, 18, 18], [.29, 4, 6, 7], [.78, -4, 6, 7]]), water: [], ponds: [[300, 240, 44, 26]], wash: null,
+  // Revision 2: the start line moved to the long straight on top (the grid stands straight; the control points are rotated, the t values moved by -.327),
+  // the big mud on the right corner sits higher (the flood line cut it in half), the small mud on the flooded lower road moved to the left bend,
+  // the mud looks like wet sand, the showers wash more slowly (update.js).
+  { name: 'STRAND', rev: 2, events: ['flut'], pier: true, theme: 'strand', song: 'beach', wallStyle: 'bar', wall: [{ x: 330, y: 190, ang: 0 }], pts: S2([[250, 50], [322, 52], [358, 96], [335, 152], [262, 135], [205, 178], [120, 184], [52, 160], [60, 105], [112, 52], [180, 50]]),
+    mud: B2([[.165, 0, 18, 18], [.72, 0, 14, 18], [.8, 4, 6, 7]]), water: [], ponds: [[300, 240, 44, 26]], wash: null,
     // small beach showers that run all the time, each one leaves a mini puddle (t along the track, offset from the centre line); none on the lower part that gets flooded
-    showers: [[.05, -15], [.25, 15], [.41, -15]] },
+    showers: [[.05, 15], [.105, -15], [.77, -15]] },
   { name: 'ZUG', seed: 4, events: ['zug'], theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 365, y: 190, ang: 0 }], tunnels: [{ x: 365, y: 190, hw: 117, portals: [300, 430] }], pts: [[120, 250], [140, 110], [260, 80], [430, 88], [600, 80], [700, 130], [710, 300], [640, 370], [430, 362], [250, 370], [140, 340]],
     mud: [[.13, 0, 28, 36], [.47, 0, 30, 36], [.63, 8, 22, 24]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36], [.86, 0, 22, 36]], ponds: [[560, 255, 40, 22]], rail: { x: 430, lines: [430, 300] }, wash: .94 },
   // The building site: the road is packed earth. Everything inside the ring road is yard (solid, see bau.js), the road narrows at barriers, a crane
