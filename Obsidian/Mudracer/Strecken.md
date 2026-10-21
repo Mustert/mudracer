@@ -129,6 +129,7 @@ Umsetzung (Abweichungen von der Skizze, weil die Welt 800x450 quer ist): Start l
 - Tiefes Wasser (Terrain 5): wer länger als 0,22 s darüber ist, fällt hinein, ist 1,4 s weg (Spritzer, Auto wird sauber), wird dann an der letzten sicheren Stelle der Strecke wieder abgesetzt, blinkt und ist 2,4 s durchlässig für andere Autos und Hindernisse. Trittsteine und Brücken sind normale Strecke.
 - Kois (`kois`): springen alle paar Sekunden über die drei Brücken und die beiden Stein-Abkürzungen (zeitabhängig, im Zeitfahren immer gleich). Wer unter einem fliegenden Koi steht, wird wie bei der Kuh weggeschleudert. Dazu schwimmen Kois im Teich und im See.
 - Optik: Kirschblütenbäume, Bonsais im Topf, Steinlaternen, drei große Pagoden, Lotusblätter, Bambuszaun; Kirschblüten wehen über die Karte, ab und zu schwebt eine Papierlaterne über die Strecke (rein optisch).
+- Rev 1 (Zeitfahr-Revision 1): Der Start liegt jetzt auf der rechten, geraden Seite (8° statt 180°), die Waschstelle ist weg (bei so vielen Pfützen braucht es keine Waschstraße), Matsch und Pfütze liegen nicht mehr übereinander. Jeder Koi-Sprung kündigt sich 0,6 s vorher mit Kreisen im Wasser an (groß am Absprung, klein an der Landung). Zweite Abkürzung: Trittsteine vom Teich neben der mittleren Brücke quer über den See zur Straße im Westen (kürzer, aber ein Koi springt darüber und daneben ist tiefes Wasser) ✅ umgesetzt (Garten Rev 1).
 - Musik `garden`: Pentatonik in D-Dur, Erhu (Melodie) und Yangqin (Arpeggio), leiser Bass, Holzblock, tiefe Trommel.
 
 Ursprüngliche Vorgabe:

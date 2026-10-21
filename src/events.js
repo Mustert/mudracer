@@ -284,16 +284,17 @@ function updateShowers(T, dt) {
 // ======================================================= Garten: leaping koi
 
 // [x, y, direction of the jump (the river's direction), half length, seconds between two jumps, offset]: bridges and stepping stones
-const KOIS = [[690, 303, 0, 54, 6.6, 1.2], [500, 403, Math.PI / 2, 54, 7.4, 3.3], [371, 352, 0, 46, 8.2, 5.1], [516, 80, Math.PI / 2, 46, 6.9, 2.4]];
-const KOI_DUR = 1.25;
+const KOIS = [[690, 303, 0, 54, 6.6, 1.2], [500, 403, Math.PI / 2, 54, 7.4, 3.3], [371, 352, 0, 56, 8.2, 5.1], [516, 80, Math.PI / 2, 46, 6.9, 2.4], [290, 375, Math.PI / 2, 26, 7.7, 4.2]];
+const KOI_DUR = 1.25, KOI_WARN = .6; // the water ripples this long before a koi leaps (principle 9)
 
-function initKois(T) { T.ev.kois = KOIS.map(([x, y, ang, half, per, off], k) => ({ x, y, ang, half, per, off, p: -1, px: x, py: y, z: 0, k })); }
+function initKois(T) { T.ev.kois = KOIS.map(([x, y, ang, half, per, off], k) => ({ x, y, ang, half, per, off, p: -1, warn: -1, px: x, py: y, z: 0, k })); }
 
 // the position depends only on the race time: in the time trial every try meets the koi at the same moment
 function updateKois(T, dt) {
   for (const f of T.ev.kois) {
     const tt = (T.ev.t + f.off) % f.per, p = tt / KOI_DUR, was = f.p;
     f.p = p < 1 ? p : -1;
+    f.warn = f.p < 0 && tt > f.per - KOI_WARN ? (tt - (f.per - KOI_WARN)) / KOI_WARN : -1;
     if (f.p < 0) { if (was >= 0) splashAt(f, 1); continue; }
     const u = -f.half + 2 * f.half * f.p;
     f.px = f.x + Math.cos(f.ang) * u; f.py = f.y + Math.sin(f.ang) * u; f.z = Math.sin(Math.PI * f.p) * 18;
@@ -335,7 +336,22 @@ function koiCollisions() {
   }
 }
 
+// rings spreading on the water where the koi will come out, smaller ones where it will land: it leaps about half a second later
+function drawKoiWarning(f) {
+  ctx.save(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
+  for (const [end, size] of [[-1, 1], [1, .6]]) {
+    const x = Math.round(f.x + Math.cos(f.ang) * f.half * end), y = Math.round(f.y + Math.sin(f.ang) * f.half * end);
+    for (let k = 0; k < 2; k++) {
+      const q = (f.warn + k * .5) % 1;
+      ctx.globalAlpha = (1 - q) * .85;
+      ctx.beginPath(); ctx.ellipse(x, y, (3 + q * 10) * size + 2, (1.5 + q * 5) * size + 1, 0, 0, TAU); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 function drawKoi(f) {
+  if (f.warn >= 0) drawKoiWarning(f);
   if (f.p < 0) return;
   const s = 1 + f.z / 40, x = Math.round(f.px), y = Math.round(f.py - f.z * .7), wag = Math.sin(G.time * 22 + f.k) * .35;
   ctx.globalAlpha = .28; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(Math.round(f.px + 4), Math.round(f.py + 5), 8, 3.5, f.ang, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;

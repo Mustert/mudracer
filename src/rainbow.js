@@ -37,7 +37,7 @@ function initRainbow(T) {
   // the koi of the silver coin leap across the bridge, from the pond on one side to the other
   if (eventOn('kois') && def.pond) {
     const i = nearestIdx(T.path, def.pond[0], def.pond[1]), p = T.path[i], n = T.nrm[i];
-    ev.kois = [0, 1].map(k => ({ x: p.x + T.tan[i].x * (k ? 8 : -8), y: p.y + T.tan[i].y * (k ? 8 : -8), ang: Math.atan2(n.y, n.x) + (k ? Math.PI : 0), half: 44, per: 7.2 + k * 1.3, off: 2 + k * 3.1, p: -1, px: p.x, py: p.y, z: 0, k }));
+    ev.kois = [0, 1].map(k => ({ x: p.x + T.tan[i].x * (k ? 8 : -8), y: p.y + T.tan[i].y * (k ? 8 : -8), ang: Math.atan2(n.y, n.x) + (k ? Math.PI : 0), half: 44, per: 7.2 + k * 1.3, off: 2 + k * 3.1, p: -1, warn: -1, px: p.x, py: p.y, z: 0, k }));
   }
 }
 
