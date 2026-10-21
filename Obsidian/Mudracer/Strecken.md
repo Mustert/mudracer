@@ -41,7 +41,7 @@ Cup: Bronze (Cup 1)
 Musik: Waldabenteuer in a-Moll. Flöte über Marimba, dazu Toms, Rim und Shaker.
 
 Jetzt:
-Die ganze Strecke ist dunkel (blaue Dämmerung, gilt immer, ist kein Ereignis), und jedes Auto hat einen Scheinwerferkegel. Die Glühwürmchen leuchten über der Dunkelheit. Die Sonnenstrahlen gibt es im Dunkeln nicht mehr.
+Die ganze Strecke ist dunkel (blaue Dämmerung, gilt immer, ist kein Ereignis; Schleier seit Rev 2 nur noch 50 %, Vignette leichter; der Matsch hat einen hellen Rand und hellere Glanzpunkte, ✅ umgesetzt, ROADMAP 1S2-1; die Startaufstellung steht auf der langen Geraden links, Straße dreht sich auf 200 px nur um 7° statt 69°), und jedes Auto hat einen Scheinwerferkegel. Die Glühwürmchen leuchten über der Dunkelheit. Die Sonnenstrahlen gibt es im Dunkeln nicht mehr.
 ![[Wald Dunkel Loecher.jpg]]
 Streckenereignis **Regen** (`regen`):
 - Von Anfang an liegen sieben dunkle Löcher auf der Strecke, an den markierten Stellen. Sie sind nur ein Hinweis und bremsen nicht.
