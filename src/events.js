@@ -370,14 +370,15 @@ function initKipper(T) {
 const vol = (x, y) => clamp(1 - near(x, y) / 460, 0, 1);
 
 function paintPile(T, s, stage) {
-  const horiz = Math.abs(s.tg.x) > Math.abs(s.tg.y), cx = s.p.x + s.ox * (HALF + 11), cy = s.p.y + s.oy * (HALF + 11);
-  const along = [13, 17, 21][stage - 1] + s.piles % 2 * 2, across = [7, 10, 12][stage - 1];
+  // the heap grows into the road edge (its inner 14 px are mud: it slows, makes the car dirty, the computer cars steer around it)
+  const horiz = Math.abs(s.tg.x) > Math.abs(s.tg.y), cx = s.p.x + s.ox * (HALF + 3), cy = s.p.y + s.oy * (HALF + 3);
+  const along = [14, 19, 24][stage - 1] + s.piles % 2 * 2, across = [8, 12, 16][stage - 1];
   const rx = horiz ? along : across, ry = horiz ? across : along, S4 = SOIL.map(hex);
-  snap(T, cx - 28, cy - 28, 56, 56);
+  snap(T, cx - 40, cy - 40, 80, 80);
   blob(T, cx, cy, rx, ry, 61 + s.k * 7 + s.piles, (rel, x, y) => {
     const lit = ((x - cx) + (y - cy)) / (rx + ry), n = hash(x, y, 71);
     return rel > .84 ? S4[0] : n < .1 ? S4[0] : lit < -.12 ? (n > .85 ? S4[3] : S4[2]) : lit > .22 ? S4[1] : S4[2];
-  });
+  }, 2);
 }
 
 function updateKipper(T, dt) {
@@ -404,11 +405,11 @@ function updateKipper(T, dt) {
     // the cloud of earth: it grows, drifts across the road edge towards the middle and thins out
     const cu = u - DT.cloud0;
     if (cu >= 0 && cu < DT.cloud) {
-      const r = 16 + 30 * Math.min(1, cu / 2.2), a = clamp(cu / .7, 0, 1) * (1 - clamp((cu - 4.2) / 2.3, 0, 1));
-      s.cloud = { x: s.p.x + s.ox * (HALF + 2 - cu * 4.2) + s.tg.x * cu * 2, y: s.p.y + s.oy * (HALF + 2 - cu * 4.2) + s.tg.y * cu * 2, r, a };
+      const r = 20 + 36 * Math.min(1, cu / 2.2), a = clamp(cu / .7, 0, 1) * (1 - clamp((cu - 4.2) / 2.3, 0, 1));
+      s.cloud = { x: s.p.x + s.ox * (HALF + 2 - cu * 6) + s.tg.x * cu * 2, y: s.p.y + s.oy * (HALF + 2 - cu * 6) + s.tg.y * cu * 2, r, a };
       for (const c of G.cars) {
         if (c.fall > 0 || c.z > 0 || Math.hypot(c.x - s.cloud.x, c.y - s.cloud.y) > r * .95) continue;
-        c.dirt = Math.min(1, c.dirt + 1.1 * a * dt); c.mudTrail = Math.max(c.mudTrail, .8);
+        c.dirt = Math.min(1, c.dirt + 2.6 * a * dt); c.mudTrail = Math.max(c.mudTrail, 1.2);
       }
     } else s.cloud = null;
   }
@@ -426,6 +427,7 @@ function truckCollisions() {
         if (d >= mn || d === 0) continue;
         const nx = dx / d, ny = dy / d, vn = c.vx * nx + c.vy * ny;
         c.x = px + nx * mn; c.y = py + ny * mn;
+        c.dirt = Math.min(1, c.dirt + .12);
         if (vn < 0) { c.vx -= 1.5 * vn * nx; c.vy -= 1.5 * vn * ny; if (!c.ai && -vn > 35) SFX.bump(); }
       }
     }

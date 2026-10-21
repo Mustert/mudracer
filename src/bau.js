@@ -162,9 +162,9 @@ export function paintSite(S) {
 
   // ----- the water hose: a hydrant beside the outer edge of a curve sprays onto the road; driving through the spray washes the car
   // (also the cement off). It is on the outside of the curve, away from the ideal line, so a clean car costs a little time -----
-  let hose = null;
-  if (def.hose) {
-    const { x: hx, y: hy, r: hr, rx, ry } = def.hose, wet = [hex('#4f6e78'), hex('#5d7f86'), hex('#a9cdd3')];
+  const hoses = [];
+  for (const dh of def.hoses || []) {
+    const { x: hx, y: hy, r: hr, rx, ry } = dh, wet = [hex('#4f6e78'), hex('#5d7f86'), hex('#a9cdd3')];
     for (let yy = Math.floor(hy - hr - 2); yy <= hy + hr + 2; yy++) for (let xx = Math.floor(hx - hr - 2); xx <= hx + hr + 2; xx++) {
       if (xx < 0 || yy < 0 || xx >= MW || yy >= MH) continue;
       const dd = Math.hypot(xx + .5 - hx, yy + .5 - hy) + (hash(xx, yy, S.sd + 31) - .5) * 2.5, j = yy * MW + xx;
@@ -187,7 +187,7 @@ export function paintSite(S) {
     S.setT(rx, ry - 7, K.grey);
     // the nozzle
     for (let yy = -1; yy <= 1; yy++) for (let xx = -1; xx <= 1; xx++) S.setT(nx + xx, ny + yy, xx || yy ? K.greyD : K.grey);
-    hose = { x: hx, y: hy, r: hr, nx, ny };
+    hoses.push({ x: hx, y: hy, r: hr, nx, ny });
   }
 
   // ----- the big building (Rohbau): concrete slab, columns, lift shaft, stairs, safety rail -----
@@ -327,5 +327,5 @@ export function paintSite(S) {
       for (let s = 0; s <= n; s++) T(Math.round(hookX + (ex - hookX) * s / n), Math.round(hookY + (ey - hookY) * s / n), K.blk);
     }
   }
-  return { lights, mixer, hose, tight };
+  return { lights, mixer, hoses, tight };
 }
