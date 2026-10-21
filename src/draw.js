@@ -216,7 +216,7 @@ function drawMood() {
     }
     ctx.restore();
   }
-  if (!G.VIGNETTE) { G.VIGNETTE = ctx.createRadialGradient(VW / 2, VH / 2, VH * .45, VW / 2, VH / 2, VW * .62); G.VIGNETTE.addColorStop(0, 'rgba(10,25,15,0)'); G.VIGNETTE.addColorStop(1, 'rgba(10,25,15,.38)'); }
+  if (!G.VIGNETTE) { G.VIGNETTE = ctx.createRadialGradient(VW / 2, VH / 2, VH * .45, VW / 2, VH / 2, VW * .62); G.VIGNETTE.addColorStop(0, 'rgba(10,25,15,0)'); G.VIGNETTE.addColorStop(1, 'rgba(10,25,15,.28)'); }
   ctx.fillStyle = G.VIGNETTE; ctx.fillRect(0, 0, VW, VH);
 }
 

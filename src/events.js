@@ -560,7 +560,7 @@ const night = mk(VW, VH), nctx = night.getContext('2d');
 // the forest is dark: the picture gets a blue veil and every car cuts light cones out of it
 export function drawNight(cx, cy) {
   nctx.globalCompositeOperation = 'source-over'; nctx.clearRect(0, 0, VW, VH);
-  nctx.fillStyle = 'rgba(8,14,36,.64)'; nctx.fillRect(0, 0, VW, VH);
+  nctx.fillStyle = 'rgba(8,14,36,.5)'; nctx.fillRect(0, 0, VW, VH);
   nctx.globalCompositeOperation = 'destination-out';
   for (const c of G.cars) {
     const x = c.x - cx, y = c.y - cy;
