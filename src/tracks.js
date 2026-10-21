@@ -170,26 +170,31 @@ const TRACK_DEFS = [
     // scenery: stands [x, y, w, h, facing down 1 / up -1], team trucks [x, y, team], helipad, big screen, a flag mown into the grass, camera towers
     stands: [[405, 6, 168, 32, 1], [358, 410, 136, 36, -1]], heli: [530, 118], screen: [450, 58], flag: [575, 275, 56, 40], towers: [[268, 210], [380, 388]],
     trucks: [[230, 158, 0], [248, 158, 1], [266, 158, 2], [284, 158, 3], [302, 158, 4], [230, 262, 5], [248, 262, 6], [266, 262, 7], [284, 262, 1]] },
-  // The desert: a sand road with three dunes to jump over, through the big pyramid (a tunnel, dark inside), a slalom between cacti, the gorge
-  // (jump over it from the rocky ramp or take the slow swinging rope bridge beside it), quicksand, the oasis at the start (see desertmap.js, desert.js).
-  // oasis = [x, y, rx, ry] (the shallow rim reaches the road and washes, the deep middle is deep water); dunes = x of the crests on the top straight;
-  // pyramid = [x, y, half size]; cacti = [x, y] on the road; canyon = x, half width, from y, ramp lip x and its y range, rope bridge y (middle) and half width;
-  // quick = quicksand [x, y, r] (in a hollow of the dunes, a damp rim round it); drifts = where the sandstorm blows sand onto the road [x, y, r];
-  // minis = small pyramids [x, y, half size]; sphinx = [x, y]; ridges = chains of rock between the pyramids and the head of the gorge (the dunes
-  // in the middle are closed, nobody cuts through); heat = places over the road where the air flickers [x0, y0, x1, y1]
-  // Revision 1: the start line moved to the long straight on the left (the grid stands straight), the right side bends (the road follows the wadi),
-  // oasis in the top left corner, rock ridges through the middle, cacti on the road bigger than the ones beside it.
-  { name: 'WUESTE', rev: 1, seed: 8, theme: 'wueste', song: 'desert', events: ['sandsturm'], wall: [], wash: null, desert: true,
-    poly: [[70, 140, 0], [70, 70, 50], [680, 70, 45], [680, 175, 38], [640, 262, 42], [690, 390, 55], [70, 390, 20]],
+  // The desert: a sand road with three dunes to jump over, through the big pyramid (a long dark tunnel), past two cacti, the gorge (the short way
+  // is the jump from the rocky ramp, the safe long way dips down to the swinging rope bridge), quicksand beside the road, the oasis on a side
+  // path at the top (see desertmap.js, desert.js).
+  // oasis = pond [x, y, rx, ry], the side path through its shallow water (points, half width), a signpost at the turn-off [x, y]; dunes = x of the crests on the top straight (y);
+  // pyramid = [x, y, half size]; cacti = [x, y] on the road; canyon = x, half width, from y, y of the road over it, ramp lip x and its y range,
+  // rope bridge y (middle) and half width, the long way to it (points, half width); quick = quicksand [x, y, r] (its middle beside the road,
+  // it reaches over the edge and pulls you off); drifts = where the sandstorm blows sand onto the road [x, y, r]; minis = small pyramids
+  // [x, y, half size]; sphinx = [x, y]; ridges = rock ridges between the pyramids and the head of the gorge (the dunes in the middle are closed,
+  // nobody cuts through); heat = places over the road where the air flickers [x0, y0, x1, y1]
+  // Revision 1: the start line moved to the long straight on the left (the grid stands straight), the right side bends (the road follows the wadi).
+  // Revision 2: 110 px higher (the oasis on its own path at the top, the bridge on its own long way), the pyramid half as big again, quicksand
+  // beside the road, rock ridges instead of chains of boulders.
+  { name: 'WUESTE', rev: 2, seed: 8, H: 560, theme: 'wueste', song: 'desert', events: ['sandsturm'], wall: [], wash: null, desert: true,
+    poly: [[70, 190, 0], [70, 120, 50], [680, 120, 45], [680, 225, 38], [640, 312, 42], [690, 440, 55], [70, 440, 20]],
     mud: [], water: [], ponds: [],
-    oasis: [190, 150, 50, 34], dunes: [178, 268, 358], pyramid: [660, 86, 80],
-    cacti: [[681, 206], [636, 262], [674, 311]],
-    canyon: { x: 566, hw: 20, y0: 286, lip: 592, lane: [358, 396], bridge: 414, bh: 14 },
-    quick: [[452, 378, 21], [352, 402, 18], [262, 372, 22]],
-    drifts: [[70, 260, 13], [300, 66, 14], [520, 76, 13], [150, 392, 14]],
-    ridges: [[[205, 192], [240, 210], [272, 214]], [[328, 222], [380, 236], [432, 248]], [[476, 256], [520, 270], [546, 282]], [[466, 232], [515, 203], [556, 176], [580, 168]]],
-    heat: [[110, 44, 560, 96], [120, 364, 540, 416]],
-    minis: [[300, 230, 30], [452, 250, 22]], sphinx: [758, 300] },
+    oasis: { pond: [262, 44, 70, 26], path: [[150, 110, 0], [178, 58, 22], [348, 58, 22], [376, 110, 0]], half: 14, sign: [128, 79] },
+    dunes: [222, 302, 408], pyramid: [600, 150, 120],
+    cacti: [[644, 348], [680, 388]],
+    canyon: { x: 556, hw: 20, y0: 336, ym: 440, lip: 582, lane: [410, 470], bridge: 524, bh: 14,
+      path: [[664, 452, 0], [632, 524, 22], [488, 524, 22], [462, 452, 0]], half: 14 },
+    quick: [[396, 484, 28], [300, 396, 28], [188, 486, 30]],
+    drifts: [[88, 150, 12], [300, 118, 14], [150, 440, 13]],
+    ridges: [[[126, 232], [170, 252], [214, 258], [270, 270]], [[330, 274], [380, 288], [430, 300]], [[476, 306], [522, 322]], [[468, 284], [492, 266]]],
+    heat: [[110, 94, 470, 146], [120, 414, 520, 466]],
+    minis: [[300, 280, 30], [452, 300, 22]], sphinx: [760, 352] },
   // The ice: the ski jump (a boost pad on the run-up, about a second in the air), the bob run with springy walls and a hairpin, deep snow and the
   // penguins on the way down, the frozen lake (the road goes round it, the short cut across the thin ice cracks and breaks), a wooden bridge over
   // the glacier stream, then the icy run down to the line past the hot spring (see icemap.js, ice.js).

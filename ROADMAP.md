@@ -2,13 +2,13 @@
 
 Die eine Liste für alles, was am Spiel noch zu tun ist. Sie ersetzt `ANALYSE.md`, `VERBESSERUNGEN.md` und die Einzelmeldungen aus `feedback/`. Nichts davon existiert mehr gesondert; die alten Stände liegen in der Git-Historie (`git show 8fb323f:ANALYSE.md`).
 
-Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-21, Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
+Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-21, Commit „Wüste Rev 2“ (1S8-1 erledigt, 1S8-2 teilweise, 1S8-4 neu, 1A-2 und 1A-5 für die Wüste). Davor: Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
 
 ## Die drei Phasen
 
 | Phase | Name | Ziel in einem Satz | Stand |
 |---|---|---|---|
-| 1 | **Map_Pack** (Branch `map_pack`) | Alle 15 Strecken spielbar, überarbeitet und geprüft; alle 5 Cups und die Freischaltung der Strecken fertig; Performance reicht dafür | in Arbeit (2 von 15 Strecken überarbeitet, Wüste noch nicht committet) |
+| 1 | **Map_Pack** (Branch `map_pack`) | Alle 15 Strecken spielbar, überarbeitet und geprüft; alle 5 Cups und die Freischaltung der Strecken fertig; Performance reicht dafür | in Arbeit (2 von 15 Strecken überarbeitet, Wüste Rev 2 im Spiel noch nicht abgenommen) |
 | 2 | **Cars & Customizations** | Keine NPC-Autos mehr; mehr spielbare Autos mit spürbar anderer Handhabung; mehr freischaltbare Anpassungen; hinter jeder Stufe jedes Cups liegt etwas; Achievement-Übersicht | nicht begonnen |
 | 3 | **Game_Modes** | Vier Stufen LEICHT, MITTEL, SCHWER, PRO; alle Einstellungen ohne Überladung; Kindermodus verbessert; KI verhält sich auf jeder Strecke richtig und hat Charakter; das ganze Spiel ist poliert | nicht begonnen |
 | – | Nach dem Release | Große Ideen, die nicht zum Full Release gehören | ungeplant |
@@ -49,7 +49,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | 5 | BAUSTELLE | 2 | 800×450 | umgesetzt (Rev 2) | offen |
 | 6 | GARTEN | 2 | 800×450 | umgesetzt | offen |
 | 7 | RENNSTRECKE | 3 | 800×450 | Prototyp | offen |
-| 8 | WUESTE | 3 | 800×450 | überarbeitet (Rev 1 committet, Rev 2 im Arbeitsbaum, nicht committet) | offen |
+| 8 | WUESTE | 3 | 800×560 | überarbeitet (Rev 2) | offen |
 | 9 | EIS | 3 | 800×450 | überarbeitet (Rev 1) | offen |
 | 10 | VULKAN | 4 | 800×450 | Prototyp, Rework offen | offen |
 | 11 | DSCHUNGEL | 4 | 800×450 | Prototyp, Rework offen | offen |
@@ -63,10 +63,10 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | ID | Prio | Status | Aufgabe | Herkunft |
 |---|---|---|---|---|
 | 1A-1 | H | offen | **Matsch und Pfützen sind eine Entscheidung, kein Zwang.** Auf jeder Strecke gibt es an mehreren Stellen eine kürzere Linie durch Matsch gegen eine längere saubere Linie; nie ist alles unausweichlich, aber auch nie alles umfahrbar. Gemeinsamer Baustein, der Matsch, Sumpf, Asche, Tiefschnee und Treibsand vom Rand her in die Fahrbahn wachsen lässt (Stempel mitten auf der Fahrbahn vermeiden). Die Menge auf der Wiese bleibt ausdrücklich. Prüfung: `check` meldet Matschstellen, die nicht umfahrbar sind | D2, D9, Meldung 2026-10-16 WIESE |
-| 1A-2 | H | offen | **Ein verständliches Wasch-Konzept je Strecke:** genau eine Art, sauber zu werden (Dusche, Waschanlage, Box, Oase, Schlauchstelle), vorher erkennbar, wäscht nie sofort (Dauer/Grad je Strecke festlegen), die Computerautos nutzen sie nur, wenn sie dreckig sind, und eine Strecke mit sehr vielen Pfützen braucht keine zusätzliche Waschstraße. Einzelfälle: 1S3-2, 1S5-1, 1S6-2, 1S7-1, 1S8 | Meldungen STRAND, GARTEN, BAUSTELLE, RENNSTRECKE, WUESTE (2026-10-17) |
+| 1A-2 | H | teilweise (WÜSTE Rev 2: Oase an einem Nebenweg mit Schild, wäscht im flachen Wasser nach und nach, die KI fährt nur dreckig hin) | **Ein verständliches Wasch-Konzept je Strecke:** genau eine Art, sauber zu werden (Dusche, Waschanlage, Box, Oase, Schlauchstelle), vorher erkennbar, wäscht nie sofort (Dauer/Grad je Strecke festlegen), die Computerautos nutzen sie nur, wenn sie dreckig sind, und eine Strecke mit sehr vielen Pfützen braucht keine zusätzliche Waschstraße. Einzelfälle: 1S3-2, 1S5-1, 1S6-2, 1S7-1, 1S8 | Meldungen STRAND, GARTEN, BAUSTELLE, RENNSTRECKE, WUESTE (2026-10-17) |
 | 1A-3 | M | offen | **Gefahren kündigen sich an** (Grundsatz 9): Kois, Reifenwurf, jede Lawine/Bombe/Böe prüfen, ob Schatten, Blinken, Ton oder Text kommen. Prüfung in `check` oder im Skill `strecke` als Liste je Ereignis | M9, Meldungen GARTEN, RENNSTRECKE |
-| 1A-4 | H | offen | **Startaufstellung gerade** (Grundsatz 5) für alle Strecken, die noch in der Kurve starten (Wert in Grad bei 10 Autos): WIESE 109°, WALD 69°, STRAND 101°, ZUG 85°, BAUSTELLE 90°, GARTEN 180°, RENNSTRECKE 60°, VULKAN 90°, DSCHUNGEL 90°, SPIELZIMMER 90°. Gerade sind WÜSTE (Rev 1), EIS, WELTALL 2°, SUESS 7°, REGENBOGEN 2°. Jede neue Startlinie ist eine neue `rev` | D7 |
-| 1A-5 | M | offen | **Nichts darf die Ziellinie überdecken** (Eis: Schnee/Frost lag darüber). Prüfung in `check`: Ziellinie im letzten Rennbild sichtbar, auf jeder Strecke | Meldung EIS |
+| 1A-4 | H | offen | **Startaufstellung gerade** (Grundsatz 5) für alle Strecken, die noch in der Kurve starten (Wert in Grad bei 10 Autos): WIESE 109°, WALD 69°, STRAND 101°, ZUG 85°, BAUSTELLE 90°, GARTEN 180°, RENNSTRECKE 60°, VULKAN 90°, DSCHUNGEL 90°, SPIELZIMMER 90°. Gerade sind WÜSTE (Rev 2), EIS, WELTALL 2°, SUESS 7°, REGENBOGEN 2°. Jede neue Startlinie ist eine neue `rev` | D7 |
+| 1A-5 | M | teilweise (WÜSTE Rev 2: der Sandsturm spart die Ziellinie aus, keine Verwehung auf der Startaufstellung; Prüfung in `check` fehlt noch) | **Nichts darf die Ziellinie überdecken** (Eis: Schnee/Frost lag darüber). Prüfung in `check`: Ziellinie im letzten Rennbild sichtbar, auf jeder Strecke | Meldung EIS |
 | 1A-6 | M | offen | **Hindernis oder Deko?** Prüfen, dass jedes Hindernis auf der Fahrbahn klar anders aussieht als die Deko daneben und dass jedes Hindernis spürbar wirkt (Beispiele: Kipplaster-Erdhaufen, Matschpfütze am Strand) | Grundsatz 10, Meldungen BAUSTELLE, STRAND |
 | 1A-7 | N | offen | **Mehr als ein Kreis ab Strecke 5** (Grundsatz 6): bei jeder Abnahme für 5–15 ausdrücklich bestätigen; offen bei VULKAN (nur der Spieler nimmt den Geysir), DSCHUNGEL | Grundsatz 6, D19 |
 
@@ -115,13 +115,14 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | 1S7-2 | M | offen | Der erste Reifenwurf der Strecke kommt zu früh (Anfangsverzögerung des Ereignisses, 1A-3) | Meldung RENNSTRECKE 00:15:33 |
 
 ### 1S8 WUESTE
-Rev 2 aus dem Feedback vom 2026-10-17 liegt **ungespeichert im Arbeitsbaum** (`src/desert.js`, `desertmap.js`, `events.js`, `audio.js`, `music.js`, `tracks.js`). Stand der Umsetzung: Höhe 560, Oase als Nebenweg oben (wäscht, die KI fährt hin, wenn der Dreck über 0,35 liegt), Pyramide mit lesbarer dunkler Maske und wenigen Fackeln, kein Sturm in der Pyramide, Sturm ohne Wind, Böen, Steppenläufer und Windfahnen (Dunst, Sandwirbel um die Autos, Autos werden langsam sandig), Brücke als langer sicherer Nebenweg unten und der Sprung als kurzer Weg mit voller Rampe, Treibsand neben der Straße mit dunklem Rand, schwächeres Hitzeflimmern, Felsrippen statt Findlingsketten, Kakteen weiter vom Pyramidenausgang.
+Rev 2 (2026-10-21, aus den Meldungen vom 2026-10-17): Karte 800×560, Oase oben an einem eigenen Nebenweg mit Schild (wäscht im flachen Wasser, die KI fährt hin, wenn ihr Dreck über 0,35 liegt), Pyramide 240 px mit lesbarer dunkler Maske und wenigen Fackeln, kein Sturm in der Pyramide und über der Ziellinie, Sturm ohne Wind, Böen, Steppenläufer und Windsäcke (Dunst, Sandwirbel um die Autos, Autos werden langsam sandig, drei Verwehungen), Brücke an einem langen sicheren Nebenweg unten und der Sprung als kurzer Weg über die straßenbreite Rampe, Treibsand mit der Mitte neben der Straße und dunklem Rand, schwächeres Hitzeflimmern, Felskämme statt Findlingsketten, zwei Kakteen etwa 80 px hinter dem Pyramidenausgang. `mudracer.check('WUESTE')`: Bau etwa 0,45 s, Mittellinie 901 Punkte, Start 0°, keine Abkürzungen, 10/10 im Ziel und keine Stürze auf LEICHT, MITTEL und SCHWER, schnellste Runde 12,7 bis 15 s.
 
 | ID | Prio | Status | Aufgabe | Herkunft |
 |---|---|---|---|---|
-| 1S8-1 | H | in Arbeit | Rev 2 abschließen: auf LEICHT fallen noch etwa 9 Computerautos in den Abgrund (Bot-Route „Brücke“ verfehlt die Abzweigung, `desertTarget` in `desert.js` hat eine Korrektur, noch nicht geprüft); `npm test`; `check` auf allen Stufen; neue `rev`; Obsidian `Strecken.md`; committen und pushen | Memory „Wüste Rev 2 pausiert“ |
-| 1S8-2 | M | offen | Aus den Meldungen vom 2026-10-17 gegen den fertigen Stand abhaken: Oase nicht deplatziert und eine Waschmöglichkeit (00:16:38), Pyramide: nicht zu viele Lichter, kein Sturm (00:20:43), Treibsand besser sichtbar und größere Areale außerhalb der Strecke (00:21:29), Brücke und Sprung nicht zu dicht, Sprung riskant und kurz, Brücke sicher und länger (00:21:29), Wind und wehende Objekte entfernt, Sturm nur leicht (00:17:50) | Meldungen WUESTE |
+| 1S8-1 | H | erledigt (Wüste Rev 2) | Rev 2 abschließen. Die Stürze auf LEICHT kamen von Autos nach dem Ziel, die den Brückenweg nicht mehr nahmen (`desertTarget` gilt jetzt auch im Zustand `finish`), und von Autos auf der Innenseite der Kurve vor dem Abzweig; `npm test`, `check` auf allen Stufen, `rev` 2, Obsidian `Strecken.md` | Memory „Wüste Rev 2 pausiert“ |
+| 1S8-2 | M | teilweise (Wüste Rev 2 umgesetzt, vom Nutzer im Spiel noch nicht abgenommen) | Aus den Meldungen vom 2026-10-17 gegen den fertigen Stand abhaken: Oase nicht deplatziert und eine Waschmöglichkeit (00:16:38), Pyramide: nicht zu viele Lichter, kein Sturm (00:20:43), Treibsand besser sichtbar und größere Areale außerhalb der Strecke (00:21:29), Brücke und Sprung nicht zu dicht, Sprung riskant und kurz, Brücke sicher und länger (00:21:29), Wind und wehende Objekte entfernt, Sturm nur leicht, Flimmern schwächer, Kakteen weiter vom Pyramidenausgang, Pyramide größer, Felsen in der Mitte natürlicher (00:17:50) | Meldungen WUESTE |
 | 1S8-3 | N | offen | Rest aus dem Rework: echtes Wadi mit Felskämmen an beiden Rändern, Sphinx und Pyramiden als Grenze am Kartenrand, Pyramidenausgang als zweite Wahl | D10, D13 |
+| 1S8-4 | N | offen | Brückenweg und Oasenweg im Spiel abstimmen: der Bot braucht mit Brücke und Oase in einer Runde bis zu 23 s statt 13 s (Brücke bremst auf 60 %, Wasser auf 72 %, enge Kurven). Ist der sichere Weg zu teuer, die Brücke weniger bremsen lassen oder den Weg kürzen | `check('WUESTE', { diff: 1 })` 2026-10-21 |
 
 ### 1S9 EIS
 | ID | Prio | Status | Aufgabe | Herkunft |

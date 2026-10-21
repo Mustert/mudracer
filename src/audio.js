@@ -150,7 +150,7 @@ export const SFX = {
   },
   tyre: v => { voice({ f: 190, to: 80, d: .16, vol: .25 * v }); noise({ type: 'lowpass', f: 900, d: .07, vol: .15 * v }); },
   // desert and ice: the big jump, touching down, falling into the gorge (a whistle going down, then a dull plop), sinking in quicksand,
-  // sand trickling, the rope bridge creaking, a cactus ("autsch"), the storm, its gusts, a tumbleweed
+  // sand trickling, the rope bridge creaking, a cactus ("autsch"), the storm
   bigJump: v => { voice({ type: 'sawtooth', f: 160, to: 640, d: .5, vol: .08 * v, lp: 2200 }); noise({ type: 'bandpass', f: 600, to: 3000, a: .1, d: .7, vol: .1 * v }); },
   land: v => { voice({ f: 120, to: 40, d: .22, vol: .4 * v }); noise({ type: 'lowpass', f: 1200, to: 300, d: .25, vol: .25 * v }); },
   fall: v => { voice({ type: 'sine', f: 1300, to: 200, a: .02, hold: .7, d: .3, vol: .1 * v }); voice({ t: 1.05, f: 90, to: 40, d: .3, vol: .4 * v }); noise({ t: 1.05, type: 'lowpass', f: 600, to: 150, d: .4, vol: .3 * v }); },
@@ -160,8 +160,6 @@ export const SFX = {
   ouch: v => { voice({ type: 'square', f: 620, to: 900, a: .01, hold: .06, d: .1, vol: .07 * v, lp: 2400 }); voice({ t: .14, type: 'square', f: 900, to: 420, a: .01, hold: .1, d: .2, vol: .07 * v, lp: 2400 }); },
   storm: () => { noise({ type: 'bandpass', f: 300, to: 1400, a: 2.5, hold: 3, d: 2, vol: .22, q: .8 }); noise({ type: 'lowpass', f: 200, a: 1.5, hold: 3, d: 2, vol: .2 }); },
   windLoop: () => { noise({ type: 'bandpass', f: 500 + Math.random() * 300, to: 900, a: 1.5, hold: 3, d: 2, vol: .09, q: 1.2 }); },
-  gust: () => { noise({ type: 'bandpass', f: 400, to: 2400, a: .6, hold: .6, d: .9, vol: .2, q: 2.5 }); voice({ type: 'sine', f: 420, to: 780, a: .5, hold: .4, d: .8, vol: .03 }); },
-  tumble: () => noise({ type: 'bandpass', f: 2600, q: 1.5, d: .12, vol: .12 }),
   // ice: the springy bob wall, cracking ice, the ice breaking, the frost coming, the avalanche rumbling, shaking free of the snow, a penguin
   bonk: () => { voice({ f: 220, to: 120, d: .12, vol: .3 }); voice({ type: 'triangle', f: 440, to: 300, d: .08, vol: .08 }); },
   crack: v => { for (let i = 0; i < 4; i++) noise({ t: i * .03 + Math.random() * .02, type: 'highpass', f: 3500, d: .025, vol: .12 * v }); voice({ type: 'square', f: 2400, to: 900, d: .05, vol: .03 * v, lp: 5000 }); },

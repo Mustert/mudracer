@@ -250,7 +250,7 @@ const SONGS = {
       if (s === 0 || s === 8) M.dum(t); if (s === 2 || s === 6 || s === 12) M.tek(t, 1);
       if (storm && (s % 2 === 1)) M.tek(t, .5); if (storm && s === 10) M.dum(t, .7);
       if (s % 4 === 0) M.zill(t);
-      if (storm && s === 0) M.sandWind(t, 16 * M.sd, ev.dsGust || 0, ev.dsWarn || 0);
+      if (storm && s === 0) M.sandWind(t, 16 * M.sd);
       if (s === 0 && bi === 0 && sec === 'A') M.crash(t);
     } },
   // volcano: C minor, metal and orchestra, 150 BPM. Taiko drums carry it, brass stabs on 1 and 3+, a distorted guitar plays palm-muted eighths
@@ -601,7 +601,7 @@ export const Music = {
   tek(t, v = 1) { noise({ at: t, type: 'bandpass', f: 3200, q: 1.6, a: .001, d: .045, vol: .16 * v, dest: this.out }); voice({ at: t, type: 'triangle', f: 760, d: .03, vol: .05 * v, dest: this.out }); },
   zill(t) { voice({ at: t, f: 3150, a: .001, d: .35, vol: .025, dest: this.out }); voice({ at: t, f: 4720, a: .001, d: .22, vol: .015, dest: this.out }); },
   drone(f, t, d, v = 1) { synth({ at: t, f, parts: [['sawtooth', 1, .5], ['sawtooth', 1.003, .5]], a: .3, hold: Math.max(0, d - .5), d: .3, vol: .045 * v, lp: 700, dest: this.out }); },
-  sandWind(t, d, gust, warn) { noise({ at: t, type: 'bandpass', f: 500 + 1400 * Math.max(gust, warn * .6), to: 600 + 2200 * Math.max(gust, warn), a: d * .4, hold: d * .3, d: d * .3, vol: .07 + .06 * gust, q: 1.3, dest: this.out }); },
+  sandWind(t, d) { noise({ at: t, type: 'bandpass', f: 500, to: 600, a: d * .4, hold: d * .3, d: d * .3, vol: .07, q: 1.3, dest: this.out }); },
   // ice: celesta, sleigh bells, a sub bass, a choir singing "aah", strings in sixteenths, timpani
   celesta(f, t, d) { synth({ at: t, f, parts: [['sine', 1, 1], ['sine', 4, .25], ['triangle', 2, .15]], a: .002, d: Math.max(.6, d), vol: .07, dest: this.leadBus }); },
   sleigh(t, v = 1) { for (let i = 0; i < 3; i++) noise({ at: t + i * .012, type: 'bandpass', f: 7000 + i * 900, q: 4, a: .001, d: .05, vol: .03 * v, dest: this.out }); },

@@ -19,7 +19,7 @@ import { near } from './trackfx.js';
 // Zug: the train (it can be switched off like the others, then it never comes).
 // Rennstrecke: tyres roll across the road (a marshal waves the yellow flag first), hard hits knock tyres out of the tyre walls,
 // from lap 2 the oil gets smeared along the road (see ring.js).
-// Wueste: from lap 2 a sandstorm (little to see, wind from the right, sand drifts, tumbleweeds; see desert.js).
+// Wueste: from lap 2 a sandstorm (a haze of sand, sand whirling up round the cars, sand drifts; see desert.js).
 // Eis: from lap 2 frost (three corners freeze, avalanches); penguins cross the road (see ice.js).
 // Vulkan: from lap 2 the eruption (lava bombs, a lava tongue over the serpentine, ash rain; see volcano.js).
 // Dschungel: rotten trees fall across the road and stay there as little ramps, from lap 2 a stone ball rolls through the temple;
