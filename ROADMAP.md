@@ -2,7 +2,7 @@
 
 Die eine Liste für alles, was am Spiel noch zu tun ist. Sie ersetzt `ANALYSE.md`, `VERBESSERUNGEN.md` und die Einzelmeldungen aus `feedback/`. Nichts davon existiert mehr gesondert; die alten Stände liegen in der Git-Historie (`git show 8fb323f:ANALYSE.md`).
 
-Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-21, Commit „Wüste Rev 2“ (1S8-1 erledigt, 1S8-2 teilweise, 1S8-4 neu, 1A-2 und 1A-5 für die Wüste). Davor: Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
+Stand: 2026-10-21, Branch `map_pack`. Zuletzt abgeglichen: 2026-10-21, Commit „Strand Rev 2“ (1S3-1 bis 3 erledigt, Start gerade, Dusche für 1A-2); davor „Wüste Rev 2“ (1S8-1 erledigt, 1S8-2 teilweise, 1S8-4 neu, 1A-2 und 1A-5 für die Wüste). Davor: Umbau auf die Roadmap (Commit „Roadmap statt ANALYSE.md“).
 
 ## Die drei Phasen
 
@@ -44,7 +44,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 |---|---|---|---|---|---|
 | 1 | WIESE | 1 | 800×450 | umgesetzt (Rev 2) | offen (von Hand fahren, Lied anhören) |
 | 2 | WALD | 1 | 800×450 | umgesetzt | offen |
-| 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 1) | offen |
+| 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 2) | offen |
 | 4 | ZUG | 2 | 800×450 | umgesetzt, Rework geplant | offen |
 | 5 | BAUSTELLE | 2 | 800×450 | umgesetzt (Rev 2) | offen |
 | 6 | GARTEN | 2 | 800×450 | umgesetzt | offen |
@@ -65,7 +65,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | 1A-1 | H | teilweise (WIESE Rev 2: Matsch und Pfützen innen in den Kurven, außen sauber; gemeinsamer Baustein und Prüfung in `check` fehlen noch) | **Matsch und Pfützen sind eine Entscheidung, kein Zwang.** Auf jeder Strecke gibt es an mehreren Stellen eine kürzere Linie durch Matsch gegen eine längere saubere Linie; nie ist alles unausweichlich, aber auch nie alles umfahrbar. Gemeinsamer Baustein, der Matsch, Sumpf, Asche, Tiefschnee und Treibsand vom Rand her in die Fahrbahn wachsen lässt (Stempel mitten auf der Fahrbahn vermeiden). Die Menge auf der Wiese bleibt ausdrücklich. Prüfung: `check` meldet Matschstellen, die nicht umfahrbar sind | D2, D9, Meldung 2026-10-16 WIESE |
 | 1A-2 | H | teilweise (WÜSTE Rev 2: Oase an einem Nebenweg mit Schild, wäscht im flachen Wasser nach und nach, die KI fährt nur dreckig hin) | **Ein verständliches Wasch-Konzept je Strecke:** genau eine Art, sauber zu werden (Dusche, Waschanlage, Box, Oase, Schlauchstelle), vorher erkennbar, wäscht nie sofort (Dauer/Grad je Strecke festlegen), die Computerautos nutzen sie nur, wenn sie dreckig sind, und eine Strecke mit sehr vielen Pfützen braucht keine zusätzliche Waschstraße. Einzelfälle: 1S3-2, 1S5-1, 1S6-2, 1S7-1, 1S8 | Meldungen STRAND, GARTEN, BAUSTELLE, RENNSTRECKE, WUESTE (2026-10-17) |
 | 1A-3 | M | offen | **Gefahren kündigen sich an** (Grundsatz 9): Kois, Reifenwurf, jede Lawine/Bombe/Böe prüfen, ob Schatten, Blinken, Ton oder Text kommen. Prüfung in `check` oder im Skill `strecke` als Liste je Ereignis | M9, Meldungen GARTEN, RENNSTRECKE |
-| 1A-4 | H | offen | **Startaufstellung gerade** (Grundsatz 5) für alle Strecken, die noch in der Kurve starten (Wert in Grad bei 10 Autos): WIESE (Rev 2: 6°, erledigt), WALD (Rev 2 erledigt, 7°), STRAND 101°, ZUG 85°, BAUSTELLE 90°, GARTEN 180°, RENNSTRECKE 60°, VULKAN 90°, DSCHUNGEL 90°, SPIELZIMMER 90°. Gerade sind WÜSTE (Rev 2), EIS, WELTALL 2°, SUESS 7°, REGENBOGEN 2°. Jede neue Startlinie ist eine neue `rev` | D7 |
+| 1A-4 | H | offen | **Startaufstellung gerade** (Grundsatz 5) für alle Strecken, die noch in der Kurve starten (Wert in Grad bei 10 Autos): WIESE (Rev 2: 6°, erledigt), WALD (Rev 2 erledigt, 7°), STRAND (Rev 2: 5°, erledigt), ZUG 85°, BAUSTELLE 90°, GARTEN 180°, RENNSTRECKE 60°, VULKAN 90°, DSCHUNGEL 90°, SPIELZIMMER 90°. Gerade sind WÜSTE (Rev 2), EIS, WELTALL 2°, SUESS 7°, REGENBOGEN 2°. Jede neue Startlinie ist eine neue `rev` | D7 |
 | 1A-5 | M | teilweise (WÜSTE Rev 2: der Sandsturm spart die Ziellinie aus, keine Verwehung auf der Startaufstellung; Prüfung in `check` fehlt noch) | **Nichts darf die Ziellinie überdecken** (Eis: Schnee/Frost lag darüber). Prüfung in `check`: Ziellinie im letzten Rennbild sichtbar, auf jeder Strecke | Meldung EIS |
 | 1A-6 | M | offen | **Hindernis oder Deko?** Prüfen, dass jedes Hindernis auf der Fahrbahn klar anders aussieht als die Deko daneben und dass jedes Hindernis spürbar wirkt (Beispiele: Kipplaster-Erdhaufen, Matschpfütze am Strand) | Grundsatz 10, Meldungen BAUSTELLE, STRAND |
 | 1A-7 | N | offen | **Mehr als ein Kreis ab Strecke 5** (Grundsatz 6): bei jeder Abnahme für 5–15 ausdrücklich bestätigen; offen bei VULKAN (nur der Spieler nimmt den Geysir), DSCHUNGEL | Grundsatz 6, D19 |
@@ -85,9 +85,9 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 ### 1S3 STRAND
 | ID | Prio | Status | Aufgabe | Herkunft |
 |---|---|---|---|---|
-| 1S3-1 | M | offen | Die Matschpfütze unter dem Auto wirkt kaum und sieht hässlich aus: Wirkung und Optik überarbeiten | Meldung STRAND 00:00:04 |
-| 1S3-2 | M | offen | Duschen waschen nicht sofort, sondern mindestens 30 % länger (Teil von 1A-2) | Meldung STRAND 00:00:47 |
-| 1S3-3 | M | offen | Der untere, geflutete Abschnitt: keine halb geflutete Matschpfütze (sieht schlecht aus), die Pfütze etwas höher setzen | Meldung STRAND 00:01:21 |
+| 1S3-1 | M | erledigt (Rev 2: Matsch wie nasser Sand statt dunkler Klumpen) | Die Matschpfütze unter dem Auto wirkt kaum und sieht hässlich aus: Wirkung und Optik überarbeiten | Meldung STRAND 00:00:04 |
+| 1S3-2 | M | erledigt (Rev 2: Dusche wäscht etwa doppelt so lange, nur kleiner Spritzer beim Einfahren) | Duschen waschen nicht sofort, sondern mindestens 30 % länger (Teil von 1A-2) | Meldung STRAND 00:00:47 |
+| 1S3-3 | M | erledigt (Rev 2: Eckpfütze liegt im Trockenen, die kleine auf der gefluteten Gerade ist weg) | Der untere, geflutete Abschnitt: keine halb geflutete Matschpfütze (sieht schlecht aus), die Pfütze etwas höher setzen | Meldung STRAND 00:01:21 |
 
 ### 1S4 ZUG
 | ID | Prio | Status | Aufgabe | Herkunft |
