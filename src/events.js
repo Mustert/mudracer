@@ -73,7 +73,7 @@ function blob(T, cx, cy, rx, ry, seed, paint, ter) {
 // ======================================================= Wiese: cows
 
 // [t along the track, offset from the centre line, how far the cow walks, phase]: the lower right edge, on and next to the track
-const COWS = [[.545, 4, 15, 0], [.6, -10, 12, .5], [.57, -46, 10, 1], [.64, 46, 12, 2], [.665, -2, 12, 3.2]];
+const COWS = [[.491, 4, 15, 0], [.544, -10, 12, .5], [.515, -46, 10, 1], [.583, 46, 12, 2], [.608, -2, 12, 3.2]];
 
 function initCows(T) {
   T.ev.cows = COWS.map(([t, off, range, ph], k) => {

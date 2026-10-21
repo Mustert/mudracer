@@ -103,8 +103,10 @@ const ARC = (cx, cy, r, a0, a1, step = 5) => { const out = []; for (let a = a0; 
 
 
 const TRACK_DEFS = [
-  { name: 'WIESE', rev: 1, events: ['kuehe'], theme: 'wiese', song: 'kart', wallStyle: 'fence', wall: [{ x: 420, y: 190, ang: 0 }], pts: S2([[70, 125], [82, 60], [150, 40], [215, 72], [285, 40], [352, 60], [365, 140], [322, 193], [238, 188], [182, 152], [118, 193], [62, 182]]),
-    mud: B2([[.14, 0, 16, 18], [.47, 5, 20, 18], [.72, -4, 14, 17]]), water: B2([[.3, -7, 11, 9], [.58, 0, 13, 18], [.84, 6, 9, 9]]), ponds: [[400, 226, 46, 26]], wash: .93 },
+  { name: 'WIESE', rev: 2, events: ['kuehe'], theme: 'wiese', song: 'kart', wallStyle: 'fence', wall: [{ x: 420, y: 190, ang: 0 }], pts: S2([[66, 72], [76, 48], [150, 38], [215, 72], [285, 40], [352, 60], [365, 140], [322, 193], [238, 188], [182, 152], [124, 193], [68, 195], [64, 140]]),
+    // rev 2: the start moved up the straight on the left (the grid stands straight); mud and puddles sit on the inside of the bends (the short line),
+    // the outside stays clean (the long line): [t, offset from the centre line (+ = inside), half length, half width]
+    mud: [[.097, 16, 52, 19], [.418, 16, 58, 19], [.661, 15, 48, 18]], water: [[.253, -14, 34, 19], [.525, 17, 40, 19], [.778, 14, 32, 18]], ponds: [[400, 226, 46, 26]], wash: .865 },
   { name: 'WALD', rev: 1, events: ['regen'], theme: 'wald', song: 'forest', wallStyle: 'logs', wall: [{ x: 410, y: 248, ang: 0 }], pts: S2([[60, 72], [150, 42], [205, 98], [262, 42], [345, 58], [360, 150], [292, 192], [205, 150], [125, 193], [48, 166]]),
     mud: B2([[.1, 0, 18, 18], [.35, 0, 15, 18], [.55, 5, 12, 12], [.76, 0, 20, 18]]), water: B2([[.22, -5, 10, 9], [.64, 0, 14, 18], [.86, 4, 10, 8]]), ponds: [], wash: .94 },
   { name: 'STRAND', rev: 1, events: ['flut'], pier: true, theme: 'strand', song: 'beach', wallStyle: 'bar', wall: [{ x: 330, y: 190, ang: 0 }], pts: S2([[60, 105], [112, 48], [200, 62], [282, 40], [352, 78], [335, 152], [262, 135], [205, 178], [120, 184], [52, 160]]),

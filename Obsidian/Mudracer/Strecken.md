@@ -5,7 +5,7 @@ Stand 2026-10-14, Branch `map_pack`. Die Strecken 1 bis 6 sind umgesetzt, 7 bis 
 
 **Kartengröße:** Die Strecken sind 800×450 px groß (Standard), größer sind das Weltall (1360×765), das Süßigkeitenland (1200×675), das Spielzimmer (1280×720) und der Regenbogen (1440×810). Seit 2026-10-12 kann eine Strecke eine eigene Größe bekommen (`W` und `H` in ihrer Definition in `TRACK_DEFS`, `src/tracks.js`). Die Strecken werden erst gebaut, wenn sie gebraucht werden (im Hintergrund oder auf einem kurzen Ladebildschirm), also verlängern größere Karten den Spielstart nicht.
 
-**Zeitfahren-Rekorde:** Wiese, Wald, Strand und Regenbogen haben durch die Änderungen eine neue Revision (`rev: 1`). Ihre Rekorde starten neu (Schlüssel mit Zusatz `-r1`), die alten Zeiten bleiben unangetastet im Speicher.
+**Zeitfahren-Rekorde:** Wiese (jetzt `rev: 2`), Wald, Strand und Regenbogen haben durch die Änderungen eine neue Revision (`rev: 1`). Ihre Rekorde starten neu (Schlüssel mit Zusatz `-r1`), die alten Zeiten bleiben unangetastet im Speicher.
 
 **Cups:** Die Strecken sind in Cups 1-5 eingeteilt. Das kindliche Zielpublikum ist mit Cup 1 gut bedient, ab Cup 2 können und sollen die Strecken immer aufwendiger und verrückter werden (Sprungschanzen etc.) selbst im Modus ohne Streckenereignis, während der Ursprung des Spiels natürlich nicht verloren geht.
 # Cup 1
@@ -26,6 +26,8 @@ Streckenereignis **Kühe** (`kuehe`):
 - Sie laufen langsam hin und her und bleiben an den Wendepunkten stehen, um zu grasen. Ihre Bewegung hängt nur an der Rennzeit, im Zeitfahren sind sie also bei jedem Versuch gleich.
 - Sie sind Hindernisse. Wer hart dagegenfährt, wird wie beim Zug zur Seite geschleudert, dreht sich und sieht Sterne, die Kuh macht „MUH!" (Text und neuer Ton). Langsames Anrempeln schiebt das Auto nur zurück.
 - Die Computerautos weichen Kühen aus, die vor ihnen stehen.
+
+Rev 2 (1S1-1, 1A-1, 1A-4): Die Startlinie liegt jetzt weiter oben auf der verlängerten linken Geraden, die 10 Autos stehen komplett gerade (6° statt 109°). Matsch und Pfützen liegen auf der Innenseite der Kurven (die kürzere Linie), außen bleibt mindestens 26 px sauber (der längere Weg). Anzahl bleibt (3 Matsch, 3 Pfützen), die Stellen sind etwas länger. ✅ umgesetzt
 
 Offen: nichts aus der Änderungsliste.
 
