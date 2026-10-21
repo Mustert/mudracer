@@ -125,19 +125,19 @@ const TRACK_DEFS = [
   // The building site: the road is packed earth. Everything inside the ring road is yard (solid, see bau.js), the road narrows at barriers, a crane
   // holds a concrete pipe over the road, a cement mixer leaks a grey puddle onto it, and dump trucks tip earth beside it (event kipper).
   // poly = [x, y, curve radius] (rounded corners), mudAt/waterAt/cement = [x, y, half length along the road, half width across]
-  { name: 'BAUSTELLE', rev: 2, seed: 6, theme: 'baustelle', song: 'site', events: ['kipper'], wall: [], wash: 0, washAt: [215, 375],
-    poly: [[75, 230, 0], [75, 75, 52], [265, 75, 45], [265, 215, 45], [405, 215, 45], [405, 75, 45], [725, 75, 45], [725, 185, 45], [565, 185, 45], [565, 280, 45], [725, 280, 45], [725, 375, 52],
-      [475, 375, 45], [475, 300, 45], [335, 300, 45], [335, 375, 45], [75, 375, 52]],
+  { name: 'BAUSTELLE', rev: 3, seed: 6, theme: 'baustelle', song: 'site', events: ['kipper'], wall: [], wash: 0, washAt: [215, 375],
+    poly: [[75, 130, 0], [75, 75, 30], [265, 75, 45], [265, 215, 45], [405, 215, 45], [405, 75, 45], [725, 75, 45], [725, 185, 45], [565, 185, 45], [565, 280, 45], [725, 280, 45], [725, 375, 52],
+      [475, 375, 45], [475, 300, 45], [335, 300, 45], [335, 375, 45], [75, 375, 30]],
     mud: [], water: [], ponds: [],
-    // after the cement there is no mud and no puddle any more: whoever got grey stays grey until the hose or the car wash
-    mudAt: [[75, 115, 30, 34], [650, 280, 15, 17], [475, 340, 30, 34]],
-    waterAt: [[75, 185, 28, 34], [725, 335, 26, 34]],
-    cement: [[272, 170, 20, 22]],
+    // no puddles: whoever got dirty washes at one of the two hoses or in the car wash at the end of the lap (grey cement stays until then)
+    mudAt: [[98, 98, 24, 18], [650, 280, 15, 17], [475, 340, 30, 34]],
+    // cement on the inner side of the left bend (the mixer leaks onto it); the outer 28 px stay clean, a longer line around it
+    cement: [[283, 150, 22, 20]],
     yards: [[96, 96, 610, 270], [296, -10, 82, 120], [366, 350, 78, 110], [690, 196, 120, 60]],
     narrows: [[175, 75, 1], [560, 375, 1], [165, 375, -1]],
-    // cones: a narrow place built from traffic cones on both sides. hose: spray spot (x, y, r) on the outer lane of the top right curve, hydrant at rx/ry
+    // cones: a narrow place built from traffic cones on both sides. hoses: spray spots (x, y, r) on the outer lane of a curve (top right, bottom right), hydrant at rx/ry
     cones: [[645, 185]],
-    hose: { x: 721, y: 79, r: 10, rx: 744, ry: 56 },
+    hoses: [{ x: 721, y: 79, r: 10, rx: 744, ry: 56 }, { x: 721, y: 371, r: 10, rx: 744, ry: 394 }],
     mixer: { x: 322, y: 96 }, crane: { x: 588, y: 128, pipe0: 552, pipeLen: 72, pipeD: 20, pipeY: 75 },
     // [x, y, side, seconds between two visits, first arrival]: the truck stands beside the road, outside
     kipper: [[75, 160, -1, 23, 12], [470, 75, -1, 26, 3], [725, 130, -1, 29, 8], [620, 375, -1, 25, 14]] },
@@ -705,7 +705,7 @@ function* buildTrack(def, ti) {
   const scatter = (n, rad, fn) => { for (let k = 0, tries = 0; k < n && tries < n * 30; tries++) { const x = 5 + (r() * (MW - 10) | 0), y = 5 + (r() * (MH - 10) | 0); if (ok(x, y) && ok(x - rad, y) && ok(x + rad, y) && ok(x, y + rad) && ok(x, y - rad)) { fn(x, y); k++; } } };
   const rock = (x, y) => { const L2 = hex('#c4c4bb'), M2 = hex('#9a9a92'), D2 = hex('#6e6e68'); for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 4; dx++) if (!((dx === 0 || dx === 3) && (dy === 0 || dy === 2))) px(x + dx, y + dy, dy === 0 ? L2 : dy === 2 ? D2 : M2); };
   const trees = [], critters = [], C = th.treeCol.map(hex);
-  let windmill = null, lights = [], mixer = null, hose = null, tight = [];
+  let windmill = null, lights = [], mixer = null, hoses = [], tight = [];
   const decorMap = MAPS.find(m => m.decor === th.decor), special = Object.fromEntries(MAPS.map(m => [m.flag, null])); // T.ring, T.desert ... (null: not this track)
   const darken = (x, y, rad, ox, oy) => { for (let dy = -rad; dy <= rad; dy++) for (let dx = -rad; dx <= rad; dx++) { if (dx * dx + dy * dy > rad * rad) continue; const xx = x + dx + ox, yy = y + dy + oy; if (xx < 0 || yy < 0 || xx >= MW || yy >= MH) continue; const i = (yy * MW + xx) * 4; d[i] *= .78; d[i + 1] *= .76; d[i + 2] *= .76; } };
   const flowers = (n, PET) => scatter(n, 2, (x, y) => { const pc = PET[(r() * PET.length) | 0]; px(x - 1, y, pc); px(x + 1, y, pc); px(x, y - 1, pc); px(x, y + 1, pc); px(x, y, pc === PET[1] ? hex('#ff8c1a') : hex('#ffe14d')); });
@@ -1062,7 +1062,7 @@ function* buildTrack(def, ti) {
   } else if (th.decor === 'bau') {
     siteRing(yard, walls, MW, MH);
     const site = paintSite({ MW, MH, def, d, set, setT, px, darken, band, path, tan, nrm, yard, walls, scatter, rock, sd, washMask });
-    lights = site.lights; mixer = site.mixer; hose = site.hose; tight = site.tight;
+    lights = site.lights; mixer = site.mixer; hoses = site.hoses; tight = site.tight;
   } else if (decorMap) {
     special[decorMap.flag] = yield* decorMap.paint({ MW, MH, def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, washMask, shore, deep, bridgeMask, isBridge,
       stoneMask, sd, th, r, critters, darken, starPix, mudPix, watPix, RT: decorMap === map ? RT : null });
@@ -1129,7 +1129,7 @@ function* buildTrack(def, ti) {
   const top = toCanvas(outlineImg(new ImageData(tp, MW, MH), MW, MH, C[3]));
   const wp = path[wi], solid = trees.concat(walls);
   return { W: MW, H: MH, def, th, name: def.name, path, tan, nrm, N, ter, washMask, trees: solid, grid: obstacleGrid(solid, MW, MH), critters, windmill, shoreY, boat: { x: 60 }, base, top, mudPix, watPix, starPix, rail,
-    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hose, tight, ...special,
+    washC: hasWash ? { x: wp.x, y: wp.y, tg: tan[wi], nm: nrm[wi] } : null, dist, near, showers, pier, stone: stoneMask, bridges, lights, mixer, cemPix, hoses, tight, ...special,
     // Cup 3 building blocks (see trackfx.js): ramps to jump from, stretches that push the cars, where a second way runs beside the road
     jumps: (decorMap && special[decorMap.flag] || {}).jumps || ramps, pushes: (decorMap && special[decorMap.flag] || {}).pushes || [], alt: (decorMap && special[decorMap.flag] || {}).alt || null };
 }
