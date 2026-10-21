@@ -11,7 +11,7 @@ import { cam } from './state.js';
 import { GHOST_DT, fmtDelta, fmtTime, ghostAt } from './timetrial.js';
 import { tctx } from './tracks.js';
 import { blink, disc, drawConfetti, drawFlag, drawTag, ell, medal, medalL, panel, R1, star, text } from './gfx.js';
-import { TRAIN } from './trainsprite.js';
+import { trainOf } from './trainsprite.js';
 
 // ---------- drawing ----------
 
@@ -271,9 +271,10 @@ function drawCrossings(R) {
 
 function drawTrain(tr) {
   const x = tr.x - 15, y = Math.round(tr.y);
-  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x + 5, y + 6, 28, TRAIN.LEN);
-  if (tr.dir > 0) ctx.drawImage(TRAIN.c, x, y);
-  else { ctx.save(); ctx.translate(x, y + TRAIN.LEN); ctx.scale(1, -1); ctx.drawImage(TRAIN.c, 0, 0); ctx.restore(); }
+  const S = trainOf(tr.n); // (every train has its own length)
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(x + 5, y + 6, 28, S.LEN);
+  if (tr.dir > 0) ctx.drawImage(S.c, x, y);
+  else { ctx.save(); ctx.translate(x, y + S.LEN); ctx.scale(1, -1); ctx.drawImage(S.c, 0, 0); ctx.restore(); }
 }
 
 

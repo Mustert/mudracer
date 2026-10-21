@@ -384,8 +384,8 @@ const TRACK_DEFS = [
 
 
 // every line of the railway has its own train (ZUG Rev 2: twice as many trains, now and then one on each line at the same time, train.js);
-// the first one comes after 6 s, the second a little later from the other end, after that each runs on its own clock
-export const newTrains = lines => lines.map((x, k) => ({ x, phase: 'wait', t: 6 + k * 3.5, dir: k ? -1 : 1, y: -9999, smokeT: 0, signal: false, gate: 0 }));
+// the first one comes after 4 s, the second 2 s later from the other end, after that each runs on its own clock
+export const newTrains = lines => lines.map((x, k) => ({ x, phase: 'wait', t: 4 + k * 2, dir: k ? -1 : 1, y: -9999, n: 4, len: 0, smokeT: 0, signal: false, gate: 0 }));
 
 
 // the centre line with rounded corners: [x, y, r] (r = 0: plain point), a circle-like curve of size r at every corner, straight in between

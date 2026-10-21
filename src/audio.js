@@ -5,7 +5,6 @@ import { reportError } from './errors.js';
 import { dirHeld } from './input.js';
 import { Music } from './music.js';
 import { cam } from './state.js';
-import { TRAIN } from './trainsprite.js';
 
 // ---------- audio: everything is synthesised live, no sound files ----------
 
@@ -359,7 +358,7 @@ export function ambience(dt) {
   }
   // one chuff for all running trains, as loud as the nearest one
   let v = -1;
-  for (const tr of R.trains) if (tr.phase === 'run') { const ty = clamp(cym, tr.y, tr.y + TRAIN.LEN); v = Math.max(v, clamp(1 - Math.hypot(tr.x - cxm, ty - cym) / 520, 0, 1)); }
+  for (const tr of R.trains) if (tr.phase === 'run') { const ty = clamp(cym, tr.y, tr.y + tr.len); v = Math.max(v, clamp(1 - Math.hypot(tr.x - cxm, ty - cym) / 520, 0, 1)); }
   if (v >= 0 && (R.chuffT -= dt) <= 0) {
     R.chuffT = .19; R.chuffN++;
     noise({ type: R.chuffN % 2 ? 'lowpass' : 'bandpass', f: R.chuffN % 2 ? 700 : 1600, d: .14, vol: .3 * v + .02 });
