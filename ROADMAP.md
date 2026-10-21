@@ -47,7 +47,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 2) | offen |
 | 4 | ZUG | 2 | 1120×630 | umgesetzt (Rev 1: größer, Sprungschanze, Zug öfter je Runde; im Spiel noch nicht abgenommen) | offen |
 | 5 | BAUSTELLE | 2 | 800×450 | umgesetzt (Rev 2) | offen |
-| 6 | GARTEN | 2 | 800×450 | umgesetzt | offen |
+| 6 | GARTEN | 2 | 800×450 | umgesetzt (Rev 1: Startgerade, zweite Abkürzung, Koi-Ankündigung; im Spiel noch nicht abgenommen) | offen |
 | 7 | RENNSTRECKE | 3 | 800×450 | Prototyp | offen |
 | 8 | WUESTE | 3 | 800×560 | überarbeitet (Rev 2) | offen |
 | 9 | EIS | 3 | 800×450 | überarbeitet (Rev 1) | offen |
@@ -65,7 +65,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | 1A-1 | H | teilweise (WIESE Rev 2: Matsch und Pfützen innen in den Kurven, außen sauber; gemeinsamer Baustein und Prüfung in `check` fehlen noch) | **Matsch und Pfützen sind eine Entscheidung, kein Zwang.** Auf jeder Strecke gibt es an mehreren Stellen eine kürzere Linie durch Matsch gegen eine längere saubere Linie; nie ist alles unausweichlich, aber auch nie alles umfahrbar. Gemeinsamer Baustein, der Matsch, Sumpf, Asche, Tiefschnee und Treibsand vom Rand her in die Fahrbahn wachsen lässt (Stempel mitten auf der Fahrbahn vermeiden). Die Menge auf der Wiese bleibt ausdrücklich. Prüfung: `check` meldet Matschstellen, die nicht umfahrbar sind | D2, D9, Meldung 2026-10-16 WIESE |
 | 1A-2 | H | teilweise (WÜSTE Rev 2: Oase an einem Nebenweg mit Schild, wäscht im flachen Wasser nach und nach, die KI fährt nur dreckig hin) | **Ein verständliches Wasch-Konzept je Strecke:** genau eine Art, sauber zu werden (Dusche, Waschanlage, Box, Oase, Schlauchstelle), vorher erkennbar, wäscht nie sofort (Dauer/Grad je Strecke festlegen), die Computerautos nutzen sie nur, wenn sie dreckig sind, und eine Strecke mit sehr vielen Pfützen braucht keine zusätzliche Waschstraße. Einzelfälle: 1S3-2, 1S5-1, 1S6-2, 1S7-1, 1S8 | Meldungen STRAND, GARTEN, BAUSTELLE, RENNSTRECKE, WUESTE (2026-10-17) |
 | 1A-3 | M | offen | **Gefahren kündigen sich an** (Grundsatz 9): Kois, Reifenwurf, jede Lawine/Bombe/Böe prüfen, ob Schatten, Blinken, Ton oder Text kommen. Prüfung in `check` oder im Skill `strecke` als Liste je Ereignis | M9, Meldungen GARTEN, RENNSTRECKE |
-| 1A-4 | H | offen | **Startaufstellung gerade** (Grundsatz 5) für alle Strecken, die noch in der Kurve starten (Wert in Grad bei 10 Autos): WIESE (Rev 2: 6°, erledigt), WALD (Rev 2 erledigt, 7°), STRAND (Rev 2: 5°, erledigt), ZUG (Rev 1: 7°, erledigt), BAUSTELLE 90°, GARTEN 180°, RENNSTRECKE 60°, VULKAN 90°, DSCHUNGEL 90°, SPIELZIMMER 90°. Gerade sind WÜSTE (Rev 2), EIS, WELTALL 2°, SUESS 7°, REGENBOGEN 2°. Jede neue Startlinie ist eine neue `rev` | D7 |
+| 1A-4 | H | offen | **Startaufstellung gerade** (Grundsatz 5) für alle Strecken, die noch in der Kurve starten (Wert in Grad bei 10 Autos): WIESE (Rev 2: 6°, erledigt), WALD (Rev 2 erledigt, 7°), STRAND (Rev 2: 5°, erledigt), ZUG (Rev 1: 7°, erledigt), BAUSTELLE 90°, GARTEN (Rev 1: 8°, erledigt), RENNSTRECKE 60°, VULKAN 90°, DSCHUNGEL 90°, SPIELZIMMER 90°. Gerade sind WÜSTE (Rev 2), EIS, WELTALL 2°, SUESS 7°, REGENBOGEN 2°. Jede neue Startlinie ist eine neue `rev` | D7 |
 | 1A-5 | M | teilweise (WÜSTE Rev 2: der Sandsturm spart die Ziellinie aus, keine Verwehung auf der Startaufstellung; Prüfung in `check` fehlt noch) | **Nichts darf die Ziellinie überdecken** (Eis: Schnee/Frost lag darüber). Prüfung in `check`: Ziellinie im letzten Rennbild sichtbar, auf jeder Strecke | Meldung EIS |
 | 1A-6 | M | offen | **Hindernis oder Deko?** Prüfen, dass jedes Hindernis auf der Fahrbahn klar anders aussieht als die Deko daneben und dass jedes Hindernis spürbar wirkt (Beispiele: Kipplaster-Erdhaufen, Matschpfütze am Strand) | Grundsatz 10, Meldungen BAUSTELLE, STRAND |
 | 1A-7 | N | offen | **Mehr als ein Kreis ab Strecke 5** (Grundsatz 6): bei jeder Abnahme für 5–15 ausdrücklich bestätigen; offen bei VULKAN (nur der Spieler nimmt den Geysir), DSCHUNGEL | Grundsatz 6, D19 |
@@ -104,9 +104,9 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 ### 1S6 GARTEN
 | ID | Prio | Status | Aufgabe | Herkunft |
 |---|---|---|---|---|
-| 1S6-1 | H | offen | Die springenden Kois brauchen eine Ankündigung (etwa 0,5 s vorher Kreise im Wasser) | M9, Meldung GARTEN 00:11:41 |
-| 1S6-2 | M | offen | Die halb/halb-Pfütze am Ende sieht merkwürdig aus; bei so vielen Pfützen braucht es keine Waschstraße (1A-2) | Meldung GARTEN 00:11:58 |
-| 1S6-3 | M | offen | Eine zweite Abkürzung (die Idee der ersten ist gut), mit Risiko; Grundsatz 4 und 6 mitprüfen | Meldung GARTEN 00:12:34 |
+| 1S6-1 | H | erledigt (Garten Rev 1: Wasserkreise 0,6 s vor jedem Sprung, groß am Start, klein an der Landung) | Die springenden Kois brauchen eine Ankündigung (etwa 0,5 s vorher Kreise im Wasser) | M9, Meldung GARTEN 00:11:41 |
+| 1S6-2 | M | erledigt (Garten Rev 1: Waschstreifen entfernt, Matsch und Pfütze liegen nicht mehr übereinander; 1A-2) | Die halb/halb-Pfütze am Ende sieht merkwürdig aus; bei so vielen Pfützen braucht es keine Waschstraße (1A-2) | Meldung GARTEN 00:11:58 |
+| 1S6-3 | M | erledigt (Garten Rev 1: zweite Trittsteinreihe vom Teich neben der Brücke über den See zur Westseite, ein Koi springt darüber; Grundsatz 4 und 6 geprüft) | Eine zweite Abkürzung (die Idee der ersten ist gut), mit Risiko; Grundsatz 4 und 6 mitprüfen | Meldung GARTEN 00:12:34 |
 
 ### 1S7 RENNSTRECKE
 | ID | Prio | Status | Aufgabe | Herkunft |
