@@ -44,7 +44,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 |---|---|---|---|---|---|
 | 1 | WIESE | 1 | 800×450 | umgesetzt (Rev 2) | offen (von Hand fahren, Lied anhören) |
 | 2 | WALD | 1 | 800×450 | umgesetzt (Rev 3: Pfützen wachsen mit dem Regen) | offen |
-| 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 3: Beachvolleyball-Abkürzung, Pfeiler bei Flut, Dusche vor der Ziellinie) | offen |
+| 3 | STRAND | 1 | 800×450 | umgesetzt (Rev 3: Beachvolleyball-Abkürzung, Pfeiler bei Flut, Dusche vor der Ziellinie, Steg breiter, Flut niedriger) | offen |
 | 4 | ZUG | 2 | 1120×630 | umgesetzt (Rev 2: zwei graue Schanzen, Matsch nur halbseitig, ein Zug je Linie, bayerisches Dorf als Kulisse; Runde ca. 16 s; im Spiel noch nicht abgenommen) | offen |
 | 5 | BAUSTELLE | 2 | 800×450 | umgesetzt (Rev 3: keine Pfützen, zwei Schläuche, Zementumfahrung, Erdhaufen auf der Fahrbahn, Startgerade) | offen |
 | 6 | GARTEN | 2 | 800×450 | umgesetzt (Rev 2: kein Matsch unter Brücken, zweite Abkürzung am Südrand des Sees, Koi-Ankündigung nur am Absprung; im Spiel noch nicht abgenommen) | offen |
@@ -94,6 +94,9 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | 1S3-5 | H | erledigt (Rev 3: die Flut malt genau die Pfeiler des Stegs neu, die sie gerade überspült; Liste `T.piles`) | Die Holzpfeiler links und rechts vom Steg verschwinden bei steigendem Wasser | Meldung F8 2026-10-21 22:49 |
 | 1S3-6 | H | erledigt (Rev 3: keine Pfeiler mehr außerhalb des Stegs) | Bei voller Flut sammeln sich Holzpfeiler mitten in der ersten Kurve | Meldung F8 2026-10-21 22:50 |
 | 1S3-7 | M | erledigt (Rev 3: Beachvolleyballfeld statt der Lagune; schmale Sandspur mitten über das Feld als Abkürzung, Netz bremst einmal, der Ball trifft und schleudert, Schatten kündigt Schmetterbälle an; Meer und Flut bremsen etwas mehr; Computerautos nehmen die Abkürzung manchmal, öfter auf SCHWER und bei Flut; etwa gleich schnell wie außen herum) | Statt des unlogischen Sees ein Beachvolleyballfeld mit Abkürzung: Spieler, Netz bremst, Ball trifft beim Seitenwechsel; das Meer bremst etwas mehr | Idee F8 2026-10-21 22:51 |
+| 1S3-9 | M | erledigt (Rev 3: Sandspur 76 % statt 84 % Tempo, Netz bremst auf 40 %, öfter Schmetterbälle; ohne Treffer etwa gleich schnell, eher langsamer) | Die Volleyball-Abkürzung ist beim Fahren von Hand schneller als außen herum: einen Tick schwieriger machen | Nutzer 2026-10-21 |
+| 1S3-10 | M | erledigt (Rev 3: Steg 24 px statt 16 px breit) | Über den Holzsteg zu fahren soll etwas einfacher werden: breiter | Nutzer 2026-10-21 |
+| 1S3-11 | H | erledigt (Rev 3: die Flut steigt nur noch bis y 310 statt 284; die Schlenkerkurve im Südosten bleibt mindestens 31 px breit trocken, der Steg schließt an beiden Enden an) | Die Flut darf nur so hoch steigen, dass man in der Schlenkerkurve im Südosten nicht zwingend durchs Wasser muss (sonst ist der Weg über den Steg im Nachteil) | Nutzer 2026-10-21 |
 | 1S3-8 | N | offen | Die Ausfahrt der Volleyball-Abkürzung mündet in die Matschstelle der linken Kurve (gewollt als Preis der Abkürzung); beim Fahren von Hand prüfen, ob das zu hart ist, sonst die Matschstelle nach außen rücken | Rev 3 |
 
 ### 1S4 ZUG

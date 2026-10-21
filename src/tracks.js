@@ -86,7 +86,8 @@ export const THEMES = {
 // the wooden pier along the lower part of the beach track: it is there from the start, the flood rises around it later.
 // It runs from where the track first dips below the line y (a wavy line, the same as the later shoreline, at the mud) to where it
 // comes back up shortly before the finish, and bridges the dry stretch in between. 2 x half wide.
-export const PIER = { half: 8, y: 284 };
+// Rev 3: half 12 instead of 8 (wider, easier to drive), flood = how high the sea rises (events.js FLOOD), lower than the line y
+export const PIER = { half: 12, y: 284, flood: 310 };
 export const PILE = [[138, 100, 64], [59, 37, 18]]; // a pile beside the pier: its lit top, the dark wood
 export const PIER_WAVE = x => Math.sin(x / 40) * 5 + Math.sin(x / 13) * 2;
 export function pierColor(d, nr, x, y) {

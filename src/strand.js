@@ -13,7 +13,7 @@ import { nearestIdx } from './bau.js';
 // The sea (the beach at the bottom and everything the flood covers) brakes a little more than a puddle; it still washes.
 // Computer cars take the short cut now and then (more often on SCHWER and when the pier is flooded). Fields in T.ev start with bv (T22).
 
-const BALL = { pass: 1.3, passUp: 30, spike: .85, spikeUp: 20, spikeP: .35, hitZ: 12, hitR: 11, rest: 1 };
+const BALL = { pass: 1.3, passUp: 30, spike: .85, spikeUp: 20, spikeP: .45, hitZ: 12, hitR: 11, rest: 1 };
 const SKIN = ['#f1c27d', '#c68642', '#8d5524', '#ffdbac'], SUIT = ['#e84a5f', '#2e86de', '#ffd93d', '#6bcb77'], HAIR = ['#3b2512', '#f2d16b', '#1b120c', '#a0522d'];
 
 const loud = (x, y) => clamp(1 - near(x, y) / 300, 0, 1);
@@ -90,8 +90,8 @@ function beachUpdate(T, dt) {
 // the ground of the court and the sea (terrain codes 50-52, see strandmap.js; 3 where the sea is)
 function beachSurf(c) {
   const T = G.T, m = c.def.mud;
-  if (c.surf === 50) return [.84, 7, .95];
-  if (c.surf === 51) return [.6, 6, .8];
+  if (c.surf === 50) return [.76, 7, .95];
+  if (c.surf === 51) return [.5, 6, .8];
   if (c.surf === 52) return [MUD_A + MUD_B * m, 2.4 * m, Math.min(.8, .55 * m)];
   if (c.surf === 3) {
     const x = clamp(c.x | 0, 0, T.W - 1), j = clamp(c.y | 0, 0, T.H - 1) * T.W + x;
@@ -103,7 +103,7 @@ function beachSurf(c) {
 // the net: every car is braked once when it drives through
 function beachGround(c, j, sp, dt) {
   if (c.surf !== 51 || (c.bvNetT || 0) > G.time) return;
-  c.bvNetT = G.time + .6; c.vx *= .5; c.vy *= .5;
+  c.bvNetT = G.time + .6; c.vx *= .4; c.vy *= .4;
   G.T.ev.bvNet = .5; G.T.ev.bvNetY = c.y;
   SX.net(c.ai ? loud(c.x, c.y) * .6 : 1);
 }

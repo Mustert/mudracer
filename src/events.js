@@ -276,9 +276,10 @@ export function drawRain() {
 
 // ======================================================= Strand: the flood
 
-// The sea rises: the shoreline moves from the beach up to y1 (just below the lagoon) across the whole width. Behind it everything is water,
-// the foam line and the waves (drawBeach) move with it. Only a pier along the track stays dry.
-const FLOOD = { y0: 412, y1: PIER.y, dur: 9, pier: PIER.half };
+// The sea rises: the shoreline moves from the beach up to y1 (below the volleyball court) across the whole width. Behind it everything is water,
+// the foam line and the waves (drawBeach) move with it. Only a pier along the track stays dry. Rev 3: the sea stops lower (PIER.flood), so the
+// upper half of the S bend in the south east stays dry and the way to the pier needs no water.
+const FLOOD = { y0: 412, y1: PIER.flood, dur: 9, pier: PIER.half };
 const WAVE = PIER_WAVE; // the same wavy line as the original shore
 
 function initFlood(T) { T.ev.flood = null; }

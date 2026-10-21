@@ -72,11 +72,11 @@ Jetzt:
 - Keine Pfützen auf der Strecke mehr und keine Hauptdusche (Waschanlage). Die Lagune im Infield habe ich behalten.
 - Stattdessen drei kleine Strandduschen, die dauernd laufen und eine Minipfütze unter sich lassen (Wasser wäscht das Auto). Im unteren Teil der Strecke stehen bewusst keine, dort steht später die Flut.
 - Zwei kleine Schlammpfützen mehr.
-- Der **Holzsteg** ist von Anfang an da, damit er bei der Flut nicht aus dem Nichts kommt. Er beginnt am Matsch unten rechts, überbrückt die Strecke über die trockene Lücke in der Mitte und endet kurz vor dem Ziel (nach etwa 51 % bis 94 % der Runde). Für die Autos ist er normale Strecke, schmal (16 px) mit Pfählen an beiden Seiten.
+- Der **Holzsteg** ist von Anfang an da, damit er bei der Flut nicht aus dem Nichts kommt. Er beginnt am Matsch unten rechts, überbrückt die Strecke über die trockene Lücke in der Mitte und endet kurz vor dem Ziel (nach etwa 51 % bis 94 % der Runde). Für die Autos ist er normale Strecke, schmal (seit Rev 3: 24 px statt 16 px) mit Pfählen an beiden Seiten.
 ![[Strand Duschen.jpg]]
 ![[Strand Steg.jpg]]
 Streckenereignis **Flut** (`flut`):
-- Ab Runde 2 steigt das Meer. Die Wasserlinie samt Schaum und Wellen wandert in rund 9 Sekunden über die gesamte Breite nach oben bis knapp unter die Lagune und geht ohne Naht ins Meer über.
+- Ab Runde 2 steigt das Meer. Die Wasserlinie samt Schaum und Wellen wandert in rund 9 Sekunden über die gesamte Breite nach oben bis unter das Volleyballfeld und geht ohne Naht ins Meer über. Seit Rev 3 steigt sie weniger hoch: die obere Hälfte der Schlenkerkurve im Südosten bleibt trocken, der Weg zum Steg führt nicht durchs Wasser.
 - Nur der schmale Holzsteg („schwimmender Steg", siehe oben) bleibt als normale Strecke. Das Wasser daneben bremst, wäscht aber auch.
 - Reifenspuren und Schlamm im überfluteten Bereich werden weggespült. Auf dem Steg fahren die Computerautos mittig, damit sie nicht ins Wasser geraten.
 ![[Strand Flut.jpg]]
@@ -87,7 +87,7 @@ Rev 3 (Wunsch aus `Screenshots/STRAND_Improvements.jpg` und F8-Meldungen):
 - Holzpfeiler verschwinden bei steigendem Wasser und sammeln sich bei voller Flut in der ersten Kurve. ✅ umgesetzt (STRAND Rev 3, ROADMAP 1S3-5, 1S3-6)
 - Wo der (unlogische) See ist, eine Abkürzung über ein Beachvolleyballfeld mit Pixelspielern: schmale Strecke mitten über den Platz, das Netz bremst, der Ball trifft beim Seitenwechsel; das Meer bremst einen Tick mehr. ✅ umgesetzt (STRAND Rev 3, ROADMAP 1S3-7)
 
-Beachvolleyball (immer, kein Ereignis): Vier Spieler spielen über das Netz, jeder Ball wechselt die Seite, ab und zu schmettert einer auf die Sandspur (der Schatten zeigt vorher, wo er landet). Ein tiefer Ball trifft ein Auto: es wird zur Seite geschleudert und gebremst. Das Netz bremst jedes Auto einmal, der Sand neben der Spur ist langsam. Die Abkürzung ist etwa gleich schnell wie außen herum; sie spart den Steg bei Flut, mündet aber in die Matschstelle der linken Kurve. Die Computerautos nehmen sie manchmal (öfter auf SCHWER und bei Flut).
+Beachvolleyball (immer, kein Ereignis): Vier Spieler spielen über das Netz, jeder Ball wechselt die Seite, ab und zu schmettert einer auf die Sandspur (der Schatten zeigt vorher, wo er landet). Ein tiefer Ball trifft ein Auto: es wird zur Seite geschleudert und gebremst. Das Netz bremst jedes Auto einmal, der Sand neben der Spur ist langsam. Die Abkürzung ist ohne Treffer etwa gleich schnell wie außen herum, eher etwas langsamer (Sandspur und Netz bremsen stärker, mehr Schmetterbälle); sie spart den Steg bei Flut, mündet aber in die Matschstelle der linken Kurve. Die Computerautos nehmen sie manchmal (öfter auf SCHWER und bei Flut).
 
 Offen: nichts aus der Änderungsliste. Die Auswahl- und Vorschaubilder zeigen den Strand noch ohne Flut (gewollt, so sieht man die saubere Strecke).
 
