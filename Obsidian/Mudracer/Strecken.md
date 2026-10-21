@@ -183,7 +183,7 @@ Oberflächen:
 - **Öl** statt Matsch (neues Terrain): schwarze, schillernde Flecken. Öl bremst nicht, aber das Auto hat kaum Grip: es rutscht zur Seite weg, lenkt nur halb so gut und wird **schwarz**. Der Dreck wirkt wie Matsch-Dreck (stottert, lenkt schlechter).
 - Keine Pfützen. Waschen geht nur in der Box.
 
-**Boxengasse = Dusche:**
+**Boxengasse = Dusche** (✅ umgesetzt, Rev 2: Regel klarer; gewaschen wird nur im Boxenstopp, die Gasse ist ein Stopp über die ganze Breite; in der letzten Runde ist die Box zu, rotes Schild „BOX ZU“, Computerautos meiden sie; Start-Ziel-Gerade 3° gerade, erster Reifenwurf erst nach etwa 20 s):
 - Sie läuft unter der Start-Ziel-Geraden entlang, getrennt durch eine weiße Mauer mit Einfahrt (vor Kurve 1 der Vorrunde, also vor der Zielgeraden) und Ausfahrt (hinter Kurve 1).
 - In der Gasse gilt ein Tempolimit (Schild, das Auto fährt höchstens 55 %). In der Mitte steht die Box: drei Mechaniker mit Schlauch und Schlagschrauber, das Auto wird beim Durchfahren **sofort ganz sauber** (Funkspruch „BOX BOX“, Schlagschrauber-Ton).
 - Die Box kostet etwa 1,5 s gegenüber der Geraden. Damit ist sie eine echte Entscheidung: schwarz und rutschig weiterfahren oder Zeit opfern.

@@ -166,8 +166,8 @@ const TRACK_DEFS = [
   // outside, oil instead of mud, a pit lane along the start straight whose box washes the car, barriers all around (see ringmap.js, ring.js).
   // oilAt = [x, y, half length, half width]; gravel and stacks (tyre walls) = [x, y, radius]; pit = lane points, half width, box (y from, to),
   // pit wall [x, y from, to], garages [x0, y0, x1, y1]; rollers = [x, y, seconds between two tyres, first one] (event reifen)
-  { name: 'RENNSTRECKE', seed: 7, theme: 'ring', song: 'circuit', events: ['reifen'], wall: [], wash: null, ring: true,
-    poly: [[70, 185, 0], [70, 55, 55], [165, 55, 22], [195, 100, 22], [255, 100, 22], [285, 55, 22], [345, 55, 60], [540, 395, 65], [730, 395, 55], [730, 55, 48], [630, 55, 48],
+  { name: 'RENNSTRECKE', rev: 2, seed: 7, theme: 'ring', song: 'circuit', events: ['reifen'], wall: [], wash: null, ring: true,
+    poly: [[70, 130, 0], [70, 55, 55], [165, 55, 22], [195, 100, 22], [255, 100, 22], [285, 55, 22], [345, 55, 60], [540, 395, 65], [730, 395, 55], [730, 55, 48], [630, 55, 48],
       [630, 175, 50], [270, 395, 65], [70, 395, 55]],
     mud: [], water: [], ponds: [],
     // the small patch on the lower right straight lies on the upper half of the road: along the lower edge there is a clean lane
@@ -175,7 +175,7 @@ const TRACK_DEFS = [
     gravel: [[40, 30, 85], [700, 22, 95], [760, 425, 70]], stacks: [[680, 125, 40]],
     // the pit lane forks off at the start of the bottom straight, runs behind the pit wall and joins the start straight again before turn 1
     pit: { pts: [[238, 381, 0], [148, 381, 32], [148, 214, 46], [93, 120, 0]], half: 15, box: [270, 306], wall: [116, 196, 350], garage: [174, 226, 212, 348] },
-    rollers: [[730, 262, 12, 5], [600, 395, 13, 9], [120, 55, 11, 4], [400, 316, 12, 8], [225, 100, 14, 12]],
+    rollers: [[730, 262, 12, 21], [600, 395, 13, 25], [120, 55, 11, 20], [400, 316, 12, 24], [225, 100, 14, 28]],
     // scenery: stands [x, y, w, h, facing down 1 / up -1], team trucks [x, y, team], helipad, big screen, a flag mown into the grass, camera towers
     stands: [[405, 6, 168, 32, 1], [358, 410, 136, 36, -1]], heli: [530, 118], screen: [450, 58], flag: [575, 275, 56, 40], towers: [[268, 210], [380, 388]],
     trucks: [[230, 158, 0], [248, 158, 1], [266, 158, 2], [284, 158, 3], [302, 158, 4], [230, 262, 5], [248, 262, 6], [266, 262, 7], [284, 262, 1]] },

@@ -1,6 +1,6 @@
 import { G, PREFS } from './g.js';
 import { SFX } from './audio.js';
-import { HALF, VH, VW, angDiff, clamp, ctx, hash } from './core.js';
+import { HALF, LAPS, VH, VW, angDiff, clamp, ctx, hash } from './core.js';
 import { R1, disc, text } from './gfx.js';
 import { eventOn, snap } from './undo.js';
 import { dirHeld, held } from './input.js';
@@ -81,14 +81,17 @@ function boxPose(R) {
 // ground under a car (from update.js): kerbs rattle, gravel throws up dust and stones, the pit lane has a speed limit.
 // The pit stop: in the middle of the box the car stops for a moment, the crew rushes in, washes it and changes the wheels.
 const STOP = 1;
+// The pit lane has one rule: whoever drives in is stopped in the box, across the whole width of the lane, and only then washed. Driving past
+// the box does nothing. In the last lap of a car the box is shut (red sign): no stop, no wash, and the computer cars stay out.
+const boxShut = c => c.lap >= LAPS;
 function ringGround(c, j, sp, dt) {
   const R = G.T.ring; if (!R) return;
   c.kerb = !!R.kerb[j]; c.oilT = Math.max(0, c.oilT - dt);
   const pit = !!R.pitMask[j], B = boxPose(R);
-  if (pit && !c.pit && !c.ai) { c.msg = 'BOX BOX!'; c.msgT = 1.6; SFX.radio(); }
+  if (pit && !c.pit && !c.ai) { c.msg = boxShut(c) ? 'BOX ZU' : 'BOX BOX!'; c.msgT = 1.6; if (!boxShut(c)) SFX.radio(); }
   c.pit = pit;
   if (!pit) c.boxDone = false;
-  if (B && pit && !c.boxDone && Math.hypot(c.x - B.x, c.y - B.y) < 7) {
+  if (B && pit && !c.boxDone && !boxShut(c) && Math.abs(c.y - B.y) < 6) {
     c.boxDone = true; c.boxT = STOP;
     if (!c.ai) { c.msg = 'BOXENSTOPP!'; c.msgT = STOP; }
     if (near(c.x, c.y) < 300) { SFX.wrench(c.ai ? .4 : 1); setTimeout(() => SFX.wrench(c.ai ? .3 : .8), 380); }
@@ -109,7 +112,7 @@ function ringPitTarget(c) {
   const R = G.T.ring; if (!R || !R.pit) return null;
   const P = R.pit.pts, N = G.T.N;
   if (!c.pitting) {
-    if (c.finished || c.dirt < .5 || G.state !== 'race') return null;
+    if (c.finished || c.dirt < .5 || G.state !== 'race' || boxShut(c)) return null;
     const ahead = (R.pit.ie - c.idx + N) % N;
     if (ahead < 8 || ahead > 50) return null;
     c.pitting = true; c.pitK = 0;
@@ -299,7 +302,7 @@ function updateCrew(R, dt) {
   // side: towards the garages
   const fx = Math.cos(B.ang), fy = Math.sin(B.ang), nx = -fy, ny = fx, side = R.pit.garage && (R.pit.garage[0] - B.x) * nx < 0 ? -1 : 1;
   if (!R.crew) R.crew = CREW.map((m, k) => { const hf = -25 + k * 10, hl = (R.pit.half + 9) * side; return { ...m, k, l: m.l * (m.r === 'hose' ? side : 1), hx: B.x + fx * hf + nx * hl, hy: B.y + fy * hf + ny * hl, x: B.x + fx * hf + nx * hl, y: B.y + fy * hf + ny * hl, run: 0 }; });
-  const boxed = G.cars.find(c => c.boxT > 0), coming = boxed || G.cars.find(c => c.pit && !c.boxDone && Math.hypot(c.x - B.x, c.y - B.y) < 80);
+  const boxed = G.cars.find(c => c.boxT > 0), coming = boxed || G.cars.find(c => c.pit && !c.boxDone && !boxShut(c) && Math.hypot(c.x - B.x, c.y - B.y) < 80);
   R.crewCar = boxed || null;
   for (const m of R.crew) {
     const tx = coming ? B.x + fx * m.f + nx * m.l : m.hx, ty = coming ? B.y + fy * m.f + ny * m.l : m.hy, ox = m.x, oy = m.y;
@@ -353,7 +356,9 @@ function drawRingAbove() {
   }
   if (R.pit) {
     const q = R.pit.pts[Math.max(0, R.pit.k0)], x = Math.round(q.x + 26), y = Math.round(q.y - 2);
-    R1(x - 6, y - 6, 13, 13, '#1b120c'); R1(x - 5, y - 5, 11, 11, '#2f6fd8'); text('P', x + 1, y - 4, 8, '#ffffff', 'center', null);
+    const shut = !!G.player && boxShut(G.player);
+    R1(x - 6, y - 6, 13, 13, '#1b120c'); R1(x - 5, y - 5, 11, 11, shut ? '#c0281c' : '#2f6fd8'); text(shut ? 'X' : 'P', x + 1, y - 4, 8, '#ffffff', 'center', null);
+    text(shut ? 'BOX ZU' : 'BOX = HALT', x + 1, y + 9, 8, shut ? '#ff6b5e' : '#9fd6ff', 'center', null);
   }
   for (const c of G.cars) {
     if (c.draft > .3 && c.fall <= 0) {
