@@ -160,7 +160,9 @@ const TRACK_DEFS = [
   // GARTEN Rev 3: start on the straight in the middle of the left half (the left road moved west for a straight grid), a big lake between the
   // three bridges with a path of stepping stones from the right road (past a torii) to the corner after the slanted bridge: it saves all three
   // bridges. Floating lanterns, two koi leaps over the stones and a koi that spits from beside the big stone (events.js). The bridges end square.
-  { name: 'GARTEN', rev: 3, seed: 5, theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: null, squareBridges: true,
+  // Rev 4: the way into the short cut is open (two stones in the grass, the torii moved beside it, 1S6-10); the palisade at the water is one
+  // solid line whose obstacles match what you see (1S6-11).
+  { name: 'GARTEN', rev: 4, seed: 5, theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: null, squareBridges: true,
     pts: [[308,198], [334,195], [347,167], [338,135], [305,120], [240,120], [180,120], [148,108], [134,80],
       [148,52], [180,40], [250,40], [320,40], [392,42], [424,52], [444,80], [447,125], [458,168], [484,198], [515,211], [546,198], [572,168], [583,125],
       [585,90], [595,62], [620,43], [642,38], [665,43], [690,62], [700,90], [706,140], [700,200], [692,255], [690,282], [690,300], [688,335], [678,368],
@@ -186,11 +188,12 @@ const TRACK_DEFS = [
       [[288, 400, 12], [288, 462, 13]]],
     // stepping stones [x, y, radius, stretch, angle]: the short cut across the pool at the top, and the path across the lake from the right road
     // (past the torii) and the big stone to the corner after the slanted bridge
+    // (Rev 4, 1S6-10: two stones in the grass lead from the road edge to the water, the torii stands beside the way in, not in it)
     stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10],
-      [613, 261, 9], [590, 276, 9], [567, 291, 9], [524, 318, 12, 2.2, .1], [478, 319, 9], [454, 318, 9], [430, 318, 9]],
+      [650, 252, 8], [632, 257, 8], [613, 261, 9], [590, 276, 9], [567, 291, 9], [524, 318, 12, 2.2, .1], [478, 319, 9], [454, 318, 9], [430, 318, 9]],
     // clipped hedges that keep you from cutting across the garden: [x1, y1, x2, y2]; the right one bends along the lake to the torii
     hedges: [[12, 159, 333, 159], [172, 80, 396, 80], [100, 258, 396, 258], [396, 78, 396, 300], [642, 98, 642, 222], [642, 222, 570, 241], [152, 260, 152, 376]],
-    torii: [629, 241, 12],
+    torii: [598, 236, 12],
     pagodas: [[764, 142, 4, 1.15], [764, 388, 4, 1.15]],
     // the decoration is laid out by hand, in lines and pairs: cherry trees, stone lanterns, bonsai in pots
     cherries: [[28, 34], [78, 34], [28, 104], [78, 104], [768, 40], [768, 236]],
@@ -870,11 +873,45 @@ function* buildTrack(def, ti) {
     for (const sx of [rail.x - 28, rail.x + 28]) { for (let dy = -4; dy <= 4; dy++) for (let dx = -3; dx <= 3; dx++) px(sx + dx, gy + dy, PO); px(sx, gy - 3, hex('#ff3b3b')); }
   }
   yield .74;
+  // the garden palisade (1S6-11): the fence spots along one side of the road with deep water behind them are joined into one solid line,
+  // 5 px wide (dark rim, light and darker bamboo), a post every 9 px, a shadow to the bottom right; the obstacles lie on that same line every
+  // 4 px (r 2.5 = half its width), so what you see is exactly what stops you. Spots up to 10 points and 16 px apart are joined (no gaps at the bends).
+  const palisade = sides => {
+    const SL = hex('#c8b25a'), SM = hex('#8f7a30'), SD = hex('#24190a'), SP = hex('#5a4318'), col = new Map(), posts = new Map(), sh = new Set();
+    const put = (x, y, c, m = col) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) m.set(y * MW + x, c); };
+    const post = (x, y) => { for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) put(x + dx, y + dy, Math.abs(dx) === 2 || Math.abs(dy) === 2 ? SD : dx + dy < -1 ? SL : SP, posts); };
+    for (const spots of sides) {
+      let i0 = spots.findIndex(p => !p); if (i0 < 0) i0 = 0;
+      let prev = null, gap = 0, run = 0;
+      for (let k = 1; k <= N; k++) {
+        const p = spots[(i0 + k) % N];
+        if (!p) { if (++gap > 10) prev = null; continue; }
+        gap = 0;
+        if (!prev || Math.hypot(p.x - prev.x, p.y - prev.y) > 16) { post(p.x, p.y); walls.push({ x: p.x, y: p.y, r: 2.5 }); run = 0; prev = p; continue; }
+        const L = Math.hypot(p.x - prev.x, p.y - prev.y); if (L < .5) continue;
+        const ux = (p.x - prev.x) / L, uy = (p.y - prev.y) / L;
+        for (let t = .5; t <= L; t += .5) {
+          const cx = prev.x + ux * t, cy = prev.y + uy * t, lit = uy - ux > 0 ? 1 : -1; // the side facing the top left is the light one
+          for (let w = -2; w <= 2; w += .5) {
+            put(cx - uy * w, cy + ux * w, Math.abs(w) > 1.5 ? SD : w * lit > 0 ? SL : SM);
+            for (const o of [2, 3]) { const sx = Math.round(cx - uy * w + o), sy = Math.round(cy + ux * w + o); if (sx >= 0 && sy >= 0 && sx < MW && sy < MH) sh.add(sy * MW + sx); }
+          }
+          run += .5;
+          if (run % 4 === 0) walls.push({ x: cx, y: cy, r: 2.5 });
+          if (run % 9 === 0) post(cx, cy);
+        }
+        prev = p;
+      }
+    }
+    for (const j of sh) if (!col.has(j) && !posts.has(j)) { const q = j * 4; d[q] *= .58; d[q + 1] *= .6; d[q + 2] *= .62; }
+    for (const [j, c] of col) set(j, c);
+    for (const [j, c] of posts) set(j, c);
+  };
   // fence along both sides of the track: rope (beach), white pickets (meadow), logs (forest)
   const FENCE = { rope: ['#f0dcaa', '#7a4f2a', '#a8743f', '#5a3a1c', 9], bamboo: ['#c9d49a', '#5f7d34', '#87a24b', '#364a1c', 9], picket: ['#e6e1d2', '#ffffff', '#f4f1e6', '#8a8472', 6], log: ['#8a6440', '#5a3a1c', '#7a5230', '#3b2512', 12], mesh: ['#e8872a', '#5a6068', '#7b838c', '#2c3036', 9] }[th.fence];
   if (FENCE) {
     const RL = hex(FENCE[0]), P0 = hex(FENCE[1]), P1 = hex(FENCE[2]), P2 = hex(FENCE[3]), RL2 = hex('#6b4a2e');
-    const SL = hex('#b8a14a'), SM = hex('#8f7a30'), SD = hex('#2a1e0c'), SP = hex('#5a4318'), SH = hex('#203a2a'); // solid palisade (garden)
+    const garden = th.decor === 'garten', pal = garden ? [new Array(N).fill(null), new Array(N).fill(null)] : null; // palisade spots per side (garden)
     for (let i = 0; i < N; i++) for (const s of [-1, 1]) {
       // the garden: if the first spot is already water, the fence moves out onto the grass strip next to the pond
       let x = 0, y = 0, j = -1;
@@ -886,20 +923,15 @@ function* buildTrack(def, ti) {
       if (j < 0) continue;
       if ((def.kipper || []).some(k => Math.hypot(k[0] - x, k[1] - y) < 52)) continue; // the dump trucks drive through a gap in the fence
       // the garden: where deep water lies right behind the fence it is a solid barrier (except at the stepping stones, that is where you go in on purpose)
-      // it looks different from the low decoration fence: a thick dark bamboo palisade with posts
-      if (th.decor === 'garten' && !(def.stones || []).some(q => Math.hypot(q[0] - x, q[1] - y) < 60)) {
+      // it looks different from the low decoration fence: a thick dark bamboo palisade with posts (drawn below as one line, 1S6-11)
+      if (garden && !(def.stones || []).some(q => Math.hypot(q[0] - x, q[1] - y) < 60)) {
         let wet = false; for (let dy = -12; dy <= 12 && !wet; dy += 4) for (let dx = -12; dx <= 12; dx += 4) { const xx = clamp(x + dx, 0, MW - 1), yy = clamp(y + dy, 0, MH - 1); if (ter[yy * MW + xx] === 5 && !bridgeMask[yy * MW + xx]) { wet = true; break; } }
-        if (wet) {
-          if (i % 3 === 0) walls.push({ x, y, r: 2.5 });
-          const ox = nrm[i].x * s, oy = nrm[i].y * s, P = (k, c) => px(Math.round(x + ox * k), Math.round(y + oy * k), c);
-          P(-1, SD); P(0, SL); P(1, SL); P(2, SM); P(3, SD); P(4, SH);
-          if (i % 4 === 0) for (let k = -1; k <= 3; k++) for (const q of [-1, 0, 1]) px(Math.round(x + ox * k - oy * q), Math.round(y + oy * k + ox * q), k === -1 || k === 3 || q ? SD : SP);
-          continue;
-        }
+        if (wet) { pal[s > 0 ? 1 : 0][i] = { x, y }; continue; }
       }
       if (i % FENCE[4] === 0) { px(x + 2, y + 2, P2); px(x, y, P1); px(x + 1, y, P0); px(x, y + 1, P0); px(x + 1, y + 1, P2); }
       else { px(x, y, RL); if (th.fence === 'log') px(x + Math.round(nrm[i].x * s), y + Math.round(nrm[i].y * s), RL2); }
     }
+    if (garden) palisade(pal);
   }
   // the ramps over the railway (ZUG Rev 3, railJump): one at every crossing, grey concrete across the whole jump lane beside the road, yellow
   // and black stripes at the lip, a shadow behind it; whoever takes one flies over the rails beside the boom (the train does not hit cars in the
