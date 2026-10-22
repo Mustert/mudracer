@@ -36,10 +36,10 @@ const MAYPOLE = [108, 372];
 const SQUARE = [62, 338, 128, 384]; // the village square (gravel)
 /** @type {[number, number, number, number, string][]} */
 const FIELDS = [
-  [232, 8, 392, 64, 'wheat'], [448, 8, 576, 60, 'potato'], [628, 8, 830, 60, 'hops'], [232, 170, 392, 252, 'plough'],
-  [232, 348, 392, 460, 'wheat'], [450, 350, 574, 460, 'sun'], [300, 592, 396, 628, 'potato'], [870, 566, 1000, 626, 'wheat'],
+  [232, 6, 392, 30, 'wheat'], [448, 6, 576, 38, 'potato'], [628, 6, 830, 40, 'hops'], [232, 170, 392, 252, 'plough'],
+  [232, 348, 392, 428, 'wheat'], [450, 350, 574, 428, 'sun'], [300, 592, 396, 628, 'potato'], [870, 566, 1000, 626, 'wheat'],
 ];
-const PASTURES = [[700, 326, 930, 462, 5], [1046, 362, 1114, 600, 3]]; // [x0, y0, x1, y1, cows]
+const PASTURES = [[700, 326, 930, 428, 5], [1046, 362, 1114, 600, 3]]; // [x0, y0, x1, y1, cows]
 const ORCHARD = [1046, 176, 1114, 336];
 /** @type {[number, number, number, number]} */
 const YARD = [690, 228, 906, 270]; // the farmyard (gravel) with the dung heap and the hens

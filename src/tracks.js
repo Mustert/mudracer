@@ -129,11 +129,15 @@ const TRACK_DEFS = [
   // (jumps = [x, y, speed upwards, side: -1 outer half, 1 inner half]) lets you jump over the train; the train comes more often from lap to lap (train.js)
   // Rev 2 (1S4-2): the mud moved (one between the crossings on top, a new one on the outer half, the right one split into two halves, one straight
   // before the first ramp), a second ramp on the inner half before the left crossing, both ramps of grey concrete, the car wash on the left
-  // straight behind the grid, no pond and no puddle in the lower left bend; a Bavarian village around the track (bahnmap.js); a train on each line
-  { name: 'ZUG', rev: 2, seed: 4, W: 1120, H: 630, events: ['zug'], theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 511, y: 300, ang: 0 }], tunnels: [{ x: 511, y: 300, hw: 164, portals: [420, 602] }],
+  // straight behind the grid, no pond and no puddle in the lower left bend; a Bavarian village around the track (bahnmap.js); a train on each line.
+  // Rev 3: a ramp at every crossing, in a lane of its own beside the barrier (railJump, see buildTrack): the road widens by w px on one side
+  // (sides in the order of rail.cross: line 602 top, bottom, line 420 top, bottom; -1 outer, 1 inner) from `from` to `to` px along the road
+  // around the crossing, an island carries the post of the boom between road and lane; the lip lies `lip` px before the rails, and every jump
+  // leaves it with a forward speed between push and cap, so it always lands well behind the rails (the train only hits cars on the ground)
+  { name: 'ZUG', rev: 3, seed: 4, W: 1120, H: 630, events: ['zug'], theme: 'bahn', song: 'train', wallStyle: 'barrier', wall: [{ x: 511, y: 300, ang: 0 }], tunnels: [{ x: 511, y: 300, hw: 164, portals: [420, 602] }],
     pts: [[180, 240], [180, 160], [240, 112], [364, 112], [602, 123], [840, 112], [980, 182], [994, 420], [896, 518], [602, 507], [350, 518], [260, 548], [180, 500], [180, 400], [180, 320]],
     mud: [[.182, 12, 28, 22], [.254, -15, 24, 16], [.452, -15, 26, 16], [.487, 15, 26, 16], [.641, -16, 22, 15]], water: [[.36, -10, 20, 18], [.55, 0, 24, 36]], ponds: [], rail: { x: 602, lines: [602, 420] }, wash: 0, washAt: [180, 482],
-    jumps: [[650, 508, 100, -1], [470, 508, 105, 1]], village: true },
+    railJump: { w: 38, from: -100, to: 95, lip: -36, vz: 105, push: 170, cap: 200, sides: [-1, 1, -1, 1] }, village: true },
   // The building site: the road is packed earth. Everything inside the ring road is yard (solid, see bau.js), the road narrows at barriers, a crane
   // holds a concrete pipe over the road, a cement mixer leaks a grey puddle onto it, and dump trucks tip earth beside it (event kipper).
   // poly = [x, y, curve radius] (rounded corners), mudAt/waterAt/cement = [x, y, half length along the road, half width across]
@@ -388,6 +392,18 @@ const TRACK_DEFS = [
 export const newTrains = lines => lines.map((x, k) => ({ x, phase: 'wait', t: 4 + k * 2, dir: k ? -1 : 1, y: -9999, n: 4, len: 0, smokeT: 0, signal: false, gate: 0 }));
 
 
+// where the centre line crosses the rail lines (x): { i (index on the centre line), x, y }, line by line, in driving order
+const railCross = (path, N, lines) => {
+  const cross = [];
+  for (const RX of lines) for (let i = 0; i < N; i++) { const a = path[i], b = path[(i + 1) % N]; if ((a.x - RX) * (b.x - RX) <= 0 && !cross.some(c => c.x === RX && Math.abs(c.i - i) < 30)) cross.push({ i, x: RX, y: (a.y + b.y) / 2 }); }
+  return cross;
+};
+// ZUG Rev 3: is a point a (px along the road from the crossing), ac (px to the side of the lane) on the island of a boom post?
+// (two short kerbs between road and lane, one under each boom, 30 px before and after the rails)
+const ISLE = { a: 31, half: 13, c: HALF + 6.5, r: 5.5 };
+const onIsle = (a, ac) => Math.hypot(Math.max(0, Math.abs(Math.abs(a) - ISLE.a) - (ISLE.half - ISLE.r)), ac - ISLE.c) < ISLE.r;
+
+
 // the centre line with rounded corners: [x, y, r] (r = 0: plain point), a circle-like curve of size r at every corner, straight in between
 function roundedPath(poly) {
   const raw = [], n = poly.length, k = .5523;
@@ -463,7 +479,7 @@ function* buildTrack(def, ti) {
   const th = THEMES[def.theme], sd = (def.seed !== undefined ? def.seed : ti) * 131 + 17, r = rng(sd);
   const { path, tan, nrm, N } = centreLine(def);
   // distance to centre line (and which centre point is nearest)
-  const A = MW * MH, dist = new Float32Array(A).fill(1e8), near = new Int32Array(A), RR = HALF + 22;
+  const RJ = def.railJump, A = MW * MH, dist = new Float32Array(A).fill(1e8), near = new Int32Array(A), RR = HALF + 22 + (RJ ? RJ.w : 0);
   for (let pi = 0; pi < N; pi++) {
     const p = path[pi];
     const x0 = Math.max(0, Math.floor(p.x - RR)), x1 = Math.min(MW - 1, Math.ceil(p.x + RR));
@@ -472,6 +488,20 @@ function* buildTrack(def, ti) {
     if (pi % 25 === 24) yield .2 * pi / N;
   }
   for (let j = 0; j < A; j++) dist[j] = Math.sqrt(dist[j]);
+  // ZUG Rev 3: the jump lanes beside the crossings. The road gets w px wider on the side of the lane (dist gets smaller there, so everything that
+  // asks dist sees the wider road: terrain, edge, planks over the rails, decor); it widens and narrows again over 30 px, the islands stay grass
+  const jumpX = RJ ? railCross(path, N, def.rail.lines || [def.rail.x]).map((cr, k) => ({ ...cr, side: RJ.sides[k] || -1 })) : [];
+  if (RJ) for (let j = 0; j < A; j++) {
+    if (dist[j] > HALF + RJ.w + 30) continue;
+    const i = near[j], p = path[i], x = j % MW, y = (j / MW) | 0, c = (x + .5 - p.x) * nrm[i].x + (y + .5 - p.y) * nrm[i].y;
+    for (const cr of jumpX) {
+      let a = (i - cr.i + N) % N; if (a > N / 2) a -= N; a *= 2;
+      if (c * cr.side <= 0 || a < RJ.from - 30 || a > RJ.to + 30) continue;
+      const w = RJ.w * clamp(a < RJ.from ? (a - RJ.from + 30) / 30 : (RJ.to + 30 - a) / 30, 0, 1), ac = Math.abs(c);
+      if (onIsle(a, ac)) { dist[j] = Math.max(dist[j], HALF + 6); break; }
+      if (w > 0) dist[j] = Math.min(dist[j], Math.max(HALF - 3.5, ac - w));
+    }
+  }
   yield .2;
   const band = (i, alongMax, fn) => {
     const p = path[i], tg = tan[i], nm = nrm[i], R = HALF + 16;
@@ -555,8 +585,7 @@ function* buildTrack(def, ti) {
   if (def.rail) {
     const lines = def.rail.lines || [def.rail.x];
     for (const RX of lines) for (let y = 0; y < MH; y++) for (let x = RX - 18; x <= RX + 18; x++) { const j = y * MW + x; if (ter[j] >= 2) ter[j] = dist[j] < HALF ? 1 : 0; }
-    const cross = [];
-    for (const RX of lines) for (let i = 0; i < N; i++) { const a = path[i], b = path[(i + 1) % N]; if ((a.x - RX) * (b.x - RX) <= 0 && !cross.some(c => c.x === RX && Math.abs(c.i - i) < 30)) cross.push({ i, x: RX, y: (a.y + b.y) / 2 }); }
+    const cross = RJ ? jumpX : railCross(path, N, lines); // (side: where the jump lane is, the boom posts follow it, draw.js)
     rail = { x: def.rail.x, lines, cross, signal: false, bellT: 0, chuffT: 0, chuffN: 0, trains: newTrains(lines) };
   }
   const yard = siteYards(def, ter, dist, MW, MH), cemPix = [];
@@ -833,17 +862,29 @@ function* buildTrack(def, ti) {
       else { px(x, y, RL); if (th.fence === 'log') px(x + Math.round(nrm[i].x * s), y + Math.round(nrm[i].y * s), RL2); }
     }
   }
-  // the ramps over the railway (ZUG): grey concrete on one half of the road (side -1 outer, 1 inner), yellow and black stripes at the lip, a shadow
-  // behind it; whoever takes one flies over the rails (the train does not hit cars in the air, train.js). Optional: the other half stays flat.
+  // the ramps over the railway (ZUG Rev 3, railJump): one at every crossing, grey concrete across the whole jump lane beside the road, yellow
+  // and black stripes at the lip, a shadow behind it; whoever takes one flies over the rails beside the boom (the train does not hit cars in the
+  // air, train.js). Optional: the road itself stays flat. The islands between road and lane are kerbed concrete and solid.
   const ramps = [];
-  if (def.jumps && !decorMap) for (const [jx, jy, vz, side] of def.jumps) {
-    const i = nearestIdx(path, jx, jy), p = path[i], t = tan[i], nx = -t.y, ny = t.x, l0 = side < 0 ? -HALF + 2 : 3, l1 = side < 0 ? -3 : HALF - 2;
-    ramps.push({ x: p.x, y: p.y, tx: t.x, ty: t.y, lo: side < 0 ? -HALF - 4 : 3, hi: side < 0 ? -3 : HALF + 4, vz });
+  if (RJ) for (const cr of jumpX) {
+    const L = cr.side, i = (cr.i + Math.round(RJ.lip / 2) + N) % N, p = path[i], t = tan[i], nx = -t.y, ny = t.x;
+    const l0 = Math.min(L * (HALF + 13), L * (HALF + RJ.w - 2)), l1 = Math.max(L * (HALF + 13), L * (HALF + RJ.w - 2));
+    ramps.push({ x: p.x, y: p.y, tx: t.x, ty: t.y, lo: l0 - 3, hi: l1 + 3, vz: RJ.vz, push: RJ.push, cap: RJ.cap });
+    for (let k = -26; k <= 26; k++) for (let l = HALF; l <= HALF + 13; l += .5) {
+      const ii = (cr.i + k + N) % N, a = k * 2, q = path[ii], x = Math.round(q.x + nrm[ii].x * L * l), y = Math.round(q.y + nrm[ii].y * L * l);
+      if (!onIsle(a, l) || x < 0 || y < 0 || x >= MW || y >= MH) continue;
+      const edge = !onIsle(a + 1.5, l) || !onIsle(a - 1.5, l) || !onIsle(a, l + 1.5) || !onIsle(a, l - 1.5);
+      px(x, y, edge ? [236, 236, 228] : hash(x, y, 33) < .25 ? [138, 142, 146] : [154, 158, 162]); wallMask[y * MW + x] = 1;
+    }
+    for (const a of [-40, -31, -22, 22, 31, 40]) {
+      const ii = (cr.i + Math.round(a / 2) + N) % N, q = path[ii];
+      walls.push({ x: q.x + nrm[ii].x * L * ISLE.c, y: q.y + nrm[ii].y * L * ISLE.c, r: 4 });
+    }
     const CO = [hex('#a4a8ad'), hex('#b6babf'), hex('#70757c')], YE = hex('#f2c230'), BK = hex('#2a2420'), SH = hex('#5e5040');
-    for (let a = -26; a <= 3; a++) for (let l = l0; l <= l1; l++) {
+    for (let a = -38; a <= 3; a++) for (let l = l0; l <= l1; l++) {
       const x = Math.round(p.x + t.x * a + nx * l), y = Math.round(p.y + t.y * a + ny * l);
       // concrete gets lighter towards the lip (it rises), seams every 8 px, a dark rim on both long edges
-      px(x, y, a > 0 ? SH : a >= -2 ? (((l >> 2) & 1) ? YE : BK) : l === l0 || l === l1 ? CO[2] : (a & 7) === 0 ? CO[2] : a > -12 || hash(x, y, 31) < .2 ? CO[1] : CO[0]);
+      px(x, y, a > 0 ? SH : a >= -2 ? (((l >> 2) & 1) ? YE : BK) : l === l0 || l === l1 ? CO[2] : (a & 7) === 0 ? CO[2] : a > -16 || hash(x, y, 31) < .2 ? CO[1] : CO[0]);
     }
   }
   yield .76;

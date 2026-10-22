@@ -250,11 +250,12 @@ function drawCrossings(R) {
   const flash = ((G.time * 3) | 0) % 2;
   for (const cr of R.cross) {
     const p = G.T.path[cr.i], tg = G.T.tan[cr.i], nm = G.T.nrm[cr.i];
+    // two booms, 30 px before (s -1) and after (s 1) the rails; the post before stands on the side of the jump lane (cr.side, ZUG Rev 3), on its island
     for (const s of [-1, 1]) {
-      const bx = p.x + tg.x * s * 30 + nm.x * s * (HALF + 7), by = p.y + tg.y * s * 30 + nm.y * s * (HALF + 7);
+      const ps = -s * (cr.side || -1), bx = p.x + tg.x * s * 30 + nm.x * ps * (HALF + 7), by = p.y + tg.y * s * 30 + nm.y * ps * (HALF + 7);
       const tr = R.trains.find(q => q.x === cr.x), sig = tr.signal, len = 5 + (2 * HALF + 4) * tr.gate; // (every line has its own train)
       for (const pass of [0, 1]) for (let k = 0; k < len; k++) {
-        const x = Math.round(bx - nm.x * s * k), y = Math.round(by - nm.y * s * k);
+        const x = Math.round(bx - nm.x * ps * k), y = Math.round(by - nm.y * ps * k);
         ctx.fillStyle = pass ? ((k >> 2) & 1 ? '#ffffff' : '#e53935') : '#1b120c';
         ctx.fillRect(x - 1 - (pass ? 0 : 1), y - 1 - (pass ? 0 : 1), pass ? 3 : 5, pass ? 3 : 5);
       }

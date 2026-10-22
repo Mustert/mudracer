@@ -8,7 +8,7 @@ import { cam } from './state.js';
 // sinking in quicksand, burning in lava (volcano). Terrain codes: 10 quicksand, 11 gorge (no ground), 12 sheet ice, 14 swinging rope bridge,
 // 15 lava, 16 the crust over the lava stream (lava while the stream breaks through, see volcano.js).
 // A jump: { x, y (the lip), tx, ty (the way you jump), lo, hi (how far to the side of the lip, along the normal -ty, tx), vz (speed upwards),
-// push (optional: at least this speed forwards, the geyser), off (true: it does not throw you right now) }.
+// push (optional: at least this speed forwards, the geyser), cap (optional: at most this speed forwards), off (true: it does not throw you right now) }.
 // A push: { i0, i1 (stretch of the centre line, in driving order), f (push along the road, px/s²) }, or a current in a box
 // { rect: [x0, y0, x1, y1], fx, fy } (the ford in the jungle). ----------
 
@@ -38,6 +38,7 @@ export function airborne(c, dt) {
     const fwd = c.vx * J.tx + c.vy * J.ty; if (fwd < (J.push ? 5 : 30)) return;
     c.z = .01; c.vz = J.vz; c.air = 0; c.jumpLand = J.land; // (land: where it is set down if it falls short, the rainbow)
     if (J.push && fwd < J.push) { c.vx += J.tx * (J.push - fwd); c.vy += J.ty * (J.push - fwd); }
+    if (J.cap && fwd > J.cap) { c.vx *= J.cap / fwd; c.vy *= J.cap / fwd; } // (cap: at most this fast, so it lands where it should, the railway)
     const v = loud(c, c.x, c.y); if (v > .02) (J.snd || (J.sfx ? SFX[J.sfx] : J.vz > 120 ? SFX.bigJump : SFX.jump))(v); // (snd: a sound of its own, the trampolines)
   });
 }
