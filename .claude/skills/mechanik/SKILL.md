@@ -132,7 +132,7 @@ Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil
 
 ## 11. Zeichnen (`draw.js` `drawRace`)
 
-Reihenfolge: `base` → Reifenspuren `tctx` → Wasserglitzern → Strand → Tiere → `drawEventsGround` → Hook `drawGround` → Geist → Autos (nach `y` sortiert; Ring-Brücke dazwischen) → Zug → Partikel, Rauch → `top` (Baumkronen, Geländer) → Bahnübergänge → Windmühle, Vögel → Zurück-Pfeil → `drawEventsAbove` → Hook `drawAbove` → Nacht → Regen → Hook `drawSky` → Stimmung → 1P-Schild → HUD → Countdown/Ziel. Auto: `drawCar` (Hook `drawCar`, `drawFall`), Schmutzstufe `round(dirt·5)`.
+Reihenfolge: `base` → Reifenspuren `tctx` → Wasserglitzern → Strand → Tiere → `drawEventsGround` → Hook `drawGround` → Geist → Autos am Boden (nach `y` sortiert; Ring-Brücke dazwischen) → Zug → Autos in der Luft (`z > 0`, über dem Zug, 1S4-9) → Partikel, Rauch → `top` (Baumkronen, Geländer) → Bahnübergänge (je ein Warnlicht, `cr.lx/ly` aus `buildTrack`) → Windmühle, Vögel → Zurück-Pfeil → `drawEventsAbove` → Hook `drawAbove` → Nacht → Regen → Hook `drawSky` → Stimmung → 1P-Schild → HUD → Countdown/Ziel. Auto: `drawCar` (Hook `drawCar`, `drawFall`), Schmutzstufe `round(dirt·5)`.
 
 ## 12. Zustand, Menüs, Speichern, Ton
 

@@ -45,7 +45,6 @@ export function updateTrain(dt) {
       if ((tr.dir > 0 && tr.y > G.T.H + 40) || (tr.dir < 0 && tr.y + tr.len < -40)) { tr.phase = 'clear'; tr.t = .8; }
     } else if (tr.phase === 'clear' && tr.t <= 0) { tr.phase = 'wait'; tr.t = (WAIT[0] + (G.ttRand || Math.random)() * WAIT[1]) * PAUSE[clamp((G.player ? G.player.lap : 1) - 1, 0, 2)]; tr.dir *= -1; }
     tr.signal = tr.phase === 'warn' || tr.phase === 'run';
-    tr.gate += ((tr.signal ? 1 : 0) - tr.gate) * Math.min(1, dt * 2.5);
   }
   R.signal = R.trains.some(tr => tr.signal);
 }

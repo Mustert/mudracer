@@ -256,24 +256,22 @@ function drawMood() {
 
 function drawCrossings(R) {
   const flash = ((G.time * 3) | 0) % 2;
+  // one warning light per crossing (1S4-8, no booms): a post beside the road on the side without the jump lane, a St Andrew's cross on top
+  // and under it a red lamp that blinks while the train of this line is coming (every line has its own train)
   for (const cr of R.cross) {
-    const p = G.T.path[cr.i], tg = G.T.tan[cr.i], nm = G.T.nrm[cr.i];
-    // two booms, 30 px before (s -1) and after (s 1) the rails; the post before stands on the side of the jump lane (cr.side, ZUG Rev 3), on its island
-    for (const s of [-1, 1]) {
-      const ps = -s * (cr.side || -1), bx = p.x + tg.x * s * 30 + nm.x * ps * (HALF + 7), by = p.y + tg.y * s * 30 + nm.y * ps * (HALF + 7);
-      const tr = R.trains.find(q => q.x === cr.x), sig = tr.signal, len = 5 + (2 * HALF + 4) * tr.gate; // (every line has its own train)
-      for (const pass of [0, 1]) for (let k = 0; k < len; k++) {
-        const x = Math.round(bx - nm.x * ps * k), y = Math.round(by - nm.y * ps * k);
-        ctx.fillStyle = pass ? ((k >> 2) & 1 ? '#ffffff' : '#e53935') : '#1b120c';
-        ctx.fillRect(x - 1 - (pass ? 0 : 1), y - 1 - (pass ? 0 : 1), pass ? 3 : 5, pass ? 3 : 5);
-      }
-      const px = Math.round(bx), py = Math.round(by);
-      ctx.fillStyle = '#1b120c'; ctx.fillRect(px - 4, py - 4, 9, 9);
-      ctx.fillStyle = '#555555'; ctx.fillRect(px - 3, py - 3, 7, 7);
-      ctx.fillStyle = sig && flash ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px - 3, py - 3, 3, 3);
-      ctx.fillStyle = sig && !flash ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px + 1, py + 1, 3, 3);
-      if (sig) { ctx.globalAlpha = .35; disc(px + (flash ? -2 : 2), py + (flash ? -2 : 2), 5, '#ff4040'); ctx.globalAlpha = 1; }
+    const px = cr.lx, py = cr.ly, sig = R.trains.find(q => q.x === cr.x).signal, on = sig && flash;
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(px - 1, py - 1, 6, 6); ctx.fillRect(px + 3, py - 8, 4, 10);
+    ctx.fillStyle = '#1b120c'; ctx.fillRect(px - 2, py - 2, 5, 5); ctx.fillRect(px - 1, py - 12, 3, 12);
+    ctx.fillStyle = '#9a9a9a'; ctx.fillRect(px, py - 11, 1, 11);
+    // the cross: two red and white diagonal boards
+    for (let k = -4; k <= 4; k++) {
+      ctx.fillStyle = '#1b120c'; ctx.fillRect(px + k - 1, py - 18 + k - 1, 3, 3); ctx.fillRect(px - k - 1, py - 18 + k - 1, 3, 3);
     }
+    for (let k = -4; k <= 4; k++) { ctx.fillStyle = (Math.abs(k) >> 1) & 1 ? '#e53935' : '#ffffff'; ctx.fillRect(px + k, py - 18 + k, 1, 1); ctx.fillRect(px - k, py - 18 + k, 1, 1); }
+    // the lamp box
+    ctx.fillStyle = '#1b120c'; ctx.fillRect(px - 4, py - 12, 9, 9);
+    ctx.fillStyle = on ? '#ff2d2d' : '#5a1010'; ctx.fillRect(px - 3, py - 11, 7, 7);
+    if (on) { ctx.fillStyle = '#ffe0d0'; ctx.fillRect(px - 1, py - 9, 3, 3); ctx.globalAlpha = .4; disc(px, py - 8, 12, '#ff4040'); ctx.globalAlpha = 1; }
   }
 }
 
@@ -320,10 +318,12 @@ export function drawRace() {
   // the bridge of the race circuit: first the cars on the road below, then the bridge, then the cars up on it
   const deck = G.T.ring && G.T.ring.deck, ghUp = gh && deck && ghostUp(gh);
   if (gh && !ghUp) drawGhost();
-  const order = [...G.cars].sort((a, b) => a.y - b.y);
-  for (const c of order) if (!deck || c.lvl !== 1) drawCar(c);
-  if (deck) { ctx.drawImage(deck.c, deck.x, deck.y); if (ghUp) drawGhost(); for (const c of order) if (c.lvl === 1) drawCar(c); }
+  // cars in the air (a ramp, a jump) come after the trains, so whoever jumps over a train is seen above it (1S4-9)
+  const order = [...G.cars].sort((a, b) => a.y - b.y), air = c => (c.z || 0) > 0;
+  for (const c of order) if ((!deck || c.lvl !== 1) && !air(c)) drawCar(c);
+  if (deck) { ctx.drawImage(deck.c, deck.x, deck.y); if (ghUp) drawGhost(); for (const c of order) if (c.lvl === 1 && !air(c)) drawCar(c); }
   if (R) for (const tr of R.trains) if (tr.phase === 'run') drawTrain(tr);
+  for (const c of order) if (air(c)) drawCar(c);
   drawParticles();
   drawSmoke();
   if (G.T.run) drawRunLayer('top', cx, cy, cx, cy); else ctx.drawImage(G.T.top, cx, cy, VW, VH, cx, cy, VW, VH);
