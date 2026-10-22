@@ -81,17 +81,18 @@ function boxPose(R) {
 // ground under a car (from update.js): kerbs rattle, gravel throws up dust and stones, the pit lane has a speed limit.
 // The pit stop: in the middle of the box the car stops for a moment, the crew rushes in, washes it and changes the wheels.
 const STOP = 1;
-// The pit lane has one rule: whoever drives in is stopped in the box, across the whole width of the lane, and only then washed. Driving past
-// the box does nothing. In the last lap of a car the box is shut (red sign): no stop, no wash, and the computer cars stay out.
+// The pit lane has one rule: whoever drives in is stopped in the box, across the whole width of the lane, and only then washed. The pit wall
+// and the barrier in front of the garages hold the lane in, so there is no way past the box. In the last lap of a car the box is shut: a
+// gate closes the entry (red sign, ringCollisions), and the computer cars stay out.
 const boxShut = c => c.lap >= LAPS;
 function ringGround(c, j, sp, dt) {
   const R = G.T.ring; if (!R) return;
   c.kerb = !!R.kerb[j]; c.oilT = Math.max(0, c.oilT - dt);
   const pit = !!R.pitMask[j], B = boxPose(R);
-  if (pit && !c.pit && !c.ai) { c.msg = boxShut(c) ? 'BOX ZU' : 'BOX BOX!'; c.msgT = 1.6; if (!boxShut(c)) SFX.radio(); }
+  if (pit && !c.pit && !c.ai && !boxShut(c)) { c.msg = 'BOX BOX!'; c.msgT = 1.6; SFX.radio(); }
   c.pit = pit;
   if (!pit) c.boxDone = false;
-  if (B && pit && !c.boxDone && !boxShut(c) && Math.abs(c.y - B.y) < 6) {
+  if (B && pit && !c.boxDone && !boxShut(c) && Math.abs(c.y - B.y) < 6 && !G.cars.some(o => o.boxT > 0)) {
     c.boxDone = true; c.boxT = STOP;
     if (!c.ai) { c.msg = 'BOXENSTOPP!'; c.msgT = STOP; }
     if (near(c.x, c.y) < 300) { SFX.wrench(c.ai ? .4 : 1); setTimeout(() => SFX.wrench(c.ai ? .3 : .8), 380); }
@@ -111,8 +112,11 @@ function ringGround(c, j, sp, dt) {
 function ringPitTarget(c) {
   const R = G.T.ring; if (!R || !R.pit) return null;
   const P = R.pit.pts, N = G.T.N;
+  if (c.pitting && boxShut(c) && !c.pit) c.pitting = false; // the box closed before the car got there
   if (!c.pitting) {
     if (c.finished || c.dirt < .5 || G.state !== 'race' || boxShut(c)) return null;
+    // one at a time: there is no way past a car standing in the box, so nobody turns in while another one is on its way to it
+    if (G.cars.some(o => o !== c && ((o.pitting && !o.boxDone) || o.boxT > 0))) return null;
     const ahead = (R.pit.ie - c.idx + N) % N;
     if (ahead < 8 || ahead > 50) return null;
     c.pitting = true; c.pitK = 0;
@@ -120,10 +124,15 @@ function ringPitTarget(c) {
   let k = c.pitK, bd = 1e9;
   for (let q = c.pitK; q < Math.min(P.length, c.pitK + 30); q++) { const dd = (P[q].x - c.x) ** 2 + (P[q].y - c.y) ** 2; if (dd < bd) { bd = dd; k = q; } }
   c.pitK = k;
-  if (k >= P.length - 4 || bd > 70 * 70) { c.pitting = false; return null; }
+  // a car that missed the entry (outside the pit wall) gives up and stays on the track
+  const pj = (c.y | 0) * G.T.W + (c.x | 0), missed = k > R.pit.k0 && R.pitD && R.pitD[pj] > R.pit.half + 3;
+  if (k >= P.length - 4 || bd > 70 * 70 || missed) { c.pitting = false; return null; }
   const t = P[Math.min(P.length - 1, k + 12)];
   return [t.x, t.y];
 }
+
+// a computer car on its way into the pits lifts off, so it makes the bend into the lane
+const ringThrottle = (c, thr) => c.pitting && !c.boxDone ? Math.min(thr, .55) : thr;
 
 // the ghost of the time trial has no place on the lap: up on the bridge is the one that drives the way of the bridge
 export function ghostUp(gh) {
@@ -271,6 +280,31 @@ export function drawMarshals(ev) {
   }
 }
 
+// the gate at the pit entry: a car in its last lap bounces off it like off a wall (the others drive through, for them it is open)
+function ringCollisions() {
+  const R = G.T.ring, gt = R && R.pit && R.pit.gate; if (!gt) return;
+  for (const c of G.cars) {
+    if (c.fall > 0 || c.z > 0 || !boxShut(c) || Math.hypot(c.x - gt.x, c.y - gt.y) > gt.w + 14) continue;
+    for (const o of gt.posts) {
+      const dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy), mn = o.r + 9;
+      if (d >= mn || d === 0) continue;
+      const nx = dx / d, ny = dy / d, vn = c.vx * nx + c.vy * ny;
+      c.x = o.x + nx * mn; c.y = o.y + ny * mn;
+      if (vn < 0) { c.vx -= 1.6 * vn * nx; c.vy -= 1.6 * vn * ny; if (!c.ai && -vn > 35) SFX.bump(); }
+    }
+  }
+}
+
+// the closed gate: red and white boards across the lane between two posts, with a shadow
+function drawGate(gt) {
+  if (near(gt.x, gt.y) > 320) return;
+  const nx = -gt.ty, ny = gt.tx, pt = q => [Math.round(gt.x + nx * q), Math.round(gt.y + ny * q)];
+  ctx.globalAlpha = .3; for (let q = -gt.w; q <= gt.w; q++) { const [x, y] = pt(q); R1(x + 2, y + 3, 2, 3, '#000'); } ctx.globalAlpha = 1;
+  for (let q = -gt.w; q <= gt.w; q++) { const [x, y] = pt(q); R1(x - 1, y - 3, 3, 5, '#1b120c'); }
+  for (let q = -gt.w + 1; q <= gt.w - 1; q++) { const [x, y] = pt(q); R1(x, y - 2, 1, 3, ((q + 100) / 5 | 0) % 2 ? '#f2f2ee' : '#d83a2c'); }
+  for (const q of [-gt.w, gt.w]) { const [x, y] = pt(q); R1(x - 2, y - 5, 5, 8, '#1b120c'); R1(x - 1, y - 4, 3, 6, '#8d939d'); }
+}
+
 // ======================================================= drawing
 
 // on the ground, below the cars: the oil shines, the pit crew waits next to the box
@@ -278,6 +312,7 @@ function drawRingGround() {
   const R = G.T.ring; if (!R) return;
   const k = Math.floor(G.time * 4);
   for (let q = 0; q < 10 && R.oilPix.length; q++) { const p = R.oilPix[(hash(q, k, 79) * R.oilPix.length) | 0]; R1(p % G.T.W, (p / G.T.W) | 0, 1, 1, ['#7a5ab8', '#3fa0aa', '#b08a4a'][q % 3]); }
+  if (R.pit && R.pit.gate && G.player && boxShut(G.player)) drawGate(R.pit.gate);
   // fans in the grandstands wave their flags
   for (const f of R.fans) {
     if (near(f.x, f.y) > 300) continue;
@@ -355,10 +390,10 @@ function drawRingAbove() {
     if (on) { ctx.globalAlpha = .35; disc(x, y, 6, '#ff4040'); ctx.globalAlpha = 1; }
   }
   if (R.pit) {
+    // the sign at the entry: blue P = open, red X = shut (the gate is down)
     const q = R.pit.pts[Math.max(0, R.pit.k0)], x = Math.round(q.x + 26), y = Math.round(q.y - 2);
     const shut = !!G.player && boxShut(G.player);
     R1(x - 6, y - 6, 13, 13, '#1b120c'); R1(x - 5, y - 5, 11, 11, shut ? '#c0281c' : '#2f6fd8'); text(shut ? 'X' : 'P', x + 1, y - 4, 8, '#ffffff', 'center', null);
-    text(shut ? 'BOX ZU' : 'BOX = HALT', x + 1, y + 9, 8, shut ? '#ff6b5e' : '#9fd6ff', 'center', null);
   }
   for (const c of G.cars) {
     if (c.draft > .3 && c.fall <= 0) {
@@ -389,4 +424,4 @@ export function drawStartLights() {
 
 // ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
 /** @type {import('./_template.js').TrackHooks} */
-export const ringHooks = { events: { reifen: initReifen }, target: ringPitTarget, avoidAll: true, ground: ringGround, drawGround: drawRingGround, drawAbove: drawRingAbove };
+export const ringHooks = { events: { reifen: initReifen }, target: ringPitTarget, avoidAll: true, ground: ringGround, collisions: ringCollisions, throttle: ringThrottle, drawGround: drawRingGround, drawAbove: drawRingAbove };

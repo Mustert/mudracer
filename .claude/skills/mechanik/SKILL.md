@@ -90,6 +90,7 @@ Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil
 - `c.dirt` 0..1. Steigt in Matsch/Zement (.55/s, langsam unter 8 px/s), Öl (1,36/s), Treibsand (.5/s); Fallen in Sand/Lava setzt 1, Versinken im Wasser 0.
 - Wirkung über `def.soil` (`cars.js`, aus `mud` berechnet, 0,04 bis 0,21): Höchsttempo × `(1 − soil·dirt)`, Lenkung schwächer, Stottern beim Gas, Schlingern ab `dirt > .15`. Geländewagen (hohes `mud`) leiden kaum.
 - Sauber werden: flaches Wasser (−.7/s), Waschanlage `washMask` (−.35 beim Einfahren, dann −3/s), Duschen `T.showers` (−.12, dann −1,8/s), Schlauch, Sonderstrecken über Hook `ground`. Grundsatz 13: genau eine Art je Strecke.
+- Box (Rennstrecke, `ring.js` `ringGround`): wer in der Gasse die Mitte der Box erreicht, steht 1 s (`c.boxT`) und wird dabei sauber; immer nur ein Auto zugleich. Boxenmauer (`def.pit.wall`) und Leitplanke vor den Garagen fassen die Gasse ein, es gibt keinen Weg an der Box vorbei. In der letzten Runde eines Autos (`boxShut`) ist die Einfahrt mit einer Schranke zu (`pit.gate`, Hook `collisions`, nur für dieses Auto fest; gezeichnet, wenn dein Auto in der letzten Runde ist). Computerautos fahren nur dreckig (`dirt ≥ .5`), einzeln und mit Gas ≤ .55 hinein (Hooks `target`, `throttle`).
 - Aussehen: je Auto 6 Schmutzstufen (`newSet`, `cars.js`), Farbe aus `th.goo` (Matsch, Sand, Schnee, Asche …), zweiter Satz `Fc` für Zement/`goo2`; `c.cem` sagt, welcher gezeigt wird.
 
 ## 6. Physik eines Autos (`physics.js` `physics`)
@@ -114,7 +115,7 @@ Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil
 - Ausweichen vor Matsch/Zement/Gras/tiefem Wasser/Kies/Öl (`sticky`): nur Autos mit `mud < 1.15` (oder Hook `avoidAll`), Anteil `DIFFS.avoid` (0 / .5 / 1). Danach Hook `lane`, dann `steerAround` (Kühe, Reifen, `T.ev.obst`, 75 px voraus).
 - Hook `target` ersetzt das Ziel ganz (Boxengasse, Eissee, Doppelregenbogen).
 - Gas = `c.skill` (`aiSkill`, je Stufe `DIFFS.skill`), Gummiband (`ahead`/`slow`, `behind`/`catchUp`), Blankeis/Plattform weniger in Kurven, Hook `throttle`.
-- Festgefahren: unter 12 px/s länger als 1,2 s → 0,9 s rückwärts.
+- Festgefahren: unter 12 px/s länger als 1,2 s → 0,9 s rückwärts (nicht während eines Boxenstopps, `c.boxT`).
 
 ## 9. Fortschritt, Runden, Platzierung
 
