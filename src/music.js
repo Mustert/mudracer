@@ -157,7 +157,8 @@ const SONGS = {
       M.brush(t, (s & 3) === 2 ? 1 : .5);
     } },
   // garden: pentatonic D major, a singing erhu over rippling yangqin, soft bass; a festival band drives it on (1S6-8): shime-daiko in sixteenths
-  // (don-doko) and the kane clinking on the off-beats; no taiko, its deep boom droned too loud (1S6-12)
+  // (don-doko) and the kane clinking on the off-beats. Nothing deep (1S6-12, 1S6-15): no taiko, the bass an octave higher and shorter, the
+  // shime a high, light knock
   garden: { bpm: 84, swing: 0,
     chords: { D: { r: 38, n: [62, 66, 69] }, Bm: { r: 35, n: [59, 62, 66] }, G: { r: 43, n: [62, 67, 71] }, A: { r: 45, n: [61, 64, 69] } },
     A: { ch: ['D', 'D', 'Bm', 'Bm', 'G', 'D', 'A', 'D'], mel: mel([
@@ -170,7 +171,7 @@ const SONGS = {
     band(M, s, t, bi, ch) {
       if (s % 2 === 0) M.yangqin(hz(ch.n[[0, 1, 2, 1, 2, 1, 0, 1][s >> 1] % ch.n.length] + 12), t, s % 4 === 0 ? 1 : .55);
       if (s === 0) M.pad(ch.n, t, 16 * M.sd, .016);
-      if (s === 0 || s === 10) M.bassWarm(hz(ch.r - 12 + (s === 10 ? 7 : 0)), t, 5 * M.sd);
+      if (s === 0 || s === 10) M.bassWarm(hz(ch.r + (s === 10 ? 7 : 0)), t, 3 * M.sd);
       if ([1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1][s]) M.shime(t, s % 4 === 0 ? 1 : s % 2 ? .45 : .7);
       if (s % 4 === 2) M.kane(t, s === 10 ? 1 : .7);
       if (s === 12) M.rim(t);
@@ -613,7 +614,7 @@ export const Music = {
   // volcano: taiko (a deep drum with a long tail), brass stabs, a distorted guitar (palm-muted or ringing), a singing lead guitar
   taiko(f, t, v = 1) { voice({ at: t, f, to: f * .55, a: .003, d: .7, vol: .45 * v, dest: this.out }); noise({ at: t, type: 'lowpass', f: 400, d: .25, vol: .15 * v, dest: this.out }); },
   // shime-daiko: the small, tightly laced festival drum (a hard high knock), kane: the little hand gong of the festival band (a bright clink)
-  shime(t, v = 1) { voice({ at: t, f: 420, to: 300, a: .001, d: .07, vol: .2 * v, dest: this.out }); noise({ at: t, type: 'bandpass', f: 2000, q: 1.8, d: .025, vol: .09 * v, dest: this.out }); },
+  shime(t, v = 1) { voice({ at: t, f: 760, to: 560, a: .001, d: .05, vol: .1 * v, dest: this.out }); noise({ at: t, type: 'bandpass', f: 2400, q: 1.8, d: .025, vol: .08 * v, dest: this.out }); },
   kane(t, v = 1) { voice({ at: t, type: 'square', f: 2350, a: .001, d: .07, vol: .022 * v, lp: 6000, dest: this.out }); voice({ at: t, f: 3610, a: .001, d: .05, vol: .03 * v, dest: this.out }); },
   brass(ns, t, d, v = 1) { for (const m of ns) synth({ at: t, f: hz(m), parts: [['sawtooth', 1, .6], ['sawtooth', 1, .4, 8], ['square', .5, .2]], a: .015, hold: Math.max(0, d - .04), d: .08, vol: .045 * v, lp: 2600, lpTo: 1200, dest: this.out }); },
   gtr(f, t, d, mute) { synth({ at: t, f, parts: [['sawtooth', 1, .6], ['square', 1, .5, 12], ['sawtooth', 2, .25, -7]], a: .002, hold: mute ? d * .3 : d * .8, d: mute ? .05 : .15, vol: mute ? .07 : .06, lp: mute ? 900 : 1900, q: 3, dest: this.out }); },

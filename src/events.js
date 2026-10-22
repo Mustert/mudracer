@@ -359,7 +359,7 @@ const KOI_DUR = 1.25, KOI_WARN = .6; // the water ripples this long before a koi
 
 function initKois(T) {
   T.ev.kois = KOIS.map(([x, y, ang, half, per, off], k) => ({ x, y, ang, half, per, off, p: -1, warn: -1, px: x, py: y, z: 0, k }));
-  if (T.def.torii) T.ev.koiSpit = { ...SPIT, warn: -1, jet: -1 };
+  if (T.def.koiSpit) T.ev.koiSpit = { ...SPIT, warn: -1, jet: -1 };
 }
 
 // the position depends only on the race time: in the time trial every try meets the koi at the same moment
@@ -435,7 +435,7 @@ function drawKoi(f) {
   ctx.restore();
 }
 
-// the koi beside the big stone in the lake (only on a track with the torii short cut): its head is always out of the water. Every per seconds
+// the koi beside the big stone in the lake (only on a track with koiSpit in its TRACK_DEFS entry): its head is always out of the water. Every per seconds
 // it puffs up and blows bubbles (warn seconds, principle 9), then spits a jet across the stone for jet seconds that pushes cars into the lake.
 // It depends only on the race time, like the leaps. [x, y] = the mouth, ang = where it spits, len = how far the jet reaches.
 const SPIT = { x: 527, y: 341, ang: -Math.PI / 2, len: 48, per: 6.8, off: 2.2, warnT: 1, jetT: .6, push: 430 };
@@ -640,7 +640,7 @@ function checkSpots(T) {
     const ex = x + Math.cos(ang) * half * s, ey = y + Math.sin(ang) * half * s, wet = (dx, dy) => T.ter[at(ex + dx, ey + dy)] === 5;
     if (![[0, 0], [5, 0], [-5, 0], [0, 5], [0, -5], [4, 4], [-4, 4], [4, -4], [-4, -4]].every(([dx, dy]) => wet(dx, dy))) bad.push('Koi-Sprung ' + Math.round(ex) + ',' + Math.round(ey) + ' nicht im Wasser');
   }
-  if ((T.def.events || []).includes('kois') && T.def.torii && T.ter[at(SPIT.x, SPIT.y)] !== 5) bad.push('Spuck-Koi nicht im Wasser');
+  if ((T.def.events || []).includes('kois') && T.def.koiSpit && T.ter[at(SPIT.x, SPIT.y)] !== 5) bad.push('Spuck-Koi nicht im Wasser');
   for (const [x, y] of T.def.rollers || []) road(x, y, 0, 'Reifen');
   for (const [x, y] of T.def.trees || []) road(x, y, 5, 'Baum');
   for (const [x, y] of T.def.kipper || []) if (T.dist[at(x, y)] > HALF + 40) bad.push('Kipper ' + x + ',' + y + ' weit weg von der Strasse');

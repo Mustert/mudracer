@@ -162,7 +162,7 @@ const TRACK_DEFS = [
   // three bridges with a path of stepping stones from the right road (past a torii) to the corner after the slanted bridge: it saves all three
   // bridges. Floating lanterns, two koi leaps over the stones and a koi that spits from beside the big stone (events.js). The bridges end square.
   // Rev 4: the way into the short cut is open (two stones in the grass, the torii moved beside it, 1S6-10); the palisade at the water is one
-  // solid line whose obstacles match what you see (1S6-11).
+  // solid line whose obstacles match what you see (1S6-11). The torii is gone again (1S6-13): it looked out of place beside the hedge.
   { name: 'GARTEN', rev: 4, seed: 5, theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: null, squareBridges: true,
     pts: [[308,198], [334,195], [347,167], [338,135], [305,120], [240,120], [180,120], [148,108], [134,80],
       [148,52], [180,40], [250,40], [320,40], [392,42], [424,52], [444,80], [447,125], [458,168], [484,198], [515,211], [546,198], [572,168], [583,125],
@@ -188,14 +188,15 @@ const TRACK_DEFS = [
       [[264, 378, 24], [312, 378, 24]], [[288, 378, 26], [288, 378, 26]],
       [[288, 400, 12], [288, 462, 13]]],
     // stepping stones [x, y, radius, stretch, angle]: the short cut across the pool at the top, and the path across the lake from the right road
-    // (past the torii) and the big stone to the corner after the slanted bridge
-    // (Rev 4, 1S6-10: two stones in the grass lead from the road edge to the water, the torii stands beside the way in, not in it;
+    // over the big stone to the corner after the slanted bridge
+    // (Rev 4, 1S6-10: two stones in the grass lead from the road edge to the water;
     // 1S6-12: the big stone is larger, the stone after it moved closer, all lake stones 5 % larger, no gap wider than about 12 px)
     stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10],
       [650, 252, 8.4], [632, 257, 8.4], [613, 261, 9.5], [587, 278, 9.5], [560, 296, 10.5], [524, 318, 14, 2.2, .1], [478, 319, 9.5], [454, 318, 9.5], [430, 318, 9.5]],
-    // clipped hedges that keep you from cutting across the garden: [x1, y1, x2, y2]; the right one bends along the lake to the torii
+    // clipped hedges that keep you from cutting across the garden: [x1, y1, x2, y2]; the right one bends along the lake to the way in.
+    // koiSpit: the koi beside the big stone that spits across it (events.js)
     hedges: [[12, 159, 333, 159], [172, 80, 396, 80], [100, 258, 396, 258], [396, 78, 396, 300], [642, 98, 642, 222], [642, 222, 570, 241], [152, 260, 152, 376]],
-    torii: [598, 236, 12],
+    koiSpit: true,
     pagodas: [[764, 142, 4, 1.15], [764, 388, 4, 1.15]],
     // the decoration is laid out by hand, in lines and pairs: cherry trees, stone lanterns, bonsai in pots
     cherries: [[28, 34], [78, 34], [28, 104], [78, 104], [768, 40], [768, 236]],
@@ -597,11 +598,12 @@ function* buildTrack(def, ti) {
     for (const [a, b] of bridges) for (let i = a; ; i = (i + 1) % N) { isBridge[i] = 1; if (i === b) break; }
     for (let j = 0; j < A; j++) if (dist[j] < HALF && onDeck(j % MW + .5, (j / MW | 0) + .5, near[j])) bridgeMask[j] = 1;
   }
-  for (const st of def.stones || []) {
+  // stoneMask holds the number of the stone (1, 2 …) so that each stone is painted only over its own pixels, not over a neighbour's (1S6-14)
+  (def.stones || []).forEach((st, k) => {
     const [sx, sy, sr] = st, R = stoneR(st);
     for (let y = Math.floor(sy - R - 3); y <= Math.ceil(sy + R + 3); y++) for (let x = Math.floor(sx - R - 3); x <= Math.ceil(sx + R + 3); x++)
-      if (x >= 0 && y >= 0 && x < MW && y < MH && stoneD(st, x + .5, y + .5) < sr + (vnoise(x * .3, y * .3, sd + 4) - .5) * 2) { ter[y * MW + x] = 1; stoneMask[y * MW + x] = 1; }
-  }
+      if (x >= 0 && y >= 0 && x < MW && y < MH && !stoneMask[y * MW + x] && stoneD(st, x + .5, y + .5) < sr + (vnoise(x * .3, y * .3, sd + 4) - .5) * 2) { ter[y * MW + x] = 1; stoneMask[y * MW + x] = k + 1; }
+  });
   def.mud.forEach(m => onPath(m[0], m[1], m[2], m[3], 2));
   def.water.forEach(m => onPath(m[0], m[1], m[2], m[3], 3));
   def.ponds.forEach(p => stamp(p[0], p[1], { x: 1, y: 0 }, { x: 0, y: 1 }, p[2], p[3], 3));
@@ -742,18 +744,19 @@ function* buildTrack(def, ti) {
     }
   }
   // stepping stones: round grey stones with a dark rim, some moss, a ripple in the water around them
-  for (const st of def.stones || []) {
+  (def.stones || []).forEach((st, k) => {
     const [sx, sy, sr] = st, R = stoneR(st);
     for (let y = Math.floor(sy - R - 4); y <= Math.ceil(sy + R + 4); y++) for (let x = Math.floor(sx - R - 4); x <= Math.ceil(sx + R + 4); x++) {
       if (x < 0 || y < 0 || x >= MW || y >= MH) continue;
       const j = y * MW + x, dx = x + .5 - sx, dy = y + .5 - sy, dd = stoneD(st, x + .5, y + .5);
+      if (stoneMask[j] && stoneMask[j] !== k + 1) continue;
       if (!stoneMask[j]) { if (ter[j] === 5 && dd < sr + 3.5 && hash(x, y, sd + 6) < .5) set(j, [150, 214, 220]); continue; }
       const sh = (dx + dy) / R;
       let c = dd > sr - 1.6 ? [84, 84, 80] : sh < -.35 ? [196, 194, 184] : sh > .4 ? [128, 127, 120] : [164, 162, 153];
       if (dd <= sr - 1.6 && hash(x, y, sd + 7) < .1) c = [96, 138, 72];
       set(j, c);
     }
-  }
+  });
   // boost pads: yellow chevrons pointing the way
   boosts.forEach(t => band(Math.floor(t * N) % N, 16, (x, y, a, c) => {
     const ac = Math.abs(c); if (ac >= 18) return;
@@ -1195,26 +1198,6 @@ function* buildTrack(def, ti) {
       rc(x - 5, y - 13, 11, 2, L2); rc(x - 3, y - 15, 7, 2, L1); rc(x - 1, y - 17, 3, 2, L0);
     }
     for (const [x, y] of def.cherries || []) wallTrees.push({ x, y });
-    // the torii at the entrance of the short cut across the lake [x, y, half span]: two pillars north and south of the way in, the curved
-    // black top beam over the red one on the top layer (you drive under it)
-    if (def.torii) {
-      // [x, y of the feet, half the distance of the pillars]: a red torii in front of the hedge, facing the way in (drawn upright like the lanterns):
-      // two pillars with black feet, the red lower beam (nuki), the black top beam (kasagi) with upturned ends over its red layer, the name plate
-      const [tx, ty, h] = def.torii, TB = hex('#1f1612'), TR = hex('#e0452a'), TL = hex('#ff7a52'), TD = hex('#9a2614'), TG = hex('#e8c14a');
-      for (let dx = -h - 4; dx <= h + 4; dx++) darken(tx + dx + 4, ty + 2, 2, 0, 0);
-      for (const qx of [tx - h, tx + h]) {
-        walls.push({ x: qx, y: ty, r: 3 });
-        rc(qx - 2, ty - 1, 5, 3, TB);
-        for (let k = 2; k <= 24; k++) { setT(qx - 1, ty - k, TL); setT(qx, ty - k, TR); setT(qx + 1, ty - k, TD); }
-      }
-      rc(tx - h - 4, ty - 19, 2 * h + 9, 3, TR); rc(tx - h - 4, ty - 17, 2 * h + 9, 1, TD);
-      rc(tx - h - 5, ty - 26, 2 * h + 11, 2, TR);
-      for (let dx = -h - 8; dx <= h + 8; dx++) {
-        const end = Math.max(0, Math.abs(dx) - h - 4), lift = end > 2 ? 2 : end > 0 ? 1 : 0;
-        setT(tx + dx, ty - 29 - lift, TB); setT(tx + dx, ty - 28 - lift, TB); if (Math.abs(dx) <= h + 6) setT(tx + dx, ty - 27 - lift, hex('#3a2a22'));
-      }
-      rc(tx - 3, ty - 25, 7, 7, TG); rc(tx - 2, ty - 24, 5, 5, TB); rc(tx - 1, ty - 23, 3, 1, TG);
-    }
     // lotus pads on the ponds and the lake
     for (const [lx, ly] of [[503, 152], [528, 141], [515, 164], [500, 102], [532, 100], [283, 376], [305, 381], [262, 394], [456, 296], [508, 348], [584, 310], [620, 296], [548, 268]]) {
       let free = true; for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (ter[(ly + dy) * MW + lx + dx] !== 5) free = false;
