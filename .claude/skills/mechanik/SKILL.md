@@ -42,7 +42,7 @@ Gebaut von `buildTrack` (`tracks.js`, Generator in Häppchen über `idle.js`; `e
 
 Reihenfolge in `buildTrack`: Abstandsfeld → Straße (1) → Meer (`th.sea`) → **tiefes Wasser** aus `def.rivers` → Brücken → Trittsteine → `mud`/`water`/`ponds`/`mudAt`/`waterAt`/`cement`/Duschen/Boost → `terrain` der Sonderstrecke → Bahn → Ufer (`shore`) → Bodenbild → Waschanlage → Wände/Zäune → Deko je `th.decor` (Garten: Brückengeländer, Hecken) → Bäume → Rückgabe.
 
-`def`-Felder (Eintrag in `TRACK_DEFS`): `pts`, `rev`, `seed`, `W/H`, `theme`, `song`, `events`, `mud/water` (`[t, Versatz, halbe Länge, halbe Breite]` entlang der Mittellinie), `mudAt/waterAt/cement` (`[x, y, …]`), `ponds`, `rivers`, `stones`, `wash`/`washAt`, `showers`, `boost`/`boostAt`, `grow`, `wall`/`wallStyle`, `hedges`, `rail`, `tunnels`, `jumps`, Sonderschalter (`desert: true` …).
+`def`-Felder (Eintrag in `TRACK_DEFS`): `pts`, `rev`, `seed`, `W/H`, `theme`, `song`, `events`, `mud/water` (`[t, Versatz, halbe Länge, halbe Breite]` entlang der Mittellinie), `mudAt/waterAt/cement` (`[x, y, …]`), `ponds`, `rivers`, `stones`, `squareBridges`, `wash`/`washAt`, `showers`, `boost`/`boostAt`, `grow`, `wall`/`wallStyle`, `hedges`, `rail`, `tunnels`, `jumps`, Sonderschalter (`desert: true` …).
 
 ## 3. Boden-Codes (`T.ter`)
 
@@ -75,8 +75,8 @@ Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil
 ## 4. Wasser, Brücken, Trittsteine (Garten, Dschungel, Süß, Eis)
 
 - **Entstehung** (`buildTrack`): `def.rivers` = Ketten von Kreisen `[x, y, r]`, zwischen je zwei wird eine Kapsel mit verrauschtem Rand in die Maske `deep` gestempelt. Nur wo `ter == 0` (neben der Straße) wird daraus Code 5; **Straße über `deep` bleibt Code 1 = Brücke**.
-- **Brücken**: Abschnitte der Mittellinie, die über `deep` laufen, ±8 Punkte verlängert (`bridges`, `isBridge[i]`), `bridgeMask` = Straßenpixel darauf (Holzplanken im Bild). Geländer: Garten, Süß und Eis setzen alle 3 Punkte Hindernisse `r: 3` bei `±HALF` (Garten: rote Lackgeländer in der `garten`-Deko, `suessmap.js`, `icemap.js`); andere Strecken haben auf Brücken kein festes Geländer.
-- **Trittsteine** `def.stones` `[x, y, r]`: Code 1 + `stoneMask` (`T.stone`). Kein Zurück-Pfeil auf Steinen. Zwischen den Steinen bleibt Code 5.
+- **Brücken**: Abschnitte der Mittellinie, die über `deep` laufen, ±8 Punkte verlängert (`bridges`, `isBridge[i]`), `bridgeMask` = Straßenpixel darauf (Holzplanken im Bild). Mit `def.squareBridges` (Garten) endet jede Brücke in einem geraden Schnitt quer zu ihrer Mitte, 10 px vom Wasser, die Bohlen liegen quer (`deckAt`/`onDeck` in `buildTrack`, auch für die Geländer). Geländer: Garten, Süß und Eis setzen alle 3 Punkte Hindernisse `r: 3` bei `±HALF` (Garten: rote Lackgeländer in der `garten`-Deko, `suessmap.js`, `icemap.js`); andere Strecken haben auf Brücken kein festes Geländer.
+- **Trittsteine** `def.stones` `[x, y, r]` oder `[x, y, r, Streckung, Winkel]` (ovaler großer Stein, `stoneD` in `tracks.js`): Code 1 + `stoneMask` (`T.stone`). Kein Zurück-Pfeil auf Steinen. Zwischen den Steinen bleibt Code 5.
 - **Zaun am Wasser (Garten)**: in der Zaun-Schleife wird der Zaun bei Wasser nach außen versetzt (5–11 px); liegt tiefes Wasser direkt dahinter, wird er eine feste Bambus-Palisade (Hindernisse `r: 2.5`), außer im Umkreis von 60 px um Trittsteine (dort fährt man absichtlich hinein).
 - **Ufer** `shore`: 3 px Rand um Wasser (eigene Farbe `th.shore`); keine Bäume und keine normalen Zäune dort.
 - **Versinken** (`updateRace`): `c.wet += dt` solange `c.surf === 5`, sonst 0; ab `c.wet > .22` → `sinkCar(c)`: `fall = 1.4 s`, sauber (`dirt = 0`), Stillstand, Spritzer. Fliegende Autos (`z > 0`) versinken nicht; landen sie in 3/5, gibt es nur einen Spritzer (`land`), versinken dann im nächsten Schritt über den Zähler.

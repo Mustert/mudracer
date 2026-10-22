@@ -15,7 +15,8 @@ import { near } from './trackfx.js';
 // Wiese: a herd of cows grazes on and next to the track (they are obstacles, they moo).
 // Wald: dark holes in the road; after the first lap the rain fills them with mud. (The dusk and the headlights are not an event.)
 // Strand: from lap 2 the tide floods the lower part of the track, only a thin pier stays dry.
-// Garten: koi carp leap out of the water and over the bridges and the stepping stones (obstacles while they fly over the track).
+// Garten: koi carp leap out of the water and over the bridges and the stepping stones (obstacles while they fly over the track); a koi beside
+// the big stone in the lake spits water across it now and then and pushes cars off.
 // Zug: the train (it can be switched off like the others, then it never comes).
 // Rennstrecke: tyres roll across the road (a marshal waves the yellow flag first), hard hits knock tyres out of the tyre walls,
 // from lap 2 the oil gets smeared along the road (see ring.js).
@@ -350,11 +351,16 @@ function updateShowers(T, dt) {
 
 // ======================================================= Garten: leaping koi
 
-// [x, y, direction of the jump (the river's direction), half length, seconds between two jumps, offset]: bridges and stepping stones
-const KOIS = [[690, 303, 0, 54, 6.6, 1.2], [500, 403, Math.PI / 2, 54, 7.4, 3.3], [371, 352, 0, 56, 8.2, 5.1], [516, 80, Math.PI / 2, 46, 6.9, 2.4], [290, 375, Math.PI / 2, 26, 7.7, 4.2]];
+// [x, y, direction of the jump (the river's direction), half length, seconds between two jumps, offset]: the three bridges, the stones in the
+// pool and two places on the stone path across the lake. Both ends lie in open water (checkSpots): the koi leaves the water and lands in it.
+const KOIS = [[690, 303, 0, 54, 6.6, 1.2], [500, 400, Math.PI / 2, 42, 7.4, 3.3], [372, 354, 0, 44, 8.2, 5.1], [516, 80, Math.PI / 2, 46, 6.9, 2.4],
+  [580, 287, 1.04, 30, 7.1, .6], [464, 316, Math.PI / 2, 30, 8.6, 4.6]];
 const KOI_DUR = 1.25, KOI_WARN = .6; // the water ripples this long before a koi leaps (principle 9)
 
-function initKois(T) { T.ev.kois = KOIS.map(([x, y, ang, half, per, off], k) => ({ x, y, ang, half, per, off, p: -1, warn: -1, px: x, py: y, z: 0, k })); }
+function initKois(T) {
+  T.ev.kois = KOIS.map(([x, y, ang, half, per, off], k) => ({ x, y, ang, half, per, off, p: -1, warn: -1, px: x, py: y, z: 0, k }));
+  if (T.def.torii) T.ev.koiSpit = { ...SPIT, warn: -1, jet: -1 };
+}
 
 // the position depends only on the race time: in the time trial every try meets the koi at the same moment
 function updateKois(T, dt) {
@@ -427,6 +433,49 @@ function drawKoi(f) {
   ctx.save(); ctx.translate(-12, 0); ctx.rotate(wag); R(-5, -4, 6, 8, '#1b120c'); R(-4, -3, 5, 6, '#ffb35a'); ctx.restore();
   R(-3, 3, 4, 3, '#ffb35a'); R(-3, -6, 4, 3, '#ffb35a');
   ctx.restore();
+}
+
+// the koi beside the big stone in the lake (only on a track with the torii short cut): its head is always out of the water. Every per seconds
+// it puffs up and blows bubbles (warn seconds, principle 9), then spits a jet across the stone for jet seconds that pushes cars into the lake.
+// It depends only on the race time, like the leaps. [x, y] = the mouth, ang = where it spits, len = how far the jet reaches.
+const SPIT = { x: 527, y: 341, ang: -Math.PI / 2, len: 48, per: 6.8, off: 2.2, warnT: 1, jetT: .6, push: 430 };
+
+function updateSpit(s, dt) {
+  const tt = (G.T.ev.t + s.off) % s.per, was = s.jet;
+  s.jet = tt < s.jetT ? tt / s.jetT : -1;
+  s.warn = tt > s.per - s.warnT ? (tt - (s.per - s.warnT)) / s.warnT : -1;
+  const seen = Math.hypot(s.x - cam.x - VW / 2, s.y - cam.y - VH / 2) < 300;
+  if (s.warn >= 0 && seen && Math.random() < dt * 9) addP({ t: 'ring', x: s.x + (Math.random() - .5) * 8, y: s.y + 2, life: .5, ml: .5 });
+  if (s.jet < 0) return;
+  if (was < 0 && seen) { SFX.splash(.35); SFX.blubb(); }
+  const ca = Math.cos(s.ang), sa = Math.sin(s.ang), reach = s.len * Math.min(1, s.jet * 4);
+  if (seen && Math.random() < dt * 40) drop(s.x + ca * reach, s.y + sa * reach, s.ang + (Math.random() - .5) * 1.2, 20 + Math.random() * 30, 40 + Math.random() * 40, pick(WATC), 1, false);
+  for (const c of G.cars) {
+    if (c.z > 0 || c.fall > 0 || c.ghost > 0) continue;
+    const dx = c.x - s.x, dy = c.y - s.y, u = dx * ca + dy * sa, v = -dx * sa + dy * ca;
+    if (u < 2 || u > reach + 6 || Math.abs(v) > 9 + u * .2) continue;
+    c.vx += ca * s.push * dt; c.vy += sa * s.push * dt; c.dirt = Math.max(0, c.dirt - .4 * dt);
+    if (!c.ai && Math.random() < dt * 6) SFX.blubb();
+  }
+}
+
+// the head out of the water seen from above, rings around it; it rises and puffs its cheeks before it spits, the mouth is open while it spits
+function drawSpit(s) {
+  const x = Math.round(s.x), w = s.warn >= 0 ? s.warn : 0, y = Math.round(s.y + 6 - w * 2), puff = s.warn >= 0 ? Math.round(w * 2) : 0;
+  ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1;
+  const q = (G.time * .7) % 1; ctx.globalAlpha = 1 - q; ctx.beginPath(); ctx.ellipse(x, y + 3, 7 + q * 7, 3 + q * 3, 0, 0, TAU); ctx.stroke(); ctx.restore();
+  ctx.globalAlpha = .3; R1(x - 5, y + 3, 11, 3, '#123a48'); ctx.globalAlpha = 1;
+  R1(x - 5 - puff, y - 4, 11 + puff * 2, 8, '#1b120c'); R1(x - 4 - puff, y - 3, 9 + puff * 2, 6, '#ff7a1a');
+  R1(x - 2, y - 3, 5, 3, '#fff7e8'); R1(x - 4 - puff, y - 1, 1, 1, '#1b120c'); R1(x + 4 + puff, y - 1, 1, 1, '#1b120c');
+  R1(x - 1, y - 6, 3, 3, '#1b120c'); R1(x, y - 5, 1, s.jet >= 0 ? 2 : 1, s.jet >= 0 ? '#5a1a10' : '#e8452c');
+  if (s.jet < 0) return;
+  // the jet: a wobbling stream of water from the mouth over the stone, white at the front
+  const ca = Math.cos(s.ang), sa = Math.sin(s.ang), reach = s.len * Math.min(1, s.jet * 4);
+  for (let u = 4; u < reach; u += 2) {
+    const k = u / s.len, wob = Math.sin(G.time * 30 + u * .5) * (1 + k * 2), wd = 2 + k * 3, hx = x + ca * u - sa * wob, hy = y - 6 + sa * u + ca * wob - Math.sin(Math.PI * k) * 5;
+    ctx.globalAlpha = .85; ctx.fillStyle = u > reach - 6 ? '#ffffff' : u % 4 ? '#bfeff4' : '#7ccfd2'; ctx.fillRect(Math.round(hx - wd / 2), Math.round(hy - wd / 2), Math.round(wd), Math.round(wd));
+  }
+  ctx.globalAlpha = 1;
 }
 
 // ======================================================= Baustelle: the dump trucks
@@ -587,10 +636,11 @@ function checkSpots(T) {
   const road = (x, y, slack, what) => { if (T.dist[at(x, y)] > HALF + slack) bad.push(what + ' ' + Math.round(x) + ',' + Math.round(y) + ' nicht auf der Strasse'); };
   if ((T.def.events || []).includes('regen')) for (const [x, y] of HOLES) road(x, y, 10, 'Loch');
   if ((T.def.events || []).includes('kois')) for (const [x, y, ang, half] of KOIS) for (const s of [-1, 1]) {
-    // the ends of a leap in the water (a few px on the bank are fine: the splash covers them)
-    const ex = x + Math.cos(ang) * half * s, ey = y + Math.sin(ang) * half * s, wet = (dx, dy) => { const t = T.ter[at(ex + dx, ey + dy)]; return t === 5 || t === 3; };
-    if (![[0, 0], [4, 0], [-4, 0], [0, 4], [0, -4]].some(([dx, dy]) => wet(dx, dy))) bad.push('Koi-Sprung ' + Math.round(ex) + ',' + Math.round(ey) + ' nicht im Wasser');
+    // both ends of a leap in open deep water, 5 px all round (no bank, no stone, no bridge): the koi leaves the water and lands in it
+    const ex = x + Math.cos(ang) * half * s, ey = y + Math.sin(ang) * half * s, wet = (dx, dy) => T.ter[at(ex + dx, ey + dy)] === 5;
+    if (![[0, 0], [5, 0], [-5, 0], [0, 5], [0, -5], [4, 4], [-4, 4], [4, -4], [-4, -4]].every(([dx, dy]) => wet(dx, dy))) bad.push('Koi-Sprung ' + Math.round(ex) + ',' + Math.round(ey) + ' nicht im Wasser');
   }
+  if ((T.def.events || []).includes('kois') && T.def.torii && T.ter[at(SPIT.x, SPIT.y)] !== 5) bad.push('Spuck-Koi nicht im Wasser');
   for (const [x, y] of T.def.rollers || []) road(x, y, 0, 'Reifen');
   for (const [x, y] of T.def.trees || []) road(x, y, 5, 'Baum');
   for (const [x, y] of T.def.kipper || []) if (T.dist[at(x, y)] > HALF + 40) bad.push('Kipper ' + x + ',' + y + ' weit weg von der Strasse');
@@ -616,6 +666,7 @@ export function updateEvents(dt) {
   if (ev.cows.length) updateCows(T, dt);
   if (ev.holes.length) updateRain(T, dt);
   if (ev.kois.length) updateKois(T, dt);
+  if (ev.koiSpit) updateSpit(ev.koiSpit, dt);
   if (ev.kipper.length) updateKipper(T, dt);
   if (ev.rollers && ev.rollers.length) updateReifen(T, dt);
   if (T.def.events && T.def.events.includes('flut') && eventOn('flut')) updateFlood(T, dt);
@@ -631,6 +682,7 @@ export function drawEventsAbove() {
   const T = G.T; drawLights(T);
   const ev = T.ev; if (!ev) return;
   for (const f of ev.kois) drawKoi(f);
+  if (ev.koiSpit) drawSpit(ev.koiSpit);
   for (const s of ev.kipper) drawDust(s);
   if (ev.rollers) drawMarshals(ev);
   for (const w of ev.cows) if (w.mooT > 0) text('MUH!', Math.round(w.x), Math.round(w.y - 16 - (1.3 - w.mooT) * 8), 8, '#ffffff', 'center');

@@ -129,6 +129,14 @@ function drawCritters() {
       R1(-5, -2, 9, 4, B[0]); R1(0, -2, 3, 4, B[1]); R1(3, -1, 2, 2, B[0]);
       ctx.save(); ctx.translate(-5, 0); ctx.rotate(wag); R1(-4, -2, 4, 4, B[0]); ctx.restore();
       ctx.restore();
+    } else if (c.type === 'float') {
+      // a paper lantern drifting on the lake (GARTEN): warm glow on the water, a wooden float, the lit paper box, bobbing a little
+      const a = G.time * c.sp + c.ph, x = Math.round(c.x + Math.cos(a) * c.rx), y = Math.round(c.y + Math.sin(a) * c.ry), bob = Math.round(Math.sin(G.time * 2.2 + c.ph * 3) * .6);
+      const glow = .2 + Math.sin(G.time * 3.1 + c.ph * 5) * .05;
+      ctx.globalAlpha = glow; ctx.fillStyle = '#ffd36a'; ctx.beginPath(); ctx.ellipse(x, y + 2, 9, 5, 0, 0, TAU); ctx.fill();
+      ctx.globalAlpha = .35; R1(x - 1, y + 4, 3, 3, '#fff0b0'); ctx.globalAlpha = 1;
+      R1(x - 4, y - 1, 9, 5, '#3a2414'); R1(x - 3, y, 7, 3, '#6b4a2e');
+      R1(x - 3, y - 6 + bob, 7, 7, '#1b120c'); R1(x - 2, y - 5 + bob, 5, 5, '#ffe9a8'); R1(x - 1, y - 4 + bob, 3, 3, '#fff8dc'); R1(x - 2, y - 5 + bob, 5, 1, '#e8452c');
     } else if (c.type === 'ducks') {
       for (let k = 0; k < 4; k++) {
         const a = G.time * .25 + c.ph - k * .22, x = Math.round(c.x + Math.cos(a) * c.rx), y = Math.round(c.y + Math.sin(a) * c.ry), dir = -Math.sin(a) >= 0 ? 1 : -1;

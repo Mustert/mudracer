@@ -1,5 +1,5 @@
 import { G } from './g.js';
-import { HALF, TAU, VH, VW, WH, WW, angDiff, clamp, hash, hex, mk, outlineImg, rng, toCanvas, vnoise } from './core.js';
+import { HALF, TAU, VH, VW, WH, WW, angDiff, clamp, hash, hex, inRange, mk, outlineImg, rng, toCanvas, vnoise } from './core.js';
 import { obstacleGrid } from './grid.js';
 import { TiledLayer } from './layer.js';
 import { nearestIdx, paintSite, siteRing, siteYards } from './bau.js';
@@ -29,7 +29,7 @@ export const THEMES = {
     grass: ['#f3d995', '#ebcc81', '#f8e6b0'], grassEdge: '#dcb96c', tuft: '#e2c275', track: ['#bb8c5a', '#ae8050', '#c69864'], trackEdge: '#8f6a42', trail: '#b89656',
     decor: 'strand', tree: 'palm', treeCol: ['#2a8a3c', '#3cac4e', '#74d66c', '#18521f'], trees: 18, sea: true, fence: 'rope', ambient: 'gull' },
   garten: { ...MUDDY, water: ['#2a7184', '#34899b', '#43a0ae', '#7ccfd2'], shore: ['#8d8f86', '#777970'], grass: ['#6fb85a', '#62a84e', '#7ec766'], grassEdge: '#54944a', tuft: '#4d8a42',
-    track: ['#c4ad86', '#b59d76', '#d0ba94'], trackEdge: '#948063', trail: '#3f7a35', decor: 'garten', tree: 'cherry', treeCol: ['#c4547f', '#e98cb0', '#f9cfdf', '#4a2438'], trees: 14, fence: 'bamboo', ambient: 'sakura' },
+    track: ['#c4ad86', '#b59d76', '#d0ba94'], trackEdge: '#948063', trail: '#3f7a35', decor: 'garten', tree: 'cherry', treeCol: ['#c4547f', '#e98cb0', '#f9cfdf', '#4a2438'], trees: 0, fence: 'bamboo', ambient: 'sakura' },
   baustelle: { ...MUDDY, water: ['#5d7f86', '#6b909a', '#7da3ac', '#a9cdd3'], shore: ['#5a4630', '#4d3a26'], grass: ['#9b9684', '#8f8a79', '#a8a392'], grassEdge: '#6f6a5a', tuft: '#7c7766',
     track: ['#b78a57', '#a97d4c', '#c39662'], trackEdge: '#845e38', trail: '#6a5a44', decor: 'bau', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#1b120c'], trees: 0, fence: 'mesh' },
   // race circuit: asphalt (faster than earth roads), oil instead of mud (it makes the cars black: goo 'oil'), start lights instead of 3-2-1
@@ -157,28 +157,48 @@ const TRACK_DEFS = [
     mixer: { x: 322, y: 96 }, crane: { x: 588, y: 128, pipe0: 552, pipeLen: 72, pipeD: 20, pipeY: 75 },
     // [x, y, side, seconds between two visits, first arrival]: the truck stands beside the road, outside
     kipper: [[75, 160, -1, 23, 12], [470, 75, -1, 26, 3], [725, 130, -1, 29, 8], [620, 375, -1, 25, 14]] },
-  { name: 'GARTEN', rev: 2, seed: 5, theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: null,
-    pts: [[688,335], [678,368], [654,392], [620,402], [560,403], [500,403], [440,402], [412,401], [386,396], [374,380], [370,355], [370,335],
-      [360,322], [345,317], [300,316], [260,318], [232,328], [212,350], [205,376], [204,392], [194,404], [170,408], [142,397], [117,372], [102,336], [100,290],
-      [100,252], [103,224], [125,204], [170,198], [235,198], [300,198], [332,187], [344,159], [332,131], [305,120], [240,120], [180,120], [148,108], [134,80],
+  // GARTEN Rev 3: start on the straight in the middle of the left half (the left road moved west for a straight grid), a big lake between the
+  // three bridges with a path of stepping stones from the right road (past a torii) to the corner after the slanted bridge: it saves all three
+  // bridges. Floating lanterns, two koi leaps over the stones and a koi that spits from beside the big stone (events.js). The bridges end square.
+  { name: 'GARTEN', rev: 3, seed: 5, theme: 'garten', song: 'garden', events: ['kois'], wall: [], wash: null, squareBridges: true,
+    pts: [[308,198], [334,195], [347,167], [338,135], [305,120], [240,120], [180,120], [148,108], [134,80],
       [148,52], [180,40], [250,40], [320,40], [392,42], [424,52], [444,80], [447,125], [458,168], [484,198], [515,211], [546,198], [572,168], [583,125],
-      [585,90], [595,62], [620,43], [642,38], [665,43], [690,62], [700,90], [706,140], [700,200], [692,255], [690,282], [690,300]],
-    mud: [[.045, 0, 30, 34], [.285, 0, 30, 34], [.555, 0, 30, 34], [.615, 0, 30, 34], [.905, 0, 30, 34]], water: [[.205, 10, 26, 26], [.43, 0, 28, 34], [.70, 0, 26, 34], [.80, 0, 26, 34]], ponds: [],
-    // deep water: rivers and ponds as chains of circles [x, y, radius]. The river from the top runs into the pool and the pond inside the first U, the second river crosses the
-    // lower road twice and feeds the lake in the middle (a channel), the lake drains to the south. You fall into deep water, roads over it are bridges.
+      [585,90], [595,62], [620,43], [642,38], [665,43], [690,62], [700,90], [706,140], [700,200], [692,255], [690,282], [690,300], [688,335], [678,368],
+      [654,392], [620,402], [560,403], [500,403], [440,402], [410,400], [388,393], [375,377], [372,355], [370,335], [360,322], [345,317], [300,316],
+      [260,318], [232,328], [212,350], [205,376], [204,392], [192,405], [165,412], [128,409], [96,394], [72,368], [60,332], [57,290], [57,252],
+      [59,226], [67,209], [84,200], [120,198], [170,198], [220,198], [262,198]],
+    // mud and puddles [x, y, half length along the road, half width across]: on the inner line of a bend (or one half of a straight), the other
+    // half of the road stays clean, so driving through is a choice. The puddles wash, there is no car wash.
+    mud: [], water: [], ponds: [],
+    mudAt: [[257, 331, 22, 17], [155, 96, 22, 17], [236, 26, 26, 17], [688, 102, 24, 17], [711, 220, 24, 17]],
+    waterAt: [[150, 397, 22, 16], [515, 196, 26, 17], [671, 395, 22, 16]],
+    // deep water: rivers, ponds and the lake as chains of circles [x, y, radius]. The river from the top runs into the pool inside the first U, the
+    // river from the right edge runs under the right bridge into the lake, the lake drains south under the lower bridge and west through a
+    // channel under the slanted bridge into the pond, which has a stream to the south. You fall into deep water, roads over it are bridges.
     rivers: [
       [[515, -14, 10], [515, 38, 11], [515, 82, 35], [515, 114, 14], [515, 140, 22]],
-      [[812, 299, 13], [742, 301, 13], [660, 305, 13], [592, 312, 13], [543, 327, 13], [510, 350, 13], [500, 386, 13], [500, 422, 13], [502, 462, 13]],
-      [[508, 350, 11], [462, 351, 10], [420, 352, 10], [372, 352, 10], [336, 360, 12]],
+      [[812, 299, 13], [742, 301, 13], [664, 302, 13]],
+      [[438, 278, 26], [490, 284, 38], [545, 290, 42], [594, 280, 36], [630, 292, 22], [664, 302, 13]],
+      [[432, 312, 24], [470, 334, 24], [520, 336, 22], [560, 326, 24], [604, 316, 18]],
+      [[510, 345, 14], [500, 386, 13], [500, 422, 13], [502, 462, 13]],
+      [[446, 326, 12], [410, 352, 11], [372, 354, 10], [330, 354, 10], [300, 366, 14]],
       [[264, 378, 24], [312, 378, 24]], [[288, 378, 26], [288, 378, 26]],
       [[288, 400, 12], [288, 462, 13]]],
-    // stepping stones: the short cut across the pool at the top and the one across the lake at the bottom (from the corner after the slanted bridge
-    // straight west to the left road; a koi leaps over it)
-    stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10], [320, 391, 9], [298, 393, 9], [276, 392, 9], [255, 388, 9]],
-    // clipped hedges that keep you from cutting across the garden: [x1, y1, x2, y2]
-    hedges: [[12, 159, 333, 159], [172, 80, 396, 80], [135, 258, 396, 258], [396, 78, 396, 300], [396, 300, 520, 314], [642, 98, 642, 290], [152, 260, 152, 376]],
-    pagodas: [[765, 142, 4, 1.15], [758, 388, 4, 1.15], [452, 262, 3, .85]],
-    koi: [[515, 140, 11, 9], [288, 366, 20, 6], [515, 104, 14, 5], [655, 303, 40, 3]] },
+    // stepping stones [x, y, radius, stretch, angle]: the short cut across the pool at the top, and the path across the lake from the right road
+    // (past the torii) and the big stone to the corner after the slanted bridge
+    stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10],
+      [613, 261, 9], [590, 276, 9], [567, 291, 9], [524, 318, 12, 2.2, .1], [478, 319, 9], [454, 318, 9], [430, 318, 9]],
+    // clipped hedges that keep you from cutting across the garden: [x1, y1, x2, y2]; the right one bends along the lake to the torii
+    hedges: [[12, 159, 333, 159], [172, 80, 396, 80], [100, 258, 396, 258], [396, 78, 396, 300], [642, 98, 642, 222], [642, 222, 570, 241], [152, 260, 152, 376]],
+    torii: [629, 241, 12],
+    pagodas: [[764, 142, 4, 1.15], [764, 388, 4, 1.15]],
+    // the decoration is laid out by hand, in lines and pairs: cherry trees, stone lanterns, bonsai in pots
+    cherries: [[28, 34], [78, 34], [28, 104], [78, 104], [768, 40], [768, 236]],
+    lanterns: [[53, 72], [13, 215], [13, 265], [13, 315], [13, 365], [13, 415], [486, 122], [544, 122], [628, 190], [656, 190], [764, 100], [764, 188], [764, 346], [764, 440]],
+    bonsai: [[118, 292], [118, 340], [628, 104], [656, 104]],
+    // floating lanterns on the lake [x, y, rx, ry] and koi swimming circles [x, y, rx, ry] (both shrink until they keep clear of stones and shore)
+    floats: [[443, 274, 8, 4], [482, 280, 10, 4], [542, 266, 10, 4], [598, 318, 7, 4]],
+    koi: [[515, 140, 11, 9], [515, 106, 14, 5], [288, 382, 16, 7], [470, 290, 18, 6], [560, 336, 14, 5], [440, 290, 10, 6]] },
   // The race circuit: an 8 on asphalt, the road crosses itself on a bridge (first over it, later underneath). Kerbs inside the corners, gravel
   // outside, oil instead of mud, a pit lane along the start straight whose box washes the car, barriers all around (see ringmap.js, ring.js).
   // oilAt = [x, y, half length, half width]; gravel and stacks (tyre walls) = [x, y, radius]; pit = lane points, half width, box (y from, to),
@@ -425,6 +445,11 @@ function roundedPath(poly) {
 
 // the centre line of a track: closed Catmull-Rom (pts) or rounded corners (poly), resampled every 2px, with tangents and normals.
 // Cheap, so the menus can show the shape of a track before it is built.
+// stepping stones [x, y, r, stretch, angle]: round, or an oval stretch times longer along the angle. stoneD is the distance of a point
+// from the middle measured in r (the rim lies at r), stoneR the radius of the circle around the whole stone
+const stoneD = ([sx, sy, , st = 1, an = 0], x, y) => { const dx = x - sx, dy = y - sy, c = Math.cos(an), s = Math.sin(an); return Math.hypot((dx * c + dy * s) / st, -dx * s + dy * c); };
+const stoneR = ([, , sr, st = 1]) => sr * Math.max(1, st);
+
 export function centreLine(def) {
   const P = def.pts || [], n = P.length, raw = def.poly ? roundedPath(def.poly) : [];
   for (let i = 0; i < n; i++) {
@@ -537,6 +562,17 @@ function* buildTrack(def, ti) {
   const onPath = (t, off, rx, ry, type) => { const i = Math.floor(t * N) % N, p = path[i]; stamp(p.x + nrm[i].x * off, p.y + nrm[i].y * off, tan[i], nrm[i], rx, ry, type, def.grow); };
   // deep water (type 5): rivers, pools and lakes next to the road. A road over it stays road = a bridge. Stepping stones are road again.
   const deep = new Uint8Array(A), stoneMask = new Uint8Array(A), bridgeMask = new Uint8Array(A), isBridge = new Uint8Array(N), bridges = [];
+  // where on a bridge deck is a point (x, y, nearest centre point k)? null: not on a bridge. Normally the bridge is a stretch of the centre
+  // line, so its ends follow the road's bends; with def.squareBridges each bridge is cut off straight across its middle direction, 10 px from
+  // the water instead of 16 (the garden, 1S6-8), and the result is the distance along that direction (its planks lie across it)
+  const deckAt = (x, y, k) => {
+    for (const [a, b] of bridges) {
+      const len = (b - a + N) % N, m = (a + (len >> 1)) % N, u = (x - path[m].x) * tan[m].x + (y - path[m].y) * tan[m].y;
+      if (inRange(k, (a - 14 + N) % N, (b + 14) % N) && Math.abs(u) <= len - 6) return u;
+    }
+    return null;
+  };
+  const onDeck = (x, y, k) => def.squareBridges ? deckAt(x, y, k) !== null : !!isBridge[k];
   const capsule = (c0, c1) => {
     const st = Math.max(1, Math.ceil(Math.hypot(c1[0] - c0[0], c1[1] - c0[1]) / 2));
     for (let s = 0; s <= st; s++) {
@@ -557,11 +593,13 @@ function* buildTrack(def, ti) {
       else if (a >= 0) { bridges.push([(s0 + a - 8 + N) % N, (s0 + k - 1 + 8) % N]); a = -1; }
     }
     for (const [a, b] of bridges) for (let i = a; ; i = (i + 1) % N) { isBridge[i] = 1; if (i === b) break; }
-    for (let j = 0; j < A; j++) if (dist[j] < HALF && isBridge[near[j]]) bridgeMask[j] = 1;
+    for (let j = 0; j < A; j++) if (dist[j] < HALF && onDeck(j % MW + .5, (j / MW | 0) + .5, near[j])) bridgeMask[j] = 1;
   }
-  for (const [sx, sy, sr] of def.stones || [])
-    for (let y = Math.floor(sy - sr - 3); y <= Math.ceil(sy + sr + 3); y++) for (let x = Math.floor(sx - sr - 3); x <= Math.ceil(sx + sr + 3); x++)
-      if (Math.hypot(x + .5 - sx, y + .5 - sy) < sr + (vnoise(x * .3, y * .3, sd + 4) - .5) * 2) { ter[y * MW + x] = 1; stoneMask[y * MW + x] = 1; }
+  for (const st of def.stones || []) {
+    const [sx, sy, sr] = st, R = stoneR(st);
+    for (let y = Math.floor(sy - R - 3); y <= Math.ceil(sy + R + 3); y++) for (let x = Math.floor(sx - R - 3); x <= Math.ceil(sx + R + 3); x++)
+      if (x >= 0 && y >= 0 && x < MW && y < MH && stoneD(st, x + .5, y + .5) < sr + (vnoise(x * .3, y * .3, sd + 4) - .5) * 2) { ter[y * MW + x] = 1; stoneMask[y * MW + x] = 1; }
+  }
   def.mud.forEach(m => onPath(m[0], m[1], m[2], m[3], 2));
   def.water.forEach(m => onPath(m[0], m[1], m[2], m[3], 3));
   def.ponds.forEach(p => stamp(p[0], p[1], { x: 1, y: 0 }, { x: 0, y: 1 }, p[2], p[3], 3));
@@ -625,7 +663,7 @@ function* buildTrack(def, ti) {
     let col;
     if (bridgeMask[j]) {
       // wooden bridge: planks across the road, rails along both edges (they are solid, see below)
-      const i = near[j], dd = dist[j];
+      const u = def.squareBridges ? deckAt(x + .5, y + .5, near[j]) : null, i = u === null ? near[j] : Math.floor((u + 1000) / 2), dd = dist[j];
       col = dd > HALF - 2.5 ? (i % 6 < 2 ? [206, 156, 92] : [124, 82, 44]) : dd > HALF - 4.5 ? (i % 6 < 2 ? [168, 118, 66] : [84, 52, 26]) : i % 3 === 0 ? [96, 64, 34] : (Math.floor(i / 3) & 1) ? [176, 128, 74] : [160, 112, 62];
       if (h < .03 && dd < HALF - 4.5) col = [128, 88, 46];
     } else if (t === 3 || t === 5) {
@@ -697,12 +735,13 @@ function* buildTrack(def, ti) {
     }
   }
   // stepping stones: round grey stones with a dark rim, some moss, a ripple in the water around them
-  for (const [sx, sy, sr] of def.stones || []) {
-    for (let y = Math.floor(sy - sr - 4); y <= Math.ceil(sy + sr + 4); y++) for (let x = Math.floor(sx - sr - 4); x <= Math.ceil(sx + sr + 4); x++) {
+  for (const st of def.stones || []) {
+    const [sx, sy, sr] = st, R = stoneR(st);
+    for (let y = Math.floor(sy - R - 4); y <= Math.ceil(sy + R + 4); y++) for (let x = Math.floor(sx - R - 4); x <= Math.ceil(sx + R + 4); x++) {
       if (x < 0 || y < 0 || x >= MW || y >= MH) continue;
-      const j = y * MW + x, dx = x + .5 - sx, dy = y + .5 - sy, dd = Math.hypot(dx, dy);
+      const j = y * MW + x, dx = x + .5 - sx, dy = y + .5 - sy, dd = stoneD(st, x + .5, y + .5);
       if (!stoneMask[j]) { if (ter[j] === 5 && dd < sr + 3.5 && hash(x, y, sd + 6) < .5) set(j, [150, 214, 220]); continue; }
-      const sh = (dx + dy) / sr;
+      const sh = (dx + dy) / R;
       let c = dd > sr - 1.6 ? [84, 84, 80] : sh < -.35 ? [196, 194, 184] : sh > .4 ? [128, 127, 120] : [164, 162, 153];
       if (dd <= sr - 1.6 && hash(x, y, sd + 7) < .1) c = [96, 138, 72];
       set(j, c);
@@ -1064,10 +1103,13 @@ function* buildTrack(def, ti) {
     const rc = (x0, y0, w, h, c) => { for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) setT(x0 + xx, y0 + yy, c); };
     const GR = ['#2f6b3a', '#3f8a47', '#58a85a', '#e8a6c0', '#ffffff'].map(hex);
     // the rails of the bridges are solid: red lacquered railings with dark posts and golden caps, a shadow on the water
-    for (let i = 0; i < N; i += 3) if (isBridge[i]) for (const s of [-1, 1]) walls.push({ x: path[i].x + nrm[i].x * s * HALF, y: path[i].y + nrm[i].y * s * HALF, r: 3 });
+    for (let i = 0; i < N; i += 3) for (const s of [-1, 1]) {
+      const x = path[i].x + nrm[i].x * s * HALF, y = path[i].y + nrm[i].y * s * HALF;
+      if (onDeck(x, y, i)) walls.push({ x, y, r: 3 });
+    }
     const BR = [hex('#2a120c'), hex('#b8321f'), hex('#e0543a'), hex('#ff8a6a')], BP = hex('#3a1a10'), BG = hex('#e8c14a');
     for (let j = 0; j < A; j++) {
-      if (!isBridge[near[j]] || dist[j] < HALF - 3 || dist[j] > HALF + 3) continue;
+      if (dist[j] < HALF - 3 || dist[j] > HALF + 3 || !onDeck(j % MW + .5, (j / MW | 0) + .5, near[j])) continue;
       const dd = dist[j], i = near[j], x = j % MW, y = (j / MW) | 0;
       if (dd > HALF + 1.5) { if (ter[j] === 5 || ter[j] === 3) { const q = j * 4; d[q] *= .6; d[q + 1] *= .6; d[q + 2] *= .65; } continue; }
       const post = i % 9 < 2;
@@ -1108,29 +1150,66 @@ function* buildTrack(def, ti) {
     };
     for (const [x, y, n, sc] of def.pagodas || []) pagoda(x, y, n, sc);
     flowers(240, ['#ffc2d6', '#ffffff', '#ff9fbf', '#ffe14d', '#b9a2ff'].map(hex));
-    // bonsai trees in their pots
-    scatter(9, 8, (x, y) => {
+    // the decoration stands where the track says, in lines and pairs (a laid-out garden, nothing at random; 1S6-8): bonsai trees in their pots,
+    // stone lanterns, cherry trees (drawn with the trees below)
+    for (const [x, y] of def.bonsai || []) {
       walls.push({ x, y, r: 5 }); darken(x, y, 5, 2, 3);
       rc(x - 4, y + 1, 9, 4, hex('#8a5a3a')); rc(x - 5, y, 11, 1, hex('#b07a52')); rc(x - 3, y + 4, 7, 1, hex('#5a3a22'));
       for (let k = 0; k < 9; k++) rc(x - 1 + Math.round(Math.sin(k * .55) * 2), y - k, 2, 1, hex('#6b4a2e'));
       for (const [bx, by, rr] of [[x - 5, y - 7, 4], [x + 4, y - 10, 4], [x - 1, y - 14, 5]])
         for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr - 1; dx <= rr + 1; dx++) if ((dx / (rr + 1)) ** 2 + (dy / rr) ** 2 <= 1) setT(bx + dx, by + dy, dx + dy < -2 ? GR[2] : dx + dy > 2 ? GR[0] : GR[1]);
-    });
-    // stone lanterns
-    scatter(8, 6, (x, y) => {
+    }
+    for (const [x, y] of def.lanterns || []) {
       const L0 = hex('#b9b7ac'), L1 = hex('#8f8d82'), L2 = hex('#6d6b62');
       walls.push({ x, y, r: 4 }); darken(x, y, 4, 2, 3);
       rc(x - 4, y, 9, 2, L1); rc(x - 1, y - 6, 3, 6, L0); rc(x - 4, y - 11, 9, 5, L1); rc(x - 3, y - 10, 7, 3, L0); rc(x - 1, y - 10, 3, 3, hex('#ffd36a'));
       rc(x - 5, y - 13, 11, 2, L2); rc(x - 3, y - 15, 7, 2, L1); rc(x - 1, y - 17, 3, 2, L0);
-    });
-    scatter(18, 3, rock);
-    // lotus pads on the ponds
-    for (const [lx, ly] of [[503, 152], [528, 141], [515, 164], [500, 102], [532, 100], [283, 376], [305, 381], [262, 394]]) {
-      if (ter[ly * MW + lx] !== 5) continue;
+    }
+    for (const [x, y] of def.cherries || []) wallTrees.push({ x, y });
+    // the torii at the entrance of the short cut across the lake [x, y, half span]: two pillars north and south of the way in, the curved
+    // black top beam over the red one on the top layer (you drive under it)
+    if (def.torii) {
+      // [x, y of the feet, half the distance of the pillars]: a red torii in front of the hedge, facing the way in (drawn upright like the lanterns):
+      // two pillars with black feet, the red lower beam (nuki), the black top beam (kasagi) with upturned ends over its red layer, the name plate
+      const [tx, ty, h] = def.torii, TB = hex('#1f1612'), TR = hex('#e0452a'), TL = hex('#ff7a52'), TD = hex('#9a2614'), TG = hex('#e8c14a');
+      for (let dx = -h - 4; dx <= h + 4; dx++) darken(tx + dx + 4, ty + 2, 2, 0, 0);
+      for (const qx of [tx - h, tx + h]) {
+        walls.push({ x: qx, y: ty, r: 3 });
+        rc(qx - 2, ty - 1, 5, 3, TB);
+        for (let k = 2; k <= 24; k++) { setT(qx - 1, ty - k, TL); setT(qx, ty - k, TR); setT(qx + 1, ty - k, TD); }
+      }
+      rc(tx - h - 4, ty - 19, 2 * h + 9, 3, TR); rc(tx - h - 4, ty - 17, 2 * h + 9, 1, TD);
+      rc(tx - h - 5, ty - 26, 2 * h + 11, 2, TR);
+      for (let dx = -h - 8; dx <= h + 8; dx++) {
+        const end = Math.max(0, Math.abs(dx) - h - 4), lift = end > 2 ? 2 : end > 0 ? 1 : 0;
+        setT(tx + dx, ty - 29 - lift, TB); setT(tx + dx, ty - 28 - lift, TB); if (Math.abs(dx) <= h + 6) setT(tx + dx, ty - 27 - lift, hex('#3a2a22'));
+      }
+      rc(tx - 3, ty - 25, 7, 7, TG); rc(tx - 2, ty - 24, 5, 5, TB); rc(tx - 1, ty - 23, 3, 1, TG);
+    }
+    // lotus pads on the ponds and the lake
+    for (const [lx, ly] of [[503, 152], [528, 141], [515, 164], [500, 102], [532, 100], [283, 376], [305, 381], [262, 394], [456, 296], [508, 348], [584, 310], [620, 296], [548, 268]]) {
+      let free = true; for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (ter[(ly + dy) * MW + lx + dx] !== 5) free = false;
+      if (!free) continue;
       for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const dd = dx * dx + dy * dy; if (dd > 10 || (dd > 1 && dx > 0 && dy === 0)) continue; px(lx + dx, ly + dy, dx + dy < -1 ? hex('#6fca57') : hex('#3f9a3f')); }
       px(lx - 1, ly - 1, hex('#ffb3cf')); px(lx, ly - 1, hex('#ffffff')); px(lx - 1, ly, hex('#ff8fb8'));
     }
-    for (const [kx, ky, krx, kry] of def.koi || []) for (let k = 0; k < 3; k++) critters.push({ type: 'koi', x: kx, y: ky, rx: krx, ry: kry, ph: r() * TAU + k * 2.1, col: (r() * 3) | 0 });
+    // koi and floating lanterns move on ellipses over open water: the ellipse shrinks until the whole thing (m px around its middle) stays
+    // clear of stones, bridges and shore all the way round (1S6-6: the koi never swim over a stone)
+    const open = (x, y) => { const xx = Math.round(x), yy = Math.round(y); return xx >= 0 && yy >= 0 && xx < MW && yy < MH && ter[yy * MW + xx] === 5 && !bridgeMask[yy * MW + xx]; };
+    const fit = (cx, cy, rx, ry, m) => {
+      for (let s = 1; s > .15; s -= .1) {
+        let fits = true;
+        for (let k = 0; k < 48 && fits; k++) {
+          const a = k / 48 * TAU, x = cx + Math.cos(a) * rx * s, y = cy + Math.sin(a) * ry * s;
+          for (let q = 0; q < 9 && fits; q++) fits = open(x + (q ? Math.cos(q * TAU / 8) * m : 0), y + (q ? Math.sin(q * TAU / 8) * m : 0));
+        }
+        if (fits) return [rx * s, ry * s];
+      }
+      if (import.meta.env.DEV) console.warn(def.name + ': kein Platz im Wasser bei', cx, cy);
+      return null;
+    };
+    for (const [kx, ky, krx, kry] of def.koi || []) { const f = fit(kx, ky, krx, kry, 9); if (f) for (let k = 0; k < 3; k++) critters.push({ type: 'koi', x: kx, y: ky, rx: f[0], ry: f[1], ph: r() * TAU + k * 2.1, col: (r() * 3) | 0 }); }
+    for (const [fx, fy, frx, fry] of def.floats || []) { const f = fit(fx, fy, frx, fry, 6); if (f) critters.push({ type: 'float', x: fx, y: fy, rx: f[0], ry: f[1], ph: r() * TAU, sp: .08 + r() * .05 }); }
   } else if (th.decor === 'bau') {
     siteRing(yard, walls, MW, MH);
     const site = paintSite({ MW, MH, def, d, set, setT, px, darken, band, path, tan, nrm, yard, walls, scatter, rock, sd, washMask });
