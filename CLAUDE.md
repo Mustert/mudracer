@@ -12,6 +12,7 @@ Nur wenn der Nutzer im Prompt ausdrücklich sagt, dass es ohne Commit/Push erfol
 - `npm run dev` startet den Dev-Server (Port 5177), `npm run build` erzeugt **eine** Datei `dist/index.html` (vite-plugin-singlefile).
 - `dist/` und `node_modules/` sind nicht im Repo. Nach dem Klonen `npm install`.
 - `npm run lint` (ESLint), `npm test` (Vitest, Tests in `test/`) und `npm run typecheck` (TypeScript prüft die JS-Dateien) laufen vor jedem Commit und müssen sauber sein.
+- Wie die Mechaniken funktionieren (Spielschleife, Boden-Codes, Physik, Wasser, Schmutz, KI, Runden, Ereignisse, Zeichnen) und wo sie stehen: Skill `mechanik` (`.claude/skills/mechanik/SKILL.md`). Vor Arbeit an einer Mechanik, einer Strecke oder einem Fehler im Rennen laden, statt den Code neu zu lesen. Ändert sich eine dort beschriebene Mechanik, wird der Skill im selben Commit angepasst.
 - Nichts Schweres beim Start berechnen: Strecken und Auto-Sprites entstehen in Häppchen (`src/idle.js`), die Spielphysik läuft in festen Schritten (`src/clock.js`). Im Dev-Server gibt es `window.mudracer` mit `frameAt(now)`, um Frames ohne sichtbares Vorschaufenster zu rechnen, und mit der Streckenprüfung `check`, `checkAll`, `checkPic` (`src/check.js`, nur im Dev-Server, nicht im Build).
 
 ## Roadmap und Doku aktuell halten (Pflicht bei jeder Änderung)

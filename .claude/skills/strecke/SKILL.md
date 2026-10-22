@@ -9,6 +9,7 @@ Gilt für neue Strecken und Überarbeitungen. Die Streckendesign-Grundsätze 1�
 
 ## 1. Lesen, aber gezielt
 
+- Skill `mechanik`: wie Boden-Codes, Wasser und Brücken, Schmutz, KI, Runden und Ereignisse funktionieren und wo sie stehen. Erst dort nachsehen, dann gezielt im Code.
 - `ROADMAP.md`: den Block der Strecke (`1S<Nr>`) und den Querschnitt `1A` (`grep -n "1S8\|^| 1A-" ROADMAP.md`), dazu die Zeile der Strecke in „Strecken im Überblick“.
 - `Obsidian/Mudracer/Strecken.md`: nur den Abschnitt der Strecke (Plan, Wünsche, Ereignis).
 - Als Vorlage **eine** ähnliche, neuere Strecke lesen, nicht alle. Spielzimmer (`toymap.js` + `toys.js`) und Regenbogen (`rainbowmap.js` + `rainbow.js`) sind die vollständigsten Beispiele für eine Sonderstrecke.
