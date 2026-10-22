@@ -157,7 +157,7 @@ const SONGS = {
       M.brush(t, (s & 3) === 2 ? 1 : .5);
     } },
   // garden: pentatonic D major, a singing erhu over rippling yangqin, soft bass; a festival band drives it on (1S6-8): shime-daiko in sixteenths
-  // (don-doko), taiko on the beats with a roll at the end of every fourth bar, the kane clinking on the off-beats
+  // (don-doko) and the kane clinking on the off-beats; no taiko, its deep boom droned too loud (1S6-12)
   garden: { bpm: 84, swing: 0,
     chords: { D: { r: 38, n: [62, 66, 69] }, Bm: { r: 35, n: [59, 62, 66] }, G: { r: 43, n: [62, 67, 71] }, A: { r: 45, n: [61, 64, 69] } },
     A: { ch: ['D', 'D', 'Bm', 'Bm', 'G', 'D', 'A', 'D'], mel: mel([
@@ -171,7 +171,6 @@ const SONGS = {
       if (s % 2 === 0) M.yangqin(hz(ch.n[[0, 1, 2, 1, 2, 1, 0, 1][s >> 1] % ch.n.length] + 12), t, s % 4 === 0 ? 1 : .55);
       if (s === 0) M.pad(ch.n, t, 16 * M.sd, .016);
       if (s === 0 || s === 10) M.bassWarm(hz(ch.r - 12 + (s === 10 ? 7 : 0)), t, 5 * M.sd);
-      if (s === 0 || s === 8 || (s === 6 && bi % 2) || (bi % 4 === 3 && s >= 12)) M.taiko(s >= 12 ? 95 : 72, t, s >= 12 ? .45 + (s - 12) * .1 : s ? .6 : .9);
       if ([1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1][s]) M.shime(t, s % 4 === 0 ? 1 : s % 2 ? .45 : .7);
       if (s % 4 === 2) M.kane(t, s === 10 ? 1 : .7);
       if (s === 12) M.rim(t);

@@ -189,9 +189,10 @@ const TRACK_DEFS = [
       [[288, 400, 12], [288, 462, 13]]],
     // stepping stones [x, y, radius, stretch, angle]: the short cut across the pool at the top, and the path across the lake from the right road
     // (past the torii) and the big stone to the corner after the slanted bridge
-    // (Rev 4, 1S6-10: two stones in the grass lead from the road edge to the water, the torii stands beside the way in, not in it)
+    // (Rev 4, 1S6-10: two stones in the grass lead from the road edge to the water, the torii stands beside the way in, not in it;
+    // 1S6-12: the big stone is larger, the stone after it moved closer, all lake stones 5 % larger, no gap wider than about 12 px)
     stones: [[493, 84, 10], [517, 74, 10], [540, 86, 10],
-      [650, 252, 8], [632, 257, 8], [613, 261, 9], [590, 276, 9], [567, 291, 9], [524, 318, 12, 2.2, .1], [478, 319, 9], [454, 318, 9], [430, 318, 9]],
+      [650, 252, 8.4], [632, 257, 8.4], [613, 261, 9.5], [587, 278, 9.5], [560, 296, 10.5], [524, 318, 14, 2.2, .1], [478, 319, 9.5], [454, 318, 9.5], [430, 318, 9.5]],
     // clipped hedges that keep you from cutting across the garden: [x1, y1, x2, y2]; the right one bends along the lake to the torii
     hedges: [[12, 159, 333, 159], [172, 80, 396, 80], [100, 258, 396, 258], [396, 78, 396, 300], [642, 98, 642, 222], [642, 222, 570, 241], [152, 260, 152, 376]],
     torii: [598, 236, 12],
