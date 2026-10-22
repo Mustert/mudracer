@@ -138,6 +138,14 @@ export function* paintRing(S) {
     while (k1 > 0 && S.dist[Math.round(pit.pts[k1].y) * MW + Math.round(pit.pts[k1].x)] < HALF + pit.half + 2) k1--;
     if (k0 > 0) across(k0, K.line); if (k1 > 0) across(k1, K.line);
     pit.k0 = k0; pit.k1 = k1;
+    // the gate a little behind the white line at the entry: in the last lap of a car it is closed (ring.js), from the pit wall to the
+    // barrier in front of the garages. Posts every 4 px across the lane, solid only for the cars whose box is shut.
+    if (k0 > 0) {
+      const kg = Math.min(pit.pts.length - 2, k0 + 4), a = pit.pts[kg - 1], b = pit.pts[kg + 1], l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const tx = (b.x - a.x) / l, ty = (b.y - a.y) / l, p = pit.pts[kg], w = pit.half + 8, posts = [];
+      for (let q = -w; q <= w + .1; q += 4) posts.push({ x: p.x - ty * q, y: p.y + tx * q, r: 3 });
+      pit.gate = { x: p.x, y: p.y, tx, ty, w, posts };
+    }
     const [b0, b1] = pit.box;
     for (let j = 0; j < A; j++) {
       const y = j / MW | 0; if (y < b0 || y > b1 || !inPit(j) || pitD[j] > pit.half - 1) continue;
@@ -323,5 +331,5 @@ export function* paintRing(S) {
     deck = { c: cv, x: x0, y: y0, ang1: Math.atan2(tg.y, tg.x), ang2: Math.atan2(t2.y, t2.x) };
   }
 
-  return { deck, cross, kerb: RT.kerb, pitMask: RT.pitMask, pit, oilPix, bar, fans, screen };
+  return { deck, cross, kerb: RT.kerb, pitMask: RT.pitMask, pitD, pit, oilPix, bar, fans, screen };
 }

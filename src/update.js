@@ -94,7 +94,7 @@ function updateRace(dt) {
         // stuck (against a tree or the edge, e.g. after a cow threw it there): back up for a moment, turning towards the track
         if (G.state === 'race' && !c.finished) {
           if (c.rev > 0) { c.rev -= dt; thr = -1; }
-          else if (Math.hypot(c.vx, c.vy) < 12 && !c.pit) { c.stuckT = (c.stuckT || 0) + dt; if (c.stuckT > 1.2) { c.rev = .9; c.stuckT = 0; } }
+          else if (Math.hypot(c.vx, c.vy) < 12 && !(c.boxT > 0)) { c.stuckT = (c.stuckT || 0) + dt; if (c.stuckT > 1.2) { c.rev = .9; c.stuckT = 0; } }
           else c.stuckT = 0;
         }
       }
