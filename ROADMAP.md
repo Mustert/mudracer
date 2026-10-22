@@ -120,7 +120,7 @@ Reifegrad aus `Obsidian/Mudracer/Strecken.md` und `ANALYSE.md`. „Abnahme“ is
 | 1S5-3 | M | erledigt (Rev 3: Zement nur auf der Innenseite der linken Kurve, die äußeren 28 px sind sauber und die Linie dort länger, Bremse bleibt 1/3,8) | Zement bremst auf 1/3,8: bewusst hart, aber es braucht eine sichtbare saubere Umfahrung, damit es eine Entscheidung ist (1A-1) | M8 |
 | 1S5-4 | M | offen | Der Kipplaster links vom Kran färbt Autos betongrau (vielleicht nur solche, die schon etwas Zement hatten und durch den Laster jetzt sehr grau werden). Prüfen, welche Schmutzart Staubwolke und Erdhaufen des Kippers auftragen; erledigt, wenn der Kipper nur Erde/Matsch aufträgt und kein Auto durch ihn grau wird | Meldung 2026-10-22 BAUSTELLE |
 | 1S5-5 | M | offen | Die erste Matschpfütze direkt vor der Zielgeraden (Kurve oben links) entfernen; neue `rev` | Meldung 2026-10-22 BAUSTELLE |
-| 1S5-6 | M | offen | Die Erdhaufen-Polygone, die die Fahrbahn verengen, sind zum Teil schlecht zu erkennen: deutlicher und dicker zeichnen (Grundsatz 10, 1A-6) | Meldung 2026-10-22 BAUSTELLE |
+| 1S5-6 | M | offen | Die orangen Warnbaken (Leitkegel/Absperrungen), die die Fahrbahn verengen, sind zum Teil schlecht zu erkennen: deutlicher und dicker zeichnen, damit klar ist, wo es eng wird (Grundsatz 10, 1A-6) | Meldung 2026-10-22 BAUSTELLE |
 
 ### 1S6 GARTEN
 | ID | Prio | Status | Aufgabe | Herkunft |
