@@ -5,7 +5,7 @@ description: Eingang (F8-Meldungen in feedback/) in ROADMAP.md einordnen und die
 
 # Roadmap pflegen
 
-`ROADMAP.md` ist die **einzige** Liste für Bugs, Ideen und offene Arbeit. Es gibt keine `ANALYSE.md`, keine `VERBESSERUNGEN.md` und keine Meldungsdateien, die nach der Sichtung liegen bleiben.
+`ROADMAP.md` liegt im Obsidian-Vault unter `Obsidian/Mudracer/ROADMAP.md` (nicht mehr in der Repo-Wurzel) und ist die **einzige** Liste für Bugs, Ideen und offene Arbeit. Es gibt keine `ANALYSE.md`, keine `VERBESSERUNGEN.md` und keine Meldungsdateien, die nach der Sichtung liegen bleiben.
 
 ## Eingang sichten (nur auf Ansage des Nutzers)
 
@@ -19,7 +19,7 @@ Das F8-Fenster im Dev-Server legt `bug_<datum>_<zeit>_<STRECKE>.md` und `feature
    - Autos, Handhabung, Anpassungen, Achievements → Phase 2.
    - Schwierigkeit, KI, Optionen, Kindermodus, Grafik-Politur → Phase 3.
    - Große neue Funktion ohne Platz in den drei Phasen → „Nach dem Release“.
-3. Vorher prüfen, ob es den Punkt schon gibt (`grep -n "Stichwort" ROADMAP.md`): dann den Punkt ergänzen und die Meldung in „Herkunft“ nennen, statt einen zweiten anzulegen.
+3. Vorher prüfen, ob es den Punkt schon gibt (`grep -n "Stichwort" Obsidian/Mudracer/ROADMAP.md`): dann den Punkt ergänzen und die Meldung in „Herkunft“ nennen, statt einen zweiten anzulegen.
 4. Neuen Punkt mit der **nächsten freien ID** im Block anhängen (`1S6-4`, nie eine ID wiederverwenden). Spalten: ID, Prio (H/M/N), Status `offen`, Aufgabe (ein bis zwei Sätze, die Bedingung zum Abhaken steht drin), Herkunft (`Meldung <Datum> <STRECKE>`). Der Wortlaut des Nutzers bleibt erhalten, wird aber nicht abgeschrieben, sondern auf die Aufgabe verdichtet.
 5. Ein Wunsch, der gegen die Streckendesign-Grundsätze oder gegen die Phasenziele läuft, wird nicht still eingeordnet: dem Nutzer die Frage stellen.
 6. Gehört ein Punkt in eine **Entscheidung** (Tabelle „Offene Entscheidungen“), dort ergänzen statt eine Aufgabe zu erfinden.
@@ -28,6 +28,8 @@ Das F8-Fenster im Dev-Server legt `bug_<datum>_<zeit>_<STRECKE>.md` und `feature
 
 ## Roadmap sonst pflegen
 
+- Obsidian formatiert Tabellen beim Bearbeiten um (aufgefüllte Spalten); das ist in Ordnung, beim Eintragen die vorhandene Form der Tabelle übernehmen.
+- Große Umbauten mit eigenem Plan (`plaene/…`) stehen dort im Detail, in der Roadmap nur ihr Block.
 - Erledigt: Status `erledigt (<commit>)`, Zeile stehen lassen. Wenn die Phase abgeschlossen ist, wandert die Kurzfassung nach „Erledigt“ ganz unten.
 - Neue Erkenntnis aus der Arbeit (Fehler, Schwäche, Idee): sofort mit nächster freier ID im Block anhängen, auch wenn sie nicht zur aktuellen Aufgabe gehört.
 - Die Tabelle „Strecken im Überblick“ und die Statuszeile der drei Phasen bei jeder Änderung an einer Strecke nachziehen.

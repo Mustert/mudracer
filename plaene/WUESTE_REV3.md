@@ -1,6 +1,6 @@
 # WUESTE Rev 3 – Umsetzungsplan
 
-Stand: 2026-10-23, Branch `map_pack`. Eigener Plan für den Komplettumbau der Wüste (Strecke 8, Cup 3). Er steht bewusst nicht in `ROADMAP.md`, damit die nicht zu groß wird; dort bleibt nur der Block `1S8`. Grundlage: Mockup `Obsidian/Mudracer/Screenshots/WUESTE_improvements.jpg` (die Ziffern unten sind die Ziffern im Mockup), Rev 2 in `src/desert.js` und `src/desertmap.js`, Skills `strecke` und `mechanik`, Streckendesign-Grundsätze in `CLAUDE.md`.
+Stand: 2026-10-23, Branch `map_pack`. Eigener Plan für den Komplettumbau der Wüste (Strecke 8, Cup 3). Er steht bewusst nicht in `ROADMAP.md` (`Obsidian/Mudracer/ROADMAP.md`), damit die nicht zu groß wird; dort bleibt nur der Block `1S8`. Grundlage: Mockup `Obsidian/Mudracer/Screenshots/WUESTE_improvements.jpg` (die Ziffern unten sind die Ziffern im Mockup), Rev 2 in `src/desert.js` und `src/desertmap.js`, Skills `strecke` und `mechanik`, Streckendesign-Grundsätze in `CLAUDE.md`.
 
 **Status je Paket** wird hier gepflegt (Abschnitt „Arbeitspakete“). Erst beim Abschluss (M6) wird `ROADMAP.md` nachgezogen: 1S8 auf den neuen Stand, Tabelle „Strecken im Überblick“, Notiz unter 1S9.
 

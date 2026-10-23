@@ -19,8 +19,8 @@ Nur wenn der Nutzer im Prompt ausdrücklich sagt, dass es ohne Commit/Push erfol
 
 Jede Änderung am Spiel wird vor dem Commit mit `ROADMAP.md` und der Obsidian-Doku abgeglichen. Das ist Teil der Änderung, nicht optional, und gehört in denselben Commit.
 
-**`ROADMAP.md`** (Repo-Wurzel) ist die eine Liste für alles, was noch zu tun ist: drei Phasen (1 Map_Pack, 2 Cars & Customizations, 3 Game_Modes), dazu „Offene Entscheidungen“ und „Nach dem Release“. Es gibt keine zweite Liste: `ANALYSE.md`, `VERBESSERUNGEN.md` und einzelne Fehler- oder Ideenlisten existieren nicht mehr (alte Stände in der Git-Historie, letzter Stand `git show 8fb323f:ANALYSE.md`). Code-Kommentare mit „ANALYSE.md T21“ o. ä. meinen diesen alten Stand.
-1. Vor der Arbeit: in `ROADMAP.md` die Punkte des Bereichs nachsehen (`grep -n "WUESTE\|1A-" ROADMAP.md`) und beim Umsetzen berücksichtigen. Gearbeitet wird an der Phase, die dran ist, nicht an späteren.
+**`ROADMAP.md`** (liegt im Obsidian-Vault: `Obsidian/Mudracer/ROADMAP.md`; „`ROADMAP.md`“ meint überall diese Datei, eine Kopie in der Repo-Wurzel gibt es nicht mehr) ist die eine Liste für alles, was noch zu tun ist: drei Phasen (1 Map_Pack, 2 Cars & Customizations, 3 Game_Modes), dazu „Offene Entscheidungen“ und „Nach dem Release“. Es gibt keine zweite Liste: `ANALYSE.md`, `VERBESSERUNGEN.md` und einzelne Fehler- oder Ideenlisten existieren nicht mehr (alte Stände in der Git-Historie, letzter Stand `git show 8fb323f:ANALYSE.md`). Code-Kommentare mit „ANALYSE.md T21“ o. ä. meinen diesen alten Stand.
+1. Vor der Arbeit: in `ROADMAP.md` die Punkte des Bereichs nachsehen (`grep -n "WUESTE\|1A-" Obsidian/Mudracer/ROADMAP.md`) und beim Umsetzen berücksichtigen. Gearbeitet wird an der Phase, die dran ist, nicht an späteren.
 2. Vor dem Commit:
    - erledigte Punkte auf `erledigt (<commit oder Kurzbeschreibung>)` setzen, teilweise erledigte auf `teilweise (…)`;
    - neu entdeckte Schwächen oder Ideen mit der nächsten freien ID im passenden Block der passenden Phase anhängen (IDs `<Phase><Block>-<Nr>`, nie wiederverwenden); Großes ohne Platz in den drei Phasen kommt nach „Nach dem Release“;
@@ -28,6 +28,7 @@ Jede Änderung am Spiel wird vor dem Commit mit `ROADMAP.md` und der Obsidian-Do
    - die Zeile „Zuletzt abgeglichen“ oben auf Datum und Commit nachziehen.
 3. Die Grundregel „Spielstände bleiben gültig“ in `ROADMAP.md` gilt für jede Änderung.
 4. Jede Phase hat einen Block `…T` mit technischen Aufgaben (Skills, `CLAUDE.md`, Prüfskripte, Tests). Ändert sich eine Arbeitsweise, wird dieser Block und diese Datei im selben Schritt angepasst.
+5. Große Umbauten mit eigenem Umsetzungsplan (z. B. `plaene/WUESTE_REV3.md`) werden dort im Detail geführt, nicht in `ROADMAP.md`; die Roadmap behält nur ihren Block und wird beim Abschluss nachgezogen.
 
 **Eingang (F8):** Meldungen aus dem Dev-Server landen wie bisher in `feedback/` (`bug_…`, `feature_…`, mit Bild). Sie bleiben dort liegen. Nur wenn der Nutzer es sagt („sichte den Eingang“), ordnet Claude sie nach dem Skill `roadmap` in `ROADMAP.md` ein und löscht die verarbeiteten Dateien. Nichts wird von sich aus eingeordnet oder gelöscht.
 
@@ -35,7 +36,8 @@ Jede Änderung am Spiel wird vor dem Commit mit `ROADMAP.md` und der Obsidian-Do
 - `Strecken.md`: Plan aller Strecken und Cups (Cup 1 bis 5, Strecken 1 bis 15) mit Thema, Ereignis und Ideen; Grundlage für neue Strecken, zusammen mit den Streckendesign-Grundsätzen unten.
 - `Autos.md`: alle Autos mit Freischaltung, Sternen, Feinwerten (`speed`, `mud`, `acc`, `turn`, `engine`), Hupe und Änderungswünschen; dazu die Füllautos.
 - `Spielmodi.md`: Menüfluss und Bildschirme (Hauptmenü, Autowahl, Cup-Wahl, Einzelstrecke, Zeitfahren, Matschfahrt) mit Mockups.
-- Ideen und offene Punkte gehören nicht in den Vault, sondern in `ROADMAP.md`. (Verweise auf `ANALYSE.md` im Vault meinen den alten Stand in der Git-Historie.)
+- `ROADMAP.md`: die eine Liste für offene Arbeit (siehe oben).
+- Ideen und offene Punkte gehören nicht in die anderen Vault-Dateien, sondern in `ROADMAP.md`. (Verweise auf `ANALYSE.md` im Vault meinen den alten Stand in der Git-Historie.)
 - Bilder liegen in `Bilder/` und direkt im Vault; nicht anfassen.
 
 Regeln für die Obsidian-Doku:
