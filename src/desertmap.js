@@ -18,7 +18,7 @@ const K = Object.fromEntries(Object.entries({
   soft1: '#f3dca6', soft2: '#e9ca8c', soft3: '#c9a468',
   road: '#d9b57c', road1: '#cfaa6e', road2: '#e2c08a', roadE: '#b8915a',
   water: '#2fa6b2', water1: '#1f8c9c', water2: '#46bcc2', waterL: '#8ee0dc', bank: '#b99a62', bank1: '#a98a54', bank2: '#c8aa72',
-  st: '#d8b06a', stL: '#f0cc86', stD: '#a8803e', stDD: '#7e5c28', gold: '#ffd84a', goldD: '#c89a20',
+  st: '#d8b06a', stL: '#f0cc86', stD: '#a8803e', stDD: '#7e5c28', gold: '#ffd84a', goldD: '#c89a20', tileA: '#efdcae', tileB: '#8fd0d0', clay: '#b8683c', clayD: '#8a4a28', clayL: '#d8884e',
   wallE: '#7a5a38', floor: '#8a6c44', floor1: '#7e6240', floor2: '#947650', floorD: '#6a5030', kerb: '#b08a54', wall: '#4a3420', wallL: '#6a4c2e', wallD: '#2e1e10',
   rock: '#b07a48', rockL: '#d49a62', rockD: '#7a4c28', rockDD: '#5a361a',
   cac: '#3f9a4a', cacL: '#6cc070', cacD: '#256a30', spine: '#f4f0d0',
@@ -65,6 +65,10 @@ export function* desertTerrain(S) {
     return f;
   });
   yield;
+  // the car wash: a lane that leaves the start straight below the bay and comes back above it (the cars drive through the arch)
+  let bay = null;
+  if (def.bay) { const P = stampLine(def.bay.lane, def.bay.half, j => { if (ter[j] === 0) { ter[j] = 1; alt[j] = 1; } }, MW, MH); bay = { P, i0: nearestIdx(path, def.bay.lane[0][0], def.bay.lane[0][1]) }; }
+  yield;
   // places in the field are given along the line (x on the field, offset to the side of the line: positive is to its right)
   const lineAt = x => { const i = path.findIndex((p, k) => k >= iA && k <= iB && p.x >= x); return i < 0 ? iB : i; };
   const onLine = (x, off) => { const i = lineAt(x), p = path[i], n = nrm[i], t = tan[i]; return { i, x: p.x + n.x * off, y: p.y + n.y * off, tx: t.x, ty: t.y, nx: n.x, ny: n.y }; };
@@ -100,12 +104,12 @@ export function* desertTerrain(S) {
   const cacti = (def.cacti || []).map(([x, off]) => { const o = onLine(x, off); return { x: Math.round(o.x), y: Math.round(o.y), r: 8 }; });
   const signs = (def.signs || []).map((x, k) => { const o = onLine(x, k % 2 ? 88 : -88); return { x: Math.round(o.x), y: Math.round(o.y) }; });
   const bugs = forks.flatMap(f => (f.bugs || []).map(x => ({ x, y: f.up[1][1] })));
-  return { alt, forks, iA, iB, soft, oases, jumps, blocks, cacti, signs, bugs, shafts: forks.filter(f => f.shaftR).map(f => f.shaftR), obst: [] };
+  return { alt, forks, bay, iA, iB, soft, oases, jumps, blocks, cacti, signs, bugs, shafts: forks.filter(f => f.shaftR).map(f => f.shaftR), obst: [] };
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, sd, th, r, watPix, RT }
 export function* paintDesert(S) {
-  const { MW, MH, def, d, set, setT, path, nrm, N, ter, dist, walls, wallMask, sd, watPix, RT } = S, A = MW * MH;
+  const { MW, MH, def, d, set, setT, path, nrm, N, ter, dist, walls, wallMask, washMask, sd, watPix, RT } = S, A = MW * MH;
   const [x0, y0, x1, y1] = def.pyramid, PW = x1 - x0, PH = y1 - y0, inFoot = (x, y) => x >= x0 && x < x1 && y >= y0 && y < y1;
   const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); };
   const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= MW || y >= MH) return; const i = (y * MW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
@@ -321,6 +325,42 @@ export function* paintDesert(S) {
   }
 
   yield;
+  // ----- the car wash: a low wall between the road and the bay, a floor of sand and turquoise tiles under a sandstone arch with a roof of palm leaves
+  // (on the top layer: you drive under it), lion heads that spit water, clay jars, a signpost with a blue drop before the way in -----
+  if (def.bay) {
+    const B = def.bay, [wx0, wy0, wx1, wy1] = B.wash, [bx, by0, by1] = B.wall;
+    for (let y = wy0; y < wy1; y++) for (let x = wx0; x < wx1; x++) { const j = y * MW + x; if (ter[j] === 1) { washMask[j] = 1; set(j, ((x >> 2) + (y >> 2)) & 1 ? K.tileA : K.tileB); } }
+    for (let y = by0; y <= by1; y++) {
+      for (let x = bx - 6; x <= bx + 5; x++) { if (x === bx - 6 || x === bx + 5 || y === by0 || y === by1) dk(x + 3, y + 4, .8); }
+      for (let x = bx - 5; x <= bx + 4; x++) { const edge = x === bx - 5 || x === bx + 4 || y === by0 || y === by1; px(x, y, edge ? K.stDD : (y % 9 === 0 || x === bx) ? K.stD : x < bx - 1 ? K.stL : K.st); }
+      if ((y - by0) % 6 === 0) { walls.push({ x: bx, y, r: 5 }); solid(bx, y, 6); }
+    }
+    // the arch: two pillars at the edges of the lane (solid), the lintel across, the roof of palm leaves above it
+    const wa0 = wx0 - 8, ay0 = wy0 + 1, wa1 = wx1 + 8, ay1 = wy0 + 13, PAL2 = ['#2a8a3c', '#3cac4e', '#74d66c'].map(hex);
+    for (const pxl of [wa0 + 3, wa1 - 3]) { walls.push({ x: pxl, y: (ay0 + ay1) / 2, r: 5 }); solid(pxl, (ay0 + ay1) / 2, 7); }
+    for (let y = ay1 + 1; y <= ay1 + 7; y++) for (let x = wa0 + 6; x <= wa1 - 6; x++) dk(x, y, .72); // (its shadow on the floor)
+    for (let y = ay0; y <= ay1; y++) for (let x = wa0 - 2; x <= wa1 + 2; x++) {
+      const pillar = x < wa0 + 6 || x > wa1 - 6, edge = y === ay0 || y === ay1 || x === wa0 - 2 || x === wa1 + 2, brick = (x + (y >> 2) * 3) % 8 === 0;
+      setT(x, y, edge ? K.stDD : pillar ? (x < wa0 + 2 || (x > wa1 - 6 && x < wa1 - 3) ? K.stL : K.st) : brick ? K.stD : y < ay0 + 3 ? K.stL : K.st);
+    }
+    for (let x = wa0 - 6; x <= wa1 + 6; x++) for (let y = ay0 - 6; y < ay0; y++) { // (palm leaves lying on the lintel, pointing up and to both sides)
+      const v = hash(x, y, sd + 49), lf = ((x * 2 + y * 3) % 7) < 4;
+      if (lf || v < .3) setT(x, y, v < .25 ? PAL2[0] : lf ? PAL2[1 + (x & 1)] : PAL2[0]);
+    }
+    for (const lx of [wa0 + 3, wa1 - 3]) for (const [dx, dy, c] of /** @type {Array<[number, number, number[]]>} */ ([[0, 0, K.gold], [1, 0, K.gold], [-1, 0, K.goldD], [0, 1, K.goldD], [1, 1, K.gold], [0, -1, K.gold]])) setT(lx + dx, ay1 - 3 + dy, c);
+    const jar = (x, y) => {
+      for (let dy = 0; dy < 6; dy++) for (let dx = 0; dx < 8; dx++) dk(x + dx + 2, y + dy + 4, .8);
+      for (let dy = -6; dy <= 6; dy++) { const w = Math.round(4.2 * Math.sqrt(1 - (dy / 7.4) ** 2)) + (dy < -4 ? -1 : 0); for (let dx = -w; dx <= w; dx++) px(x + dx, y + dy, dy < -5 || Math.abs(dx) === w ? K.clayD : dx + dy < -1 ? K.clayL : K.clay); }
+    };
+    for (const [jx, jy] of [[wx1 + 12, wy0 - 6], [wx1 + 12, wy1 + 4]]) { jar(jx, jy); walls.push({ x: jx, y: jy, r: 5 }); solid(jx, jy, 6); }
+    const [sx, sy] = B.sign;
+    for (let k = 0; k < 9; k++) px(sx, sy + k, k > 6 ? [74, 46, 22] : [138, 96, 52]);
+    for (let yy = -7; yy <= 0; yy++) for (let xx = -6; xx <= 6; xx++) px(sx + xx, sy + yy, yy === -7 || yy === 0 || Math.abs(xx) === 6 ? [74, 46, 22] : [196, 150, 92]);
+    for (const [dx, dy] of [[-2, -5], [-2, -4], [-3, -3], [-2, -3], [-1, -3], [-3, -2], [-2, -2], [-1, -2]]) px(sx + dx, sy + dy, [52, 150, 220]);
+    for (const [dx, dy] of [[3, -5], [2, -4], [3, -4], [4, -4], [3, -3], [3, -2]]) px(sx + dx, sy + dy, [40, 26, 14]);
+    for (let dy = 1; dy <= 3; dy++) for (let dx = 1; dx <= 3; dx++) dk(sx + dx, sy + 8 + dy - 2, .8);
+  }
+  yield;
   // ----- inside the pyramid: the ramps and the shafts (the cars come from the east), torches on the walls, the light maps -----
   for (const R of RT.shafts) {
     for (let y = R.y - 28; y <= R.y + 28; y++) {
@@ -398,5 +438,5 @@ export function* paintDesert(S) {
   g.putImageData(img, 0, 0);
   const pyr = { c: cv, x: x0, y: y0, W: PW, H: PH, glow: gl, dark2: dk2, torches };
 
-  return { alt: RT.alt, jumps: RT.jumps, pyr, forks: RT.forks, shafts: RT.shafts, bugs: RT.bugs, iA: RT.iA, iB: RT.iB, field: def.field, soft: RT.soft, oases: RT.oases, cacti: RT.cacti, obst: RT.obst, inside: false };
+  return { alt: RT.alt, jumps: RT.jumps, pyr, forks: RT.forks, bay: RT.bay, shafts: RT.shafts, bugs: RT.bugs, iA: RT.iA, iB: RT.iB, field: def.field, soft: RT.soft, oases: RT.oases, cacti: RT.cacti, obst: RT.obst, inside: false };
 }

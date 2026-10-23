@@ -33,6 +33,8 @@ function desertUpdate(T, dt) {
   for (const b of T.ev.dsBugs) { b.x = b.cx + Math.sin(T.ev.t * .3 + b.ph * 2) * 10; b.y = b.cy + Math.sin(T.ev.t * .55 + b.ph) * 15; }
   for (const c of G.cars) c.dsBugT = Math.max(0, (c.dsBugT || 0) - dt);
   D.inside = !!P && inPyr(T, P.x, P.y);
+  // the water that falls in the arch of the car wash
+  if (D.bay) { const [x0, y0, x1, y1] = T.def.bay.wash; if (inView((x0 + x1) / 2, (y0 + y1) / 2, 60)) for (let k = 0; k < 3; k++) addP({ t: 'd', x: x0 + Math.random() * (x1 - x0), y: y0 + Math.random() * (y1 - y0), z: 12, vx: 0, vy: 0, vz: -15, col: ['#8ee0dc', '#46bcc2', '#d8f4f4'][k], s: 1, life: 1, ml: 1 }); }
   if (T.ev.dsStormOn) updateStorm(T, dt);
   // a crooked landing makes the car spin (the sand takes the wheels)
   for (const c of G.cars) {
@@ -72,12 +74,25 @@ function desertGround(c, j, sp, dt) {
 // a dirty car on its way along the field turns off to an oasis that lies ahead and drives to its middle until it is clean (or has had enough)
 function washTarget(c) {
   const T = G.T, D = T.desert, N = T.N;
-  if (!c.dsWash && G.state === 'race' && c.dirt > [.6, .7, .8][G.raceDiff || 0] && c.idx >= D.iA && c.idx < D.iB) {
+  if (!c.dsWash && G.time - (c.dsWashT || -99) > 30 && G.state === 'race' && c.dirt > [.6, .7, .8][G.raceDiff || 0] && c.idx >= D.iA && c.idx < D.iB) {
     for (const O of D.oases) { const ahead = (O.i - c.idx + N) % N; if (ahead < 70 && Math.hypot(O.x - c.x, O.y - c.y) < 150) { c.dsWash = { O, t0: G.time }; break; } }
   }
   const w = c.dsWash; if (!w) return null;
-  if (c.dirt < .12 || G.time - w.t0 > 4 || G.state !== 'race') { c.dsWash = null; return null; }
+  if (c.dirt < .12 || G.time - w.t0 > 4 || G.state !== 'race') { c.dsWash = null; c.dsWashT = G.time; return null; }
   return [w.O.x, w.O.y];
+}
+
+// a dirty car turns into the car wash bay below the start straight (only when it is really dirty), drives through the arch and comes out above it
+function bayTarget(c) {
+  const T = G.T, B = T.desert.bay, N = T.N; if (!B) return null;
+  if (!c.dsBay && G.state === 'race' && c.dirt > [.4, .55, .7][G.raceDiff || 0] && (B.i0 - c.idx + N) % N < 40) c.dsBay = { k: 0 };
+  const W = c.dsBay; if (!W) return null;
+  const P = B.P; let k = W.k, bd = 1e9;
+  for (let q = W.k; q < Math.min(P.length, W.k + 30); q++) { const dd = (P[q].x - c.x) ** 2 + (P[q].y - c.y) ** 2; if (dd < bd) { bd = dd; k = q; } }
+  W.k = k;
+  if (k >= P.length - 4 || bd > 70 * 70 || G.state !== 'race') { c.dsBay = null; return null; }
+  const t = P[Math.min(P.length - 1, k + 9)];
+  return [t.x, t.y];
 }
 
 // the open field: everybody wanders wide, and the cars that mind soft sand look for a way round it
@@ -119,7 +134,7 @@ function desertCollisions() {
 // follows it to its end, then the centre line takes over again
 function desertTarget(c) {
   const T = G.T, D = T.desert, N = T.N; if (G.state !== 'race' && G.state !== 'finish') { c.dsFork = null; return null; }
-  if (!c.dsFork) { const w = washTarget(c); if (w) return w; }
+  if (!c.dsFork) { const w = washTarget(c) || bayTarget(c); if (w) return w; }
   if (!c.dsFork) {
     for (const F of D.forks) {
       const ahead = (F.i1 - c.idx + N) % N, within = (c.idx - F.i1 + N) % N;

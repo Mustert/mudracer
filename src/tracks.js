@@ -243,6 +243,9 @@ const TRACK_DEFS = [
     oases: [[640, 345, 60, 26], [960, 62, 56, 24]],
     dunes: [205, 540, 900], blocks: [[380, 22], [740, -26], [1075, 32]], cacti: [[470, -34], [690, 42], [905, -32], [1150, 36]], signs: [170, 420, 660, 860, 1050],
     avenue: [1090, 112, 398, 1325], gate: [1345, 240],
+    // the car wash: a bay beside the start straight (lane = the way in and out, half = half its width, wash = [x0, y0, x1, y1] of the washing floor under the arch,
+    // wall = [x, y0, y1] of the low wall between the road and the bay, sign = [x, y] of the signpost before the entrance)
+    bay: { lane: [[85, 520, 0], [160, 505, 30], [160, 395, 30], [85, 380, 0]], half: 22, wash: [138, 440, 182, 464], wall: [127, 428, 472], sign: [142, 540] },
     forks: [
       // fork 1: the upper branch has the shaft (ramp, then the jump), the lower one is pitch dark (no torches, no glow on the floor): safe but you see nothing
       { from: [1230, 580], to: [880, 580], half: 28, jump: 'up', up: [[1230, 580, 0], [1180, 528, 28], [930, 528, 28], [880, 580, 0]], down: [[1230, 580, 0], [1180, 632, 28], [930, 632, 28], [880, 580, 0]],
