@@ -154,6 +154,7 @@ export const SFX = {
   land: v => { voice({ f: 120, to: 40, d: .22, vol: .4 * v }); noise({ type: 'lowpass', f: 1200, to: 300, d: .25, vol: .25 * v }); },
   fall: v => { voice({ type: 'sine', f: 1300, to: 200, a: .02, hold: .7, d: .3, vol: .1 * v }); voice({ t: 1.05, f: 90, to: 40, d: .3, vol: .4 * v }); noise({ t: 1.05, type: 'lowpass', f: 600, to: 150, d: .4, vol: .3 * v }); },
   sink: v => { noise({ type: 'lowpass', f: 900, to: 140, a: .2, hold: .5, d: .5, vol: .35 * v }); voice({ f: 160, to: 50, a: .1, d: .9, vol: .2 * v }); },
+  crawl: v => { for (let i = 0; i < 9; i++) noise({ t: i * .04 + Math.random() * .03, type: 'bandpass', f: 4200 + Math.random() * 2600, q: 3, d: .025, vol: .05 * v }); }, // (scarabs crawling away from the wheels, wueste)
   trickle: () => { for (let i = 0; i < 6; i++) noise({ t: i * .05 + Math.random() * .04, type: 'bandpass', f: 3000 + Math.random() * 2500, q: 2, d: .04, vol: .05 }); },
   creak: () => { voice({ type: 'sawtooth', f: 180 + Math.random() * 60, to: 120, a: .05, hold: .1, d: .15, vol: .05, bp: 600, q: 8 }); },
   ouch: v => { voice({ type: 'square', f: 620, to: 900, a: .01, hold: .06, d: .1, vol: .07 * v, lp: 2400 }); voice({ t: .14, type: 'square', f: 900, to: 420, a: .01, hold: .1, d: .2, vol: .07 * v, lp: 2400 }); },

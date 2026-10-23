@@ -17,6 +17,7 @@
  * @property {number} [wander] physics.js aiTarget: how much the computer cars wander across the road (factor, default 1)
  * @property {boolean} [avoidAll] physics.js aiTarget: every computer car steers round bad ground, not only the ones bad in mud
  * @property {(c: any, i: number, lane: number) => number} [lane] physics.js aiTarget: the offset from the centre line at path index i (returns the new one)
+ * @property {(c: any, best: number) => number} [progress] physics.js updateProgress, when a car is far from the centre line (the search covers the whole line): the index it should have (for parts of the line that lie close together)
  * @property {(c: any, thr: number) => number} [throttle] update.js updateRace: the gas of a computer car (returns the new one)
  * @property {(c: any, dt: number, racing: boolean) => boolean} [stuck] update.js updateRace, before steering: true = the car is held (snowed in ...) this step
  * @property {(c: any, j: number, sp: number, dt: number) => void} [ground] update.js updateRace, after the shared ground (mud, water, jumps): the car is
@@ -41,6 +42,7 @@ export const TEMPLATE_HOOKS = {
   wander: 1,
   avoidAll: false,
   lane(c, i, lane) { return lane; },
+  progress(c, best) { return best; },
   throttle(c, thr) { return thr; },
   stuck(c, dt, racing) { return false; },
   ground(c, j, sp, dt) {},

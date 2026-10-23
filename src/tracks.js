@@ -229,11 +229,12 @@ const TRACK_DEFS = [
   // as far as the ram avenue and the sphinx gate; there the road begins again, turns down to the doorway on the east side of the big pyramid and runs
   // through it from right to left (two forks), out of its west side onto the start straight (see desertmap.js, desert.js).
   // pyramid = [x0, y0, x1, y1] of its footprint (solid, the road is cut into it); field = [x1, y1]: the open field is x < x1, y < y1 (rally sand);
-  // forks = the centre line between from and to is a wall, the branches up / down are narrow roads (points, half width), jump = the branch with the shaft.
+  // forks = the centre line between from and to is a wall, the branches up / down are narrow roads (points, half width), jump = the branch with the shaft (lip x, width),
+  // dark = x range of the pitch dark stretch (lower branch), bugs = x of the scarab swarms (upper branch).
   // Revision 3: the whole track rebuilt (1600 x 720, the pyramid is the main part, the field is open), new records.
   { name: 'WUESTE', rev: 3, seed: 8, W: 1600, H: 720, theme: 'wueste', song: 'desert', events: ['sandsturm'], wall: [], wash: null, desert: true,
-    poly: [[90, 300, 0], [90, 150, 70], [420, 270, 100], [720, 160, 100], [1000, 280, 100], [1240, 240, 0], [1500, 240, 60], [1500, 600, 60], [1330, 640, 70], [1210, 580, 50],
-      [820, 580, 0], [690, 640, 70], [590, 580, 50], [250, 580, 0], [90, 580, 60]],
+    poly: [[90, 300, 0], [90, 150, 70], [420, 270, 100], [720, 160, 100], [1000, 280, 100], [1240, 240, 0], [1500, 240, 60], [1500, 600, 60], [1360, 640, 70], [1280, 580, 50],
+      [850, 580, 30], [750, 640, 55], [650, 580, 30], [250, 580, 0], [90, 580, 60]],
     mud: [], water: [], ponds: [],
     pyramid: [250, 400, 1560, 720], field: [1290, 400],
     // places in the field: [x along the line, offset to its right, ...]; soft = soft sand [x, off, rx, ry]; oases = [x, y, rx, ry]; dunes = x of the crests; blocks = sandstone
@@ -243,8 +244,12 @@ const TRACK_DEFS = [
     dunes: [205, 540, 900], blocks: [[380, 22], [740, -26], [1075, 32]], cacti: [[470, -34], [690, 42], [905, -32], [1150, 36]], signs: [170, 420, 660, 860, 1050],
     avenue: [1090, 112, 398, 1325], gate: [1345, 240],
     forks: [
-      { from: [1190, 580], to: [840, 580], half: 28, jump: 'up', up: [[1190, 580, 0], [1130, 528, 34], [900, 528, 34], [840, 580, 0]], down: [[1190, 580, 0], [1130, 632, 34], [900, 632, 34], [840, 580, 0]] },
-      { from: [560, 580], to: [290, 580], half: 28, jump: 'down', up: [[560, 580, 0], [500, 528, 34], [350, 528, 34], [290, 580, 0]], down: [[560, 580, 0], [500, 632, 34], [350, 632, 34], [290, 580, 0]] },
+      // fork 1: the upper branch has the shaft (ramp, then the jump), the lower one is pitch dark (no torches, no glow on the floor): safe but you see nothing
+      { from: [1230, 580], to: [880, 580], half: 28, jump: 'up', up: [[1230, 580, 0], [1180, 528, 28], [930, 528, 28], [880, 580, 0]], down: [[1230, 580, 0], [1180, 632, 28], [930, 632, 28], [880, 580, 0]],
+        shaft: { lip: 1130, w: 40 }, dark: [955, 1155] },
+      // fork 2: the upper branch is safe but full of scarab swarms (x of each swarm), the lower one has the shaft
+      { from: [620, 580], to: [270, 580], half: 28, jump: 'down', up: [[620, 580, 0], [570, 528, 28], [320, 528, 28], [270, 580, 0]], down: [[620, 580, 0], [570, 632, 28], [320, 632, 28], [270, 580, 0]],
+        shaft: { lip: 520, w: 40 }, bugs: [525, 465, 405, 350] },
     ] },
   // The ice: the ski jump (a boost pad on the run-up, about a second in the air), the bob run with springy walls and a hairpin, deep snow and the
   // penguins on the way down, the frozen lake (the road goes round it, the short cut across the thin ice cracks and breaks), a wooden bridge over

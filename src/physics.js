@@ -129,7 +129,12 @@ export function crossingAhead(c) {
 export function updateProgress(c) {
   const N = G.T.N; let best = c.idx, bd = 1e9;
   for (let k = -40; k <= 40; k++) { const i = (c.idx + k + N) % N, p = G.T.path[i], d = (p.x - c.x) ** 2 + (p.y - c.y) ** 2; if (d < bd) { bd = d; best = i; } }
-  if (bd > 4900) for (let i = 0; i < N; i++) { const p = G.T.path[i], d = (p.x - c.x) ** 2 + (p.y - c.y) ** 2; if (d < bd) { bd = d; best = i; } }
+  if (bd > 4900) {
+    for (let i = 0; i < N; i++) { const p = G.T.path[i], d = (p.x - c.x) ** 2 + (p.y - c.y) ** 2; if (d < bd) { bd = d; best = i; } }
+    // a track with parts of its centre line close together can correct the far-off search (hook progress: the pyramid of the desert)
+    const fix = trackHooks(G.T).progress?.(c, best);
+    if (fix !== undefined && fix !== best) { best = fix; const p = G.T.path[best]; bd = (p.x - c.x) ** 2 + (p.y - c.y) ** 2; }
+  }
   c.idx = best; c.off = Math.sqrt(bd);
   const q = Math.floor(best / (N / 4));
   if (best % (N / 4) < N / 8 && q === c.cp) {

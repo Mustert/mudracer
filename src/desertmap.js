@@ -19,7 +19,7 @@ const K = Object.fromEntries(Object.entries({
   road: '#d9b57c', road1: '#cfaa6e', road2: '#e2c08a', roadE: '#b8915a',
   water: '#2fa6b2', water1: '#1f8c9c', water2: '#46bcc2', waterL: '#8ee0dc', bank: '#b99a62', bank1: '#a98a54', bank2: '#c8aa72',
   st: '#d8b06a', stL: '#f0cc86', stD: '#a8803e', stDD: '#7e5c28', gold: '#ffd84a', goldD: '#c89a20',
-  floor: '#8a6c44', floor1: '#7e6240', floor2: '#947650', floorD: '#6a5030', kerb: '#b08a54', wall: '#4a3420', wallL: '#6a4c2e', wallD: '#2e1e10',
+  wallE: '#7a5a38', floor: '#8a6c44', floor1: '#7e6240', floor2: '#947650', floorD: '#6a5030', kerb: '#b08a54', wall: '#4a3420', wallL: '#6a4c2e', wallD: '#2e1e10',
   rock: '#b07a48', rockL: '#d49a62', rockD: '#7a4c28', rockDD: '#5a361a',
   cac: '#3f9a4a', cacL: '#6cc070', cacD: '#256a30', spine: '#f4f0d0',
   camel: '#c89a5c', camelD: '#9a703c', camelL: '#e0b87a',
@@ -56,6 +56,12 @@ export function* desertTerrain(S) {
       }
     }
     for (const side of ['up', 'down']) f[side + 'P'] = stampLine(F[side], F.half, j => { ter[j] = 1; alt[j] = 1; }, MW, MH);
+    // the shaft in the jump branch: no ground over the whole width, a few steps beyond the lip (the cars come from the east)
+    if (F.shaft) {
+      const cy = F[F.jump][1][1], sx1 = F.shaft.lip - 6, sx0 = sx1 - F.shaft.w;
+      for (let y = cy - 30; y <= cy + 30; y++) for (let x = sx0; x <= sx1; x++) if (ter[y * MW + x] === 1) ter[y * MW + x] = 11;
+      f.shaftR = { x0: sx0, x1: sx1, y: cy, lip: F.shaft.lip, landI: (i2 + 6) % N };
+    }
     return f;
   });
   yield;
@@ -88,15 +94,18 @@ export function* desertTerrain(S) {
   // the dunes to jump over: broad crests across the field, square to the line, as wide as the field is tall; blocks of sandstone (the cars go round
   // them), cacti, signposts
   const jumps = (def.dunes || []).map(x => { const o = onLine(x, 0); return { x: o.x, y: o.y, tx: o.tx, ty: o.ty, lo: -120, hi: 120, vz: 64, dune: true }; });
+  // (the jumps over the shafts: from the lip to the west, the whole width of the branch; if it falls short it is set down behind the fork)
+  for (const f of forks) if (f.shaftR) jumps.push({ x: f.shaftR.lip, y: f.shaftR.y, tx: -1, ty: 0, lo: -30, hi: 30, vz: 100, land: f.shaftR.landI, shaft: true });
   const blocks = (def.blocks || []).map(([x, off]) => { const o = onLine(x, off); return { x: o.x, y: o.y, nx: o.nx, ny: o.ny, tx: o.tx, ty: o.ty }; });
   const cacti = (def.cacti || []).map(([x, off]) => { const o = onLine(x, off); return { x: Math.round(o.x), y: Math.round(o.y), r: 8 }; });
   const signs = (def.signs || []).map((x, k) => { const o = onLine(x, k % 2 ? 88 : -88); return { x: Math.round(o.x), y: Math.round(o.y) }; });
-  return { alt, forks, iA, iB, soft, oases, jumps, blocks, cacti, signs, obst: [] };
+  const bugs = forks.flatMap(f => (f.bugs || []).map(x => ({ x, y: f.up[1][1] })));
+  return { alt, forks, iA, iB, soft, oases, jumps, blocks, cacti, signs, bugs, shafts: forks.filter(f => f.shaftR).map(f => f.shaftR), obst: [] };
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, sd, th, r, watPix, RT }
 export function* paintDesert(S) {
-  const { MW, MH, def, d, set, setT, path, nrm, ter, dist, walls, wallMask, sd, watPix, RT } = S, A = MW * MH;
+  const { MW, MH, def, d, set, setT, path, nrm, N, ter, dist, walls, wallMask, sd, watPix, RT } = S, A = MW * MH;
   const [x0, y0, x1, y1] = def.pyramid, PW = x1 - x0, PH = y1 - y0, inFoot = (x, y) => x >= x0 && x < x1 && y >= y0 && y < y1;
   const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < MW && y < MH) set(y * MW + x, c); };
   const dk = (x, y, k) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= MW || y >= MH) return; const i = (y * MW + x) * 4; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; };
@@ -113,7 +122,11 @@ export function* paintDesert(S) {
         const slab = (x % 12 === 0 || (y + ((x / 12 | 0) & 1) * 6) % 12 === 0);
         c = slab ? K.floorD : h < .1 ? K.floor1 : h > .9 ? K.floor2 : K.floor;
         if (ter[j - 1] !== 1 || ter[j + 1] !== 1 || ter[j - MW] !== 1 || ter[j + MW] !== 1) c = K.kerb;
-      } else c = h < .08 ? K.wallL : h > .93 ? K.wallD : K.wall;
+      } else {
+        // the walls: courses of dark sandstone bricks, a lit edge where they meet the floor
+        const road = u => u === 1 || u === 11, brick = y % 6 === 0 || (x + ((y / 6 | 0) & 1) * 6) % 12 === 0;
+        c = road(ter[j - 1]) || road(ter[j + 1]) || road(ter[j - MW]) || road(ter[j + MW]) ? K.wallE : brick ? K.wallD : h < .08 ? K.wallL : K.wall;
+      }
     } else if (t === 1) {
       const v = vnoise(x / 7, y / 7, sd + 41) * .55 + h * .45;
       c = v < .33 ? K.road1 : v > .7 ? K.road2 : K.road;
@@ -139,6 +152,7 @@ export function* paintDesert(S) {
   yield;
   // ----- the dunes across the field: bright where you drive up, the crest, a shadow behind it (the ends fade out into the field) -----
   for (const J of RT.jumps) {
+    if (!J.dune) continue;
     const nx = -J.ty, ny = J.tx, R = 135;
     for (let y = Math.floor(J.y - R); y <= J.y + R; y++) for (let x = Math.floor(J.x - R); x <= J.x + R; x++) {
       if (x < 0 || y < 0 || x >= MW || y >= MH) continue;
@@ -307,6 +321,49 @@ export function* paintDesert(S) {
   }
 
   yield;
+  // ----- inside the pyramid: the ramps and the shafts (the cars come from the east), torches on the walls, the light maps -----
+  for (const R of RT.shafts) {
+    for (let y = R.y - 28; y <= R.y + 28; y++) {
+      for (let x = R.lip; x <= R.lip + 20; x++) { // the ramp: a wedge of lighter stone, lightest at the lip
+        if (ter[y * MW + x] !== 1) continue;
+        const a = (R.lip + 20 - x) / 20, course = (x - R.lip) % 5 === 0;
+        set(y * MW + x, course ? K.stD : a < .2 ? K.stL : a < .6 ? K.st : [200, 160, 100]);
+      }
+      for (let x = R.x0; x <= R.x1; x++) { // the shaft: a lit rim on the far side, rock layers on its sides, darkness deep down
+        const j = y * MW + x; if (ter[j] !== 11) continue;
+        const dd = Math.min(x - R.x0, R.x1 - x), h = hash(x, y, sd + 48);
+        set(j, dd < 2 ? (x - R.x0 < 2 ? K.stL : K.stDD) : dd < 5 ? (((y >> 2) & 1) ? K.rockD : K.rockDD) : dd < 9 ? [46, 26, 12] : dd < 14 ? [26, 14, 6] : h < .05 ? [30, 18, 8] : [14, 8, 4]);
+      }
+    }
+    // warning chevrons on the floor before the ramp
+    for (let y = R.y - 24; y <= R.y + 24; y++) for (let x = R.lip + 24; x < R.lip + 50; x++) if (ter[y * MW + x] === 1 && ((x - Math.abs(y - R.y) * .8) % 12 + 12) % 12 < 3) set(y * MW + x, [214, 72, 52]);
+  }
+  const torches = [];
+  for (let i = 0, sd2 = 1; i < N; i += 36) {
+    const p = path[i]; if (!inFoot(p.x, p.y) || !inFoot(p.x + 24, p.y + 24) || !inFoot(p.x - 24, p.y - 24)) continue;
+    const f = RT.forks.find(F => ((i - F.i1 + N) % N) < F.len);
+    if (f && f.dark) continue; // (the first fork has no light at all)
+    if (f) { torches.push({ x: p.x, y: p.y, k: torches.length }); continue; } // (on the wall between the two branches)
+    torches.push({ x: p.x + nrm[i].x * sd2 * (HALF + 3), y: p.y + nrm[i].y * sd2 * (HALF + 3), k: torches.length }); sd2 = -sd2;
+  }
+  // the light maps (footprint size, drawn cut to the screen while you are inside): the glow of the floor (cut out of the darkness: you always see
+  // where the road goes) and the extra darkness of the pitch dark branch
+  const gl = mk(PW, PH), gg = gl.getContext('2d'), gi = gg.createImageData(PW, PH), gq = gi.data;
+  const dk2 = mk(PW, PH), dgc = dk2.getContext('2d'), di = dgc.createImageData(PW, PH), dq = di.data, F1 = RT.forks.find(f => f.dark);
+  const rampX = x => F1 ? smooth(clamp((x - F1.dark[0]) / 30, 0, 1)) * smooth(clamp((F1.dark[1] - x) / 30, 0, 1)) : 0;
+  const rd = u => u === 1 || u === 11;
+  for (let yy = 2; yy < PH - 2; yy++) {
+    if (yy % 40 === 39) yield;
+    for (let xx = 2; xx < PW - 2; xx++) {
+      const j = (y0 + yy) * MW + x0 + xx, t = ter[j], k = (yy * PW + xx) * 4;
+      let a = t === 1 ? 150 : t === 11 ? 110 : (rd(ter[j - 1]) || rd(ter[j + 1]) || rd(ter[j - MW]) || rd(ter[j + MW]) || rd(ter[j - 2]) || rd(ter[j + 2])) ? 80 : 0;
+      if (a && F1 && y0 + yy >= 584) { const r = rampX(x0 + xx); a *= 1 - r; if (r > 0 && t === 1) dq[k + 3] = 205 * r; }
+      gq[k + 3] = a;
+    }
+  }
+  gg.putImageData(gi, 0, 0); dgc.putImageData(di, 0, 0);
+
+  yield;
   // ----- the pyramid: solid all over, the road is cut into it. Its roof is a picture of its own, drawn while racing (not when you are inside) -----
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) wallMask[y * MW + x] = 1;
   const seen = new Set(), wall = (x, y) => { const k = (y >> 2) * 1000 + (x >> 2); if (seen.has(k)) return; seen.add(k); walls.push({ x, y, r: 4 }); };
@@ -315,8 +372,8 @@ export function* paintDesert(S) {
   for (let y = y0; y < y1; y += 4) for (const x of [x0 + 2, x1 - 3]) if (dist[y * MW + x] >= HALF + 3) wall(x, y);
   // ... and along every edge of the road inside
   for (let y = y0 + 1; y < y1 - 1; y++) for (let x = x0 + 1; x < x1 - 1; x++) {
-    const j = y * MW + x; if (ter[j] === 1) continue;
-    if (ter[j - 1] === 1 || ter[j + 1] === 1 || ter[j - MW] === 1 || ter[j + MW] === 1) wall(x, y);
+    const j = y * MW + x; if (rd(ter[j])) continue; // (the shaft is no wall: the cars jump across it)
+    if (rd(ter[j - 1]) || rd(ter[j + 1]) || rd(ter[j - MW]) || rd(ter[j + MW])) wall(x, y);
   }
   yield;
   // the roof: four faces of sandstone courses, lit from the top left, a golden ridge, dark doorways where the road goes in and out
@@ -339,7 +396,7 @@ export function* paintDesert(S) {
     }
   }
   g.putImageData(img, 0, 0);
-  const pyr = { c: cv, x: x0, y: y0, W: PW, H: PH };
+  const pyr = { c: cv, x: x0, y: y0, W: PW, H: PH, glow: gl, dark2: dk2, torches };
 
-  return { alt: RT.alt, jumps: RT.jumps, pyr, forks: RT.forks, iA: RT.iA, iB: RT.iB, field: def.field, soft: RT.soft, oases: RT.oases, cacti: RT.cacti, obst: RT.obst, inside: false };
+  return { alt: RT.alt, jumps: RT.jumps, pyr, forks: RT.forks, shafts: RT.shafts, bugs: RT.bugs, iA: RT.iA, iB: RT.iB, field: def.field, soft: RT.soft, oases: RT.oases, cacti: RT.cacti, obst: RT.obst, inside: false };
 }
