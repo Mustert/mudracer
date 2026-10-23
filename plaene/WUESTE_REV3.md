@@ -104,7 +104,7 @@ Jedes Paket ist ein Commit (lint, test, typecheck sauber). Ab M1 ist die Strecke
 | Paket | Inhalt | Prüfen | Status |
 |---|---|---|---|
 | M1 Grundriss | Kartengröße, Mittellinie, Startgerade, Pyramidenhülle mit Nordwand, Rallysand-Feld, Eingang und Ausgang, Checkpoints | `check`: Start 0°, keine ungewollten Abkürzungen, 10/10 im Ziel; Bauzeit | erledigt (Pfad 1600×720, Feld Code 60, Pyramidenhülle mit zwei Gabelungen; Bauzeit noch 1,4 s, siehe M6) |
-| M2 Wüstenrally | Weichsand, Dünensprünge mit Schub, Sandsteinmauern, Kakteen, Schilder, zwei Oasen, Trichter, Sphinx-Tor, Kurve; KI in der Wüste (`wander`, Oasen) | `check` LEICHT/SCHWER, `checkPic`, ein Screenshot | offen |
+| M2 Wüstenrally | Weichsand, Dünensprünge mit Schub, Sandsteinmauern, Kakteen, Schilder, zwei Oasen, Trichter, Sphinx-Tor, Kurve; KI in der Wüste (`wander`, Oasen) | `check` LEICHT/SCHWER, `checkPic`, ein Screenshot | erledigt (LEICHT/SCHWER 10/10 im Ziel, Runde ca. 31–40 s; Weichsand, 3 Dünen, 3 Mauern, 4 Kakteen, 5 Schilder, 2 Oasen, Widderallee, Sphinx-Tor) |
 | M3 Pyramide innen | Straße, Lichtkarte, Fackeln, Gabelungen mit Mauer, zwei Abgrund-Sprünge, stockdunkler Zweig, Skarabäen; KI-Wahl der Zweige | `check` alle Stufen (Stürze in den Schächten?), Screenshot innen, Frame-Zeit | offen |
 | M4 Waschanlage | Seitenbucht im Wüstenlook, KI nur dreckig | `check`, Screenshot | offen |
 | M5 Ereignis | Sandsturm optisch mit Licht an allen Autos, Treibsand mit Ankündigung ab Runde 2, Schalter `sandsturm` | `check` mit und ohne `fx`, Ziellinie frei, Frame-Zeit im Sturm | offen |

@@ -236,6 +236,12 @@ const TRACK_DEFS = [
       [820, 580, 0], [690, 640, 70], [590, 580, 50], [250, 580, 0], [90, 580, 60]],
     mud: [], water: [], ponds: [],
     pyramid: [250, 400, 1560, 720], field: [1290, 400],
+    // places in the field: [x along the line, offset to its right, ...]; soft = soft sand [x, off, rx, ry]; oases = [x, y, rx, ry]; dunes = x of the crests; blocks = sandstone
+    // [x, off]; cacti and signs; avenue = [x of the mouth, y of its north end, y of its south end, x of the gate]; gate = middle of the two sphinxes
+    soft: [[290, 0, 50, 28], [560, -8, 54, 30], [820, 14, 52, 30], [1010, -6, 48, 28], [430, 80, 45, 26], [940, -95, 44, 26]],
+    oases: [[640, 345, 60, 26], [960, 62, 56, 24]],
+    dunes: [205, 540, 900], blocks: [[380, 22], [740, -26], [1075, 32]], cacti: [[470, -34], [690, 42], [905, -32], [1150, 36]], signs: [170, 420, 660, 860, 1050],
+    avenue: [1090, 112, 398, 1325], gate: [1345, 240],
     forks: [
       { from: [1190, 580], to: [840, 580], half: 28, jump: 'up', up: [[1190, 580, 0], [1130, 528, 34], [900, 528, 34], [840, 580, 0]], down: [[1190, 580, 0], [1130, 632, 34], [900, 632, 34], [840, 580, 0]] },
       { from: [560, 580], to: [290, 580], half: 28, jump: 'down', up: [[560, 580, 0], [500, 528, 34], [350, 528, 34], [290, 580, 0]], down: [[560, 580, 0], [500, 632, 34], [350, 632, 34], [290, 580, 0]] },
