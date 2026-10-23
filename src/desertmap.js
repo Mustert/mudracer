@@ -103,8 +103,9 @@ export function* desertTerrain(S) {
   const blocks = (def.blocks || []).map(([x, off]) => { const o = onLine(x, off); return { x: o.x, y: o.y, nx: o.nx, ny: o.ny, tx: o.tx, ty: o.ty }; });
   const cacti = (def.cacti || []).map(([x, off]) => { const o = onLine(x, off); return { x: Math.round(o.x), y: Math.round(o.y), r: 8 }; });
   const signs = (def.signs || []).map((x, k) => { const o = onLine(x, k % 2 ? 88 : -88); return { x: Math.round(o.x), y: Math.round(o.y) }; });
+  const quick = (def.quick || []).map(([x, off, r], k) => { const o = onLine(x, off); return { x: Math.round(o.x), y: Math.round(o.y), r, k }; }); // (the fields of the event: firm until it opens them)
   const bugs = forks.flatMap(f => (f.bugs || []).map(x => ({ x, y: f.up[1][1] })));
-  return { alt, forks, bay, iA, iB, soft, oases, jumps, blocks, cacti, signs, bugs, shafts: forks.filter(f => f.shaftR).map(f => f.shaftR), obst: [] };
+  return { alt, forks, bay, iA, iB, soft, oases, jumps, blocks, cacti, signs, quick, bugs, shafts: forks.filter(f => f.shaftR).map(f => f.shaftR), obst: [] };
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, sd, th, r, watPix, RT }
@@ -328,13 +329,16 @@ export function* paintDesert(S) {
   // ----- the car wash: a low wall between the road and the bay, a floor of sand and turquoise tiles under a sandstone arch with a roof of palm leaves
   // (on the top layer: you drive under it), lion heads that spit water, clay jars, a signpost with a blue drop before the way in -----
   if (def.bay) {
-    const B = def.bay, [wx0, wy0, wx1, wy1] = B.wash, [bx, by0, by1] = B.wall;
+    const B = def.bay, [wx0, wy0, wx1, wy1] = B.wash;
     for (let y = wy0; y < wy1; y++) for (let x = wx0; x < wx1; x++) { const j = y * MW + x; if (ter[j] === 1) { washMask[j] = 1; set(j, ((x >> 2) + (y >> 2)) & 1 ? K.tileA : K.tileB); } }
-    for (let y = by0; y <= by1; y++) {
-      for (let x = bx - 6; x <= bx + 5; x++) { if (x === bx - 6 || x === bx + 5 || y === by0 || y === by1) dk(x + 3, y + 4, .8); }
-      for (let x = bx - 5; x <= bx + 4; x++) { const edge = x === bx - 5 || x === bx + 4 || y === by0 || y === by1; px(x, y, edge ? K.stDD : (y % 9 === 0 || x === bx) ? K.stD : x < bx - 1 ? K.stL : K.st); }
-      if ((y - by0) % 6 === 0) { walls.push({ x: bx, y, r: 5 }); solid(bx, y, 6); }
-    }
+    const low = (bx, by0, by1) => { // a low wall of sandstone
+      for (let y = by0; y <= by1; y++) {
+        for (let x = bx - 6; x <= bx + 5; x++) { if (x === bx - 6 || x === bx + 5 || y === by0 || y === by1) dk(x + 3, y + 4, .8); }
+        for (let x = bx - 5; x <= bx + 4; x++) { const edge = x === bx - 5 || x === bx + 4 || y === by0 || y === by1; px(x, y, edge ? K.stDD : (y % 9 === 0 || x === bx) ? K.stD : x < bx - 1 ? K.stL : K.st); }
+        if ((y - by0) % 6 === 0) { walls.push({ x: bx, y, r: 5 }); solid(bx, y, 6); }
+      }
+    };
+    low(...B.wall); low(...B.wall2); // (between the road and the bay, and on the far side of the lane so that nobody drifts out into the sand behind it)
     // the arch: two pillars at the edges of the lane (solid), the lintel across, the roof of palm leaves above it
     const wa0 = wx0 - 8, ay0 = wy0 + 1, wa1 = wx1 + 8, ay1 = wy0 + 13, PAL2 = ['#2a8a3c', '#3cac4e', '#74d66c'].map(hex);
     for (const pxl of [wa0 + 3, wa1 - 3]) { walls.push({ x: pxl, y: (ay0 + ay1) / 2, r: 5 }); solid(pxl, (ay0 + ay1) / 2, 7); }
@@ -352,7 +356,7 @@ export function* paintDesert(S) {
       for (let dy = 0; dy < 6; dy++) for (let dx = 0; dx < 8; dx++) dk(x + dx + 2, y + dy + 4, .8);
       for (let dy = -6; dy <= 6; dy++) { const w = Math.round(4.2 * Math.sqrt(1 - (dy / 7.4) ** 2)) + (dy < -4 ? -1 : 0); for (let dx = -w; dx <= w; dx++) px(x + dx, y + dy, dy < -5 || Math.abs(dx) === w ? K.clayD : dx + dy < -1 ? K.clayL : K.clay); }
     };
-    for (const [jx, jy] of [[wx1 + 12, wy0 - 6], [wx1 + 12, wy1 + 4]]) { jar(jx, jy); walls.push({ x: jx, y: jy, r: 5 }); solid(jx, jy, 6); }
+    for (const [jx, jy] of [[wx1 + 24, wy0 - 6], [wx1 + 24, wy1 + 4]]) { jar(jx, jy); walls.push({ x: jx, y: jy, r: 5 }); solid(jx, jy, 6); }
     const [sx, sy] = B.sign;
     for (let k = 0; k < 9; k++) px(sx, sy + k, k > 6 ? [74, 46, 22] : [138, 96, 52]);
     for (let yy = -7; yy <= 0; yy++) for (let xx = -6; xx <= 6; xx++) px(sx + xx, sy + yy, yy === -7 || yy === 0 || Math.abs(xx) === 6 ? [74, 46, 22] : [196, 150, 92]);
@@ -438,5 +442,5 @@ export function* paintDesert(S) {
   g.putImageData(img, 0, 0);
   const pyr = { c: cv, x: x0, y: y0, W: PW, H: PH, glow: gl, dark2: dk2, torches };
 
-  return { alt: RT.alt, jumps: RT.jumps, pyr, forks: RT.forks, bay: RT.bay, shafts: RT.shafts, bugs: RT.bugs, iA: RT.iA, iB: RT.iB, field: def.field, soft: RT.soft, oases: RT.oases, cacti: RT.cacti, obst: RT.obst, inside: false };
+  return { alt: RT.alt, jumps: RT.jumps, pyr, forks: RT.forks, bay: RT.bay, shafts: RT.shafts, bugs: RT.bugs, iA: RT.iA, iB: RT.iB, field: def.field, soft: RT.soft, oases: RT.oases, cacti: RT.cacti, quick: RT.quick, quickList: RT.quick.map(f => [f.x, f.y, f.r]), heat: def.heat || [], obst: RT.obst, inside: false };
 }

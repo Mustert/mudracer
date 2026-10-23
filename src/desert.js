@@ -1,17 +1,20 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { HALF, TAU, VH, VW, clamp, ctx, hash, mk } from './core.js';
+import { HALF, TAU, VH, VW, clamp, ctx, hash, mk, vnoise } from './core.js';
 import { DIFFS } from './diff.js';
 import { R1, disc, text } from './gfx.js';
 import { addP, drop } from './particles.js';
-import { fallCar, inView, near } from './trackfx.js';
+import { cam } from './state.js';
+import { fallCar, inView, near, sinkInSand } from './trackfx.js';
 import { tctx } from './tracks.js';
+import { bctx, snap } from './undo.js';
 import { RALLY } from './desertmap.js';
 
 // ---------- Wueste Rev 3 while racing (plaene/WUESTE_REV3.md): rally sand in the open field, the pyramid with its forks, and the event "sandsturm"
-// (from lap 2 a storm outside, and the quicksand opens). The fields of T.ev all start with ds (T22). ----------
+// (from lap 2 a storm outside, and the quicksand opens in the field). The fields of T.ev all start with ds (T22). ----------
 
-const STORM = { wall: 6 };
+const STORM = { wall: 6, warn: 3, first: 3, gap: 2.2 };
+const WARN = 61; // the quicksand that is about to open: harmless, but you see and hear it
 
 // ======================================================= always
 
@@ -20,6 +23,8 @@ function initDesert(T) {
   ev.dsCacti = D.cacti.map(c => ({ x: c.x, y: c.y, r: c.r, cool: 0, ouch: 0 }));
   // the scarab swarms of the second fork (slalom for the cars: they are obstacles to steer round, and slow you a little when you drive through)
   ev.dsBugs = D.bugs.map((b, k) => ({ x: b.x, y: b.y, cx: b.x, cy: b.y, r: 8, ph: k * 1.9, bugs: Array.from({ length: 12 }, (_, q) => ({ a: q * 2.4, r: 3 + (q % 4) * 3, ph: q * .7 })) }));
+  // the quicksand fields of the event (st: 0 firm, 1 about to open, 2 open)
+  ev.dsQuick = D.quick.map((q, k) => ({ ...q, st: 0, openAt: STORM.wall + STORM.first + k * STORM.gap }));
   ev.obst = D.obst.concat(ev.dsCacti, ev.dsBugs); ev.dsStorm = null; ev.dsStormOn = false;
 }
 
@@ -53,17 +58,20 @@ function crookedLanding(c) {
   return true;
 }
 
-// rally sand: [speed, grip, steering] a little below the road
-function desertSurf(c) { return c.surf === RALLY ? [.7, 5, .85] : null; }
+// rally sand: [speed, grip, steering] a little below the road (the sand that is about to open is the same)
+function desertSurf(c) { return c.surf === RALLY || c.surf === WARN ? [.7, 5, .85] : null; }
 
-// the sand of the field makes the car sandy, a little on rally sand, quickly on soft sand (and it throws up sand)
+// the sand of the field makes the car sandy, a little on rally sand, quickly on soft sand (and it throws up sand); the quicksand pulls
 function desertGround(c, j, sp, dt) {
+  const D = G.T.desert;
   if (c.surf === 11) { // no ground in the shaft: set down behind it (the shaft of this fork)
-    const D = G.T.desert, R = D.shafts.reduce((a, b) => Math.abs(b.y - c.y) < Math.abs(a.y - c.y) ? b : Math.abs(b.y - c.y) === Math.abs(a.y - c.y) && Math.abs(b.x0 - c.x) < Math.abs(a.x0 - c.x) ? b : a);
+    const R = D.shafts.reduce((a, b) => Math.abs(b.y - c.y) < Math.abs(a.y - c.y) ? b : Math.abs(b.y - c.y) === Math.abs(a.y - c.y) && Math.abs(b.x0 - c.x) < Math.abs(a.x0 - c.x) ? b : a);
     fallCar(c, 'abyss', R.landI); return;
   }
   if (c.z > 0) return;
-  const soft = c.surf === 0, rally = c.surf === RALLY;
+  if (c.surf === 10) { sinkInSand(c, D.quickList, false, dt, true); return; } // (the open quicksand: it pulls to the middle and swallows)
+  if (c.sink) c.sink = Math.max(0, c.sink - dt * 2);
+  const soft = c.surf === 0, rally = c.surf === RALLY || c.surf === WARN;
   if (!soft && !rally) return;
   c.dirt = Math.min(1, c.dirt + (soft ? .16 : .07) * dt * (sp > 8 ? 1 : .2));
   if (sp > 25 && Math.random() < dt * (soft ? 18 : 10)) drop(c.x - Math.cos(c.ang) * 12, c.y - Math.sin(c.ang) * 12, c.ang + Math.PI + (Math.random() - .5) * 1.4, 20 + Math.random() * 40, 30 + Math.random() * 40, ['#e3c48c', '#d4b074', '#f0d9a6'][(Math.random() * 3) | 0], .9, false);
@@ -95,15 +103,16 @@ function bayTarget(c) {
   return [t.x, t.y];
 }
 
-// the open field: everybody wanders wide, and the cars that mind soft sand look for a way round it
+// the open field: everybody wanders wide and keeps away from the quicksand (open or about to open), and the cars that mind soft sand look for a way round it
 function desertLane(c, i, lane) {
   const T = G.T, D = T.desert; if (i < D.iA || i > D.iB) return lane;
   const p = T.path[i], n = T.nrm[i], A = DIFFS[G.raceDiff || 0].avoid;
+  // (the car is 18 wide: look 9 px to both sides of the lane too; 61 is sand that is about to open)
+  const qsAt = l => [l - 9, l, l + 9].some(m => { const x = (p.x + n.x * m) | 0, y = (p.y + n.y * m) | 0; if (x < 0 || y < 0 || x >= T.W || y >= T.H) return false; const t = T.ter[y * T.W + x]; return t === 10 || t === WARN; });
   lane *= 3;
-  if (c.def.mud < 1.15 && A && (c.seed * 7.31) % 1 < A) {
-    const bad = l => [l - 9, l, l + 9].some(m => { const x = (p.x + n.x * m) | 0, y = (p.y + n.y * m) | 0; return x >= 0 && y >= 0 && x < T.W && y < T.H && T.ter[y * T.W + x] === 0; });
-    if (bad(lane)) for (const l of [lane + 16, lane - 16, lane + 30, lane - 30, lane + 46, lane - 46]) if (Math.abs(l) <= 70 && !bad(l)) return l;
-  }
+  const soft = c.def.mud < 1.15 && A && (c.seed * 7.31) % 1 < A;
+  const bad = l => qsAt(l) || (soft && [l - 9, l, l + 9].some(m => { const x = (p.x + n.x * m) | 0, y = (p.y + n.y * m) | 0; return x >= 0 && y >= 0 && x < T.W && y < T.H && T.ter[y * T.W + x] === 0; }));
+  if (bad(lane)) for (const l of [lane + 16, lane - 16, lane + 30, lane - 30, lane + 46, lane - 46, lane + 62, lane - 62]) if (Math.abs(l) <= 75 && !bad(l)) return l;
   return lane;
 }
 
@@ -165,6 +174,9 @@ function desertProgress(c, best) {
 }
 
 // ======================================================= event "sandsturm"
+// From lap 2 (as soon as you start it): a wall of sand sweeps over the field from the right (you see less far, every car drives with its lamps on, the
+// tyre tracks blow away); behind it the quicksand fields beside the line open one after the other: three seconds before, the sand darkens, bubbles and trickles,
+// then it turns. Nothing of it reaches into the pyramid. The switch "sandsturm" turns off both.
 
 function initStorm(T) { T.ev.dsStormOn = true; }
 
@@ -172,14 +184,45 @@ function updateStorm(T, dt) {
   const ev = T.ev;
   if (!ev.dsStorm) {
     if (!G.player || G.player.lap < 2) return;
-    ev.dsStorm = { t: 0, snd: 0 };
+    ev.dsStorm = { t: 0, snd: 0, fade: 0 };
     SFX.storm();
   }
   const s = ev.dsStorm; s.t += dt;
   if ((s.snd -= dt) <= 0) { s.snd = 5.5; SFX.windLoop(); }
-  // the storm blows the tyre tracks away
-  tctx.globalCompositeOperation = 'destination-out'; tctx.globalAlpha = Math.min(1, dt * .5 * Math.min(1, s.t / STORM.wall)); tctx.fillStyle = '#000'; tctx.fillRect(0, 0, T.W, T.H);
-  tctx.globalCompositeOperation = 'source-over'; tctx.globalAlpha = 1;
+  // the quicksand: warn, then open
+  for (const q of ev.dsQuick) {
+    if (q.st === 0 && s.t >= q.openAt - STORM.warn) { q.st = 1; quickPaint(T, q, false); q.ob = { x: q.x, y: q.y, r: q.r * 1.3 }; ev.obst.push(q.ob); if (near(q.x, q.y) < 400) SFX.trickle(); }
+    else if (q.st === 1 && s.t >= q.openAt) { q.st = 2; quickPaint(T, q, true); if (near(q.x, q.y) < 400) SFX.blubb(); }
+    else if (q.st === 1 && (s.t * 4 | 0) !== ((s.t - dt) * 4 | 0) && near(q.x, q.y) < 300) SFX.trickle();
+  }
+  // the storm blows the tyre tracks away: only the part on the screen, a few times a second
+  if ((s.fade += dt) >= .25) {
+    tctx.globalCompositeOperation = 'destination-out'; tctx.globalAlpha = Math.min(1, s.fade * .5 * Math.min(1, s.t / STORM.wall)); tctx.fillStyle = '#000';
+    tctx.fillRect(Math.max(0, Math.floor(cam.x) - 8), Math.max(0, Math.floor(cam.y) - 8), VW + 16, VH + 16);
+    tctx.globalCompositeOperation = 'source-over'; tctx.globalAlpha = 1; s.fade = 0;
+  }
+}
+
+// the shape of a quicksand field: ragged, a bit more or less than its radius; the ring round it is the sand about to open
+const qLim = (q, x, y) => q.r * (.85 + .3 * vnoise(x * .12, y * .12, 63 + q.k));
+// the ground of a quicksand field changes: the ring turns dark and damp (warning, terrain 61), then the middle turns into quicksand (terrain 10);
+// the picture and the terrain are saved first (undo.js) and put back after the race
+function quickPaint(T, q, open) {
+  const R = Math.ceil(q.r * 1.6) + 2, x0 = clamp(Math.floor(q.x - R), 0, T.W - 1), y0 = clamp(Math.floor(q.y - R), 0, T.H - 1), w = Math.min(R * 2, T.W - x0), h = Math.min(R * 2, T.H - y0);
+  if (!open) snap(T, x0, y0, w, h);
+  const b = bctx(T), img = b.getImageData(x0, y0, w, h), d = img.data;
+  for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+    const j = y * T.W + x, k = ((y - y0) * w + x - x0) * 4, dd = Math.hypot(x + .5 - q.x, y + .5 - q.y), lim = qLim(q, x, y);
+    if (!open) {
+      if (dd >= lim * 1.55 || T.ter[j] !== RALLY) continue;
+      T.ter[j] = WARN; const f = 1 - .3 * (1 - dd / (lim * 1.55)); d[k] *= f; d[k + 1] *= f; d[k + 2] *= f;
+    } else if (dd < lim && (T.ter[j] === WARN || T.ter[j] === RALLY)) {
+      T.ter[j] = 10;
+      const v = vnoise(x * .2, y * .2, 64) * .55 + hash(x, y, 65) * .45, edge = dd > lim - 1.6, c = edge ? [94, 62, 30] : v < .4 ? [134, 96, 58] : v > .7 ? [176, 132, 82] : [156, 114, 68];
+      d[k] = c[0]; d[k + 1] = c[1]; d[k + 2] = c[2];
+    }
+  }
+  b.putImageData(img, x0, y0);
 }
 
 // ======================================================= drawing
@@ -211,7 +254,7 @@ function sprites() {
   const cone = mk(96, 64), g = cone.getContext('2d'), gr = g.createLinearGradient(0, 0, 96, 0);
   gr.addColorStop(0, 'rgba(0,0,0,.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr;
   g.beginPath(); g.moveTo(0, 27); g.lineTo(96, 0); g.lineTo(96, 64); g.lineTo(0, 37); g.closePath(); g.fill();
-  SP = { torch: rad(34, .6), car: rad(24, .45), cone }; return SP;
+  SP = { torch: rad(34, .6), car: rad(24, .45), glow: rad(36, .8), cone }; return SP;
 }
 function drawDark(cx, cy, py) {
   const S = sprites(); if (!LM) LM = mk(VW, VH);
@@ -240,7 +283,8 @@ function drawDark(cx, cy, py) {
   }
 }
 
-// the scarab swarms crawl about on the floor (under the cars): little blue beetles that move in small circles round the middle of their swarm
+// on the ground (under the cars): the scarab swarms crawl about in small circles round the middle of their swarm; the quicksand fields turn (a whirl of
+// dark and light sand towards the middle), and while one is about to open it darkens, bubbles and sand trickles in
 function drawDesertGround() {
   const ev = G.T.ev;
   for (const b of ev.dsBugs) {
@@ -250,28 +294,83 @@ function drawDesertGround() {
       R1(x - 1, y - 1, 3, 2, '#1b120c'); R1(x - 1 + f, y - 1, 2, 2, '#2fa6b2'); R1(x, y - 1, 1, 1, '#9cf0f0');
     }
   }
+  const s = ev.dsStorm; if (!s) return;
+  for (const q of ev.dsQuick) {
+    if (q.st === 0 || !inView(q.x, q.y, q.r * 1.7 + 10)) continue;
+    if (q.st === 1) {
+      const u = clamp(1 - (q.openAt - s.t) / STORM.warn, 0, 1), br = 1 + .08 * Math.sin(G.time * 9);
+      ctx.globalAlpha = .45 * u; disc(Math.round(q.x), Math.round(q.y), Math.round(q.r * .95 * br), '#4a3018'); ctx.globalAlpha = 1;
+      for (let k = 0; k < 7; k++) { // (bubbles: little rings that pop, at places that change four times a second)
+        const t = (G.time * 4 + k * .37) | 0, a = hash(t, k, 91) * TAU, r = Math.sqrt(hash(t, k, 92)) * q.r * .85, bx = Math.round(q.x + Math.cos(a) * r), by = Math.round(q.y + Math.sin(a) * r), f = ((G.time * 4 + k * .37) % 1);
+        R1(bx, by, 3, 1, '#d8b47a'); R1(bx, by + 2, 3, 1, '#d8b47a'); R1(bx - 1 + (f > .6 ? 1 : 0), by + 1, 1, 1, '#d8b47a'); R1(bx + 3 - (f > .6 ? 1 : 0), by + 1, 1, 1, '#d8b47a');
+      }
+      for (let k = 0; k < 10; k++) { // (sand trickles in from the rim)
+        const a = k * .63 + hash(k, 1, 93) * 2, ph = (G.time * .9 + k / 10) % 1, r = q.r * 1.35 * (1 - ph);
+        R1(Math.round(q.x + Math.cos(a) * r), Math.round(q.y + Math.sin(a) * r), 1, 1, '#f0d9a6');
+      }
+    } else {
+      for (let k = 0; k < 4; k++) for (let a = 0; a < TAU; a += .16) {
+        const rr = q.r * (.18 + k * .19), an = a + G.time * (1.4 - k * .25) + rr * .14;
+        if (((a * 6.25) | 0) % 3 === 2) continue; // (broken rings: they look like turning arms)
+        R1(Math.round(q.x + Math.cos(an) * rr), Math.round(q.y + Math.sin(an) * rr), 2, 1, k % 2 ? '#5e3e1e' : '#d8b47a');
+      }
+      disc(Math.round(q.x), Math.round(q.y), 3, '#4a3018'); disc(Math.round(q.x), Math.round(q.y), 1, '#2a1a0c');
+    }
+  }
 }
 
-function drawDesertSky(cx, cy) { drawStorm(cx, cy); }
+// the heat over the long straights (lap 1, over the road): a few rows of the picture are pushed a pixel to the side in slow waves, the air shimmers
+// lightly over the sand road. Not in the storm (it is cooler and you see less anyway).
+function drawHeat(cx, cy) {
+  const D = G.T.desert, ev = G.T.ev; if (!D.heat.length || (ev && ev.dsStorm) || !ctx) return;
+  const src = ctx.canvas, t = G.time * 2.2;
+  for (const [x0, y0, x1, y1] of D.heat) {
+    const sx0 = Math.max(0, x0 - cx), sx1 = Math.min(VW, x1 - cx), sy0 = Math.max(0, y0 - cy), sy1 = Math.min(VH, y1 - cy);
+    if (sx1 - sx0 < 4 || sy1 - sy0 < 2) continue;
+    const edge = (y, a, b) => clamp(Math.min(y - a, b - y) / 10, 0, 1); // (fades out towards the top and bottom of the zone)
+    for (let y = Math.ceil(sy0); y < sy1 - 1; y += 2) {
+      const off = Math.trunc(Math.sin((y + cy) * .21 + t + Math.sin((y + cy) * .05 + t * .3) * 2) * 1.15 * edge(y + cy, y0, y1));
+      if (off) ctx.drawImage(src, sx0, y, sx1 - sx0, 2, sx0 + off, y, sx1 - sx0, 2);
+    }
+  }
+}
 
-// the sandstorm on the screen: an ochre wall that comes in from the right, then a haze of sand where you see less far; the inside of the pyramid
-// and the finish line stay clear
+function drawDesertSky(cx, cy) { drawHeat(cx, cy); drawStorm(cx, cy); }
+
+// the sandstorm on the screen: an ochre wall that comes in from the right, then a haze of sand where you see less far, a soft glow and a cone of light
+// at every car; the inside of the pyramid and the finish line stay clear
 const fog = mk(VW, VH), fctx = fog.getContext('2d');
 function drawStorm(cx, cy) {
   const T = G.T, ev = T.ev, s = ev && ev.dsStorm; if (!s) return;
   const p = Math.min(1, s.t / STORM.wall), wx = Math.round(T.W + 40 - p * (T.W + 80) - cx), py = T.desert.pyr;
   if (wx >= VW) return;
-  fctx.globalCompositeOperation = 'source-over'; fctx.clearRect(0, 0, VW, VH);
-  fctx.fillStyle = 'rgba(184,138,74,.5)'; fctx.fillRect(Math.max(0, wx), 0, VW, VH);
+  const S = sprites();
+  fctx.globalCompositeOperation = 'source-over'; fctx.globalAlpha = 1; fctx.clearRect(0, 0, VW, VH);
+  fctx.fillStyle = 'rgba(184,138,74,.55)'; fctx.fillRect(Math.max(0, wx), 0, VW, VH);
   fctx.globalCompositeOperation = 'destination-out';
   fctx.fillStyle = '#000'; fctx.fillRect(py.x - cx, py.y - cy, py.W, py.H);
   const s0 = T.path[0]; fctx.fillRect(s0.x - HALF - 4 - cx, s0.y - 7 - cy, HALF * 2 + 8, 14); // (the finish line always stays clear)
+  fctx.fillRect(s0.x - HALF - 4 - cx, s0.y + 12 - cy, HALF * 2 + 8, 230); // (and the start grid behind it)
+  for (const c of G.cars) {
+    const x = c.x - cx, y = c.y - cy; if (c.fall > 0 || x < -110 || x > VW + 110 || y < -110 || y > VH + 110) continue;
+    fctx.drawImage(S.glow, Math.round(x - 36), Math.round(y - 36));
+    fctx.save(); fctx.translate(x, y); fctx.rotate(c.ang); fctx.drawImage(S.cone, 8, -32); fctx.restore();
+  }
   ctx.drawImage(fog, 0, 0);
   if (p < 1) for (let k = 0; k < 14; k++) { const y = k * VH / 13, r = 18 + 8 * Math.sin(G.time * 2 + k); ctx.globalAlpha = .55; disc(wx + Math.round(Math.sin(G.time * 3 + k * 1.7) * 6), Math.round(y), Math.round(r), '#c49a5c'); }
   ctx.globalAlpha = .4; ctx.fillStyle = '#f0d9a6';
   for (let i = 0; i < 50; i++) {
     const x = ((hash(i, 1, 85) * (VW + 60) - G.time * 200 * (.7 + hash(i, 2, 85) * .6)) % (VW + 60) + VW + 60) % (VW + 60) - 30, y = hash(i, 3, 85) * VH;
     if (x < wx || inPyr(T, x + cx, y + cy, -2)) continue; ctx.fillRect(Math.round(x), Math.round(y), 4 + (i % 3) * 2, 1);
+  }
+  // the sand whirls up round the cars: grains spiral round each car and rise, then start again
+  for (const c of G.cars) {
+    const x = c.x - cx, y = c.y - cy; if (x < -30 || x > VW + 30 || y < -30 || y > VH + 30 || c.fall > 0 || x < wx || inPyr(T, c.x, c.y)) continue;
+    for (let k = 0; k < 8; k++) {
+      const u = (G.time * .9 + k / 8 + c.seed) % 1, a = k * 2.4 + G.time * 7 + c.seed * 5, r = 8 + u * 12;
+      ctx.globalAlpha = .7 * (1 - u); ctx.fillStyle = k % 2 ? '#f0d9a6' : '#c49a5c';
+      ctx.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r * .5 - u * 14), 2, 1);
+    }
   }
   ctx.globalAlpha = 1;
 }
@@ -280,7 +379,7 @@ function drawStorm(cx, cy) {
 /** @type {import('./_template.js').TrackHooks} */
 export const desertHooks = {
   progress: desertProgress,
-  throttle: (c, thr) => c.dsFork && c.dsFork.jump ? 1 : thr, // (full gas on the way to a jump)
+  throttle: (c, thr) => c.dsFork && c.dsFork.jump ? 1 : c.dsBay ? Math.min(thr, .6) : thr, // (full gas on the way to a jump, slowly through the car wash)
   init: initDesert, events: { sandsturm: initStorm }, update: desertUpdate, collisions: desertCollisions, surf: desertSurf, target: desertTarget, lane: desertLane, ground: desertGround,
-  noRespawn: t => t === 0, drawGround: drawDesertGround, drawAbove: drawDesertAbove, drawSky: drawDesertSky,
+  noRespawn: t => t === 0 || t === 10 || t === WARN, drawGround: drawDesertGround, drawAbove: drawDesertAbove, drawSky: drawDesertSky,
 };
