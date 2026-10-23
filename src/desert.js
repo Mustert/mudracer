@@ -83,10 +83,10 @@ function desertGround(c, j, sp, dt) {
 function washTarget(c) {
   const T = G.T, D = T.desert, N = T.N;
   if (!c.dsWash && G.time - (c.dsWashT || -99) > 30 && G.state === 'race' && c.dirt > [.6, .7, .8][G.raceDiff || 0] && c.idx >= D.iA && c.idx < D.iB) {
-    for (const O of D.oases) { const ahead = (O.i - c.idx + N) % N; if (ahead < 70 && Math.hypot(O.x - c.x, O.y - c.y) < 150) { c.dsWash = { O, t0: G.time }; break; } }
+    for (const O of D.oases) { const ahead = (O.i - c.idx + N) % N; if (ahead < 70 && Math.hypot(O.x - c.x, O.y - c.y) < 110) { c.dsWash = { O, t0: G.time }; break; } }
   }
   const w = c.dsWash; if (!w) return null;
-  if (c.dirt < .12 || G.time - w.t0 > 4 || G.state !== 'race') { c.dsWash = null; c.dsWashT = G.time; return null; }
+  if (c.dirt < .12 || G.time - w.t0 > 3.5 || G.state !== 'race') { c.dsWash = null; c.dsWashT = G.time; return null; }
   return [w.O.x, w.O.y];
 }
 

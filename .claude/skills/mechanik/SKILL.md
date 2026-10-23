@@ -61,14 +61,14 @@ Werte `[Tempo, Seitenhaftung, Lenkung, Gas]` aus `surfOf` (`physics.js`), Wirkun
 | 8 | Öl | keine Bremse, Haftung .55 | schwarz, Zucken |
 | 9 | verschmiertes Öl | Haftung 3,2 | Ring |
 | 10 | Treibsand / tiefer Sumpf | .3 | zieht (`sinkInSand`), versinkt |
-| 11 | Schlucht | – | Fall (`fallCar 'abyss'`) |
+| 11 | Schlucht, Grabschacht (Wüste) | – | Fall (`fallCar 'abyss'`) |
 | 12 | Blankeis | 1, wenig Haftung, Gas ½ | KI nimmt Gas weg |
 | 13 | Mondboden | wie Gras | Weltall |
 | 14 | Hängebrücke | .6 | Knarzen |
 | 15 | Lava | – | Fall (`'lava'`), rußig, heiß |
 | 16 | Kruste | wie Straße | Lava, wenn `T.volcano.hot` |
 | 17 | Plattform Schwerelosigkeit | wenig Haftung | Weltall |
-| 30–32, 41–48, 50–52 | Spielzimmer, Regenbogen, Strand-Volleyball | Hook `surf` | eigene Blöcke; nächster freier Block 60–69 |
+| 30–32, 41–48, 50–52 | Spielzimmer, Regenbogen, Strand-Volleyball | Hook `surf` | eigene Blöcke |
 
 Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil von `updateRace` (`c.surf`), also einen Schritt verzögert.
 
@@ -80,7 +80,7 @@ Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil
 - **Zaun am Wasser (Garten)**: in der Zaun-Schleife wird der Zaun bei Wasser nach außen versetzt (5–11 px); liegt tiefes Wasser direkt dahinter, wird er eine feste Bambus-Palisade, außer im Umkreis von 60 px um Trittsteine (dort fährt man absichtlich hinein). Die Palisaden-Punkte einer Straßenseite werden in `palisade` (`tracks.js`) zu einer durchgehenden Linie verbunden (Lücken bis 10 Punkte und 16 px), 5 px breit mit Pfosten alle 9 px und Schatten. Die Hindernisse (`r: 2.5`) liegen alle 4 px auf genau dieser Linie, also stimmen Bild und Kollision überein (1S6-11).
 - **Ufer** `shore`: 3 px Rand um Wasser (eigene Farbe `th.shore`); keine Bäume und keine normalen Zäune dort.
 - **Versinken** (`updateRace`): `c.wet += dt` solange `c.surf === 5`, sonst 0; ab `c.wet > .22` → `sinkCar(c)`: `fall = 1.4 s`, sauber (`dirt = 0`), Stillstand, Spritzer. Fliegende Autos (`z > 0`) versinken nicht; landen sie in 3/5, gibt es nur einen Spritzer (`land`), versinken dann im nächsten Schritt über den Zähler.
-- **Zurücksetzen** `respawn(c)`: ab `c.respawnI` oder `c.safe − 5` rückwärts bis 90 Punkte, seitlich 0/±16/±22, bis kein Code 15/11/5 und kein Hook `noRespawn`; Blickrichtung der Straße, `ghost = 2.4 s` (durchsichtig, keine Auto-Kollision). `c.safe` = letzter Index, an dem das Auto nicht auf 5 und höchstens `HALF + 1` von der Mitte war.
+- **Zurücksetzen** `respawn(c)`: ab `c.respawnI` oder `c.safe − 5` rückwärts bis 90 Punkte, seitlich 0/±16/±22, bis kein Code 15/11/5 und kein Hook `noRespawn`; Blickrichtung der Straße, `ghost = 2.4 s` (durchsichtig, keine Auto-Kollision). `c.safe` = letzter Index, an dem das Auto nicht auf 5 und höchstens `HALF + 1` von der Mitte war oder auf `T.alt` stand (Strecken ohne Straße, Wüste).
 - **KI**: meidet Code 5 nur über die `sticky`-Prüfung in `aiTarget` (gilt für Autos mit `mud < 1.15` oder `avoidAll`, je nach `DIFFS.avoid`); sonst folgt sie der Mittellinie und deren Versatz `lane`. Abkürzungen über Steine fährt sie nur mit Hook `target`/`lane`.
 - **Kois** (Ereignis `kois`, `events.js`): feste Sprünge `KOIS` `[x, y, Richtung, halbe Länge, Periode, Versatz]`, nur von der Rennzeit abhängig (Zeitfahren wiederholbar); 0,6 s vorher Ringe auf dem Wasser (`drawKoiWarning`); Treffer wie Kuh (`stun 1.1`). `checkSpots` meldet im Dev-Server Sprungenden, die nicht im Wasser liegen.
 - **Meer/Flut** (Strand): `th.sea` → Code 3 unter `shoreY`, Flut ab Runde 2 färbt Zeilen um (`updateFlood`), Steg `PIER`.
@@ -119,7 +119,7 @@ Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil
 
 ## 9. Fortschritt, Runden, Platzierung
 
-- `updateProgress` (`physics.js`): nächster Mittellinien-Index im Fenster ±40 (bei > 70 px Abstand alles), `c.off` = Abstand. 4 Checkpoints je Viertel; Runde zählt, wenn Checkpoint 0 nach den anderen erreicht wird. Ziel nach `LAPS = 3`, `finishRace` (`race.js`).
+- `updateProgress` (`physics.js`): nächster Mittellinien-Index im Fenster ±40 (bei > 70 px Abstand alles; dann kann der Hook `progress(c, best)` den Index korrigieren, wenn Teile der Mittellinie nah beieinander liegen: Wüste, Feld gegen Pyramide), `c.off` = Abstand. 4 Checkpoints je Viertel; Runde zählt, wenn Checkpoint 0 nach den anderen erreicht wird. Ziel nach `LAPS = 3`, `finishRace` (`race.js`).
 - Platz: `rank.js` `score = (lap − 1)·N + idx`. Startaufstellung: `startRace`, Reihen 22 px Abstand, ±13 seitlich, ab 12 Indizes vor der Linie.
 - Gelber Pfeil zurück zur Straße, wenn `off > HALF + 20` (nicht auf Steinen, Zweitweg, Boxengasse, im Flug).
 
@@ -153,3 +153,11 @@ grep -rn "c\.<feld>\b" src | head                     # wer ein Autofeld setzt/l
 ```
 
 Im Dev-Server: `mudracer.G.T` (aktuelle Strecke), `mudracer.G.cars`, `mudracer.tracks.TRACKS`, `mudracer.frameAt(now)`, `mudracer.check('NAME')`.
+
+## 14. Wüste Rev 3 in Kürze (Beispiel für eine Strecke ohne durchgehende Straße)
+
+- **Feld ohne Straße:** Die Mittellinie läuft durch das Feld (Fortschritt, KI), aber ihr Straßenstreifen wird zu Rallysand 60 (desertTerrain, iA/iB = Indexbereich des Feldes). Das ganze Feld ist T.alt (kein Zurück-Pfeil, c.safe zählt). KI: Hook lane fährt dort dreimal so breit, meidet Weichsand (Code 0, nur Autos mit mud < 1,15 je nach Stufe) und für alle Treibsand (10, 61); Hook 	arget schickt dreckige Autos zu Oasen und in die Waschbucht.
+- **Pyramide:** Fußabdruck def.pyramid ist fest (walls entlang jeder Straßenkante innen, Dach als eigenes Bild), die Straße ist hineingeschnitten. Gabelungen: das Stück der Mittellinie zwischen rom und 	o wird Wand, die zwei Zweige sind Nebenwege (stampLine, lt); die KI wählt den Zweig im Hook 	arget und folgt dessen Punkten. Schacht = Code 11 über die Zweigbreite, Sprung { land } mit dem Rückkehrindex hinter der Gabelung; im Hook ground fällt das Auto mit allCar 'abyss'. Der Hook progress hält Autos im Feld vom Pyramiden-Index fern.
+- **Dunkelheit:** drawDark setzt je Frame eine Lichtkarte in Bildschirmgröße zusammen (Dunkel über der Pyramide, das Glimmen des Bodens und der stockdunkle Zweig aus zwei vorgerechneten Karten in Pyramidengröße, Fackeln und Autolampen als einmal erzeugte Sprites). Nur wenn der Spieler innen ist (T.desert.inside), sonst wird das Dach gezeichnet.
+- **Ereignis sandsturm:** T.ev.dsStorm (ab Runde 2), T.ev.dsQuick (Treibsand-Felder: 0 fest, 1 Warnung = Code 61 und dunkles Bild, 2 offen = Code 10 mit sinkInSand); Bild und 	er werden vorher mit snap gesichert (nur über das Feld). Der Sturm ist rein optisch (Nebelkarte, Licht an allen Autos). Schalter sandsturm schaltet beides ab.
+- Dateien: desertmap.js (Gelände und Bild), desert.js (Laufzeit und Hooks).

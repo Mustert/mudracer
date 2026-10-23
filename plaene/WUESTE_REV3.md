@@ -108,7 +108,7 @@ Jedes Paket ist ein Commit (lint, test, typecheck sauber). Ab M1 ist die Strecke
 | M3 Pyramide innen | Straße, Lichtkarte, Fackeln, Gabelungen mit Mauer, zwei Abgrund-Sprünge, stockdunkler Zweig, Skarabäen; KI-Wahl der Zweige | `check` alle Stufen (Stürze in den Schächten?), Screenshot innen, Frame-Zeit | erledigt (Lichtkarte, Fackeln, zwei Abgrund-Sprünge, stockdunkler Zweig, Skarabäen; neuer Hook `progress` gegen Index-Sprünge; `check` LEICHT/MITTEL/SCHWER sauber; Frame-Zeit noch zu messen, M6) |
 | M4 Waschanlage | Seitenbucht im Wüstenlook, KI nur dreckig | `check`, Screenshot | erledigt (Bucht mit Bogen, Palmdach, Krügen, Wasserspeiern und niedriger Mauer an der Startgeraden; KI nur ab Schmutz .4/.55/.7; `check` LEICHT/MITTEL/SCHWER sauber) |
 | M5 Ereignis | Sandsturm optisch mit Licht an allen Autos, Treibsand mit Ankündigung ab Runde 2, Schalter `sandsturm` | `check` mit und ohne `fx`, Ziellinie frei, Frame-Zeit im Sturm | erledigt (Sturm optisch mit Licht an allen Autos, Treibsand mit Warnung 3 s vor dem Öffnen ab Runde 2, `snap` nur über die Felder, Spuren nur im Sichtfeld verweht, Hitzeflimmern nur Runde 1; `check` mit/ohne `fx` auf allen Stufen sauber; Frame-Zeit noch zu messen, M6) |
-| M6 Abschluss | Lied (optional Pyramiden-Variante), Feinschliff, Performance messen, `check` LEICHT/MITTEL/SCHWER, Grundsätze 1–14 durchgehen; Doku: `ROADMAP.md` (1S8, Tabelle, Notiz unter 1S9, „Zuletzt abgeglichen“), `Obsidian/Mudracer/Strecken.md` (Abschnitt 8, Ausnahme Grundsatz 13 begründen), Skill `mechanik` (Codes 60/61, Lichtkarte), Skill `strecke` falls nötig | alles | offen |
+| M6 Abschluss | Lied (optional Pyramiden-Variante), Feinschliff, Performance messen, `check` LEICHT/MITTEL/SCHWER, Grundsätze 1–14 durchgehen; Doku: `ROADMAP.md` (1S8, Tabelle, Notiz unter 1S9, „Zuletzt abgeglichen“), `Obsidian/Mudracer/Strecken.md` (Abschnitt 8, Ausnahme Grundsatz 13 begründen), Skill `mechanik` (Codes 60/61, Lichtkarte), Skill `strecke` falls nötig | alles | erledigt (2026-10-23: Lied bleibt, in der Pyramide spielt nur die Dum-Trommel mit Echo und ein tiefer Bordun; Performance gemessen; `check` LEICHT/MITTEL/SCHWER mit und ohne Effekte sauber; Doku nachgezogen. Offen: Abnahme durch den Nutzer, Bauzeit 1,4–1,7 s, siehe ROADMAP 1S8-5 bis 1S8-7) |
 
 ## Grundsätze-Check (für M6)
 
@@ -126,3 +126,13 @@ Jedes Paket ist ein Commit (lint, test, typecheck sauber). Ab M1 ist die Strecke
 12. Matsch ist eine Entscheidung: Weichsand-Felder auf der Ideallinie gegen Umweg.
 13. Waschen: bewusste Ausnahme (Waschanlage und zwei Oasen), begründen.
 14. Ziellinie und Start frei von Sturm und Dunkelheit.
+
+## Stand nach der Umsetzung (2026-10-23)
+
+Alle sechs Pakete sind auf `map_pack` umgesetzt und committet. Abweichungen vom Plan und Messwerte:
+- **Bauzeit** 1,4–1,7 s (Ziel war unter 1 s); schneller als Zug, Spielzimmer und Regenbogen (2,2 s), aber noch nicht am Ziel (ROADMAP 1S8-6).
+- **Frame-Zeit** (Desktop, im Vorschaufenster gemessen): 0,4 ms im Feld, 1,2 ms in der Pyramide mit 10 Autos, 1,0 ms im Sturm; Mobilgröße nicht gemessen (die Zeichenfläche ist immer 480×270).
+- **Neuer Hook `progress`** (`physics.js` `updateProgress`, `_template.js`): am Südrand des Feldes lag die Pyramiden-Mittellinie näher als die Feld-Mittellinie, die Fortschrittssuche sprang dorthin; der Hook hält Feld und Pyramide auseinander. `c.safe` zählt außerdem auf `T.alt`.
+- **Weichsand und Treibsand** liegen als Mulden neben der Ideallinie, **die KI** fährt nur zu Oase 1 (Oase 2 liegt für sie zu weit), nur bei viel Schmutz (0,6 / 0,7 / 0,8), und in die Waschbucht ab 0,4 / 0,55 / 0,7 (mit Gas höchstens 0,6).
+- **Schacht-Sprung:** Mindesttempo etwa 88 px/s; langsamer fällt man in den Schacht und wird hinter der Gabelung abgesetzt. Die KI nimmt den Sprungzweig nur ab 100 px/s und mit Vollgas.
+- **Hitzeflimmern** nur über der Straße hinter dem Tor (nicht über der Startaufstellung, Grundsatz 14).

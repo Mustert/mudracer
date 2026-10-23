@@ -241,42 +241,39 @@ Streckenereignis: Reifenstapel/Reifen liegen auf der Strecke und rollen gelegent
 Änderung: Mud ist Öl und schwarz.
 
 ## 8. Wüste
-Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `WUESTE`, Theme `wueste`, Musik `desert`, Streckenereignis Sandsturm `sandsturm`; Code in `src/desertmap.js` und `src/desert.js`, gemeinsame Bausteine in `src/trackfx.js`). Im Cup GOLD eingetragen. **Rev 1** (Rework, 2026-10-16): Start auf der langen linken Geraden, S-Kurve rechts, Felsketten durch die Mitte, Oase in der oberen linken Kurve, neue Kakteen und Schlucht, Hitzeflimmern. Alte Rekorde der Wüste bleiben, die Strecke startet mit Rev 1 frisch. **Rev 2** (aus den Meldungen vom 2026-10-17, 2026-10-21): Karte 800×560, die Oase liegt oben an einem eigenen Nebenweg, die Hängebrücke an einem eigenen langen Weg unten, die Pyramide ist anderthalbmal so groß, Treibsand neben der Straße, Felskämme statt Findlingsketten, der Sturm ohne Wind, Böen und Steppenläufer. Neue Rekorde mit Rev 2.
+Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `WUESTE`, Theme `wueste`, Musik `desert`, Streckenereignis Sandsturm `sandsturm`; Code in `src/desertmap.js` und `src/desert.js`, gemeinsame Bausteine in `src/trackfx.js`). Im Cup GOLD eingetragen. **Rev 1** (Rework, 2026-10-16): Start auf der langen linken Geraden, S-Kurve rechts, Felsketten durch die Mitte, Oase in der oberen linken Kurve, neue Kakteen und Schlucht, Hitzeflimmern. Alte Rekorde der Wüste bleiben, die Strecke startet mit Rev 1 frisch. **Rev 2** (aus den Meldungen vom 2026-10-17, 2026-10-21): Karte 800×560, die Oase liegt oben an einem eigenen Nebenweg, die Hängebrücke an einem eigenen langen Weg unten, die Pyramide ist anderthalbmal so groß, Treibsand neben der Straße, Felskämme statt Findlingsketten, der Sturm ohne Wind, Böen und Steppenläufer. Neue Rekorde mit Rev 2. **Rev 3** (2026-10-23, Plan in plaene/WUESTE_REV3.md, Mockup Screenshots/WUESTE_improvements.jpg): die Strecke ist komplett neu (Karte 1600×720): Wüstenrally über ein offenes Feld, Sphinx-Tor, lange dunkle Fahrt durch die große Pyramide mit zwei Gabelungen und Sprüngen über Schächte, Waschanlage an der Startgeraden, ab Runde 2 Sandsturm und Treibsand. Hängebrücke, Schlucht, Oase am Nebenweg und Verwehungen entfallen. Neue Rekorde mit Rev 3, noch nicht vom Nutzer abgenommen (ROADMAP.md 1S8).
 
 Abweichungen vom Vorschlag (erster Wurf): Die Strecke ist ein Rechteck mit runden Ecken. ✅ umgesetzt (Rev 1: S-Kurve rechts, Felsketten schließen die Mitte, noch kein Wadi mit Kämmen an beiden Rändern). An der Oase gibt es keinen Matsch, nur flaches Wasser, das wäscht. ✅ umgesetzt (Rev 1: Matschufer um die Oase). Kein Hitzeflimmern. ✅ umgesetzt (Rev 1: die Luft flimmert über den langen Geraden oben und unten).
 
-Idee: Die erste Rennstrecke mit **Sprüngen** und mit echtem Risiko: Wer zu langsam auf die Schanze kommt, fällt in die Schlucht. Dazu gibt es zum ersten Mal **zwei Wege**: den gefährlichen Sprung oder die langsame, sichere Hängebrücke.
+Idee: Die erste Rennstrecke mit **Sprüngen** und mit echtem Risiko: Wer zu langsam auf die Schanze kommt, fällt in die Schlucht. Dazu gibt es zum ersten Mal **zwei Wege**: den gefährlichen Sprung oder die langsame, sichere Hängebrücke. ✅ umgesetzt, in Rev 3 verändert: der Sprung bleibt (in den beiden Gabelungen der Pyramide über Schächte), die Hängebrücke entfällt, der sichere Weg ist der andere Zweig.
 
-Rundenverlauf (Uhrzeigersinn, Start links, es geht zuerst nach oben):
-- 0–12 %: Start links auf der langen Geraden (die Aufstellung steht komplett gerade). Oben, kurz nach der Kurve, zweigt ein schmaler Weg zur **Oase** ab (ein Schild mit Wassertropfen zeigt ihn an): er führt am oberen Kartenrand durch das flache Wasser des Teichs (wäscht, aber nicht sofort) und wieder zurück auf die Gerade, etwas länger als der direkte Weg. Palmen, Kamele, ein Matschufer neben dem Weg, die tiefe Mitte ist tiefes Wasser. Die Computerautos nehmen den Weg, wenn sie dreckig sind.
-- 12–28 %: oben die **Buckelpiste**: drei Dünen hintereinander, jeder Dünenkamm ist ein kleiner Sprung. Schnelle Autos fliegen weiter. Wer schräg abspringt, landet neben der Strecke im Sand.
-- 28–45 %: **durch die große Pyramide** oben rechts (240 px breit): Einfahrt an der Westseite, Ausfahrt an der Südseite, drinnen eine lange Gerade, die Kurve und der Anfang der S-Kurve. Wer drinnen ist, sieht das Dach der Pyramide durchsichtig. Innen ist es neben der Straße tief dunkel, über der Straße nur gedämpft, sodass man den Weg immer sieht; wenige Fackeln, das eigene Licht als ein weicher Kegel. Skarabäen krabbeln an den Wänden (nur Optik). In der Pyramide gibt es keinen Sandsturm.
-- 45–58 %: rechts herunter, etwa 80 px nach dem Pyramidenausgang, zwei versetzte **Kakteen** auf der Fahrbahn. Danach Anlauf bis zur Rampe.
-- 58–68 %: die **Schlucht** (Wadi, sie kommt als schmaler Riss unter einer Felswand mit trockenem Wasserfall und wird breiter, mit ausgefranstem Rand), zwei Wege:
-  - **Sprung** (kurzer Weg): Die Rampe aus Felsen ist so breit wie die Straße, dahinter ist ein dunkler Abgrund, dann die Landung. Ab etwa 70 % der Höchstgeschwindigkeit fliegt man hinüber. Wer schief landet, dreht sich und verliert Tempo. Wer zu langsam ist (z. B. nach einem Kaktus), fällt hinein: 1,4 s weg, wird hinter der Schlucht abgesetzt und blinkt (wie beim Wasser im Garten). Das kostet etwa 2 s.
-  - **Hängebrücke** (langer, sicherer Weg): vor der Rampe zweigt ein schmaler Weg nach unten ab, führt über eine wackelige Brücke für ein Auto (bremst auf etwa 60 %) und kommt hinter der Schlucht zurück. Sicher, aber deutlich langsamer als ein guter Sprung.
-- 68–85 %: unten drei **Treibsand**-Felder, deren Mitte neben der Straße liegt (abwechselnd oben und unten); ihr Rand reicht in die Fahrbahn und zieht das Auto hinaus.
-- 85–100 %: zurück nach links zur Oase und ins Ziel.
+Rundenverlauf **ab Rev 3** (Uhrzeigersinn, Start links auf der Geraden, es geht zuerst nach oben; Karte 1600×720, Mittellinie etwa 3570 px, Runde des Bots 31–40 s; Plan und Begründungen in `plaene/WUESTE_REV3.md`):
+- **Start und Waschanlage** (0 %): Start links auf der langen Geraden (die Aufstellung steht komplett gerade, 0°). Unterhalb der Linie liegt neben der Geraden die **Waschanlage**: eine Seitenbucht, durch eine niedrige Sandsteinmauer von der Fahrbahn getrennt, mit Sandsteinbogen, Dach aus Palmblättern, Wasserspeiern (Löwenköpfe), Tonkrügen und einem Schild mit blauem Tropfen. Man fährt hinein, unter dem Bogen durch (wäscht nicht sofort) und kommt hinter der Mauer wieder auf die Gerade. Die Computerautos fahren nur hinein, wenn sie dreckig sind (Schmutz ab 0,4 / 0,55 / 0,7 je Stufe) und dann langsam.
+- **Offene Wüste** (rund 5–40 %): nach der ersten Kurve endet die Straße. Das ganze Feld ist **Rallysand** (Code 60: etwa 0,7 der Straße, etwas weniger Haftung, macht langsam sandig); kein Zurück-Pfeil. Schilder mit einem Pfeil nach rechts (flach und blass, Deko) zeigen die Richtung. Auf dem Feld liegen, meist neben der Ideallinie: **Weichsand**-Mulden (Code 0: langsamer und schnell sandig; die Matsch-Entscheidung des Feldes: durch oder außen herum), **Dünenkämme** quer über das Feld (drei Sprünge mit breitem Absprung, in der Luft bremst der Sand nicht, ein gerader Aufsatz gibt einen kleinen Schub, ein schiefer dreht), kurze **Sandsteinmauern** (fest, kräftig mit Schatten), **Kakteen** auf und neben der Linie (Stich, „AUTSCH!“, Steinkranz), dazu zwei **Oasen** (flaches Wasser, wäscht voll, kein tiefes Wasser, Palmen, Matschufer außer an der Seite, von der man kommt; Oase 1 unten in der Mitte, Oase 2 oben vor der Allee), die beide echte Umwege sind; die KI fährt nur hin, wenn sie sehr dreckig ist und die Oase in der Nähe liegt.
+- **Widderallee und Sphinx-Tor** (rund 40–47 %): zwei Reihen Widdersphingen und Obelisken führen das Feld auf das Tor zu, dahinter setzt die Straße wieder ein; zwei große Sphinxe sehen sich über der Straße an (fest). Ab dem Tor begrenzen Sandsteinwände die Straße bis zur Pyramide, man kann nicht außen herum.
+- **Kurve** (rund 47–55 %): die Straße biegt nach rechts und führt hinunter zum Eingang der großen Pyramide an der Ostseite.
+- **Pyramide innen** (rund 55–95 %, die lange Fahrt von rechts nach links): Straße aus Steinplatten mit Randsteinen, Wände aus dunklen Ziegeln. Es ist **dunkel**: die Pyramide ist eine Lichtkarte in Bildschirmgröße, die Straße glimmt gedämpft (man sieht den Weg immer), Fackeln an den Wänden, jedes Auto fährt mit Lampe (weicher Schein und Kegel, auch die der anderen). Zwei **Gabelungen**, dazwischen eine feste Mauer:
+  - **Gabelung 1**: oben die Rampe und der **Sprung über einen Grabschacht** (Code 11, wer zu langsam ist, fällt hinein und wird dahinter abgesetzt), unten der **stockdunkle Zweig** ohne Fackeln und ohne Glimmen (sicher, man sieht nur die Scheinwerfer, auch die der anderen).
+  - **Gabelung 2**: oben der sichere Zweig mit **Skarabäen-Schwärmen** (blaue Käfer, wandern langsam quer, bremsen leicht beim Durchfahren, kein Dreher, Krabbelgeräusch; Slalom möglich), unten die Rampe und der zweite **Sprung über einen Schacht**.
+  - Die Computerautos wählen den Zweig rechtzeitig: schwer den Sprung, leicht den sicheren Zweig, mittel gemischt; zu langsam für den Sprung (unter 100 px/s): sicherer Zweig. Auf dem Sprungzweig fahren sie mit Vollgas.
+- **Ausgang** (rund 95–100 %): unten links aus der Westseite der Pyramide heraus auf die Startgerade, an der Waschanlage vorbei und über die Ziellinie.
+
+Abweichungen von Grundsatz 13 (ein Wasch-Konzept je Strecke): bewusst **drei** Wasch-Stellen, nämlich die Waschanlage als letzte Chance vor dem Ziel und zwei Oasen auf dem Feld. Die Oasen sind echte Umwege, die Waschanlage ist die sichere Wahl; alle waschen voll, kündigen sich an (Schild, Palmen, Bogen) und die KI nutzt sie nur, wenn sie dreckig ist.
 
 Oberflächen:
-- **Sandpiste** (Strecke): hell ockerfarben, Reifenspuren sind deutlich zu sehen.
-- **Dünen** (neben der Strecke): bremsen wie bisher das Gras, aber das Auto wird **sandig beige** (im Gegensatz zum Gras auf anderen Strecken, das sauber lässt).
-- **Matsch** gibt es nur am Rand der Oase (braun).
-- **Treibsand** (neues Terrain): große, unregelmäßige Mulden neben der Straße, dunkel mit fast schwarzem Rand und einem Wirbel aus hellen und dunklen Armen, der sich dreht. Treibsand bremst stark und **zieht zur Mitte** (Sog, am Rand schwach und zur Mitte stärker). In der Mitte sinkt das Auto ein (es wird kleiner gezeichnet, Sand rieselt) und ist nach 1,2 s verschwunden, dann wird es wie beim Wasser wieder abgesetzt, und zwar beige. Mit Vollgas kommt man am Rand wieder heraus. Matsch-Autos (Monster, Traktor) zieht der Sog weniger stark (Sog-Stärke durch `mud` geteilt).
-- **Kakteen**: feste Hindernisse (groß, dunkelgrün, mit Steinkranz und langem Schatten). Wer hart dagegenfährt, dreht sich kurz, es fliegen Stacheln, Text „AUTSCH!“. Langsames Anrempeln schiebt nur zurück. Die kleinen, blassen Kakteen in den Dünen sind nur Deko, man fährt darüber.
-- **Felskämme**: lange Rücken aus Sandstein mit Sonnen- und Schattenseite, Schichten und Geröll am Fuß, von links über die kleinen Pyramiden bis zum Kopf der Schlucht und zur großen Pyramide, fest. Man kann nicht durch die Mitte abkürzen.
+- **Sandpiste** (Straße vor dem Feld und hinter dem Tor): hell ockerfarben, Reifenspuren sind deutlich zu sehen.
+- **Rallysand** (Code 60, das ganze Feld), **Weichsand** (Code 0 im Feld, Mulden mit hellem, losem Sand und dunklem Rand), **Dünenkämme** (hell vor dem Kamm, Schatten dahinter).
+- **Oase**: flaches Wasser (Code 3, wäscht), Matschufer (Code 2) und Palmen, kein tiefes Wasser.
+- **Pyramide**: Platten (Straße), Ziegelwände, Schacht (Code 11, kein Boden).
+- **Treibsand** (nur im Ereignis, siehe unten): erst Code 61 (Vorstufe, harmlos), dann Code 10 (Sog, einsinken nach 1,2 s, beige abgesetzt; Matsch-Autos spüren den Sog weniger).
+- **Sandsteinblöcke, Kakteen, Sphingen, Widder, Obelisken, Palmen, Krüge**: fest; die kleinen blassen Kakteen und die Schilder auf dem Feld sind Deko, man fährt darüber.
 
-Streckenereignis **Sandsturm** (`sandsturm`):
-- Sobald du in Runde 2 gehst, zieht von rechts eine Sandwand heran (sie wandert in etwa 6 s über die Karte, wie die Flut am Strand) und bleibt bis zum Ende des Rennens.
-- **Sicht:** Das Bild wird leicht ockerfarben eingetrübt, um jedes Auto und vor ihm ist es klarer. Die Ziellinie und die Pyramide bleiben frei.
-- **Sand:** Um jedes Auto wirbelt Sand hoch, die Autos werden langsam sandig (die Oase wäscht sie wieder).
-- ~~Wind und Böen~~: entfernt in Rev 2 (machten keinen Spaß).
-- **Verwehungen:** Nacheinander weht an drei Stellen Sand auf die Strecke (wie die Löcher im Wald-Regen). Verwehungen bremsen wie Matsch und machen beige.
-- ~~Steppenläufer~~ und Windsäcke: entfernt in Rev 2.
-- Der Sturm verweht die Reifenspuren.
-- Die Computerautos: Auf leichter Schwierigkeit nehmen sie die Hängebrücke, auf schwerer springen sie. Sie fahren auch dann über die Brücke, wenn sie zu langsam für den Sprung sind, und zur Oase, wenn sie dreckig sind. Treibsand meiden sie immer, auch den Rand.
+Streckenereignis **Sandsturm** (`sandsturm`, der Schalter schaltet Sturm und Treibsand zusammen ab):
+- Sobald du in Runde 2 gehst, zieht von rechts eine Sandwand heran (etwa 6 s über die Karte) und bleibt bis zum Ende. Rein optisch: das Bild wird ockerfarben eingetrübt, Sand wirbelt um die Autos, **jedes Auto fährt mit Licht** (Schein und Kegel). Die Ziellinie, die Startaufstellung und die Pyramide bleiben frei. Der Sturm verweht die Reifenspuren (nur im Bild). „Sturm macht sandig“ und die Verwehungen gibt es nicht mehr.
+- **Treibsand öffnet sich** (nach der Wand, vier Felder nacheinander, neben der Ideallinie): 3 s vorher wird der Sand dunkel, blubbert und rieselt (Ton), dann dreht er sich als Treibsand. Er bleibt bis zum Ende des Rennens offen. Die Computerautos meiden ihn immer (auch die Vorstufe).
+- Hitzeflimmern über der Straße hinter dem Tor, nur bis der Sturm kommt.
 
-Optik: drei Pyramiden (eine große als Tunnel, zwei kleine als Kulisse), Sphinx am Kartenrand, Felsen, Tierschädel, Palmen an der Oase, Kamele, leichtes Hitzeflimmern über der Sandpiste, ein Geier zieht seine Kreise (Schatten auf dem Boden).
+Optik: Pyramide mit Dach aus Sandsteinschichten und goldenem First (von innen durchsichtig), Fackeln, Geier mit Schatten über dem Feld, Kamel an der Oase, Tierschädel und Steine verstreut, Palmen, Krüge, Widderallee und Sphinx-Tor.
 
 Musik `desert`: **phrygisch-dominant auf D** (D, Es, Fis, G, A, B, C), **132 BPM**.
 - Lead: Schlangenbeschwörer-Flöte (näselnd, mit Vibrato und Gleiten zwischen den Tönen).
@@ -285,8 +282,11 @@ Musik `desert`: **phrygisch-dominant auf D** (D, Es, Fis, G, A, B, C), **132 BPM
 - Bass: Bordun auf D mit der Quinte A. Im Teil B eine laufende Basslinie.
 - Teil A (Karawane): D – Es – D – D | Gm – Es – D – D. Teil B (Basar, höher, Läufe im Unisono): Cm – B – Es – D | Gm – Cm – Es – D.
 - **Bei Sandsturm** kommt eine Rausch-Schicht (Wind) dazu, und die Darbuka spielt doppelt so schnell.
+- **In der Pyramide** spielt nur die Dum-Trommel (mit einem dumpfen Echo), ohne Tek und Zimbeln, dazu ein tiefer Bordun: der Gang hallt.
 
-Neue Töne: Sandrieseln (Treibsand), Windheulen und Böen, „AUTSCH“ (Kaktus), Knarren der Hängebrücke, Fallen in die Schlucht (Pfeifen, das tiefer wird, dann ein dumpfer Plopp).
+Neue Töne: Sandrieseln (Treibsand, Warnung), Windheulen, „AUTSCH“ (Kaktus), Fallen in den Schacht (Pfeifen, das tiefer wird, dann ein dumpfer Plopp), Krabbeln der Skarabäen.
+
+Rev 1 und Rev 2 (Hängebrücke, Schlucht, Oase am Nebenweg, Felskämme, drei Verwehungen) sind in Rev 3 aufgegangen; die Beschreibung steht in der Git-Historie.
 
 Warum schwerer als die Rennstrecke: Hier kann man richtig abstürzen. Die Entscheidung Sprung oder Brücke muss man in jeder Runde neu treffen. Ab Runde 2 sieht man wenig, und der Wind schiebt einen genau dann, wenn man in der Luft ist.
 

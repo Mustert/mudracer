@@ -241,15 +241,17 @@ const SONGS = {
       'A#5:0:2 D#6:2:2 G6:4:4 F#6:8:2 D#6:10:2 D6:12:2 C6:14:2', 'D6:0:6 A5:6:2 F#5:8:2 D#5:10:2 D5:12:4']) },
     lead(M, m, t, d, sec) { M.reed(hz(m), t, d); if (sec === 'B') M.oud(hz(m - 12), t, .5); },
     band(M, s, t, bi, ch, sec) {
-      const ev = G.T && G.T.ev, storm = !!(ev && ev.dsStorm && G.T.desert);
+      const ev = G.T && G.T.ev, storm = !!(ev && ev.dsStorm && G.T.desert), hall = !!(G.T && G.T.desert && G.T.desert.inside); // (hall: inside the pyramid)
       // the oud: arpeggios in part A, tremolo on the root in part B
       if (sec === 'A' ? s % 4 === 2 : s % 2 === 0) M.oud(hz((sec === 'A' ? ch.n[(s >> 2) % ch.n.length] : ch.n[0]) - 12), t, sec === 'A' ? .8 : .45);
       if (s === 0) { M.drone(hz(38), t, 16 * M.sd); M.drone(hz(45), t, 16 * M.sd, .5); }
       if (sec === 'B' && s % 4 === 0) M.bassWarm(hz(ch.r - 12 + [0, 7, 12, 7][s >> 2]), t, 3 * M.sd);
       // maqsum: dum, tek, -, tek, dum, -, tek, - (in eighths); in the storm twice as fast
-      if (s === 0 || s === 8) M.dum(t); if (s === 2 || s === 6 || s === 12) M.tek(t, 1);
+      if (s === 0 || s === 8) M.dum(t); if (!hall && (s === 2 || s === 6 || s === 12)) M.tek(t, 1);
+      if (hall && (s === 4 || s === 12)) M.dum(t, .4); // (a dull echo in the hall)
       if (storm && (s % 2 === 1)) M.tek(t, .5); if (storm && s === 10) M.dum(t, .7);
-      if (s % 4 === 0) M.zill(t);
+      if (!hall && s % 4 === 0) M.zill(t);
+      if (hall && s === 0) M.drone(hz(26), t, 16 * M.sd, .6);
       if (storm && s === 0) M.sandWind(t, 16 * M.sd);
       if (s === 0 && bi === 0 && sec === 'A') M.crash(t);
     } },
