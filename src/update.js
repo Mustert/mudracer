@@ -207,7 +207,7 @@ function updateRace(dt) {
     }
     c.mudTrail = Math.max(0, c.mudTrail - dt); c.wetTrail = Math.max(0, c.wetTrail - dt * .7);
     if (G.state !== 'countdown') {
-      if (!G.T.run) { updateProgress(c); if (c.surf !== 5 && c.off <= HALF + 1) c.safe = c.idx; }
+      if (!G.T.run) { updateProgress(c); if (c.surf !== 5 && (c.off <= HALF + 1 || (G.T.alt && G.T.alt[clamp(c.y | 0, 0, G.T.H - 1) * G.T.W + clamp(c.x | 0, 0, G.T.W - 1)]))) c.safe = c.idx; }
       else if (!c.finished && c.y < G.T.finishY) { c.finished = true; c.place = 1; setState('finish'); SFX.fanfare(); }
     }
   }

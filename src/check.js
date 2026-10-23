@@ -49,6 +49,7 @@ function speedOn(T, t) {
   if (t === 6) return mud / 3.8;
   if (t === 3) return .72;
   if (t === 7 || t === 10) return .3;
+  if (t === 60 || t === 61) return .7; // (desert: rally sand)
   if (t === 14) return .6;
   return 1;
 }
