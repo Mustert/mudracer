@@ -22,7 +22,7 @@ import { near } from './trackfx.js';
 // from lap 2 the oil gets smeared along the road (see ring.js).
 // Wueste: from lap 2 a sandstorm (a haze of sand, sand whirling up round the cars, sand drifts; see desert.js).
 // Eis: snowballs roll down the serpentines, the lake ice breaks (see ice.js).
-// Vulkan: from lap 2 the eruption (lava bombs, a lava tongue over the serpentine, ash rain; see volcano.js).
+// Vulkan: from lap 2 the eruption (lava bombs in the lava field, ash rain) and the glowing cloud down the open way (see volcano.js).
 // Dschungel: rotten trees fall across the road and stay there as little ramps, from lap 2 a stone ball rolls through the temple;
 // crocodiles snap in the ford and the swamp (see jungle.js).
 // Weltall: asteroids fly across the map (a dashed line and a red arrow first); from lap 2 a black hole opens in the middle and pulls (see space.js).

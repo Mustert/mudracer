@@ -13,10 +13,10 @@ import { reportError } from './errors.js';
 
 // The terrain codes (T.ter), one number row for all tracks (ANALYSE.md T21). Shared: 0 beside the road (grass, space), 1 road, 2 mud,
 // 3 shallow water (washes), 4 boost pad, 5 deep water (you sink), 6 cement, 7 gravel, 8 oil, 9 smeared oil (race circuit), 10 quicksand or
-// deep swamp, 11 gorge (no ground), 12 sheet ice, 13 ground of the moon, 14 swinging rope bridge, 15 lava, 16 crust over the lava stream,
+// deep swamp, 11 gorge (no ground), 12 sheet ice, 13 ground of the moon, 14 swinging rope bridge, 15 lava, (16 free: the crust of Vulkan Rev 1),
 // 17 platform in zero gravity. Own blocks of ten: 30-32 kids' room (parquet, blanket road, watercolour; toymap.js), 41-48 rainbow (colour
 // lanes 41-46, asphalt 47, cloud hole 48; rainbowmap.js LANE, ASPH, HOLE), 50-52 beach volleyball (lane, net, court; strandmap.js).
-// 60-61 desert rally sand and the quicksand that is about to open (desertmap.js RALLY, desert.js WARN). 70-71 ice (70 the lift line, 71 powder snow in the wood; icemap.js POWDER). A new track takes the next free block (80-89) and answers
+// 60-61 desert rally sand and the quicksand that is about to open (desertmap.js RALLY, desert.js WARN). 70-71 ice (70 the lift line, 71 powder snow in the wood; icemap.js POWDER). 80-81 volcano (the floor of the lava tube, obsidian; volcanomap.js TUBE, GLASS). A new track takes the next free block (90-99) and answers
 // for its codes in its hook surf (_template.js); mudracer.checkAll() lists codes from 18 up that several tracks use.
 function surfOf(c) {
   const m = c.def.mud;
@@ -64,7 +64,7 @@ export function physics(c, dt, thr, tgt) {
   // slipstream (race circuit): right behind another car you get up to 7 % faster
   const spd = G.T.th.flat ? 1 + (c.def.speed - 1) * G.T.th.flat : c.def.speed;
   // downhill (ice) the car runs faster than its top speed
-  const max = MAXS * spd * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1) * (1 + .07 * c.draft) * (1 + (c.slope || 0)) * (c.hot ? .85 : 1);
+  const max = MAXS * spd * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1) * (1 + .07 * c.draft) * (1 + (c.slope || 0)) * (c.vAsh > 0 ? .6 : 1); // (vAsh: in the glowing cloud of the volcano)
   if (thr > 0 && vf < max * thr) {
     const sput = 1 - .35 * (soil / .18) * dirt * (.5 + .5 * Math.sin(G.time * 11 + c.seed * 3));
     vf += ACC * c.def.acc * sput * (.5 + .5 * sp) * (c.rocket > 0 ? 2.4 : 1) * am * dt; // rocket start: a good start pushes hard for a moment

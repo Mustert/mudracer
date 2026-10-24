@@ -16,6 +16,9 @@ const hz = m => 440 * Math.pow(2, (m - 69) / 12);
 
 const mel = bars => bars.map(b => b.split(' ').map(tok => { const [n, s, l] = tok.split(':'); return [midi(n), +s, +l]; }));
 
+// the lap of your car while racing (1 in the menus and in the Matschfahrt): songs that build up lap by lap
+const raceLap = () => G.player && G.T && !G.T.run && (G.state === 'race' || G.state === 'finish') ? G.player.lap : 1;
+
 
 const SONGS = {
   // menu: starts as a gentle music box, builds up, then turns into a full-throttle kart anthem and stays there
@@ -256,9 +259,9 @@ const SONGS = {
       if (s === 0 && bi === 0 && sec === 'A') M.crash(t);
     } },
   // volcano: C minor, metal and orchestra, 150 BPM. Taiko drums carry it, brass stabs on 1 and 3+, a distorted guitar plays palm-muted eighths
-  // (power chords in part B), the bass under it. From the eruption a double bass drum and a low choir; in the last lap it speeds up to 160 BPM
-  // (the song "volcanoFast") and the brass plays the tune as well.
-  volcano: { bpm: 150, swing: 0, swap: () => G.player && !G.T.run && G.player.lap >= LAPS && (G.state === 'race' || G.state === 'finish') ? 'volcanoFast' : null,
+  // (power chords in part B), the bass under it. From lap 2 a double bass drum and a low choir, in the last lap the brass plays the tune as well
+  // (bound to the laps, not to the event, and no change of tempo: nothing jolts at the line, 1S10-10). A taiko roll while a glowing cloud builds up.
+  volcano: { bpm: 150, swing: 0,
     chords: { Cm: { r: 36, n: [60, 63, 67] }, Ab: { r: 44, n: [60, 63, 68] }, Bb: { r: 46, n: [62, 65, 70] }, G: { r: 43, n: [59, 62, 67] }, Fm: { r: 41, n: [60, 65, 68] } },
     A: { ch: ['Cm', 'Ab', 'Bb', 'G', 'Cm', 'Ab', 'Fm', 'G'], mel: mel([
       'C5:0:4 D#5:4:2 G5:6:2 C6:8:4 A#5:12:2 G5:14:2', 'G#5:0:4 G5:4:2 D#5:6:2 C5:8:6 D#5:14:2', 'D5:0:4 F5:4:2 A#5:6:2 D6:8:4 C6:12:2 A#5:14:2', 'B5:0:6 G5:6:2 D5:8:4 B4:12:4',
@@ -266,9 +269,9 @@ const SONGS = {
     B: { ch: ['Ab', 'Bb', 'Cm', 'Cm', 'Fm', 'G', 'Ab', 'G'], mel: mel([
       'D#6:0:6 C6:6:2 G#5:8:4 C6:12:4', 'F6:0:6 D6:6:2 A#5:8:4 D6:12:4', 'G6:0:8 D#6:8:4 C6:12:4', 'C6:0:2 D6:2:2 D#6:4:2 F6:6:2 G6:8:8',
       'G#6:0:6 F6:6:2 C6:8:4 G#5:12:4', 'G6:0:6 D6:6:2 B5:8:4 D6:12:4', 'C6:0:4 D#6:4:4 G#6:8:4 G6:12:4', 'F6:0:4 D6:4:4 B5:8:8']) },
-    lead(M, m, t, d) { M.gtrLead(hz(m - 12), t, d); if (M.song.fast) M.brass([m - 12, m - 24], t, d * .9, 1.4); },
+    lead(M, m, t, d) { M.gtrLead(hz(m - 12), t, d); if (raceLap() >= LAPS) M.brass([m - 12, m - 24], t, d * .9, 1.4); },
     band(M, s, t, bi, ch, sec) {
-      const ev = G.T && G.T.ev, erupt = !!(ev && ev.erupt && G.T.volcano);
+      const ev = G.T && G.T.ev, erupt = raceLap() >= 2;
       if (s === 0 || s === 6 || (s === 8 && bi % 2) || s === 11) M.taiko(s === 0 ? 62 : 84, t, s === 0 ? 1 : .7);
       if (s === 0 || s === 10) M.brass(ch.n.map(m => m - 12), t, .14);
       if (sec === 'A') { if (s % 2 === 0) { M.gtr(hz(ch.r), t, M.sd * .8, true); M.bassSaw(hz(ch.r - 12), t, M.sd * .9); } }
@@ -277,6 +280,7 @@ const SONGS = {
       if (erupt) { M.kick(t, s % 4 === 0 ? 1 : .6); if (s === 0) M.choir(ch.n.map(m => m - 12), t, 16 * M.sd); }
       else if (s % 4 === 0) M.kick(t);
       if (s % 2 === 1) M.hat(t, false, .5);
+      if (ev && ev.vlCloud && ev.vlCloud.warn) M.taiko(s % 2 ? 70 : 58, t, .55); // (a roll while the glowing cloud builds up)
       if (s === 0 && bi === 0) M.crash(t);
     } },
   // jungle: E minor, 126 BPM, tribal. Bongos and congas take turns, a shaker in sixteenths, a wood block; a pan flute plays the tune, a marimba
@@ -343,9 +347,6 @@ const SONGS = {
     } },
 };
 
-
-// the volcano in the last lap: the same song, faster, the brass plays the tune
-SONGS.volcanoFast = { ...SONGS.volcano, bpm: 160, swap: null, fast: true };
 
 // kids' room: a toy orchestra in G major, 112 BPM. A slightly out-of-tune toy piano plays the tune, a xylophone answers, glockenspiel and a
 // music box in part B; wooden blocks are the kick, clicks the hi-hat, a rubber duck squeaks on the 4 of every second bar, a ratchet before the
@@ -515,7 +516,7 @@ export const Music = {
     const vs = G.state === 'options' ? UI.optFrom : G.state;
     const menuish = ['title', 'main', 'select_cup', 'select_track', 'select_car', 'select_count', 'standings', 'ceremony'].includes(vs);
     let w = menuish ? 'menu' : G.T.def.song;
-    if (SONGS[w] && SONGS[w].swap) w = SONGS[w].swap() || w; // a song can hand over to another one (the volcano gets faster in the last lap)
+    if (SONGS[w] && SONGS[w].swap) w = SONGS[w].swap() || w; // a song can hand over to another one (space and the rainbow in the last lap)
     this.want = SONGS[w] ? w : 'kart';
     let v = .5;
     if (G.state === 'pause') v = .22; else if (G.state === 'countdown') v = .32; else if (G.state === 'finish') v = G.stateTime < 3.5 ? .12 : .4; else if (G.state === 'ceremony') v = G.stateTime < 3.5 ? .15 : .45;

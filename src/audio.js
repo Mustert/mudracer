@@ -170,9 +170,10 @@ export const SFX = {
   iceBreak: v => { for (let i = 0; i < 10; i++) noise({ t: i * .025, type: 'highpass', f: 2500 + i * 200, d: .04, vol: .14 * v }); noise({ t: .2, type: 'lowpass', f: 2500, to: 400, d: .45, vol: .35 * v }); },
   rumble: () => { noise({ type: 'lowpass', f: 160, to: 90, a: 1, hold: 1.5, d: 1.5, vol: .5, q: .7 }); voice({ f: 48, to: 36, a: .8, hold: 1.4, d: 1.2, vol: .25 }); },
   crunch: v => { for (let i = 0; i < 8; i++) noise({ t: i * .04 + Math.random() * .03, type: 'bandpass', f: 1400 + Math.random() * 1600, q: 1.5, d: .05, vol: .16 * v }); },
-  // volcano: hissing steam and lava, the crust crackling, a hot engine coughing, the eruption, a lava bomb whistling down and hitting, "aua, heiss!"
+  // volcano: hissing steam and lava, coughing in the glowing cloud, the eruption, a lava bomb whistling down and hitting, "aua, heiss!", the glowing cloud rolling, the fire brigade's hoses
   hiss: v => noise({ type: 'highpass', f: 2500, to: 5000, a: .05, hold: .5, d: .8, vol: .16 * v }),
-  crackle: () => { for (let i = 0; i < 3; i++) noise({ t: Math.random() * .1, type: 'bandpass', f: 2000 + Math.random() * 3000, q: 3, d: .02, vol: .08 }); },
+  glut: v => { noise({ type: 'lowpass', f: 320, to: 110, a: .5, hold: 1.4, d: 1.4, vol: .45 * v, q: .7 }); noise({ t: .2, type: 'bandpass', f: 900, to: 260, q: .8, a: .4, hold: .8, d: 1.2, vol: .14 * v }); },
+  hose: v => noise({ type: 'highpass', f: 1800, to: 3200, a: .08, hold: .5, d: .5, vol: .11 * v }),
   cough: () => { for (const t of [0, .14, .3]) { noise({ t, type: 'lowpass', f: 500, d: .08, vol: .2 }); voice({ t, type: 'square', f: 70, to: 50, d: .07, vol: .06, lp: 400 }); } },
   bang: () => { noise({ type: 'lowpass', f: 900, to: 60, a: .01, hold: .3, d: 2.4, vol: .8, q: .7 }); voice({ f: 60, to: 26, d: 1.8, vol: .5 }); noise({ t: .05, type: 'bandpass', f: 1500, to: 300, d: 1.2, vol: .25 }); },
   boom: v => { noise({ type: 'lowpass', f: 1400, to: 120, d: .6, vol: .5 * v }); voice({ f: 110, to: 40, d: .4, vol: .35 * v }); },

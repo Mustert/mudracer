@@ -6,7 +6,7 @@ import { cam } from './state.js';
 
 // ---------- Cup 3 building blocks (desert and ice): jumps in a race, stretches that push the cars (slope), falling into a gorge,
 // sinking in quicksand, burning in lava (volcano). Terrain codes: 10 quicksand, 11 gorge (no ground), 12 sheet ice, 14 swinging rope bridge,
-// 15 lava, 16 the crust over the lava stream (lava while the stream breaks through, see volcano.js).
+// 15 lava.
 // A jump: { x, y (the lip), tx, ty (the way you jump), lo, hi (how far to the side of the lip, along the normal -ty, tx), vz (speed upwards),
 // push (optional: at least this speed forwards, the geyser), cap (optional: at most this speed forwards), off (true: it does not throw you right now) }.
 // A push: { i0, i1 (stretch of the centre line, in driving order), f (push along the road, px/s²) }, or a current in a box
@@ -48,7 +48,7 @@ function land(c) {
   const T = G.T, j = clamp(c.y | 0, 0, T.H - 1) * T.W + clamp(c.x | 0, 0, T.W - 1), t = T.ter[j], v = loud(c, c.x, c.y), big = c.air > .7;
   c.z = 0; c.vz = 0;
   if (t === 11) { fallCar(c, 'abyss', c.jumpLand); return; } // (the gorge of the desert: set down behind it, where the jump says)
-  if (t === 15 || (t === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }
+  if (t === 15) { fallCar(c, 'lava'); return; }
   if (t === 48 && T.rainbow) { fallCar(c, 'cloud', c.jumpLand); return; } // short of the far side: through the clouds
   if (t === 3 || t === 5) { splash(c.x, c.y, 24); SFX.splash(v); return; }
   const col = T.th.landCol || ['#e8d2a8', '#d9b878', '#c9a263']; // (the theme can bring its own: snow, sweets, clouds)
@@ -67,9 +67,9 @@ export function fallCar(c, kind, at) {
   c.fall = kind === 'sand' ? 1.1 : kind === 'space' ? 1.2 : 1.4; c.fallT0 = c.fall; c.fallKind = kind; c.fx0 = c.x; c.fy0 = c.y; c.dvx = c.vx; c.dvy = c.vy;
   c.vx = c.vy = 0; c.boost = 0; c.stun = 0; c.z = 0; c.sink = 0;
   c.respawnI = at === undefined ? null : at;
-  // quicksand leaves the car beige, lava sooty (and it comes back hot)
+  // quicksand leaves the car beige, lava sooty ("AUA, HEISS!" over it, volcano.js)
   if (kind === 'sand' || kind === 'lava') c.dirt = 1; // (in the jungle the deep swamp makes it green)
-  if (kind === 'lava') { c.heat = .6; c.burnT = 1.3; for (let i = 0; i < 16; i++) addP({ t: 'smoke', x: c.x + (Math.random() - .5) * 16, y: c.y + (Math.random() - .5) * 12, vx: (Math.random() - .5) * 20, vy: -15 - Math.random() * 20, life: 1.2, ml: 1.2 }); }
+  if (kind === 'lava') { c.burnT = 1.3; for (let i = 0; i < 16; i++) addP({ t: 'smoke', x: c.x + (Math.random() - .5) * 16, y: c.y + (Math.random() - .5) * 12, vx: (Math.random() - .5) * 20, vy: -15 - Math.random() * 20, life: 1.2, ml: 1.2 }); }
   const v = loud(c, c.x, c.y); if (v > .02) ({ abyss: SFX.fall, sand: SFX.sink, lava: SFX.burn, space: SFX.drift, cloud: SFX.fall }[kind] || SFX.sink)(v);
 }
 
@@ -93,7 +93,7 @@ export function pushCars(dt) {
 // ground hook for the gorge and the quicksand (it uses sinkInSand)
 export function groundFx(c, sp, dt) {
   const T = G.T;
-  if (c.surf === 15 || (c.surf === 16 && T.volcano && T.volcano.hot)) { fallCar(c, 'lava'); return; }
+  if (c.surf === 15) { fallCar(c, 'lava'); return; }
   if (c.surf === 10 && T.jungle && sinkInSand(c, T.jungle.quick, true, dt)) return;
   if (c.sink && c.surf !== 10) c.sink = Math.max(0, c.sink - dt * 2);
   if (c.surf === 14 && sp > 20 && !c.ai && Math.random() < dt * 2.5) SFX.creak();
