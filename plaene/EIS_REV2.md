@@ -151,7 +151,7 @@ Jedes Paket ist ein Commit (lint, test, typecheck sauber, `check('EIS')` ohne fe
 
 | Paket | Inhalt | Prüfen | Status |
 |---|---|---|---|
-| E1 Grundriss | Kartengröße festlegen und stauchen, Mittellinie, Startgerade, Lifttrasse als Straße (noch ohne Lift), Bobbahn-Strecke, Schanze, Wald als Feld, Serpentinen, See als Glatteis, Checkpoints, Hook `progress`, alte Felder und Ereignisse `frost`/`pinguine` raus, Menü-Vorschau hochkant | `check`: Start gerade, keine ungewollten Abkürzungen, 10/10 im Ziel; Bauzeit; Vorschau im Menü | offen |
+| E1 Grundriss | Kartengröße festlegen und stauchen, Mittellinie, Startgerade, Lifttrasse als Straße (noch ohne Lift), Bobbahn-Strecke, Schanze, Wald als Feld, Serpentinen, See als Glatteis, Checkpoints, Hook `progress`, alte Felder und Ereignisse `frost`/`pinguine` raus, Menü-Vorschau hochkant | `check`: Start gerade, keine ungewollten Abkürzungen, 10/10 im Ziel; Bauzeit; Vorschau im Menü | erledigt (E1: 1000 × 1500, Bauzeit ~1 s, Runde ~56 s ohne Lift, 10/10 im Ziel auf LEICHT und SCHWER) |
 | E2 Sessellift | Code 70, Einhängen ohne Wartezeit, Fahrt, Absetzen, Sessel und Seile, Stationen, Zaun (auch in der Luft fest), Weihnachtsmann und Grinch beim Schach | Start mit 10 Autos, `check` LEICHT/SCHWER, Screenshot | offen |
 | E3 Bobbahn | Verlängerung mit drei Kehren, Bande durchgehend, Gefälle, Ausfahrt auf die Schneestrecke | `check`, `checkPic` (keine Abkürzung zwischen den Schleifen) | offen |
 | E4 Schanze und Wald | Sprung bergab, Bäume mit Mindestabstand, `ground` im Landebereich, Code 71, Tiefschnee-Senken, Trichter zur Straße, Auto in der Luft über den Kronen, „8“ im Wald, KI im Wald | `check` alle Stufen (Stürze, Festhängen an Bäumen), Screenshot im Flug | offen |

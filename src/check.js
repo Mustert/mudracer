@@ -50,6 +50,7 @@ function speedOn(T, t) {
   if (t === 3) return .72;
   if (t === 7 || t === 10) return .3;
   if (t === 60 || t === 61) return .7; // (desert: rally sand)
+  if (t === 71) return .9; // (ice: powder snow)
   if (t === 14) return .6;
   return 1;
 }

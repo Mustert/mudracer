@@ -45,7 +45,7 @@ export const THEMES = {
   // ice: packed snow road, deep snow instead of mud (goo 'snow': white cars), sheet ice (terrain 12), a hot spring washes
   eis: { ...MUDDY, mud: ['#f2f6fb', '#e4ecf5', '#fdfeff'], mudEdge: '#c2d2e2', mudHi: '#ffffff', mudP: ['#ffffff', '#eef4fa', '#dce8f2', '#f8fbff'], mudTrail: ['#c8d6e4', '#dde7f0'], goo: 'snow',
     water: ['#2c98a6', '#3eb2ba', '#5ac8c8', '#a4ece8'], shore: ['#9aa8b6', '#8b99a8'], grass: ['#eef4fa', '#e3ebf4', '#f9fbfe'], grassEdge: '#cfdbe8', tuft: '#d6e0ec',
-    track: ['#dfe6ef', '#d3dbe6', '#e9eef5'], trackEdge: '#aebdcd', trail: '#c4d0dc', roadTrail: '#8f9eb0', trailA: .14, decor: 'eis', tree: 'pine', treeCol: ['#2b5a45', '#e6f0f6', '#ffffff', '#163428'], trees: 30, treeGap: 22,
+    track: ['#dfe6ef', '#d3dbe6', '#e9eef5'], trackEdge: '#aebdcd', trail: '#c4d0dc', roadTrail: '#8f9eb0', trailA: .14, decor: 'eis', tree: 'pine', treeCol: ['#2b5a45', '#e6f0f6', '#ffffff', '#163428'], trees: 0,
     landCol: ['#ffffff', '#e6eef6', '#cfdcea'] },
   // volcano: cooled lava road (dark grey, glowing cracks), ash instead of mud (goo 'ash': sooty cars), lava (terrain 15) burns, a waterfall washes
   vulkan: { ...MUDDY, mud: ['#b4b0aa', '#a29e98', '#c4c0ba'], mudEdge: '#8a8680', mudHi: '#dedad4', mudP: ['#c4c0ba', '#a29e98', '#8a8680', '#dedad4'], mudTrail: ['#8a8680', '#a29e98'], goo: 'ash',
@@ -261,30 +261,25 @@ const TRACK_DEFS = [
       { from: [620, 580], to: [270, 580], half: 28, jump: 'down', up: [[620, 580, 0], [570, 528, 28], [320, 528, 28], [270, 580, 0]], down: [[620, 580, 0], [570, 632, 28], [320, 632, 28], [270, 580, 0]],
         shaft: { lip: 520, w: 40 }, bugs: [525, 465, 405, 350] },
     ] },
-  // The ice: the ski jump (a boost pad on the run-up, about a second in the air), the bob run with springy walls and a hairpin, deep snow and the
-  // penguins on the way down, the frozen lake (the road goes round it, the short cut across the thin ice cracks and breaks), a wooden bridge over
-  // the glacier stream, then the icy run down to the line past the hot spring (see icemap.js, ice.js).
-  // jump = lip [x, y] and the speed upwards; landing = the icy slope after it; slopes = [x0, y0, x1, y1 of the stretch, push]; bob = road from [x, y] to [x, y];
-  // lake = [x, y, rx, ry]; spring = hot spring [x, y, rx, ry]; frost = the three corners that freeze from lap 2; colony = penguins [x, y] (in the bay of the glacier);
-  // avalanche = from [x, y] to [x, y]; village = the ski hut [x, y]; the start line is on the straight at the left, rev 1 (the start moved up, the infield is a glacier)
-  { name: 'EIS', rev: 1, seed: 9, theme: 'eis', song: 'ice', events: ['frost', 'pinguine'], wall: [], wash: null, ice: true,
-    poly: [[70, 135, 0], [70, 55, 50], [745, 55, 50], [745, 165, 50], [600, 165, 40], [600, 395, 45], [520, 395, 40], [520, 262, 40], [280, 262, 40], [280, 395, 40], [70, 395, 50]],
+  // The ice (rev 2, plaene/EIS_REV2.md): a winter-sports mountain on a tall map. From the start line a chair lift carries every car up the left edge, on top the long
+  // bob run (four legs, three hairpins), then the snow road to the ski jump, which throws the cars down into the pine wood (open powder-snow field), a funnel brings
+  // them back onto the road, uphill to the serpentines (snowballs roll down them), down the right edge and over the big frozen lake, back to the start.
+  // lift = [x, y from, y to] of the lift line; bob = road from [x, y] to [x, y]; jump = lip [x, y] and the speed upwards; field = the polygon of the wood (powder snow, open);
+  // fence = [x, y0, y1] of the fence between the lift and the wood; blocks = solid massifs [x0, y0, x1, y1]; ridges = rock walls [x0, y0, x1, y1, half width];
+  // lake = [x, y, rx, ry] (the road leads across it); village = the ski hut [x, y]
+  { name: 'EIS', rev: 2, seed: 9, W: 1000, H: 1500, theme: 'eis', song: 'ice', events: [], wall: [], wash: null, ice: true,
+    poly: [[72, 1130, 0], [72, 70, 55], [880, 70, 47], [880, 165, 47], [440, 165, 47], [440, 260, 47], [880, 260, 47], [880, 355, 47], [300, 355, 45], [300, 1120, 60], [520, 1120, 60],
+      [520, 470, 50], [930, 470, 55], [930, 580, 55], [680, 580, 55], [680, 690, 55], [930, 690, 55], [930, 800, 55], [680, 800, 55], [680, 910, 55], [930, 910, 50], [930, 1400, 55], [72, 1400, 55]],
     mud: [], water: [], ponds: [],
-    boostAt: [[168, 55]], jump: [246, 55, 190], landing: [[392, 55], [540, 55]],
-    slopes: [[392, 55, 540, 55, 46], [262, 395, 70, 345, 34]],
-    bob: [[592, 55], [612, 165]],
-    // deep snow grows in from the outside of two bends (drifts = [x, y of the bend, half length in path points, depth in px, a point on the outer side])
-    drifts: [[280, 262, 38, 20, 250, 232], [520, 262, 38, 20, 548, 238]],
-    lake: [400, 372, 118, 72],
-    // the stream starts in the ice gate at the foot of the glacier
-    rivers: [[[206, 238, 6], [210, 270, 8], [214, 320, 10], [217, 380, 11], [218, 400, 12], [220, 462, 12]]], gate: [206, 236],
-    // glacier = the solid infield (rects [x0, y0, x1, y1, wobble of the lower edge]; bay = the notch for the colony); ridges = [x0, y0, x1, y1, half width];
-    // slope = the steep face under the ridge on the right, outcrops = rocks in it
-    glacier: { rects: [[100, 90, 740, 138], [100, 90, 575, 238, 12]], bay: [400, 214, 42, 22] },
-    ridges: [[560, 198, 560, 366, 6], [642, 208, 800, 208, 7]], slope: [640, 213, 800, 330], outcrops: [[700, 236], [764, 262], [668, 292], [776, 304]],
-    spring: [148, 428, 26, 15],
-    frost: [[70, 55], [600, 395], [70, 395]], colony: [400, 214], avalanche: [[790, 222], [590, 248]],
-    village: [150, 300] },
+    lift: [72, 1105, 140], bob: [[150, 70], [700, 355]], jump: [300, 520, 230],
+    field: [[172, 415], [480, 415], [480, 1000], [332, 1090], [268, 1090], [172, 1000]],
+    fence: [172, 105, 1235],
+    blocks: [[182, 114, 388, 318], [105, 0, 1000, 24], [922, 0, 1000, 410], [966, 425, 1000, 1500]],
+    ridges: [[338, 415, 1000, 415, 7], [480, 415, 480, 1090, 6], [172, 1000, 268, 1090, 6], [480, 1000, 332, 1090, 6], [172, 1235, 895, 1235, 7],
+      [585, 500, 585, 965, 6], [585, 965, 858, 965, 6], [715, 965, 715, 1235, 6]],
+    klippen: [[585, 525, 875, 525], [735, 635, 966, 635], [585, 745, 875, 745], [735, 855, 966, 855]],
+    lake: [600, 1390, 270, 105],
+    village: [140, 1290] },
   // The volcano: up the flank in a serpentine, along the crater rim (the short cut over a crust that breaks through, or the long way over a stone
   // bridge), down past the steam geyser (it throws you over a lava ditch, or you take the bend), through a lava tube, over the lava ford (one of
   // two stone bridges is always flooded) and past the waterfall back to the research station (see volcanomap.js, volcano.js).
@@ -1359,10 +1354,18 @@ export function trimTracks() {
 function releaseTrack(T) { for (const k of Object.keys(T)) if (!LIGHT.has(k)) delete T[k]; T.built = false; }
 
 // the menu picture of a track: the whole map at screen size (VW x VH), smoothed once (no pixel noise when it is shrunk)
+// where the map goes in the 480 x 270 picture: all of it, with a margin at the sides when the map is not 16:9 (the tall ice track)
+function previewBox(T) {
+  const s = Math.min(VW / T.W, VH / T.H), w = Math.round(T.W * s), h = Math.round(T.H * s);
+  return [(VW - w) >> 1, (VH - h) >> 1, w, h];
+}
+
 function makePreview(T) {
   const c = mk(VW, VH), g = c.getContext('2d');
   g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
-  g.drawImage(T.base, 0, 0, T.W, T.H, 0, 0, VW, VH); g.drawImage(T.top, 0, 0, T.W, T.H, 0, 0, VW, VH);
+  const [ox, oy, w, h] = previewBox(T);
+  if (w < VW || h < VH) { g.fillStyle = T.th.grass[0]; g.fillRect(0, 0, VW, VH); }
+  g.drawImage(T.base, 0, 0, T.W, T.H, ox, oy, w, h); g.drawImage(T.top, 0, 0, T.W, T.H, ox, oy, w, h);
   return c;
 }
 
@@ -1370,9 +1373,9 @@ function makePreview(T) {
 export function trackPicture(T) {
   if (T.preview) return T.preview;
   if (!T.shape) {
-    const c = mk(VW, VH), g = c.getContext('2d'), th = T.th, { path } = centreLine(T.def), s = VW / T.W, sy = VH / T.H;
+    const c = mk(VW, VH), g = c.getContext('2d'), th = T.th, { path } = centreLine(T.def), [ox, oy, w] = previewBox(T), s = w / T.W;
     g.fillStyle = th.grass[0]; g.fillRect(0, 0, VW, VH);
-    g.lineJoin = 'round'; g.beginPath(); path.forEach((p, i) => (i ? g.lineTo : g.moveTo).call(g, p.x * s, p.y * sy)); g.closePath();
+    g.lineJoin = 'round'; g.beginPath(); path.forEach((p, i) => (i ? g.lineTo : g.moveTo).call(g, ox + p.x * s, oy + p.y * s)); g.closePath();
     g.strokeStyle = th.trackEdge; g.lineWidth = (HALF + 2) * 2 * s; g.stroke();
     g.strokeStyle = th.track[0]; g.lineWidth = (HALF - 2) * 2 * s; g.stroke();
     T.shape = c;

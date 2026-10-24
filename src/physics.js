@@ -16,7 +16,7 @@ import { reportError } from './errors.js';
 // deep swamp, 11 gorge (no ground), 12 sheet ice, 13 ground of the moon, 14 swinging rope bridge, 15 lava, 16 crust over the lava stream,
 // 17 platform in zero gravity. Own blocks of ten: 30-32 kids' room (parquet, blanket road, watercolour; toymap.js), 41-48 rainbow (colour
 // lanes 41-46, asphalt 47, cloud hole 48; rainbowmap.js LANE, ASPH, HOLE), 50-52 beach volleyball (lane, net, court; strandmap.js).
-// 60-61 desert rally sand and the quicksand that is about to open (desertmap.js RALLY, desert.js WARN). A new track takes the next free block (70-79) and answers
+// 60-61 desert rally sand and the quicksand that is about to open (desertmap.js RALLY, desert.js WARN). 70-71 ice (70 the lift line, 71 powder snow in the wood; icemap.js POWDER). A new track takes the next free block (80-89) and answers
 // for its codes in its hook surf (_template.js); mudracer.checkAll() lists codes from 18 up that several tracks use.
 function surfOf(c) {
   const m = c.def.mud;
