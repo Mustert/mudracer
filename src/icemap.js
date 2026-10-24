@@ -64,11 +64,11 @@ export function* iceTerrain(S) {
   }
   yield;
   // the pines of the wood: spread out with a minimum distance (Poisson discs, 50 px), never on the lane along the centre line (it stays free, 42 px to each side), never at the
-  // fence, the walls or the funnel. The trees in the first part of the wood (the landing of the jump) are flown over (ground: the cars in the air ignore them, update.js)
+  // fence, the walls or the rock knoll at the end of the wood. The trees in the first part of the wood (the landing of the jump) are flown over (ground: the cars in the air ignore them, update.js)
   const R = rng(def.seed * 77 + 3), trees = [], cellN = 50 / Math.SQRT2, gw = Math.ceil((fx1 - fx0) / cellN) + 1, grid = new Int16Array(gw * (Math.ceil((fy1 - fy0) / cellN) + 1)).fill(-1);
   for (let k = 0; k < 9000; k++) {
     const x = fx0 + R() * (fx1 - fx0), y = fy0 + R() * (fy1 - fy0), j = (y | 0) * MW + (x | 0);
-    if (!fieldM[j] || dist[j] < 42 || edgeDist(F, x, y) < 26 || (def.skiers || []).some(([sx, sy]) => Math.hypot(sx - x, sy - y) < 24)) continue;
+    if (!fieldM[j] || dist[j] < 42 || edgeDist(F, x, y) < 26 || (def.skiers || []).some(([sx, sy]) => Math.hypot(sx - x, sy - y) < 24) || def.blocks.some(([bx0, by0, bx1, by1]) => x > bx0 - 16 && x < bx1 + 16 && y > by0 - 16 && y < by1 + 16)) continue;
     const gx = ((x - fx0) / cellN) | 0, gy = ((y - fy0) / cellN) | 0; let ok = true;
     for (let qy = Math.max(0, gy - 2); qy <= gy + 2 && ok; qy++) for (let qx = Math.max(0, gx - 2); qx <= gx + 2; qx++) { const q = grid[qy * gw + qx]; if (q >= 0 && Math.hypot(trees[q].x - x, trees[q].y - y) < 50) { ok = false; break; } }
     if (!ok) continue;

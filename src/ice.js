@@ -12,7 +12,7 @@ import { LIFT, POWDER, RIM } from './icemap.js';
 // ---------- Eis Rev 2 while racing (plaene/EIS_REV2.md): the chair lift (every car that reaches the line is hooked on at once, no waiting: its own chair the moment it
 // arrives), the chess players, powder snow behind the cars, a crooked landing after the ski jump snows the car in, the foehn, the progress through the wood and the serpentines
 // (parts of the centre line lie close together), the polar light in the last lap.
-// Event "schneeball": every 8 to 14 s a snowball comes loose from the rock face above the serpentines and rolls straight down over all the legs, growing and hopping over the cliffs;
+// Event "schneeball": every 8 to 14 s (lap 2: 5 to 8 s, lap 3: 3 to 5 s) a snowball comes loose from the rock face above the serpentines and rolls straight down over all the legs, growing and hopping over the cliffs;
 // who it hits is snowed in until shaken free.
 // Event "eisbruch": the big lake cracks under the cars and breaks (see below); the holes stay open. ----------
 
@@ -189,20 +189,22 @@ function lakeTarget(c) {
 // ======================================================= event "schneeball"
 
 // def.balls = { x0, x1: the stretch of the rock face the balls come loose from (anywhere on it), y0: the foot of the face, y1: where the ball bursts, hops: y of the cliffs }.
-// The timer only runs while a car is on the serpentines (so there is always one coming for whoever is there), at most two balls at a time. First a warning (snow trickles
+// The timer only runs while a car is on the serpentines (so there is always one coming for whoever is there), at most two balls at a time (three in lap 3). First a warning (snow trickles
 // down the face, a warning triangle blinks at the top edge of the screen above the place, a rumble), then the roll (it gets faster and bigger, hops over each cliff),
 // at the end it bursts without leaving a heap.
-const BALL = { warn: 2.4, roll: 5.2, first: 4, per: [8, 14], max: 2 };
+// (from lap to lap of the leader they come more often and more at a time: the pause is scaled by lapK, the number at once is lapMax)
+const BALL = { warn: 2.4, roll: 5.2, first: 4, per: [8, 14], lapK: [1, .6, .38], lapMax: [2, 2, 3] };
+const ballLap = () => clamp(Math.max(...G.cars.filter(c => !c.finished).map(c => c.lap), 1), 1, 3) - 1;
 
 function initBalls(T) { const ev = T.ev; ev.iceBallOn = true; ev.iceBalls = []; ev.iceBallCd = BALL.first; ev.iceBallK = 0; }
 
 function ballsUpdate(T, dt) {
   const ev = T.ev, I = T.ice, B = I.balls, N = T.N; if (!B) return;
   if (G.cars.some(c => !c.finished && !c.iceLift && (c.idx - (I.serp[0] - 140) + N) % N < I.serp[1] - I.serp[0] + 160)) ev.iceBallCd -= dt;
-  if (ev.iceBallCd <= 0 && ev.iceBalls.length < BALL.max) {
+  if (ev.iceBallCd <= 0 && ev.iceBalls.length < BALL.lapMax[ballLap()]) {
     const k = ev.iceBallK++, x = Math.round(B.x0 + hash(k, 1, 95) * (B.x1 - B.x0));
     ev.iceBalls.push({ x, t: 0, hit: new Set(), y: B.y0, r: 6, z: 0, on: false, warn: true, p: 0, bx: x, burst: false });
-    ev.iceBallCd = BALL.per[0] + hash(k, 2, 95) * (BALL.per[1] - BALL.per[0]);
+    ev.iceBallCd = (BALL.per[0] + hash(k, 2, 95) * (BALL.per[1] - BALL.per[0])) * BALL.lapK[ballLap()];
     if (near(x, (B.y0 + B.y1) / 2) < 520) SFX.rumble();
   }
   for (const b of ev.iceBalls) {

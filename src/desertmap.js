@@ -283,8 +283,9 @@ export function* paintDesert(S) {
     for (let dy = 0; dy < 6; dy++) for (let dx = -12; dx <= 16; dx++) dk(s.x + dx + 3, s.y + 9 + dy, .86);
     for (const sx of [-8, 8]) for (let k = 0; k < 12; k++) { px(s.x + sx, s.y + k, [120, 90, 56]); px(s.x + sx + 1, s.y + k, [90, 64, 36]); }
     for (let yy = -11; yy <= 5; yy++) for (let xx = -14; xx <= 14; xx++) {
-      const edge = yy === -11 || yy === 5 || Math.abs(xx) === 14, u = xx * s.tx + (yy + 3) * s.ty, v = -xx * s.ty + (yy + 3) * s.tx;
-      const arrow = (u >= -9 && u <= 1 && Math.abs(v) <= 2) || (u > 1 && u <= 9 && Math.abs(v) <= (9 - u) * .85 + .5);
+      // (the arrow is drawn straight in pixels, pointing the way the line runs across the field: crisp edges, no turned jaggies)
+      const edge = yy === -11 || yy === 5 || Math.abs(xx) === 14, u = s.tx < 0 ? -xx : xx, v = Math.abs(yy + 3);
+      const arrow = (u >= -9 && u <= 0 && v <= 1) || (u >= 1 && u <= 8 && v <= 7 - u);
       px(s.x + xx, s.y + yy, edge ? [110, 82, 48] : arrow ? [24, 20, 16] : yy === -10 ? [244, 230, 196] : [230, 212, 170]);
     }
   }

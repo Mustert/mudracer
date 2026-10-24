@@ -262,7 +262,7 @@ const TRACK_DEFS = [
         shaft: { lip: 520, w: 40 }, bugs: [525, 465, 405, 350] },
     ] },
   // The ice (rev 2, plaene/EIS_REV2.md): a winter-sports mountain on a tall map. From the start line a chair lift carries every car up the left edge, on top the long
-  // bob run (four legs, three hairpins), then the snow road to the ski jump, which throws the cars down into the pine wood (open powder-snow field), a funnel brings
+  // bob run (four legs, three hairpins), then the snow road to the ski jump, which throws the cars down into the pine wood (open powder-snow field), the wood runs out onto the snow road (a rock knoll fills the inside of the bend), which brings
   // them back onto the road, uphill to the serpentines (snowballs roll down them), down the right edge and over the big frozen lake, back to the start.
   // lift = [x, y of the valley station, y where the cars are set down] of the lift line, chess = [x, y] of the stump of the chess players; bob = road from [x, y] to [x, y]; jump = lip [x, y] and the speed upwards; field = the polygon of the wood (powder snow, open);
   // fence = [x, y0, y1] of the fence between the lift and the wood; blocks = solid massifs [x0, y0, x1, y1]; ridges = rock walls [x0, y0, x1, y1, half width];
@@ -283,12 +283,12 @@ const TRACK_DEFS = [
     animals: { bears: [[330, 1229], [560, 1231], [770, 1229]], deer: [[250, 1262, 1], [620, 1130, -1], [430, 1192, 1], [840, 1264, -1]], penguins: [[410, 1270], [440, 1272], [720, 1270], [748, 1272], [690, 1273]] },
     fence: [172, 105, 1235],
     // blocks = the massifs [x0, y0, x1, y1, rounding]; they melt with the ridges and cliffs into one mountain (icemap.js paintMountains); summit = the cross on the round one
-    blocks: [[182, 114, 388, 318, 80], [105, 0, 1000, 30, 12], [922, 0, 1000, 410, 16], [966, 425, 1000, 1500, 16]], summit: [285, 205],
+    blocks: [[182, 114, 388, 318, 80], [338, 1004, 486, 1088, 34], [105, 0, 1000, 30, 12], [922, 0, 1000, 410, 16], [966, 425, 1000, 1500, 16]], summit: [285, 205],
     // looks only (solid where they stand): single pines in the snow, the Christmas hut at the top of the jump [x, y, x, y of its lit fir], skiers waiting at the in-run,
     // a yeti hiding behind a pine, two snowmen in a snowball fight
     pines: [[760, 1010], [880, 1015], [735, 1085], [878, 1198], [790, 1212], [660, 1070], [690, 1170], [590, 1210], [205, 1150], [250, 1208], [370, 1205], [470, 1208], [142, 470], [145, 1000]],
     hut: [222, 372, 192, 345], skiers: [[256, 436], [250, 458], [257, 480]], yeti: [877, 1198], snowfight: [[772, 1150], [858, 1108]],
-    ridges: [[338, 415, 560, 415, 7], [560, 415, 1000, 415, 12, 1], [480, 415, 480, 1070, 6], [172, 1000, 268, 1090, 6], [480, 1000, 345, 1064, 6], [172, 1235, 895, 1235, 10, 1],
+    ridges: [[338, 415, 560, 415, 7], [560, 415, 1000, 415, 12, 1], [480, 415, 480, 1070, 6], [172, 1235, 895, 1235, 10, 1],
       [585, 510, 585, 925, 6], [585, 925, 660, 975, 6], [660, 975, 852, 975, 6], [715, 975, 715, 1235, 6]],
     // balls = the snowballs of the event: the stretch of the rock face they come loose from (x0 to x1, anywhere), y of its foot and of the place where they burst, y of the cliffs they hop over
     balls: { x0: 625, x1: 900, y0: 436, y1: 955, hops: [525, 635, 745, 855] },
