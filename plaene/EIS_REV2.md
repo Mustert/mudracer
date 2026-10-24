@@ -21,7 +21,15 @@ Vom Nutzer vorgegeben (Prompt 2026-10-24):
 | Schanze | Kein Beschleunigungsstreifen (erst einmal ohne versuchen); der Zaun zum Lift kann nicht übersprungen werden |
 | Name, Rekorde | Name `EIS` bleibt, `rev: 2` (neue Rekorde, alte bleiben gültig). Lied `ice` bleibt, Schichten werden neu gebunden (siehe E8) |
 
-Von Claude vorgeschlagen, vor E1 mit dem Nutzer bestätigen (Abschnitt „Offene Fragen“): Kartengröße, Verhalten auf dem Lift, Löcher im See frieren nicht mehr zu.
+Mit dem Nutzer geklärt (2026-10-24):
+
+| Frage | Entscheidung |
+|---|---|
+| Kartengröße | **Hochkant** wie im Mockup, so weit gestaucht wie möglich (Ziel etwa 1000 × 1500); größer nur, wenn die Bauzeit nicht über der der Wüste liegt |
+| Lift | **Keine Warteschlange**, Autos auf dem Lift dürfen sich überlappen, ohne sich wegzuschieben |
+| Löcher im See | **Bleiben dauerhaft offen**, keine Wiedervereisung |
+| Polarlicht | Bleibt in der letzten Runde über dem See (Optik) |
+| Liftdauer | Start mit etwa **5 s** (200 px/s), danach nach Spielgefühl einstellen |
 
 ## Grundriss
 
@@ -75,7 +83,7 @@ Rundenzeit-Schätzung (gefahrene Strecke etwa 5,5–6 km Pixel): Lift 5 s, Bobba
 
 | # | Element | Umsetzung |
 |---|---|---|
-| 1 | **Sessellift** | Direkt hinter der Ziellinie. Die Mittellinie läuft durch die Lifttrasse (Fortschritt, Platzierung). Neuer Boden-Code **70 Lifttrasse**. Wer sie erreicht, wird sofort eingehängt (`c.lift`, wie `c.tube` im Spielzimmer): Physik und Eingabe aus, das Auto fährt mit festem Tempo (Richtwert 200 px/s, etwa 5 s) die Trasse hinauf, leicht pendelnd, mit Sessel und Bügel gezeichnet; oben wird es mit dem Tempo der Straße in Fahrtrichtung abgesetzt. **Keine Wartezeit**: jedes Auto bekommt seinen eigenen Sessel im Moment der Ankunft, egal wie viele zugleich kommen. Abstände bleiben erhalten (alle brauchen gleich lang). Auch beim Start fahren alle zehn Autos direkt in den Lift. Über dem Lift laufen zwei Seile mit leeren Sesseln (nur im Sichtfeld gezeichnet), Tal- und Bergstation als Häuschen. Fallen, Zurück-Pfeil, Festgefahren-Prüfung und Gummiband sind auf dem Lift aus |
+| 1 | **Sessellift** | Direkt hinter der Ziellinie. Die Mittellinie läuft durch die Lifttrasse (Fortschritt, Platzierung). Neuer Boden-Code **70 Lifttrasse**. Wer sie erreicht, wird sofort eingehängt (`c.lift`, wie `c.tube` im Spielzimmer): Physik und Eingabe aus, das Auto fährt mit festem Tempo (Start mit 200 px/s, etwa 5 s; nach Spielgefühl nachstellen) die Trasse hinauf, leicht pendelnd, mit Sessel und Bügel gezeichnet; oben wird es mit dem Tempo der Straße in Fahrtrichtung abgesetzt. **Keine Wartezeit**: jedes Auto bekommt seinen eigenen Sessel im Moment der Ankunft, egal wie viele zugleich kommen. Abstände bleiben erhalten (alle brauchen gleich lang). Auch beim Start fahren alle zehn Autos direkt in den Lift. Über dem Lift laufen zwei Seile mit leeren Sesseln (nur im Sichtfeld gezeichnet), Tal- und Bergstation als Häuschen. Fallen, Zurück-Pfeil, Festgefahren-Prüfung und Gummiband sind auf dem Lift aus |
 | 2 | **Weihnachtsmann und Grinch** | Im Schnee unter dem Lift (zwischen Lift und Zaun) sitzen sie an einem Schachbrett auf einem Baumstumpf: alle paar Sekunden zieht einer, der Grinch ärgert sich (Arme hoch), der Weihnachtsmann streicht den Bart; Rentier daneben. Reine Deko, im `top`-Bild statisch, nur die Figuren werden im Sichtfeld animiert (Hook `drawGround`) |
 | 3 | **Zaun Lift / Wald** | Fester Zaun (Hindernis-Kreise, kräftig mit Schatten, Grundsatz 10) entlang der ganzen Trasse zwischen Lift und Wald-Piste. **Gilt auch in der Luft** (normale Hindernisse ohne `ground`), damit die Schanze nicht in den Lift springen lässt |
 | 4 | **Bobbahn** | Bausteine aus Rev 1: Eisrinne (Code 12) mit federnder Bande (Hindernisse mit `bob: true`, `update.js`). Beginnt kurz nach der Bergstation |
@@ -89,7 +97,7 @@ Rundenzeit-Schätzung (gefahrene Strecke etwa 5,5–6 km Pixel): Lift 5 s, Bobba
 | 12 | **Bergauf** | Straße nach Norden; Gefälle als negativer Schub (`pushes` mit negativem `f`), Bild mit hellerem Hang und Schatten talwärts |
 | 13 | **Serpentinen** | Vier Schenkel mit drei Kehren hinunter. Zwischen den Schenkeln **Bergklippe** (Fels mit harter Schattenkante nach unten, feste Hindernis-Kette an der Klippenkante), am Rand der Straße Schnee. Gefälle-Schub talwärts, die Kehren eng (bremsen nötig). Die Klippen sind fest, damit niemand zwischen den Schenkeln abkürzt (Grundsatz 4); Schenkel mindestens 80 px auseinander (Fortschrittssuche) |
 | 14 | **Felswand mit Schneebällen** | Teilverschneite Felswand oberhalb der Serpentinen. **Ereignis `schneeball`**: alle 8–14 s löst sich an einer von drei Stellen ein Schneeball und kullert im Pfeilrichtung senkrecht über alle Schenkel hinunter, wird dabei größer und springt über die Klippen (kleine Hüpfer). Angekündigt durch Rieseln an der Wand, Schatten und Grollen (wie die Lawine aus Rev 1, Grundsatz 9). Treffer: Einschneien (`snowT`, freirütteln, danach weiß). Unten zerplatzt er an der Felswand ohne Haufen (sonst wächst die Strecke zu). In `T.ev.obst`, die KI weicht aus |
-| 15 | **Eissee** | Großer See, über den die Hauptlinie quer führt (kein Umweg mehr außen herum). Glatteis (Code 12). **Ereignis `eisbruch`**: Risse und Löcher wie in Rev 1, aber eine Zelle bricht **abhängig von der Zahl der Autos** schneller (Richtwert: `BREAK = max(3, round(24 / Autos))` Überfahrten, bei 10 Autos 3, bei 4 Autos 6), und Löcher frieren **nicht mehr zu** (oder erst nach 60 s, siehe Offene Fragen). Dadurch wird der See in Runde 2 und 3 enger. **Ein Randstreifen (etwa 28 px) bricht nie** und ist sichtbar dicker (weißlich, mit Schneerand), damit niemand den See durch Einbrechen am Rand abkürzt. Außerdem höchstens etwa 45 % der Seefläche offen, und eine Zelle bricht nicht, wenn sie die letzte freie Verbindung quer über den See schließen würde (Prüfung über die Zellen, nicht über Pixel). Wer einbricht, wird **hinter** dem Loch auf der Linie abgesetzt (`c.safe`), nie am Ufer weiter vorn. Ohne Ereignis ist der See nur glatt |
+| 15 | **Eissee** | Großer See, über den die Hauptlinie quer führt (kein Umweg mehr außen herum). Glatteis (Code 12). **Ereignis `eisbruch`**: Risse und Löcher wie in Rev 1, aber eine Zelle bricht **abhängig von der Zahl der Autos** schneller (Richtwert: `BREAK = max(3, round(24 / Autos))` Überfahrten, bei 10 Autos 3, bei 4 Autos 6), und Löcher bleiben **dauerhaft offen** (keine Wiedervereisung). Dadurch wird der See in Runde 2 und 3 enger. **Ein Randstreifen (etwa 28 px) bricht nie** und ist sichtbar dicker (weißlich, mit Schneerand), damit niemand den See durch Einbrechen am Rand abkürzt. Außerdem höchstens etwa 45 % der Seefläche offen, und eine Zelle bricht nicht, wenn sie die letzte freie Verbindung quer über den See schließen würde (Prüfung über die Zellen, nicht über Pixel). Wer einbricht, wird **hinter** dem Loch auf der Linie abgesetzt (`c.safe`), nie am Ufer weiter vorn. Ohne Ereignis ist der See nur glatt |
 | 16 | **Felswand mit Tieren** | Felswand zwischen Serpentinen-Bereich und See (fest). Davor und darauf Rentiere, Pinguine (Bilder aus Rev 1) und Eisbären, rein optisch, einige mit kleiner Animation im Sichtfeld |
 | 17 | **Zurück zum Start** | Schneestrecke vom See nach links unten und in einer Kurve auf die Startgerade nach Norden |
 
@@ -149,7 +157,7 @@ Jedes Paket ist ein Commit (lint, test, typecheck sauber, `check('EIS')` ohne fe
 | E4 Schanze und Wald | Sprung bergab, Bäume mit Mindestabstand, `ground` im Landebereich, Code 71, Tiefschnee-Senken, Trichter zur Straße, Auto in der Luft über den Kronen, „8“ im Wald, KI im Wald | `check` alle Stufen (Stürze, Festhängen an Bäumen), Screenshot im Flug | offen |
 | E5 Fön, Bergauf, Serpentinen | Fön-Hütte mit `washMask`, KI nur dreckig; Bergauf-Schub; Serpentinen mit Klippen, Schnee am Rand, Gefälle, KI-Gas vor den Kehren | `check`, `checkPic`, Screenshot Serpentinen | offen |
 | E6 Ereignis Schneeball | Felswand (14), drei Bahnen, Ankündigung, Hüpfer über die Klippen, Einschneien, `T.ev.obst`, Schalter `schneeball` | `check` mit und ohne `fx`, Frame-Zeit | offen |
-| E7 Eissee und Ereignis Eisbruch | Großer See mit festem Rand, Bruch abhängig von der Autozahl, keine (oder späte) Wiedervereisung, Obergrenze und freie Verbindung, Absetzen hinter dem Loch, KI-Linien, Felswand mit Tieren (16), Rückweg (17), Schalter `eisbruch` | `check` mit 4 und 10 Autos, mit und ohne `fx`; Runde 3 noch befahrbar; Frame-Zeit | offen |
+| E7 Eissee und Ereignis Eisbruch | Großer See mit festem Rand, Bruch abhängig von der Autozahl, keine Wiedervereisung, Obergrenze und freie Verbindung, Absetzen hinter dem Loch, KI-Linien, Felswand mit Tieren (16), Rückweg (17), Schalter `eisbruch` | `check` mit 4 und 10 Autos, mit und ohne `fx`; Runde 3 noch befahrbar; Frame-Zeit | offen |
 | E8 Abschluss | Lied `ice`: Winterwunderland in Runde 1, Breakbeat ab Runde 2 (nicht mehr am Frost), Chor in der letzten Runde, Paukenwirbel vor dem Schneeball; Polarlicht über dem See in der letzten Runde; Töne; Performance messen; `check` LEICHT/MITTEL/SCHWER; Grundsätze 1–14; Doku: `ROADMAP.md` (1S9, Tabelle, 1A-4, 1A-5, 1P-1, „Zuletzt abgeglichen“), `Strecken.md` Abschnitt 9 (Status, Ereignisse, Lied; Wünsche als umgesetzt markieren), Skills `mechanik` (Codes 70/71, Lift, `ground`-Bäume, Luft über `top`) und `strecke` (Code-Liste, nächster freier Block) | alles | offen |
 
 ## Grundsätze-Check (für E8)
@@ -168,13 +176,3 @@ Jedes Paket ist ein Commit (lint, test, typecheck sauber, `check('EIS')` ohne fe
 12. Tiefschnee im Wald als Entscheidung, Schneewehen an den Kehren.
 13. Waschen: nur der Fön.
 14. Ziellinie und Startaufstellung frei (kein Schneefall, kein Polarlicht, kein Liftschatten darüber).
-
-## Offene Fragen (vor E1 mit dem Nutzer klären)
-
-| Frage | Vorschlag |
-|---|---|
-| Kartengröße | Hochkant wie im Mockup, so weit gestaucht wie möglich (Ziel 1000 × 1500); größer nur, wenn die Bauzeit unter der der Wüste bleibt |
-| „Autos dürfen kollidieren“ auf dem Lift | So verstanden: keine Warteschlange, Autos auf dem Lift dürfen sich überlappen, ohne sich wegzuschieben (es gibt keinen Rückstau). Alternative: normale Kollision, dann schieben sich Autos von der Trasse |
-| Löcher im See | Frieren nicht mehr zu (der See wird nur enger). Alternative: Wiedervereisung nach 60 s statt 20 s |
-| Polarlicht | Bleibt in der letzten Runde über dem See (Optik, kein Wetter) |
-| Liftdauer | etwa 5 s je Runde (200 px/s); kürzer, wenn es sich zu lang anfühlt |
