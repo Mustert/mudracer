@@ -38,8 +38,8 @@ const CELL = 16;
 const breakN = () => Math.max(1, Math.round(1 + (G.cars.length - 2) * .625));
 
 function initBreak(T) {
-  const ev = T.ev, I = T.ice, [lx, ly, rx, ry] = I.lake, cells = new Map(); let interior = 0;
-  for (let cy = Math.floor((ly - ry) / CELL); cy <= Math.ceil((ly + ry) / CELL); cy++) for (let cx = Math.floor((lx - rx) / CELL); cx <= Math.ceil((lx + rx) / CELL); cx++) {
+  const ev = T.ev, I = T.ice, [lx, ly, rx, ry, rt = ry] = I.lake, cells = new Map(); let interior = 0;
+  for (let cy = Math.floor((ly - rt) / CELL); cy <= Math.ceil((ly + ry) / CELL); cy++) for (let cx = Math.floor((lx - rx) / CELL); cx <= Math.ceil((lx + rx) / CELL); cx++) {
     const x = (cx + .5) * CELL, y = (cy + .5) * CELL, j = (y | 0) * T.W + (x | 0);
     if (x < 0 || y < 0 || x >= T.W || y >= T.H || !I.lakeM[j]) continue;
     const elig = I.lakeD[j] >= RIM + 6;
@@ -100,7 +100,7 @@ function breakUpdate(T, dt) {
       if (p.ct > .35 && !G.cars.some(c => c.fall <= 0 && c.z === 0 && Math.hypot(c.x - C.x, c.y - C.y) < 15)) {
         L.pend.splice(L.pend.indexOf(C), 1); C.pend = null;
         if (!wayAcross(L, C)) { C.n = breakN() - 1; continue; }
-        if (!L.snapped) { L.snapped = true; const [lx, ly, rx, ry] = I.lake; snap(T, lx - rx - 10, ly - ry - 10, rx * 2 + 20, ry * 2 + 20); }
+        if (!L.snapped) { L.snapped = true; const [lx, ly, rx, ry, rt = ry] = I.lake; snap(T, lx - rx - 10, ly - rt - 10, rx * 2 + 20, rt + ry + 20); }
         C.hole = true; L.open++; L.holes.push(C); markRisky(L, C); paintHole(T, C);
         for (const dd of [1, -1, 100, -100, 101, 99, -101, -99]) { const N2 = L.cells.get(C.k + dd); if (N2) N2.nh = true; } // (the hole reaches a few pixels into its neighbours)
         if (near(C.x, C.y) < 360) SFX.iceBreak(clamp(1 - near(C.x, C.y) / 360, .2, 1));
@@ -178,8 +178,8 @@ function lakeWaypoint(L, c, R) {
 
 function lakeTarget(c) {
   const T = G.T, I = T.ice, ev = T.ev, L = ev.iceLake; if (!L || c.finished || c.fall > 0 || (G.state !== 'race' && G.state !== 'finish')) return null;
-  const [lx, ly, rx, ry] = I.lake;
-  if (c.x > lx + rx - 10 || c.x < lx - rx + 40 || Math.abs(c.y - ly) > ry) { c.iceRoute = null; return null; }
+  const [lx, ly, rx, ry, rt = ry] = I.lake;
+  if (c.x > lx + rx - 10 || c.x < lx - rx + 40 || c.y < ly - rt || c.y > ly + ry) { c.iceRoute = null; return null; }
   if (!c.iceRoute || G.time - c.iceRouteT > .33) { c.iceRoute = lakeRoute(L, c); c.iceRouteT = G.time; }
   const R = c.iceRoute; if (!R) return null;
   const C = lakeWaypoint(L, c, R);
@@ -188,9 +188,10 @@ function lakeTarget(c) {
 
 // ======================================================= event "schneeball"
 
-// def.balls = { xs: the three lanes (x), y0: the foot of the rock face, y1: where the ball bursts, hops: y of the cliffs }. The timer only runs while a car is on the
-// serpentines (so there is always one coming for whoever is there), at most two balls at a time. First a warning (snow trickles down the face, a shadow lies along the lane,
-// a rumble), then the roll (it gets faster and bigger, hops over each cliff), at the end it bursts without leaving a heap.
+// def.balls = { x0, x1: the stretch of the rock face the balls come loose from (anywhere on it), y0: the foot of the face, y1: where the ball bursts, hops: y of the cliffs }.
+// The timer only runs while a car is on the serpentines (so there is always one coming for whoever is there), at most two balls at a time. First a warning (snow trickles
+// down the face, a warning triangle blinks at the top edge of the screen above the place, a rumble), then the roll (it gets faster and bigger, hops over each cliff),
+// at the end it bursts without leaving a heap.
 const BALL = { warn: 2.4, roll: 5.2, first: 4, per: [8, 14], max: 2 };
 
 function initBalls(T) { const ev = T.ev; ev.iceBallOn = true; ev.iceBalls = []; ev.iceBallCd = BALL.first; ev.iceBallK = 0; }
@@ -199,7 +200,7 @@ function ballsUpdate(T, dt) {
   const ev = T.ev, I = T.ice, B = I.balls, N = T.N; if (!B) return;
   if (G.cars.some(c => !c.finished && !c.iceLift && (c.idx - (I.serp[0] - 140) + N) % N < I.serp[1] - I.serp[0] + 160)) ev.iceBallCd -= dt;
   if (ev.iceBallCd <= 0 && ev.iceBalls.length < BALL.max) {
-    const k = ev.iceBallK++, x = B.xs[Math.floor(hash(k, 1, 95) * B.xs.length)];
+    const k = ev.iceBallK++, x = Math.round(B.x0 + hash(k, 1, 95) * (B.x1 - B.x0));
     ev.iceBalls.push({ x, t: 0, hit: new Set(), y: B.y0, r: 6, z: 0, on: false, warn: true, p: 0, bx: x, burst: false });
     ev.iceBallCd = BALL.per[0] + hash(k, 2, 95) * (BALL.per[1] - BALL.per[0]);
     if (near(x, (B.y0 + B.y1) / 2) < 520) SFX.rumble();
@@ -384,6 +385,60 @@ function drawAnimals() {
     R1(hx - 2 * f, hy - 5, 1, 4, '#c8aa78'); R1(hx + 1 * f, hy - 5, 1, 4, '#c8aa78'); R1(hx - 3 * f, hy - 6, 3, 1, '#c8aa78');
   }
   for (const [x, y] of A.penguins) if (inView(x, y, 30)) drawPenguin(x + Math.sin(G.time * 2 + x) * 1.5, y, x % 2 ? 1 : -1, ((G.time * 2 + x) | 0) % 2);
+  drawSkiers(); drawYeti(); drawSnowfight();
+}
+
+// the skiers at the in-run of the jump, getting ready: skis pointing down the hill, one bounces on his knees, one swings his poles, one looks round
+function drawSkiers() {
+  const S = G.T.ice.skiers; if (!S) return;
+  S.forEach(([x, y], k) => {
+    if (!inView(x, y, 30)) return;
+    const t = G.time + k * 1.7, by = k === 0 ? Math.round(Math.abs(Math.sin(t * 5)) * 1.5) : 0, look = k === 2 ? Math.round(Math.sin(t * .9) * 1.5) : 0, pole = k === 1 ? Math.round(Math.sin(t * 3) * 2) : 0;
+    ctx.globalAlpha = .22; ell(x + 2, y + 3, 5, 8, '#304860'); ctx.globalAlpha = 1;
+    const col = ['#d83a2c', '#2f6fd8', '#f2c230'][k % 3];
+    R1(x - 3, y - 7, 1, 15, '#1b120c'); R1(x + 2, y - 7, 1, 15, '#1b120c'); R1(x - 3, y - 7, 1, 1, col); R1(x + 2, y - 7, 1, 1, col); // (the skis, tips up the hill)
+    R1(x - 6 - pole, y - 3, 1, 8, '#4a4a54'); R1(x + 5 + pole, y - 3, 1, 8, '#4a4a54');
+    ell(x, y - by, 4, 3, col); R1(x - 4, y - 1 - by, 2, 2, col); R1(x + 3, y - 1 - by, 2, 2, col);
+    disc(x + look, y - 3 - by, 2, '#f1d2b4'); R1(x - 2 + look, y - 6 - by, 5, 2, k === 1 ? '#ffffff' : '#1b1b22'); R1(x - 1 + look, y - 3 - by, 3, 1, '#7fd4ff'); // (helmet, goggles)
+  });
+}
+
+// the yeti behind the pine: now and then it peeks out (to the west), but not while a car is close
+function drawYeti() {
+  const Y = G.T.ice.yeti; if (!Y || !inView(Y[0], Y[1], 40)) return;
+  const ph = (G.time % 9) / 9, shy = G.cars.some(c => Math.hypot(c.x - Y[0], c.y - Y[1]) < 90);
+  const out = shy ? 0 : ph < .55 ? 0 : ph < .62 ? (ph - .55) / .07 : ph < .9 ? 1 : 1 - (ph - .9) / .1, x = Math.round(Y[0] - out * 16), y = Y[1];
+  ctx.globalAlpha = .25 * out; ell(x + 3, y + 6, 10, 5, '#304860'); ctx.globalAlpha = 1;
+  ell(x, y, 9, 10, '#7f93a8'); ell(x, y - 1, 8, 9, '#eef3f8'); ell(x + 2, y + 2, 5, 6, '#d6e0ea'); ell(x - 1, y - 5, 5, 4, '#6f8aa6'); // (shaggy fur, the blue-grey face)
+  const blink = ((G.time * 3) | 0) % 7 === 0;
+  if (!blink) { R1(x - 4, y - 6, 2, 2, '#ffffff'); R1(x, y - 6, 2, 2, '#ffffff'); R1(x - 3, y - 5, 1, 1, '#1b1b22'); R1(x + 1, y - 5, 1, 1, '#1b1b22'); }
+  R1(x - 3, y - 2, 4, 1, '#2e3846');
+  if (out > .8) { R1(x - 11, y - 3, 4, 3, '#eef3f8'); R1(x - 12, y - 3, 1, 2, '#6f8aa6'); } // (a hand on the tree)
+}
+
+// the snowball fight: the two snowmen throw at each other in turn (a ball on an arc with its shadow, it bursts on the other one), the thrower lifts its stick arm
+function drawSnowfight() {
+  const F = G.T.ice.snowfight; if (!F || F.length < 2 || !inView((F[0][0] + F[1][0]) / 2, (F[0][1] + F[1][1]) / 2, 90)) return;
+  const P = 1.6, k = Math.floor(G.time / P), u = (G.time % P) / P, [a, b] = k % 2 ? [F[1], F[0]] : [F[0], F[1]];
+  // (the snowmen themselves are on the top layer: the stick arms reach out beside them)
+  for (const [x, y] of F) { const thrower = x === a[0] && y === a[1] && u < .5; R1(x - 9, y - 1, 4, 1, '#6a4420'); R1(x - 10, y - 2, 1, 1, '#6a4420'); if (thrower) { R1(x + 6, y - 7, 1, 7, '#6a4420'); R1(x + 7, y - 8, 1, 1, '#6a4420'); } else { R1(x + 6, y - 1, 4, 1, '#6a4420'); R1(x + 10, y - 2, 1, 1, '#6a4420'); } }
+  if (u < .6) {
+    const t = u / .6, x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t, z = Math.sin(Math.PI * t) * 20;
+    ctx.globalAlpha = .25; disc(Math.round(x + 1), Math.round(y + 2), 2, '#304860'); ctx.globalAlpha = 1;
+    disc(Math.round(x), Math.round(y - 6 - z), 2, '#ffffff');
+  } else if (u < .75) for (let q = 0; q < 6; q++) R1(Math.round(b[0] + Math.cos(q + k) * (u - .6) * 60), Math.round(b[1] - 6 + Math.sin(q + k) * (u - .6) * 40), 1, 1, '#ffffff');
+}
+
+// the Christmas lights on the eaves of the mountain hut and on its fir (they twinkle in turn), a star on top of the fir
+function drawXmas() {
+  const H = G.T.ice.hut; if (!H || !inView(H[0], H[1], 60)) return;
+  const [hx, hy, fx, fy] = H, w = 44, h = 29, x0 = hx - w / 2, y0 = hy - 16, COL = ['#ff4a3c', '#ffd23f', '#4ad66a', '#4aa8ff'], t = (G.time * 3) | 0;
+  let n = 0;
+  const bulb = (x, y) => { const on = (n + t) % 4 !== 0; R1(Math.round(x), Math.round(y), 1, 1, on ? COL[n % 4] : '#5a5a64'); n++; };
+  for (let x = x0 + 1; x < x0 + w; x += 4) { bulb(x, y0); bulb(x + 2, y0 + h); }
+  for (let y = y0 + 4; y < y0 + h; y += 4) { bulb(x0, y); bulb(x0 + w - 1, y); }
+  for (let q = 0; q < 12; q++) { const a = q * 2.4, r = 3 + (q % 4) * 2.3; bulb(fx + Math.cos(a) * r, fy + Math.sin(a) * r); }
+  R1(fx - 1, fy, 3, 1, '#ffe27a'); R1(fx, fy - 1, 1, 3, '#ffe27a');
 }
 
 // a penguin: black back, white belly, orange beak and feet
@@ -395,13 +450,12 @@ function drawPenguin(x, y, f, st) {
   R1(x - 2 + st, y + 4, 2, 1, '#ffb02e'); R1(x + 1 - st, y + 4, 2, 1, '#ffb02e');
 }
 
-// the snowballs: a faint shadow along the lane while it is coming loose, the shadow of the ball while it rolls
+// the snowballs: the shadow of the ball while it rolls
 function drawBallsGround() {
   const ev = G.T.ev, B = G.T.ice.balls; if (!ev || !ev.iceBalls || !B) return;
   for (const b of ev.iceBalls) {
     if (!inView(b.x, (B.y0 + B.y1) / 2, 300)) continue;
-    if (b.warn) { ctx.globalAlpha = .07 + .06 * Math.abs(Math.sin(G.time * 6)); R1(b.x - 9, B.y0, 18, B.y1 - B.y0, '#304860'); ctx.globalAlpha = 1; }
-    else if (b.on) { ctx.globalAlpha = .28; ell(Math.round(b.bx + 3 + b.z * .5), Math.round(b.y + b.r * .6 + b.z * .8), Math.round(b.r + 4), Math.round(b.r * .5 + 2), '#304860'); ctx.globalAlpha = 1; }
+    if (b.on) { ctx.globalAlpha = .28; ell(Math.round(b.bx + 3 + b.z * .5), Math.round(b.y + b.r * .6 + b.z * .8), Math.round(b.r + 4), Math.round(b.r * .5 + 2), '#304860'); ctx.globalAlpha = 1; }
   }
 }
 
@@ -447,7 +501,7 @@ function drawChess() {
 // above the cars: the snowed-in lump over a car (the shaking shows while it is held), the polar light in the last lap
 function drawIceAbove() {
   const T = G.T, I = T.ice, ev = T.ev;
-  drawLiftCables(); drawFoenSky();
+  drawLiftCables(); drawFoenSky(); drawXmas();
   if (ev && ev.iceBalls) for (const b of ev.iceBalls) {
     if (b.on) {
       const x = Math.round(b.bx), y = Math.round(b.y - b.z), r = Math.round(b.r), rot = b.p * 22;
@@ -455,7 +509,10 @@ function drawIceAbove() {
       for (let q = 0; q < 5; q++) R1(Math.round(x + Math.cos(rot + q * 1.3) * r * .6), Math.round(y + Math.sin(rot + q * 1.3) * r * .6), 2, 2, '#c8d6e4');
       if (Math.random() < .6) addP({ t: 'd', x: b.bx + (Math.random() - .5) * b.r * 2, y: b.y - b.r * .5, z: 3, vx: (Math.random() - .5) * 40, vy: -20, vz: 30, col: '#ffffff', s: 2, life: .5, ml: .5 });
     }
-    if (b.warn && G.player && near(b.x, b.y) < 460 && ((G.time * 4) | 0) % 2 === 0) text('SCHNEEBALL!', Math.round(G.player.x), Math.round(G.player.y - 40), 8, '#ff6b6b', 'center');
+    // the warning: a triangle blinks at the top edge of the screen right above the place (or at the foot of the face when it is in view), while it comes loose
+    // and as long as the ball is still above the screen
+    const B = I.balls, ty = Math.max(Math.round(cam.y) + 18, B.y0 + 2); // (below the bar at the top of the screen)
+    if ((b.warn || (b.on && b.y < cam.y + 12)) && b.x > cam.x - 10 && b.x < cam.x + VW + 10 && cam.y + VH > B.y0 && ((G.time * 5) | 0) % 2 === 0) warnSign(b.x, ty);
   }
   for (const c of G.cars) if (c.snowT > 0 && inView(c.x, c.y, 30)) {
     const X = Math.round(c.x), Y = Math.round(c.y), w = Math.round(Math.sin(G.time * 40) * (c.shake || 0) * 2);
@@ -464,19 +521,27 @@ function drawIceAbove() {
   if (G.player && G.player.lap >= LAPS && I.lake) drawAurora(T.ev, I.lake);
 }
 
+// a warning triangle (yellow, black rim and exclamation mark), its tip at x, y
+function warnSign(x, y) {
+  x = Math.round(x);
+  for (let r = 0; r < 16; r++) { const w = Math.floor(r * .62); R1(x - w - 1, y + r, w * 2 + 3, 1, '#1b120c'); if (r > 1 && r < 15) R1(x - w + 1, y + r, w * 2 - 1, 1, '#ffd23f'); }
+  R1(x - 1, y + 5, 2, 5, '#1b120c'); R1(x - 1, y + 11, 2, 2, '#1b120c');
+}
+
 // the polar light of the last lap: three curtains hang in the sky over the lake (violet at the top, green at the lower edge, vertical rays that flicker and
 // sway), and the lake ice mirrors them (flipped at the north shore, a little squeezed, with a green glow on the ice, fainter, rippling, only inside the lake)
 const AURORA = Array.from({ length: 5 }, (_, i) => { const m = (a, b) => Math.round(a + (b - a) * i / 4); return 'rgb(' + m(150, 40) + ',' + m(80, 240) + ',' + m(255, 140) + ')'; });
-function drawAurora(ev, [lx, ly, rx, ry]) {
-  if (!inView(lx, ly - ry * .5, rx + 40) && !inView(lx, ly - ry - 140, rx + 40)) return;
+function drawAurora(ev, [lx, ly, rx, ry, rt = ry]) {
+  const yT = ly - rt, ym = yT + ry * .1, yc = (yT + ly + ry) / 2, rh = (rt + ry) / 2;
+  if (!inView(lx, yc, rx + 40) && !inView(lx, yT - 140, rx + 40)) return;
   if (ev.iceAuroraT0 === undefined) ev.iceAuroraT0 = G.time;
-  const fade = clamp((G.time - ev.iceAuroraT0) / 3, 0, 1), ym = ly - ry * .9, N = 5, x0 = Math.max(lx - rx - 40, cam.x - 6), x1 = Math.min(lx + rx + 40, cam.x + VW + 6);
+  const fade = clamp((G.time - ev.iceAuroraT0) / 3, 0, 1), N = 5, x0 = Math.max(lx - rx - 40, cam.x - 6), x1 = Math.min(lx + rx + 40, cam.x + VW + 6);
   for (const mirror of [false, true]) {
     ctx.save();
-    if (mirror) { ctx.beginPath(); ctx.ellipse(lx, ly, rx * .96, ry * .96, 0, 0, TAU); ctx.clip(); ctx.globalAlpha = .08 * fade; ctx.fillStyle = '#5cffb4'; ctx.fillRect(lx - rx, ly - ry, rx * 2, ry * 2); }
+    if (mirror) { ctx.beginPath(); ctx.ellipse(lx, yc, rx * .96, rh * .96, 0, 0, TAU); ctx.clip(); ctx.globalAlpha = .08 * fade; ctx.fillStyle = '#5cffb4'; ctx.fillRect(lx - rx, yc - rh, rx * 2, rh * 2); }
     for (let k = 0; k < 3; k++) for (let x = x0 - (x0 - (lx - rx - 40)) % 3; x < x1; x += 3) {
       const sway = Math.sin(x * .028 + G.time * (.5 + k * .17) + k * 2.2) * 9 + Math.sin(x * .011 - G.time * .35) * 7;
-      const yb = ly - ry - 135 - k * 14 + sway, h = 46 + 18 * Math.sin(x * .05 + G.time * .8 + k) + k * 6;
+      const yb = yT - 135 - k * 14 + sway, h = 46 + 18 * Math.sin(x * .05 + G.time * .8 + k) + k * 6;
       const flick = (.5 + .5 * Math.sin(x * .31 + G.time * 2.3 + k * 1.7)) ** 2, taper = clamp(Math.min(x - (lx - rx - 40), lx + rx + 40 - x) / 60, 0, 1), a = (.1 + .42 * flick) * taper * fade * (mirror ? .6 : 1);
       for (let i = 0; i < N; i++) {
         const y0 = yb - h + h * i / N, y1 = yb - h + h * (i + 1) / N, d = mirror ? ym + (ym - y1) * .7 : y0, e = mirror ? (y1 - y0) * .7 : y1 - y0;

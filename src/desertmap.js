@@ -120,7 +120,7 @@ export function* desertTerrain(S) {
   for (const f of forks) if (f.shaftR) jumps.push({ x: f.shaftR.lip, y: f.shaftR.y, tx: -1, ty: 0, lo: -30, hi: 30, vz: 100, land: f.shaftR.landI, shaft: true });
   const blocks = (def.blocks || []).map(([x, off]) => { const o = onLine(x, off); return { x: o.x, y: o.y, nx: o.nx, ny: o.ny, tx: o.tx, ty: o.ty }; });
   const cacti = (def.cacti || []).map(([x, off]) => { const o = onLine(x, off); return { x: Math.round(o.x), y: Math.round(o.y), r: 8 }; });
-  const signs = (def.signs || []).map((x, k) => { const o = onLine(x, k % 2 ? 88 : -88); return { x: Math.round(o.x), y: Math.round(o.y) }; });
+  const signs = (def.signs || []).map((x, k) => { const o = onLine(x, k % 2 ? 88 : -88); return { x: Math.round(o.x), y: Math.round(o.y), tx: o.tx, ty: o.ty }; });
   const quick = (def.quick || []).map(([x, off, r], k) => { const o = onLine(x, off); return { x: Math.round(o.x), y: Math.round(o.y), r, k }; }); // (the fields of the event: firm until it opens them)
   const bugs = forks.flatMap(f => (f.bugs || []).map(x => ({ x, y: f.up[1][1] })));
   return { alt, forks, bay, iA, iB, soft, oases, jumps, blocks, cacti, signs, quick, bugs, shafts: forks.filter(f => f.shaftR).map(f => f.shaftR), pillars, obst: pillars.map(p => ({ ...p })) };
@@ -278,13 +278,15 @@ export function* paintDesert(S) {
     deco(x, y); solid(x, y, 5); k++; // (no wall: you drive over a little one)
   }
   yield;
-  // ----- signposts: a pale board with an arrow to the right (flat decoration: you drive over it), so nobody has to guess -----
+  // ----- signposts: a big pale board on two posts with a thick black arrow along the line (flat decoration: you drive over it), so nobody has to guess -----
   for (const s of RT.signs) {
-    for (let k = 0; k < 8; k++) px(s.x, s.y + k, [150, 122, 82]);
-    for (let yy = -7; yy <= 0; yy++) for (let xx = -7; xx <= 7; xx++) px(s.x + xx, s.y + yy, yy === -7 || yy === 0 || Math.abs(xx) === 7 ? [168, 140, 98] : [226, 208, 166]);
-    for (let xx = -4; xx <= 3; xx++) px(s.x + xx, s.y - 4, [176, 128, 84]);
-    for (const [dx, dy] of [[2, -6], [3, -5], [4, -4], [3, -3], [2, -2]]) px(s.x + dx, s.y + dy, [176, 128, 84]);
-    for (let dy = 1; dy <= 3; dy++) for (let dx = 1; dx <= 3; dx++) dk(s.x + dx, s.y + 8 + dy - 2, .9);
+    for (let dy = 0; dy < 6; dy++) for (let dx = -12; dx <= 16; dx++) dk(s.x + dx + 3, s.y + 9 + dy, .86);
+    for (const sx of [-8, 8]) for (let k = 0; k < 12; k++) { px(s.x + sx, s.y + k, [120, 90, 56]); px(s.x + sx + 1, s.y + k, [90, 64, 36]); }
+    for (let yy = -11; yy <= 5; yy++) for (let xx = -14; xx <= 14; xx++) {
+      const edge = yy === -11 || yy === 5 || Math.abs(xx) === 14, u = xx * s.tx + (yy + 3) * s.ty, v = -xx * s.ty + (yy + 3) * s.tx;
+      const arrow = (u >= -9 && u <= 1 && Math.abs(v) <= 2) || (u > 1 && u <= 9 && Math.abs(v) <= (9 - u) * .85 + .5);
+      px(s.x + xx, s.y + yy, edge ? [110, 82, 48] : arrow ? [24, 20, 16] : yy === -10 ? [244, 230, 196] : [230, 212, 170]);
+    }
   }
   yield;
   // ----- the ram avenue and the sphinx gate: two rows of ram sphinxes and obelisks that close in on the gate (solid), two big sphinxes that look at
@@ -300,14 +302,28 @@ export function* paintDesert(S) {
     }
     px(x + 7, y + 10 * f, K.stDD); px(x + 9, y + 8 * f, K.gold); px(x + 10, y + 8 * f, K.goldD);
   };
+  // an obelisk on its plinth, seen from above and a little from the south: a slim shaft that tapers to a gilded tip, lit on the left, dark on the right,
+  // a column of glyphs, a long shadow to the south-east
   const obelisk = (x, y) => {
-    for (let dy = -4; dy <= 22; dy++) for (let dx = 0; dx <= 9; dx++) if (dx > 3 && dy > 0 && dx - 3 < 7 - dy * .15) dk(x + dx, y + dy, .78);
-    for (let yy = 0; yy < 18; yy++) { const w = 7 - Math.floor(yy / 6); for (let xx = -w; xx <= w; xx++) px(x + xx, y + yy, xx < -w + 2 ? K.stL : xx > w - 2 ? K.stDD : K.st); }
-    px(x, y - 1, K.gold); px(x - 1, y, K.gold); px(x + 1, y, K.goldD);
+    for (let k = 0; k < 16; k++) for (let w = -2; w <= 2; w++) dk(x + 4 + k * .8 + w, y + 20 + k * .3, .8);
+    for (let yy = 16; yy <= 21; yy++) for (let xx = -6; xx <= 6; xx++) px(x + xx, y + yy, yy === 21 || Math.abs(xx) === 6 ? K.stDD : yy === 16 ? K.stL : K.stD);
+    for (let yy = 3; yy <= 16; yy++) {
+      const w = 2 + Math.floor((yy - 3) / 6);
+      for (let xx = -w - 1; xx <= w + 1; xx++) px(x + xx, y + yy, Math.abs(xx) === w + 1 ? K.stDD : xx < 0 ? K.stL : xx === 0 ? K.st : K.stD);
+      if (yy > 5 && yy < 15 && yy % 3 === 0) px(x - 1, y + yy, K.stD);
+    }
+    for (const [dx, dy, c] of [[0, 0, K.gold], [-1, 1, K.gold], [0, 1, K.gold], [1, 1, K.goldD], [-2, 2, K.gold], [-1, 2, K.gold], [0, 2, K.goldD], [1, 2, K.goldD], [2, 2, K.goldD]]) px(x + dx, y + dy, c);
   };
   const arm = (ax, ay, bx, by, facing) => {
     const L = Math.hypot(bx - ax, by - ay), n = Math.round(L / 11), ux = (bx - ax) / L, uy = (by - ay) / L;
     for (let k = 0; k <= n; k++) { const x = ax + ux * k * 11, y = ay + uy * k * 11; walls.push({ x, y, r: 6 }); solid(x, y, 8); }
+    // a continuous plinth of sandstone under the row (the rams lie on it): it shows that the row is a wall, not a row of statues to drive between
+    for (let t = -4; t <= L + 4; t++) for (let w = -19; w <= 9; w++) {
+      const s = w * facing, X = ax + ux * t - uy * s, Y = ay + uy * t + ux * s;
+      if (w > 6 || w < -16) { if ((w > 6) === (facing > 0)) dk(X + 1, Y + 1, .8); continue; } // (its shadow on the south side)
+      const edge = w === -16 || w === 6 || t < -3 || t > L + 3;
+      px(X, Y, edge ? K.stDD : w === -15 ? K.stL : (Math.round(t) % 12 === 0 && w > -2) || w === -2 ? K.stD : K.st);
+    }
     for (let k = 0, m = Math.floor(L / 24); k <= m; k++) {
       const x = Math.round(ax + ux * k * 24), y = Math.round(ay + uy * k * 24 + facing * -9);
       if (k % 4 === 3) obelisk(x, y - (facing > 0 ? 10 : -2)); else ram(x, y, facing);
@@ -337,18 +353,20 @@ export function* paintDesert(S) {
     solid(cx, cy, 36);
   };
   sphinx(gx, gy - 77, 1); sphinx(gx, gy + 77, -1);
-  // the walls along the road behind the gate, as far as the doorway
-  const iEnd = path.findIndex((p, i) => i > RT.iB && p.y >= y0 && p.x > 1450);
-  for (let i = path.findIndex((p, k) => k > RT.iB && p.x >= gx + 24); i < iEnd; i++) {
-    const p = path[i], n = nrm[i];
-    for (const s of [-1, 1]) for (let w = 0; w < 8; w++) {
-      const X = p.x + n.x * s * (HALF + 2 + w), Y = p.y + n.y * s * (HALF + 2 + w);
-      if (inFoot(X, Y)) continue;
-      if (w === 0) dk(X + 3, Y + 4, .8);
-      px(X, Y, w < 2 ? K.stL : w > 5 ? K.stDD : ((i >> 2) & 1) && w === 3 ? K.stD : K.st);
+  // the walls along the road behind the gate, as far as the doorway: a wall of big sandstone blocks in two courses, a dark foot on the road side,
+  // the lit top, joints that change place from course to course, a hard shadow on the sand outside (solid all along)
+  const iEnd = path.findIndex((p, i) => i > RT.iB && p.y >= y0 && p.x > 1450), iW0 = path.findIndex((p, k) => k > RT.iB && p.x >= gx + 24);
+  { let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9;
+    for (let i = iW0; i < iEnd; i++) { bx0 = Math.min(bx0, path[i].x); by0 = Math.min(by0, path[i].y); bx1 = Math.max(bx1, path[i].x); by1 = Math.max(by1, path[i].y); }
+    for (let y = Math.max(0, Math.floor(by0 - HALF - 20)); y <= Math.min(MH - 1, by1 + HALF + 20); y++) for (let x = Math.max(0, Math.floor(bx0 - HALF - 20)); x <= Math.min(MW - 1, bx1 + HALF + 20); x++) {
+      const j = y * MW + x, i = S.near[j], w = dist[j] - HALF - 2;
+      if (i < iW0 || i >= iEnd || w < 0 || w >= 17 || inFoot(x, y) || ter[j] === 1) continue;
+      if (w >= 12) { dk(x, y, .78 + .04 * (w - 12)); continue; }
+      const course = w < 6 ? 0 : 1, joint = (i + course * 5) % 10 < 1;
+      set(j, w < 1 || w >= 11 ? K.stDD : w < 2.5 ? K.stL : (w >= 5.5 && w < 6.5) || joint ? K.stD : hash(x, y, 31) < .1 ? K.stL : K.st);
     }
-    if (i % 3 === 0) for (const s of [-1, 1]) { const X = p.x + n.x * s * (HALF + 6), Y = p.y + n.y * s * (HALF + 6); if (!inFoot(X, Y)) { walls.push({ x: X, y: Y, r: 5 }); solid(X, Y, 5); } }
   }
+  for (let i = iW0; i < iEnd; i += 3) for (const s of [-1, 1]) { const p = path[i], n = nrm[i], X = p.x + n.x * s * (HALF + 8), Y = p.y + n.y * s * (HALF + 8); if (!inFoot(X, Y)) { walls.push({ x: X, y: Y, r: 6 }); solid(X, Y, 7); } }
 
   yield;
   // ----- the car wash: a low wall between the road and the bay, a floor of sand and turquoise tiles under a sandstone arch with a roof of palm leaves

@@ -280,15 +280,21 @@ const TRACK_DEFS = [
     // bay = the foehn: a lane that leaves the road, a washing floor under the hut with the big hot-air blower (wash), low walls between the road and the lane, a sign
     bay: { lane: [[520, 1052, 0], [585, 1030, 26], [585, 985, 26], [520, 965, 0]], half: 22, wash: [567, 988, 603, 1028], wall: [556, 990, 1030], wall2: [614, 985, 1035], sign: [556, 1088] },
     // animals = looks only: bears on the rock wall in front of the lake, reindeer and penguins in the snow strip below it
-    animals: { bears: [[330, 1229], [560, 1231], [770, 1229]], deer: [[250, 1262, 1], [455, 1264, -1], [640, 1262, 1], [840, 1264, -1]], penguins: [[410, 1270], [440, 1272], [720, 1270], [748, 1272], [690, 1273]] },
+    animals: { bears: [[330, 1229], [560, 1231], [770, 1229]], deer: [[250, 1262, 1], [620, 1130, -1], [430, 1192, 1], [840, 1264, -1]], penguins: [[410, 1270], [440, 1272], [720, 1270], [748, 1272], [690, 1273]] },
     fence: [172, 105, 1235],
-    blocks: [[182, 114, 388, 318], [105, 0, 1000, 24], [922, 0, 1000, 410], [966, 425, 1000, 1500]],
+    // blocks = the massifs [x0, y0, x1, y1, rounding]; they melt with the ridges and cliffs into one mountain (icemap.js paintMountains); summit = the cross on the round one
+    blocks: [[182, 114, 388, 318, 80], [105, 0, 1000, 30, 12], [922, 0, 1000, 410, 16], [966, 425, 1000, 1500, 16]], summit: [285, 205],
+    // looks only (solid where they stand): single pines in the snow, the Christmas hut at the top of the jump [x, y, x, y of its lit fir], skiers waiting at the in-run,
+    // a yeti hiding behind a pine, two snowmen in a snowball fight
+    pines: [[760, 1010], [880, 1015], [735, 1085], [878, 1198], [790, 1212], [660, 1070], [690, 1170], [590, 1210], [205, 1150], [250, 1208], [370, 1205], [470, 1208], [142, 470], [145, 1000]],
+    hut: [222, 372, 192, 345], skiers: [[256, 436], [250, 458], [257, 480]], yeti: [877, 1198], snowfight: [[772, 1150], [858, 1108]],
     ridges: [[338, 415, 560, 415, 7], [560, 415, 1000, 415, 12, 1], [480, 415, 480, 1070, 6], [172, 1000, 268, 1090, 6], [480, 1000, 345, 1064, 6], [172, 1235, 895, 1235, 10, 1],
       [585, 510, 585, 925, 6], [585, 925, 660, 975, 6], [660, 975, 852, 975, 6], [715, 975, 715, 1235, 6]],
-    // balls = the snowballs of the event: x of the three lanes, y of the foot of the rock face and of the place where they burst, y of the cliffs they hop over
-    balls: { xs: [700, 775, 850], y0: 436, y1: 955, hops: [525, 635, 745, 855] },
+    // balls = the snowballs of the event: the stretch of the rock face they come loose from (x0 to x1, anywhere), y of its foot and of the place where they burst, y of the cliffs they hop over
+    balls: { x0: 625, x1: 900, y0: 436, y1: 955, hops: [525, 635, 745, 855] },
     klippen: [[585, 525, 875, 525], [735, 635, 966, 635], [585, 745, 875, 745], [735, 855, 966, 855]],
-    lake: [600, 1390, 270, 105],
+    // lake = [x, y, rx, ry south of the middle, r north of it (wider and flatter: up to the rock wall), the y of the foot of the wall]
+    lake: [600, 1390, 270, 105, 146, 1246],
     village: [140, 1290] },
   // The volcano: up the flank in a serpentine, along the crater rim (the short cut over a crust that breaks through, or the long way over a stone
   // bridge), down past the steam geyser (it throws you over a lava ditch, or you take the bend), through a lava tube, over the lava ford (one of
