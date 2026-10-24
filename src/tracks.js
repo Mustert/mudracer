@@ -264,14 +264,14 @@ const TRACK_DEFS = [
   // The ice (rev 2, plaene/EIS_REV2.md): a winter-sports mountain on a tall map. From the start line a chair lift carries every car up the left edge, on top the long
   // bob run (four legs, three hairpins), then the snow road to the ski jump, which throws the cars down into the pine wood (open powder-snow field), a funnel brings
   // them back onto the road, uphill to the serpentines (snowballs roll down them), down the right edge and over the big frozen lake, back to the start.
-  // lift = [x, y from, y to] of the lift line; bob = road from [x, y] to [x, y]; jump = lip [x, y] and the speed upwards; field = the polygon of the wood (powder snow, open);
+  // lift = [x, y of the valley station, y where the cars are set down] of the lift line, chess = [x, y] of the stump of the chess players; bob = road from [x, y] to [x, y]; jump = lip [x, y] and the speed upwards; field = the polygon of the wood (powder snow, open);
   // fence = [x, y0, y1] of the fence between the lift and the wood; blocks = solid massifs [x0, y0, x1, y1]; ridges = rock walls [x0, y0, x1, y1, half width];
   // lake = [x, y, rx, ry] (the road leads across it); village = the ski hut [x, y]
   { name: 'EIS', rev: 2, seed: 9, W: 1000, H: 1500, theme: 'eis', song: 'ice', events: [], wall: [], wash: null, ice: true,
     poly: [[72, 1130, 0], [72, 70, 55], [880, 70, 47], [880, 165, 47], [440, 165, 47], [440, 260, 47], [880, 260, 47], [880, 355, 47], [300, 355, 45], [300, 1120, 60], [520, 1120, 60],
       [520, 470, 50], [930, 470, 55], [930, 580, 55], [680, 580, 55], [680, 690, 55], [930, 690, 55], [930, 800, 55], [680, 800, 55], [680, 910, 55], [930, 910, 50], [930, 1400, 55], [72, 1400, 55]],
     mud: [], water: [], ponds: [],
-    lift: [72, 1105, 140], bob: [[150, 70], [700, 355]], jump: [300, 520, 230],
+    lift: [72, 1105, 180], chess: [134, 700], bob: [[150, 70], [700, 355]], jump: [300, 520, 230],
     field: [[172, 415], [480, 415], [480, 1000], [332, 1090], [268, 1090], [172, 1000]],
     fence: [172, 105, 1235],
     blocks: [[182, 114, 388, 318], [105, 0, 1000, 24], [922, 0, 1000, 410], [966, 425, 1000, 1500]],

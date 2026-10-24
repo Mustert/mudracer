@@ -1,18 +1,42 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { LAPS, TAU, VW, clamp, ctx } from './core.js';
-import { ell } from './gfx.js';
+import { LAPS, SS, TAU, VH, VW, clamp, ctx } from './core.js';
+import { R1, ell, text } from './gfx.js';
 import { dirHeld } from './input.js';
 import { addP } from './particles.js';
 import { cam } from './state.js';
 import { inView, near } from './trackfx.js';
-import { POWDER } from './icemap.js';
+import { LIFT, POWDER } from './icemap.js';
 
-// ---------- Eis Rev 2 while racing (plaene/EIS_REV2.md): powder snow behind the cars, a crooked landing after the ski jump snows the car in,
+// ---------- Eis Rev 2 while racing (the chair lift, the chess players,  (plaene/EIS_REV2.md): the chair lift (every car that reaches the line is hooked on at once, no waiting: its own chair the moment it arrives), powder snow behind the cars, a crooked landing after the ski jump snows the car in,
 // the progress through the wood and the serpentines (parts of the centre line lie close together), the polar light in the last lap. ----------
+
+// ======================================================= the chair lift
+
+// Every car that reaches the lift line is hooked on at once (c.iceLift, in the hook stuck: no physics, no steering, no collisions with other cars) and rides up
+// at a fixed speed, a little swaying; at the top it is set down on the road with the speed of the road. Nobody waits: all ride together, over each other if need be.
+const LIFT_V = 190, CABLE = 18;
+
+function liftIn(c) {
+  const I = G.T.ice, [lx, ly0] = I.lift;
+  c.iceLift = { s: 0, y0: Math.min(c.y, ly0), x0: c.x, off: clamp(c.x - lx, -14, 14), ph: c.seed * 9 };
+  c.vx = c.vy = 0; c.stun = 0; c.spin = 0; c.boost = 0;
+}
+
+function liftStep(c, dt) {
+  const T = G.T, I = T.ice, L = c.iceLift, [lx, , ly1] = I.lift;
+  L.s += LIFT_V * dt;
+  const u = clamp(L.s / 36, 0, 1), sway = Math.sin(G.time * 2.4 + L.ph) * 1.6 * u, xt = lx - CABLE + L.off * .3;
+  c.x = L.x0 + (xt - L.x0) * (u * u * (3 - 2 * u)) + sway; c.y = L.y0 - L.s; c.ang = -Math.PI / 2; c.vx = c.vy = 0; c.ghost = Math.max(c.ghost, .1);
+  c.idx = clamp(Math.round(L.y0 - L.s - T.path[0].y) / -2 | 0, 0, T.N - 1); c.off = Math.abs(c.x - lx); c.safe = c.idx;
+  if (c.y <= ly1) { // at the top: set down on the road, rolling
+    c.iceLift = null; c.ghost = 0; c.x = lx + ((c.seed * 7.3) % 1 - .5) * 30; c.y = ly1; c.vx = 0; c.vy = -105; c.surf = 1;
+  }
+}
 
 // the ground under a car: powder snow and steam of snow behind it
 function iceGround(c, j, sp, dt) {
+  if (c.surf === LIFT && !c.iceLift && !c.finished && c.y > G.T.ice.lift[1] - 60 && c.vy < 0) { liftIn(c); return; }
   // a crooked landing after the big jump (trackfx.js land() spins the car): it ploughs into the snow and is snowed in until it shakes free
   if (c.z > 0) c.iceAir = c.air; else if (c.iceAir) {
     if (c.iceAir > .7 && c.stun > 0) { c.snowT = 1.05; c.shake = 1; c.vx = c.vy = 0; c.stun = 0; c.spin = 0; if (!c.ai) SFX.crash(); else if (near(c.x, c.y) < 260) SFX.crunch(.4); }
@@ -46,9 +70,66 @@ function iceProgress(c, best) {
 
 // ======================================================= drawing
 
+// a car on the lift hangs high above the road: its shadow lies far down on the snow, two hangers run up from the roof to the wheel on the cable
+function drawLiftCar(c, F, rot, lv) {
+  if (!c.iceLift) return false;
+  const x = Math.round(c.x), y = Math.round(c.y), h = 15;
+  ctx.globalAlpha = .26; ctx.drawImage(F.shadow[rot], x - SS / 2 + 10, y - SS / 2 + 18); ctx.globalAlpha = 1;
+  ctx.drawImage(F.frames[lv][rot], x - SS / 2, y - SS / 2 - h);
+  ctx.fillStyle = '#3a3a40'; for (let k = 0; k < 9; k++) { ctx.fillRect(x - 7 + Math.round(k * .45), y - h - 6 - k, 1, 1); ctx.fillRect(x + 7 - Math.round(k * .45), y - h - 6 - k, 1, 1); }
+  R1(x - 2, y - h - 17, 5, 4, '#5a5a64'); R1(x - 1, y - h - 16, 3, 2, '#c9ced6');
+  return true;
+}
+
+// the cables of the lift with their empty chairs (up on the left cable, down on the right one), only in view
+function drawLiftCables() {
+  const I = G.T.ice, [lx, ly0, ly1] = I.lift;
+  if (cam.x > lx + 60 || cam.x + VW < lx - 60 || cam.y > ly0 + 30 || cam.y + VH < ly1 - 30) return;
+  const y0 = Math.max(ly1 - 8, cam.y - 20), y1 = Math.min(ly0 - 8, cam.y + VH + 20);
+  for (const s of [-1, 1]) {
+    const x = lx + s * CABLE;
+    ctx.globalAlpha = .18; ctx.fillStyle = '#304860'; ctx.fillRect(x + 8, y0 + 18, 1, y1 - y0);
+    ctx.globalAlpha = 1; ctx.fillStyle = '#4a4a54'; ctx.fillRect(x, y0, 1, y1 - y0);
+  }
+  const gap = 140, ph = (G.time * LIFT_V) % gap;
+  for (let k = -1; k * gap < ly0 - ly1 + gap; k++) for (const s of [-1, 1]) {
+    const y = s < 0 ? ly0 - 8 - (k * gap + ph) : ly1 + (k * gap + ph), x = lx + s * CABLE;
+    if (y < ly1 - 8 || y > ly0 - 8 || y < cam.y - 30 || y > cam.y + VH + 30) continue;
+    if (s < 0 && G.cars.some(c => c.iceLift && Math.abs(c.y - y) < 30)) continue;
+    ctx.globalAlpha = .2; R1(x + 8, y + 16, 8, 10, '#304860'); ctx.globalAlpha = 1;
+    R1(x, y - 6, 1, 6, '#4a4a54'); R1(x - 4, y, 9, 8, '#1b120c'); R1(x - 3, y + 1, 7, 6, ['#d83a2c', '#2f6fd8', '#f2c230', '#3aa845'][(k + 4 + (s > 0 ? 2 : 0)) & 3]); R1(x - 3, y + 1, 7, 1, '#9fd6ff');
+  }
+}
+
+// the chess players under the lift: Santa Claus (left) and the Grinch (right) at a stump. Every 2.4 s one of them moves a piece, every fourth move the
+// Grinch loses his temper (arms up, shaking), Santa Claus strokes his beard
+function drawChess() {
+  const C = G.T.ice.chess; if (!C || !inView(C[0], C[1], 40)) return;
+  const [cx, cy] = C, t = G.time / 2.4, k = Math.floor(t), u = t - k, santa = k % 2 === 0, rage = k % 4 === 3 && u > .35 && !santa;
+  const body = (x, y, col, dark, hat, f, armsUp, sh) => {
+    x = Math.round(x + sh); y = Math.round(y - (armsUp ? 1 : 0));
+    ctx.globalAlpha = .25; ell(x + 3, y + 4, 8, 6, '#000'); ctx.globalAlpha = 1;
+    ell(x, y, 8, 6, dark); ell(x, y - 1, 7, 5, col);
+    ell(x + f * 2, y - 1, 4, 4, hat === 'santa' ? '#f1d2b4' : '#7cc050'); // the head
+    if (hat === 'santa') { R1(x + f * 2 - 4, y - 5, 8, 3, '#d83a2c'); R1(x + f * 2 + f * 3, y - 6, 2, 2, '#ffffff'); R1(x + f * 2 - 2, y + 1, 5, 2, '#ffffff'); }
+    else { R1(x + f * 2 - 4, y - 5, 8, 2, '#3e8a2c'); R1(x + f * 2 - 1, y - 1, 1, 1, '#d83a2c'); R1(x + f * 2 + 1, y - 1, 1, 1, '#d83a2c'); }
+    if (armsUp) { R1(x - 7, y - 9, 2, 5, col); R1(x + 6, y - 9, 2, 5, col); }
+  };
+  const mv = u < .4 ? Math.sin(u / .4 * Math.PI) : 0;
+  body(cx - 22, cy, '#d83a2c', '#8a1f16', 'santa', 1, false, 0);
+  body(cx + 22, cy, '#4c9a32', '#2e6020', 'grinch', -1, rage, rage ? Math.sin(G.time * 40) * 1.2 : 0);
+  // the arm of the mover reaches for the board and a piece slides
+  const px = santa ? cx - 22 + 8 : cx + 22 - 8, qx = cx + (santa ? -4 : 4) + (santa ? 1 : -1) * mv * 6;
+  if (mv > 0) { R1(Math.round(px + (qx - px) * mv), cy - 1, 4, 2, santa ? '#d83a2c' : '#4c9a32'); }
+  R1(Math.round(qx) - 1, cy - 1, 3, 3, santa ? '#ffffff' : '#222');
+  if (santa && u > .5 && u < .9) R1(cx - 20, cy + 2, 4, 3, '#ffffff'); // strokes his beard
+  if (rage) text('!#*?', cx + 22, cy - 18, 6, '#ff6b6b', 'center');
+}
+
 // above the cars: the snowed-in lump over a car (the shaking shows while it is held), the polar light in the last lap
 function drawIceAbove() {
   const T = G.T, I = T.ice;
+  drawLiftCables();
   for (const c of G.cars) if (c.snowT > 0 && inView(c.x, c.y, 30)) {
     const X = Math.round(c.x), Y = Math.round(c.y), w = Math.round(Math.sin(G.time * 40) * (c.shake || 0) * 2);
     ell(X + w, Y, 16, 12, '#9fb2c6'); ell(X + w, Y - 1, 15, 11, '#eef4fa'); ell(X - 4 + w, Y - 4, 8, 5, '#ffffff');
@@ -89,6 +170,10 @@ function iceSurf(c) { return c.surf === POWDER ? [.9, 6, .9] : null; }
 export const iceHooks = {
   init(T) { T.ev.obst = []; },
   surf: iceSurf, progress: iceProgress, wander: .5,
-  stuck(c, dt, racing) { if (!(c.snowT > 0)) return false; iceStuck(c, dt, racing); return true; },
-  ground: iceGround, drawAbove: drawIceAbove,
+  stuck(c, dt, racing) {
+    if (c.iceLift) { liftStep(c, dt); return true; }
+    if (!(c.snowT > 0)) return false; iceStuck(c, dt, racing); return true;
+  },
+  noRespawn: t => t === LIFT, drawCar: drawLiftCar,
+  ground: iceGround, drawGround: drawChess, drawAbove: drawIceAbove,
 };

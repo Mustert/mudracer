@@ -3,11 +3,11 @@ import { nearestIdx, paintTools, startLine } from './bau.js';
 
 // ---------- Eis Rev 2: the winter-sports mountain (plaene/EIS_REV2.md) ----------
 // Terrain: 1 packed snow (the road), 0 snow beside the road, 2 deep snow (like mud, it makes the car white), 12 sheet ice (the bob run, the lake),
-// 71 powder snow (the open field in the pine wood, a little slower than the road, it does not make the car white).
+// 70 the line of the chair lift (road under the cables; a car that reaches it is hooked on, ice.js), 71 powder snow (the open field in the pine wood, a little slower than the road, it does not make the car white).
 // The map is tall (1000 x 1500): the lift on the left edge, the bob run on top, the wood, the serpentines on the right, the lake at the bottom.
 // Nothing can be cut off: the fence between lift and wood, solid massifs at the edge, ridges and cliffs between the serpentines (CLAUDE.md, principle 4).
 
-export const POWDER = 71;
+export const LIFT = 70, POWDER = 71;
 
 const K = Object.fromEntries(Object.entries({
   snow: '#eef4fa', snow1: '#e3ebf4', snow2: '#f9fbfe', snowB: '#cddbea', snowD: '#b7c8da', glit: '#ffffff',
@@ -51,6 +51,12 @@ export function* iceTerrain(S) {
     if (ter[j] === 0 || (ter[j] === 1 && near[j] > iA && near[j] < iB)) ter[j] = POWDER;
   }
   yield;
+  // the lift line: the road under the cables, from just after the line up to the top station
+  const [lx0, ly0, ly1] = def.lift, lA = nearestIdx(path, lx0, ly0), lB = nearestIdx(path, lx0, ly1 + 22);
+  for (let y = Math.max(0, ly1 - HALF); y <= Math.min(MH - 1, ly0 + HALF); y++) for (let x = Math.max(0, lx0 - HALF - 2); x <= Math.min(MW - 1, lx0 + HALF + 2); x++) {
+    const j = y * MW + x; if (ter[j] === 1 && near[j] >= lA && near[j] <= lB) ter[j] = LIFT;
+  }
+  yield;
   // the bob run: sheet ice on the road
   const seg = ([a, b]) => range(N, nearestIdx(path, a[0], a[1]), nearestIdx(path, b[0], b[1]));
   const bob = seg(def.bob), [bx0, by0, bx1, by1] = boxOf(path, bob, HALF + 10);
@@ -66,6 +72,55 @@ export function* iceTerrain(S) {
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, sd, r, RT }
+// a snowy gable roof seen from above (ridge along the middle, beams at the eaves) on the top layer; solid below it when the walls are asked for
+function roof(S, x0, y0, w, h) {
+  const { MW, setT, wallMask } = S;
+  for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+    const dy = y - y0, dx = x - x0, ridge = Math.abs(dy - h / 2);
+    setT(x, y, dx === 0 || dx === w - 1 || dy === 0 || dy === h - 1 ? K.woodD : ridge < 1 ? K.roofD : dy < h / 2 ? K.roofS : (dx % 6 === 0 ? K.roofD : [228, 236, 244]));
+    wallMask[y * MW + x] = 1;
+  }
+}
+
+// the chair lift: lift = [x, y of the valley station, y of the top station]; chess = [x, y] of the stump with the board
+function paintLift(S, lift, chess) {
+  const { MW, setT, walls, wallMask } = S, { px, dk } = paintTools(S), [lx, ly0, ly1] = lift;
+  // masts beside the line every 150 px, a dark cross arm over the road with two wheels for the cables (the cables themselves are drawn while racing)
+  for (let y = ly0 - 120; y > ly1 + 60; y -= 150) {
+    for (const s of [-1, 1]) { walls.push({ x: lx + s * (HALF + 5), y, r: 3 }); for (let dy = 3; dy < 8; dy++) for (let dx = 2; dx < 9; dx++) dk(lx + s * (HALF + 5) + dx, y + dy, .8); }
+    for (let x = lx - HALF - 7; x <= lx + HALF + 7; x++) for (let k = 0; k < 3; k++) setT(x, y - 1 + k, k === 0 ? K.rockL : k === 1 ? K.rockD : K.rockDD);
+    for (const cx of [lx - 18, lx + 18]) for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (dx * dx + dy * dy <= 9) setT(cx + dx, y - 2 + dy, dx * dx + dy * dy < 3 ? K.rockL : K.rockDD);
+  }
+  // the two stations: a roof the cars drive under (they are on the cables there); the valley station just behind the start line, the top station at the end
+  for (const y of [ly0 - 21, ly1 + 4]) {
+    for (let yy = y + 3; yy < y + 31; yy++) for (let xx = lx - 36 + 5; xx < lx + 36 + 5; xx++) dk(xx, yy, .8);
+    roof(S, lx - 36, y, 72, 24);
+    for (const s of [-1, 1]) for (const dy of [2, 22]) walls.push({ x: lx + s * (HALF + 5), y: y + dy, r: 4 });
+    for (let k = 0; k < 6; k++) setT(lx - 30 + k * 12, y + 24, k % 2 ? K.win : K.winD);
+  }
+  // chess under the lift: a tree stump with a board, Santa Claus and the Grinch sit at it (they are drawn while racing), a reindeer looks on
+  if (chess) {
+    const [cx, cy] = chess;
+    walls.push({ x: cx, y: cy, r: 11 });
+    for (let dy = -14; dy <= 14; dy++) for (let dx = -14; dx <= 14; dx++) {
+      const d = Math.hypot(dx, dy); if (d > 14) continue;
+      if (d > 9 && dx + dy > 0) dk(cx + dx + 3, cy + dy + 4, .8);
+      if (d <= 12) px(cx + dx, cy + dy, d > 11 ? K.woodD : Math.round(d) % 3 === 0 ? K.woodL : K.wood);
+    }
+    for (let sy = 0; sy < 8; sy++) for (let sx = 0; sx < 8; sx++) for (let q = 0; q < 2; q++) for (let r = 0; r < 2; r++) px(cx - 8 + sx * 2 + q, cy - 8 + sy * 2 + r, (sx + sy) & 1 ? [58, 40, 28] : [244, 232, 205]);
+    for (let a = -9; a <= 9; a++) { px(cx + a, cy - 9, K.woodD); px(cx + a, cy + 8, K.woodD); px(cx - 9, cy + a, K.woodD); px(cx + 8, cy + a, K.woodD); }
+    // the reindeer: brown body, head with antlers, red nose
+    const rx = cx + 12, ry = cy + 34;
+    walls.push({ x: rx, y: ry, r: 6 });
+    for (let dy = -5; dy <= 5; dy++) for (let dx = -8; dx <= 8; dx++) if ((dx / 8) ** 2 + (dy / 5) ** 2 <= 1) px(rx + dx, ry + dy, dy < -2 ? [140, 98, 62] : dy > 2 ? [92, 62, 38] : [118, 80, 50]);
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (dx * dx + dy * dy <= 9) px(rx - 11 + dx, ry + dy, [118, 80, 50]);
+    px(rx - 14, ry, K.red); px(rx - 13, ry, K.red);
+    for (const [dx, dy] of [[-12, -4], [-11, -5], [-10, -6], [-12, 4], [-11, 5], [-10, 6], [-13, -5], [-13, 5]]) px(rx + dx, ry + dy, [200, 170, 120]);
+    for (let k = 0; k < 4; k++) { px(rx - 5 + k * 3, ry + 5, [60, 40, 26]); px(rx - 5 + k * 3, ry + 6, [60, 40, 26]); }
+    wallMask[cy * MW + cx] = 1;
+  }
+}
+
 export function* paintIce(S) {
   const { MW, MH, def, set, setT, path, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, sd, RT } = S, A = MW * MH;
   const { px, dk, solid } = paintTools(S);
@@ -90,7 +145,7 @@ export function* paintIce(S) {
       // powder snow: soft and bright, the old ski tracks as faint curves
       const trk = Math.abs(Math.sin(x * .045 + Math.sin(y * .02) * 3)) > .995;
       c = trk ? K.powT : v < .25 ? K.pow1 : v > .72 ? K.pow2 : K.pow; if (h < .005) c = K.glit;
-    } else if (t === 1) {
+    } else if (t === 1 || t === LIFT) {
       c = v < .33 ? K.road1 : v > .7 ? K.road2 : K.road;
       if (dist[j] > HALF - 3) c = K.roadE; else if (Math.abs(dist[j] - 13) < 1.5 && h > .3) c = K.rut;
     } else if (t === 12) {
@@ -184,6 +239,9 @@ export function* paintIce(S) {
     for (let y = fy0; y <= fy1; y++) solid(fx, y, 3); }
 
   yield;
+  // ----- the chair lift: masts with a cross arm over the line (top layer), the two stations, the chess players under the line -----
+  paintLift(S, def.lift, def.chess);
+  yield;
   // ----- the village at the start: a ski hut with warm windows (roof on the top layer), snowmen -----
   const snowman = (x, y) => {
     walls.push({ x, y, r: 5 }); solid(x, y, 7);
@@ -212,5 +270,5 @@ export function* paintIce(S) {
   const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= MW - 2 || Y >= MH - 2) return false; const j = Y * MW + X; if (ter[j] !== 0 || dist[j] < HALF + 10 || wallMask[j] || shore[j]) return false; } return true; };
   for (let k = 0, tries = 0; k < 6 && tries < 800; tries++) { const x = 8 + (S.r() * (MW - 16) | 0), y = 8 + (S.r() * (MH - 16) | 0); if (okOff(x, y, 9)) { snowman(x, y); k++; } }
 
-  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, lakeM: RT.lakeM, fieldM: RT.fieldM, lake: def.lake, lift: def.lift };
+  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, lakeM: RT.lakeM, fieldM: RT.fieldM, lake: def.lake, lift: def.lift, chess: def.chess };
 }
