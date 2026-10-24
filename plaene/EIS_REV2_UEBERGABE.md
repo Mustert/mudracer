@@ -6,7 +6,8 @@ Zum Weiterarbeiten in einer neuen Session: erst `plaene/EIS_REV2.md` (Plan, Arbe
 
 - **E1 erledigt** (Commit `9037b30`): Karte 1000 × 1500, Bauzeit ~1 s, Runde ~56 s (ohne Lift), 10/10 im Ziel (LEICHT und SCHWER), Start gerade.
 - **E2 erledigt** (Sessellift).
-- **E3 bis E8 offen** (Reihenfolge laut Plan). Nichts publisht, `ROADMAP.md` und Obsidian-Doku erst in E8 (Plan Abschnitt „Arbeitspakete“).
+- **E3 erledigt** (Bobbahn: `def.slopes = [[150, 70, 700, 355, 40]]`, Eis läuft 40 Indizes (80 px) über die Bande hinaus).
+- **E4 bis E8 offen** (Reihenfolge laut Plan). Nichts publisht, `ROADMAP.md` und Obsidian-Doku erst in E8 (Plan Abschnitt „Arbeitspakete“).
 
 ## Was E1 festgelegt hat (nicht im Plan)
 

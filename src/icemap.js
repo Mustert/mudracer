@@ -59,9 +59,10 @@ export function* iceTerrain(S) {
   yield;
   // the bob run: sheet ice on the road
   const seg = ([a, b]) => range(N, nearestIdx(path, a[0], a[1]), nearestIdx(path, b[0], b[1]));
-  const bob = seg(def.bob), [bx0, by0, bx1, by1] = boxOf(path, bob, HALF + 10);
+  // (the ice runs on 80 px past the last wall: the run-out where the bob run ends on the snow road)
+  const bob = seg(def.bob), ice = range(N, nearestIdx(path, def.bob[0][0], def.bob[0][1]), (nearestIdx(path, def.bob[1][0], def.bob[1][1]) + 40) % N), [bx0, by0, bx1, by1] = boxOf(path, ice, HALF + 10);
   for (let y = Math.max(0, by0); y <= Math.min(MH - 1, by1); y++) for (let x = Math.max(0, bx0); x <= Math.min(MW - 1, bx1); x++) {
-    const j = y * MW + x; if (dist[j] < HALF && bob[near[j]] && ter[j] === 1) ter[j] = 12;
+    const j = y * MW + x; if (dist[j] < HALF && ice[near[j]] && ter[j] === 1) ter[j] = 12;
   }
   yield;
   // the ski jump: one big ramp across the whole road
