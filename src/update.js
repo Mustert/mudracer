@@ -97,7 +97,7 @@ function updateRace(dt) {
         if (G.state === 'race' && !c.finished) {
           const moved = c.lx === undefined ? 99 : Math.hypot(c.x - c.lx, c.y - c.ly) / dt;
           if (c.rev > 0) { c.rev -= dt; thr = -1; }
-          else if (Math.min(moved, Math.hypot(c.vx, c.vy)) < 12 && !(c.boxT > 0)) { c.stuckT = (c.stuckT || 0) + dt; if (c.stuckT > 1.2) { c.rev = .9; c.stuckT = 0; } }
+          else if (Math.min(moved, Math.hypot(c.vx, c.vy)) < 12 && !(c.boxT > 0) && !(c.pitting && c.pit)) { c.stuckT = (c.stuckT || 0) + dt; if (c.stuckT > 1.2) { c.rev = .9; c.stuckT = 0; } }
           else c.stuckT = 0;
         }
         c.lx = c.x; c.ly = c.y;

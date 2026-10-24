@@ -77,9 +77,9 @@ export function* ringTerrain(S) {
     });
     for (let j = 0; j < A; j++) if (pitD[j] < P.half) { if (dist[j] >= HALF) pitMask[j] = 1; if (ter[j] === 0 || ter[j] === 7) ter[j] = 1; }
     // where the pit lane forks off and where it comes back, the wedge between the two roads is asphalt with white hatching
-    // (only beside the lane itself, not round its two round ends: those left patches of asphalt on the grass, 1S7-7)
-    const last = pts.length - 1;
-    for (let j = 0; j < A; j++) if (ter[j] === 0 && dist[j] < HALF + 14 && pitD[j] < P.half + 14 && pitK[j] > 0 && pitK[j] < last) { ter[j] = 1; hatch[j] = 1; }
+    // (only where it forks off, beside the lane itself and not round its round end; at the exit the grass reaches up to the lane, 1S7-7)
+    const half = (pts.length - 1) / 2;
+    for (let j = 0; j < A; j++) if (ter[j] === 0 && dist[j] < HALF + 14 && pitD[j] < P.half + 14 && pitK[j] > 0 && pitK[j] < half) { ter[j] = 1; hatch[j] = 1; }
     pit = { pts, half: P.half, ie: nearestIdx(path, pts[0].x, pts[0].y), box: P.box, wall: P.wall, garage: P.garage };
   }
   return { kc, cross, kerb, pitMask, pitD, pitK, pit, hatch };
@@ -187,6 +187,10 @@ export function* paintRing(S) {
     let L = HALF + 18;
     if (cross && Math.hypot(x - cross.x, y - cross.y) < 115) L = HALF + 7;
     if (pit && pit.wall && Math.abs(x - pit.wall[0]) < 10 && y >= pit.wall[1] - 3 && y <= pit.wall[2] + 3) continue; // the pit wall does that job
+    if (pit && pitD[j] < pit.half + 22 && dist[j] < HALF + 26) { // (no splinter of barrier in the narrow strip of grass between the track and the lane, on its left)
+      const k = Math.min(RT.pitK[j], pit.pts.length - 2), a = pit.pts[k], b = pit.pts[k + 1];
+      if ((b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x) < 0) continue;
+    }
     for (const [gx, gy, gr] of def.gravel || []) if (Math.hypot(x - gx, y - gy) < gr + 8) L = HALF + 33;
     if (dist[j] >= L && (!pit || pitD[j] >= pit.half + 9)) bar[j] = 1;
   }

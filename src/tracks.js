@@ -255,7 +255,7 @@ const TRACK_DEFS = [
     forks: [
       // fork 1: the upper branch has the shaft (ramp, then the jump), the lower one is pitch dark (no torches, no glow on the floor): safe but you see nothing
       { from: [1230, 580], to: [880, 580], half: 28, jump: 'up', up: [[1230, 580, 0], [1180, 528, 28], [930, 528, 28], [880, 580, 0]], down: [[1230, 580, 0], [1180, 632, 28], [930, 632, 28], [880, 580, 0]],
-        shaft: { lip: 1130, w: 40 }, dark: [955, 1155] },
+        shaft: { lip: 1130, w: 40 }, dark: [955, 1155], pillars: [1055] }, // (pillars = x of the columns in the middle of the dark branch: slalom)
       // fork 2: the upper branch is safe but full of scarab swarms (x of each swarm), the lower one has the shaft
       { from: [620, 580], to: [270, 580], half: 28, jump: 'down', up: [[620, 580, 0], [570, 528, 28], [320, 528, 28], [270, 580, 0]], down: [[620, 580, 0], [570, 632, 28], [320, 632, 28], [270, 580, 0]],
         shaft: { lip: 520, w: 40 }, bugs: [525, 465, 405, 350] },

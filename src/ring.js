@@ -93,7 +93,8 @@ function ringGround(c, j, sp, dt) {
   c.pit = pit;
   if (!pit) c.boxDone = false;
   if (B && pit && !c.boxDone && !boxShut(c) && Math.abs(c.y - B.y) < 6 && !G.cars.some(o => o.boxT > 0)) {
-    c.boxDone = true; c.boxT = STOP;
+    // (a computer car is quicker when others queue behind it)
+    c.boxDone = true; c.boxT = c.ai && G.cars.some(o => o !== c && o.pitting && !o.boxDone) ? STOP * .6 : STOP;
     if (!c.ai) { c.msg = 'BOXENSTOPP!'; c.msgT = STOP; }
     if (near(c.x, c.y) < 300) { SFX.wrench(c.ai ? .4 : 1); setTimeout(() => SFX.wrench(c.ai ? .3 : .8), 380); }
   }
@@ -115,10 +116,11 @@ function ringPitTarget(c) {
   if (c.pitting && boxShut(c) && !c.pit) c.pitting = false; // the box closed before the car got there
   if (!c.pitting) {
     if (c.finished || c.dirt < .5 || G.state !== 'race' || boxShut(c)) return null;
-    // one at a time: there is no way past a car standing in the box, so nobody turns in while another one is on its way to it
-    if (G.cars.some(o => o !== c && ((o.pitting && !o.boxDone) || o.boxT > 0))) return null;
+    // there is no way past a car standing in the box: the next ones queue behind it in the lane (they wait, update.js does not count that as stuck).
+    // At most six on their way to the box at once, so the queue stays short (before: only one, so most dirty cars drove past)
+    if (G.cars.filter(o => o !== c && o.pitting && !o.boxDone).length >= 6) return null;
     const ahead = (R.pit.ie - c.idx + N) % N;
-    if (ahead < 8 || ahead > 50) return null;
+    if (ahead < 8 || ahead > 70) return null;
     c.pitting = true; c.pitK = 0;
   }
   let k = c.pitK, bd = 1e9;
@@ -135,7 +137,8 @@ function ringPitTarget(c) {
 }
 
 // a computer car on its way into the pits lifts off, so it makes the bend into the lane
-const ringThrottle = (c, thr) => c.pitting && !c.boxDone ? Math.min(thr, .55) : thr;
+// (coming in fast it rolls first, so it does not miss the bend and give up)
+const ringThrottle = (c, thr) => c.pitting && !c.boxDone ? (Math.hypot(c.vx, c.vy) > 80 ? 0 : Math.min(thr, .55)) : thr;
 
 // the ghost of the time trial has no place on the lap: up on the bridge is the one that drives the way of the bridge
 export function ghostUp(gh) {
@@ -383,7 +386,7 @@ function drawRingAbove() {
   const R = G.T.ring; if (!R) return;
   drawCrew(R);
   const p = G.T.path[0], n = G.T.nrm[0], lit = G.state === 'countdown' ? Math.min(5, Math.floor(G.stateTime / .5)) : 0;
-  const ax = p.x - n.x * (HALF + 9), ay = p.y - n.y * (HALF + 9), L = 2 * (HALF + 9);
+  const ax = p.x - n.x * (HALF + 3), ay = p.y - n.y * (HALF + 3), L = 2 * (HALF + 3); // (narrow: it does not reach over the pit lane)
   ctx.globalAlpha = .25; for (let s = 0; s <= L; s += 1) R1(Math.round(ax + n.x * s) + 6, Math.round(ay + n.y * s) + 8, 2, 2, '#000'); ctx.globalAlpha = 1;
   for (let s = 0; s <= L; s += 1) { const x = Math.round(ax + n.x * s), y = Math.round(ay + n.y * s); R1(x - 1, y - 2, 3, 4, '#1b120c'); R1(x, y - 1, 1, 2, '#6b6f78'); }
   for (const s of [0, L]) { const x = Math.round(ax + n.x * s), y = Math.round(ay + n.y * s); R1(x - 3, y - 3, 7, 7, '#1b120c'); R1(x - 2, y - 2, 5, 5, '#8d939d'); }

@@ -13,6 +13,7 @@ import { stampLine } from './volcanomap.js';
 
 export const RALLY = 60;
 const DUNE = 55; // (half the width of a dune across the line)
+const PILLAR = 7; // (radius of a column in the dark branch of the pyramid)
 
 const K = Object.fromEntries(Object.entries({
   sand: '#ecca8a', sand1: '#e2bf7c', sand2: '#f4d69e', sandD: '#d2ac6c', sandL: '#fae4b4', peb: '#a07a48', pebL: '#f2dcb0',
@@ -48,6 +49,7 @@ export function* desertTerrain(S) {
   }
   yield;
   // the forks: the stretch of the centre line between the entry and the exit is a wall in the middle; the two branches are narrow roads of their own
+  const pillars = [];
   const forks = (def.forks || []).map(F => {
     const i1 = nearestIdx(path, F.from[0], F.from[1]), i2 = nearestIdx(path, F.to[0], F.to[1]), f = { ...F, i1, i2, len: (i2 - i1 + N) % N };
     for (let q = 0; q < f.len; q++) {
@@ -57,6 +59,17 @@ export function* desertTerrain(S) {
       }
     }
     for (const side of ['up', 'down']) f[side + 'P'] = stampLine(F[side], F.half, j => { ter[j] = 1; alt[j] = 1; }, MW, MH);
+    // columns in the middle of the safe branch (slalom in the dark): the branch widens softly round each one, the column itself is solid (its edge
+    // becomes wall like every edge of the road inside, see paintDesert)
+    for (const cx of F.pillars || []) {
+      const cy = F[F.jump === 'up' ? 'down' : 'up'][1][1];
+      for (let x = cx - 70; x <= cx + 70; x++) {
+        const w = F.half + 20 * smooth(1 - Math.abs(x - cx) / 70);
+        for (let y = Math.floor(cy - w); y <= cy + w; y++) { ter[y * MW + x] = 1; alt[y * MW + x] = 1; }
+      }
+      for (let y = cy - 8; y <= cy + 8; y++) for (let x = cx - 8; x <= cx + 8; x++) if (Math.hypot(x + .5 - cx, y + .5 - cy) < PILLAR) ter[y * MW + x] = 0;
+      pillars.push({ x: cx, y: cy, r: PILLAR });
+    }
     // the shaft in the jump branch: no ground over the whole width, a few steps beyond the lip (the cars come from the east)
     if (F.shaft) {
       const cy = F[F.jump][1][1], sx1 = F.shaft.lip - 6, sx0 = sx1 - F.shaft.w;
@@ -109,7 +122,7 @@ export function* desertTerrain(S) {
   const signs = (def.signs || []).map((x, k) => { const o = onLine(x, k % 2 ? 88 : -88); return { x: Math.round(o.x), y: Math.round(o.y) }; });
   const quick = (def.quick || []).map(([x, off, r], k) => { const o = onLine(x, off); return { x: Math.round(o.x), y: Math.round(o.y), r, k }; }); // (the fields of the event: firm until it opens them)
   const bugs = forks.flatMap(f => (f.bugs || []).map(x => ({ x, y: f.up[1][1] })));
-  return { alt, forks, bay, iA, iB, soft, oases, jumps, blocks, cacti, signs, quick, bugs, shafts: forks.filter(f => f.shaftR).map(f => f.shaftR), obst: [] };
+  return { alt, forks, bay, iA, iB, soft, oases, jumps, blocks, cacti, signs, quick, bugs, shafts: forks.filter(f => f.shaftR).map(f => f.shaftR), pillars, obst: pillars.map(p => ({ ...p })) };
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, sd, th, r, watPix, RT }
@@ -159,6 +172,11 @@ export function* paintDesert(S) {
   }
   yield;
   startLine(S);
+  // the columns in the dark branch: round sandstone, lit from the top left, a dark rim (solid; you only see them in your lamps)
+  for (const P of RT.pillars) for (let dy = -PILLAR; dy <= PILLAR; dy++) for (let dx = -PILLAR; dx <= PILLAR; dx++) {
+    const dd = Math.hypot(dx + .5, dy + .5); if (dd >= PILLAR) continue;
+    px(P.x + dx, P.y + dy, dd > PILLAR - 1.5 ? K.stDD : dx + dy < -4 ? K.stL : dx + dy > 4 ? K.stD : K.st);
+  }
 
   yield;
   // ----- the dunes across the field: bright where you drive up, the crest, a shadow behind it (the ends fade out into the field) -----
