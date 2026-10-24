@@ -323,10 +323,11 @@ export function drawRace() {
   for (const c of order) if ((!deck || c.lvl !== 1) && !air(c)) drawCar(c);
   if (deck) { ctx.drawImage(deck.c, deck.x, deck.y); if (ghUp) drawGhost(); for (const c of order) if (c.lvl === 1 && !air(c)) drawCar(c); }
   if (R) for (const tr of R.trains) if (tr.phase === 'run') drawTrain(tr);
-  for (const c of order) if (air(c)) drawCar(c);
+  for (const c of order) if (air(c) && !H.airTop?.(c)) drawCar(c);
   drawParticles();
   drawSmoke();
   if (G.T.run) drawRunLayer('top', cx, cy, cx, cy); else ctx.drawImage(G.T.top, cx, cy, VW, VH, cx, cy, VW, VH);
+  for (const c of order) if (air(c) && H.airTop?.(c)) drawCar(c); // (high above the pine crowns of the ice track)
   if (R) drawCrossings(R);
   drawWindmill();
   const dark = G.T.th.dark;

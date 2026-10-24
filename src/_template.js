@@ -26,6 +26,7 @@
  * @property {(c: any) => void} [respawn] update.js respawn, after the car is set back on the road (instead of the splash)
  * @property {(c: any, F: any, rot: number, lv: number) => boolean} [drawCar] draw.js drawCar, first: true = the track drew the car itself
  * @property {(c: any, F: any, lv: number) => boolean} [drawFall] draw.js drawCar, while the car falls (c.fallKind): true = drawn
+ * @property {(c: any) => boolean} [airTop] draw.js drawRace: true = this car in the air is drawn over the top layer (the crowns of trees), not under it
  * @property {() => void} [drawGround] draw.js drawRace: under the cars (in world coordinates)
  * @property {(cx: number, cy: number) => void} [drawAbove] draw.js drawRace: over the cars and the top layer (world coordinates; cx, cy = camera)
  * @property {(cx: number, cy: number) => void} [drawSky] draw.js drawRace: on the screen, after night and rain (weather, darkness, messages)
@@ -50,6 +51,7 @@ export const TEMPLATE_HOOKS = {
   respawn(c) {},
   drawCar(c, F, rot, lv) { return false; },
   drawFall(c, F, lv) { return false; },
+  airTop(c) { return false; },
   drawGround() {},
   drawAbove(cx, cy) {},
   drawSky(cx, cy) {},

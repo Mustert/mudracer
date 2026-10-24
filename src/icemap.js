@@ -1,4 +1,4 @@
-import { HALF, hash, hex, vnoise } from './core.js';
+import { HALF, clamp, hash, hex, rng, vnoise } from './core.js';
 import { nearestIdx, paintTools, startLine } from './bau.js';
 
 // ---------- Eis Rev 2: the winter-sports mountain (plaene/EIS_REV2.md) ----------
@@ -28,6 +28,9 @@ function boxOf(path, R, pad) {
   return [Math.floor(x0 - pad), Math.floor(y0 - pad), Math.ceil(x1 + pad), Math.ceil(y1 + pad)];
 }
 
+// the distance of a point from the outline of a polygon
+const edgeDist = (P, x, y) => { let m = 1e9; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [ax, ay] = P[j], [bx, by] = P[i], dx = bx - ax, dy = by - ay, t = clamp(((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy), 0, 1); m = Math.min(m, Math.hypot(x - ax - dx * t, y - ay - dy * t)); } return m; };
+
 const inPoly = (P, x, y) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > y) !== (P[j][1] > y) && x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) c = !c; return c; };
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N }
@@ -51,6 +54,31 @@ export function* iceTerrain(S) {
     if (ter[j] === 0 || (ter[j] === 1 && near[j] > iA && near[j] < iB)) ter[j] = POWDER;
   }
   yield;
+  // the pines of the wood: spread out with a minimum distance (Poisson discs, 50 px), never on the lane along the centre line (it stays free, 42 px to each side), never at the
+  // fence, the walls or the funnel. The trees in the first part of the wood (the landing of the jump) are flown over (ground: the cars in the air ignore them, update.js)
+  const R = rng(def.seed * 77 + 3), trees = [], cellN = 50 / Math.SQRT2, gw = Math.ceil((fx1 - fx0) / cellN) + 1, grid = new Int16Array(gw * (Math.ceil((fy1 - fy0) / cellN) + 1)).fill(-1);
+  for (let k = 0; k < 9000; k++) {
+    const x = fx0 + R() * (fx1 - fx0), y = fy0 + R() * (fy1 - fy0), j = (y | 0) * MW + (x | 0);
+    if (!fieldM[j] || dist[j] < 42 || edgeDist(F, x, y) < 26) continue;
+    const gx = ((x - fx0) / cellN) | 0, gy = ((y - fy0) / cellN) | 0; let ok = true;
+    for (let qy = Math.max(0, gy - 2); qy <= gy + 2 && ok; qy++) for (let qx = Math.max(0, gx - 2); qx <= gx + 2; qx++) { const q = grid[qy * gw + qx]; if (q >= 0 && Math.hypot(trees[q].x - x, trees[q].y - y) < 50) { ok = false; break; } }
+    if (!ok) continue;
+    grid[gy * gw + gx] = trees.length; trees.push({ x: Math.round(x), y: Math.round(y), r: 7, ground: y < 800 });
+  }
+  yield;
+  // deep snow: hollows on the line with a clean lane beside them (a shorter line through snow against a longer clean one), and drifts in the lee of some pines
+  // (wind from the west: the drift lies to the east and the south-east of the tree)
+  const deepM = new Uint8Array(A), blob = (cx, cy, ex, ey, a, k) => {
+    const R2 = Math.ceil(Math.max(ex, ey) * 1.3) + 2, ca = Math.cos(a), sa = Math.sin(a);
+    for (let y = Math.max(0, Math.floor(cy - R2)); y <= Math.min(MH - 1, cy + R2); y++) for (let x = Math.max(0, Math.floor(cx - R2)); x <= Math.min(MW - 1, cx + R2); x++) {
+      const j = y * MW + x; if (ter[j] !== POWDER) continue;
+      const dx = x + .5 - cx, dy = y + .5 - cy, e = ((dx * ca + dy * sa) / ex) ** 2 + ((-dx * sa + dy * ca) / ey) ** 2;
+      if (e < .8 + .4 * vnoise(x * .1, y * .1, 80 + k) && !trees.some(t => (t.x - x) ** 2 + (t.y - y) ** 2 < 100)) { ter[j] = 2; deepM[j] = 1; }
+    }
+  };
+  (def.deep || []).forEach(([x, y, ax, ay, a], k) => blob(x, y, ax, ay, a || 0, k));
+  trees.filter(t => t.y > 700 && R() < .22).forEach((t, k) => blob(t.x + 26, t.y + 8, 30, 11, .3, 20 + k));
+  yield;
   // the lift line: the road under the cables, from just after the line up to the top station
   const [lx0, ly0, ly1] = def.lift, lA = nearestIdx(path, lx0, ly0), lB = nearestIdx(path, lx0, ly1 + 22);
   for (let y = Math.max(0, ly1 - HALF); y <= Math.min(MH - 1, ly0 + HALF); y++) for (let x = Math.max(0, lx0 - HALF - 2); x <= Math.min(MW - 1, lx0 + HALF + 2); x++) {
@@ -69,7 +97,7 @@ export function* iceTerrain(S) {
   const jumps = [], [jx, jy, vz] = def.jump, ji = nearestIdx(path, jx, jy), jp = path[ji], jt = S.tan[ji];
   jumps.push({ x: jp.x, y: jp.y, tx: jt.x, ty: jt.y, lo: -HALF - 4, hi: HALF + 4, vz });
   const pushes = (def.slopes || []).map(([x0, y0, x1, y1, f]) => ({ i0: nearestIdx(path, x0, y0), i1: nearestIdx(path, x1, y1), f }));
-  return { alt, lakeM, fieldM, bob, jumps, pushes };
+  return { alt, lakeM, fieldM, deepM, trees, bob, jumps, pushes };
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, sd, r, RT }
@@ -146,6 +174,10 @@ export function* paintIce(S) {
       // powder snow: soft and bright, the old ski tracks as faint curves
       const trk = Math.abs(Math.sin(x * .045 + Math.sin(y * .02) * 3)) > .995;
       c = trk ? K.powT : v < .25 ? K.pow1 : v > .72 ? K.pow2 : K.pow; if (h < .005) c = K.glit;
+    } else if (t === 2 && RT.deepM[j]) {
+      // wind-blown deep snow: ripples across it, a soft pale edge to the powder
+      let e = false; for (const q of [j - 2, j + 2, j - 2 * MW, j + 2 * MW]) if (q >= 0 && q < A && ter[q] !== 2) e = true;
+      c = e ? K.snowB : Math.sin((x * .8 + y * .5) + vnoise(x / 10, y / 10, sd + 43) * 6) > .55 ? K.snow2 : v < .3 ? K.snow1 : K.snow;
     } else if (t === 1 || t === LIFT) {
       c = v < .33 ? K.road1 : v > .7 ? K.road2 : K.road;
       if (dist[j] > HALF - 3) c = K.roadE; else if (Math.abs(dist[j] - 13) < 1.5 && h > .3) c = K.rut;
@@ -243,6 +275,22 @@ export function* paintIce(S) {
   // ----- the chair lift: masts with a cross arm over the line (top layer), the two stations, the chess players under the line -----
   paintLift(S, def.lift, def.chess);
   yield;
+  // ----- the pines: a shadow on the snow, the crown on the top layer, the trunk is a solid circle (the cars in the air fly over the ones where the jump lands) -----
+  { const C = S.th.treeCol.map(hex);
+    for (const t of RT.trees) {
+      walls.push(t); solid(t.x, t.y, 7);
+      for (let dy = -11; dy <= 11; dy++) for (let dx = -11; dx <= 11; dx++) if (dx * dx + dy * dy <= 110) dk(t.x + dx + 5, t.y + dy + 7, .76);
+      const rot = hash(t.x, t.y, sd + 90) * 6.28;
+      for (let dy = -13; dy <= 13; dy++) for (let dx = -13; dx <= 13; dx++) {
+        const dd = Math.hypot(dx, dy), an = Math.atan2(dy, dx), rad = 9 + 3 * Math.abs(Math.cos(an * 4 + rot)), inner = 5 + 2 * Math.abs(Math.cos(an * 4 + rot + Math.PI / 4));
+        if (dd > rad) continue;
+        setT(t.x + dx, t.y + dy, dd < 2 ? C[2] : dd < inner ? ((dx + dy) < 0 ? C[2] : C[1]) : ((dx + dy) < -2 ? C[1] : C[0]));
+      }
+    }
+    // a little joke: the "8" of the mock-up, two rings of snow logs on the ground between the trees (flat, you drive over it)
+    if (def.eight) { const [ex, ey] = def.eight; for (const [cy, rr] of [[ey - 11, 10], [ey + 10, 12]]) for (let a = 0; a < 6.28; a += .06) { px(ex + Math.cos(a) * rr, cy + Math.sin(a) * rr, K.woodD); px(ex + Math.cos(a) * (rr - 1), cy + Math.sin(a) * (rr - 1), K.wood); px(ex + Math.cos(a) * (rr - 2), cy + Math.sin(a) * (rr - 2), K.woodL); } }
+  }
+  yield;
   // ----- the village at the start: a ski hut with warm windows (roof on the top layer), snowmen -----
   const snowman = (x, y) => {
     walls.push({ x, y, r: 5 }); solid(x, y, 7);
@@ -271,5 +319,5 @@ export function* paintIce(S) {
   const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= MW - 2 || Y >= MH - 2) return false; const j = Y * MW + X; if (ter[j] !== 0 || dist[j] < HALF + 10 || wallMask[j] || shore[j]) return false; } return true; };
   for (let k = 0, tries = 0; k < 6 && tries < 800; tries++) { const x = 8 + (S.r() * (MW - 16) | 0), y = 8 + (S.r() * (MH - 16) | 0); if (okOff(x, y, 9)) { snowman(x, y); k++; } }
 
-  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, lakeM: RT.lakeM, fieldM: RT.fieldM, lake: def.lake, lift: def.lift, chess: def.chess };
+  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, trees: RT.trees, lakeM: RT.lakeM, fieldM: RT.fieldM, lake: def.lake, lift: def.lift, chess: def.chess };
 }

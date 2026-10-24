@@ -11,6 +11,15 @@ import { LIFT, POWDER } from './icemap.js';
 // ---------- Eis Rev 2 while racing (the chair lift, the chess players,  (plaene/EIS_REV2.md): the chair lift (every car that reaches the line is hooked on at once, no waiting: its own chair the moment it arrives), powder snow behind the cars, a crooked landing after the ski jump snows the car in,
 // the progress through the wood and the serpentines (parts of the centre line lie close together), the polar light in the last lap. ----------
 
+// the computer cars steer round the pines near them: only those within 90 px of a car go into T.ev.obst (steerAround, physics.js), not the whole wood
+function iceUpdate(T) {
+  const ev = T.ev, I = T.ice;
+  ev.obst = ev.obst.length ? [] : ev.obst;
+  const out = [];
+  for (const o of I.trees) for (const c of G.cars) if (c.ai && Math.abs(c.x - o.x) < 90 && Math.abs(c.y - o.y) < 90) { out.push(o); break; }
+  ev.obst = out;
+}
+
 // ======================================================= the chair lift
 
 // Every car that reaches the lift line is hooked on at once (c.iceLift, in the hook stuck: no physics, no steering, no collisions with other cars) and rides up
@@ -168,12 +177,12 @@ function iceSurf(c) { return c.surf === POWDER ? [.9, 6, .9] : null; }
 // ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------
 /** @type {import('./_template.js').TrackHooks} */
 export const iceHooks = {
-  init(T) { T.ev.obst = []; },
+  init(T) { T.ev.obst = []; }, update: iceUpdate,
   surf: iceSurf, progress: iceProgress, wander: .5,
   stuck(c, dt, racing) {
     if (c.iceLift) { liftStep(c, dt); return true; }
     if (!(c.snowT > 0)) return false; iceStuck(c, dt, racing); return true;
   },
-  noRespawn: t => t === LIFT, drawCar: drawLiftCar,
+  noRespawn: t => t === LIFT, drawCar: drawLiftCar, airTop: c => c.z > 22,
   ground: iceGround, drawGround: drawChess, drawAbove: drawIceAbove,
 };
