@@ -11,9 +11,9 @@ import { bctx, snap } from './undo.js';
 import { RALLY } from './desertmap.js';
 
 // ---------- Wueste Rev 3 while racing (plaene/WUESTE_REV3.md): rally sand in the open field, the pyramid with its forks, and the event "sandsturm"
-// (from lap 2 a storm outside, and the quicksand opens in the field). The fields of T.ev all start with ds (T22). ----------
+// (once the first car is out of the pyramid a storm outside, and the quicksand opens in the field). The fields of T.ev all start with ds (T22). ----------
 
-const STORM = { wall: 6, warn: 3, first: 3, gap: 2.2 };
+const STORM = { wall: 6, warn: 3, first: 0, gap: 1.2 }; // (the quicksand opens 6 to 9.6 s after the storm starts: before the leader of lap 2 gets there)
 const WARN = 61; // the quicksand that is about to open: harmless, but you see and hear it
 
 // ======================================================= always
@@ -166,16 +166,19 @@ function desertProgress(c, best) {
 }
 
 // ======================================================= event "sandsturm"
-// From lap 2 (as soon as you start it): a wall of sand sweeps over the field from the right (you see less far, every car drives with its lamps on, the
+// As soon as the first car comes out of the pyramid in lap 1: a wall of sand sweeps over the field from the right (you see less far, every car drives with its lamps on, the
 // tyre tracks blow away); behind it the quicksand fields on the line open one after the other: three seconds before, the sand darkens, bubbles and trickles,
 // then it turns. Nothing of it reaches into the pyramid. The switch "sandsturm" turns off both.
 
-function initStorm(T) { T.ev.dsStormOn = true; }
+function initStorm(T) { T.ev.dsStormOn = true; T.ev.dsIn = new Set(); T.ev.dsOut = false; }
 
 function updateStorm(T, dt) {
   const ev = T.ev;
   if (!ev.dsStorm) {
-    if (!G.player || G.player.lap < 2) return;
+    // it starts as soon as the first car comes out of the pyramid (in lap 1), so the quicksand is open from lap 2
+    const P = T.desert.pyr;
+    for (const c of G.cars) if (inPyr(T, c.x, c.y)) ev.dsIn.add(c); else if (ev.dsIn.has(c) && c.x < P.x + 4) ev.dsOut = true;
+    if (!ev.dsOut) return;
     ev.dsStorm = { t: 0, snd: 0, fade: 0 };
     SFX.storm();
   }

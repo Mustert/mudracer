@@ -251,7 +251,8 @@ const TRACK_DEFS = [
     quick: [[455, 4, 26], [630, -2, 26], [955, 6, 24], [1185, -16, 22]], heat: [[1380, 205, 1500, 275]],
     // the car wash: a bay beside the start straight (lane = the way in and out, half = half its width, wash = [x0, y0, x1, y1] of the washing floor under the arch,
     // wall = [x, y0, y1] of the low wall between the road and the bay (wall2: the one on the far side), sign = [x, y] of the signpost before the entrance)
-    bay: { lane: [[85, 520, 0], [160, 505, 40], [160, 395, 40], [85, 380, 0]], half: 22, wash: [138, 440, 182, 464], wall: [127, 428, 472], wall2: [191, 420, 490], sign: [142, 540] },
+    // (the lane leaves and comes back at a slant, like a pit lane, not square to the straight)
+    bay: { lane: [[88, 540, 0], [158, 495, 30], [158, 410, 30], [92, 350, 0]], half: 22, wash: [138, 440, 182, 464], wall: [127, 428, 472], wall2: [191, 420, 490], sign: [142, 540] },
     forks: [
       // fork 1: the upper branch has the shaft (ramp, then the jump), the lower one is pitch dark (no torches, no glow on the floor): safe but you see nothing
       { from: [1230, 580], to: [880, 580], half: 28, jump: 'up', up: [[1230, 580, 0], [1180, 528, 28], [930, 528, 28], [880, 580, 0]], down: [[1230, 580, 0], [1180, 632, 28], [930, 632, 28], [880, 580, 0]],

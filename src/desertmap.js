@@ -82,7 +82,8 @@ export function* desertTerrain(S) {
   // the car wash: a lane that leaves the start straight below the bay and comes back above it (the cars drive through the arch)
   let bay = null;
   if (def.bay) {
-    const lane = new Uint8Array(A), P = stampLine(def.bay.lane, def.bay.half, j => { lane[j] = 1; if (ter[j] === 0) { ter[j] = 1; alt[j] = 1; } }, MW, MH);
+    // (above y 400 the ground beside the straight is already rally sand: the lane is road there too, or its end is cut off square)
+    const lane = new Uint8Array(A), P = stampLine(def.bay.lane, def.bay.half, j => { lane[j] = 1; if (ter[j] === 0 || ter[j] === RALLY) { ter[j] = 1; alt[j] = 1; } }, MW, MH);
     bay = { P, i0: nearestIdx(path, def.bay.lane[0][0], def.bay.lane[0][1]), lane };
   }
   yield;
