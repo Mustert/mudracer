@@ -267,7 +267,7 @@ const TRACK_DEFS = [
   // lift = [x, y of the valley station, y where the cars are set down] of the lift line, chess = [x, y] of the stump of the chess players; bob = road from [x, y] to [x, y]; jump = lip [x, y] and the speed upwards; field = the polygon of the wood (powder snow, open);
   // fence = [x, y0, y1] of the fence between the lift and the wood; blocks = solid massifs [x0, y0, x1, y1]; ridges = rock walls [x0, y0, x1, y1, half width];
   // lake = [x, y, rx, ry] (the road leads across it); village = the ski hut [x, y]
-  { name: 'EIS', rev: 2, seed: 9, W: 1000, H: 1500, theme: 'eis', song: 'ice', events: ['schneeball'], wall: [], wash: null, ice: true,
+  { name: 'EIS', rev: 2, seed: 9, W: 1000, H: 1500, theme: 'eis', song: 'ice', events: ['schneeball', 'eisbruch'], wall: [], wash: null, ice: true,
     poly: [[72, 1130, 0], [72, 70, 55], [880, 70, 47], [880, 165, 47], [440, 165, 47], [440, 260, 47], [880, 260, 47], [880, 355, 47], [300, 355, 45], [300, 1120, 60], [520, 1120, 60],
       [520, 470, 50], [930, 470, 55], [930, 580, 55], [680, 580, 55], [680, 690, 55], [930, 690, 55], [930, 800, 55], [680, 800, 55], [680, 910, 55], [930, 910, 50], [930, 1400, 55], [72, 1400, 55]],
     mud: [], water: [], ponds: [],
@@ -279,9 +279,11 @@ const TRACK_DEFS = [
     deep: [[318, 760, 46, 26, .2], [262, 880, 40, 24, -.3], [335, 955, 38, 20, 0], [624, 635, 22, 40, 0], [624, 855, 22, 40, 0]], eight: [222, 640],
     // bay = the foehn: a lane that leaves the road, a washing floor under the hut with the big hot-air blower (wash), low walls between the road and the lane, a sign
     bay: { lane: [[520, 1052, 0], [585, 1030, 26], [585, 985, 26], [520, 965, 0]], half: 22, wash: [567, 988, 603, 1028], wall: [556, 990, 1030], wall2: [614, 985, 1035], sign: [556, 1088] },
+    // animals = looks only: bears on the rock wall in front of the lake, reindeer and penguins in the snow strip below it
+    animals: { bears: [[330, 1229], [560, 1231], [770, 1229]], deer: [[250, 1262, 1], [455, 1264, -1], [640, 1262, 1], [840, 1264, -1]], penguins: [[410, 1270], [440, 1272], [720, 1270], [748, 1272], [690, 1273]] },
     fence: [172, 105, 1235],
     blocks: [[182, 114, 388, 318], [105, 0, 1000, 24], [922, 0, 1000, 410], [966, 425, 1000, 1500]],
-    ridges: [[338, 415, 560, 415, 7], [560, 415, 1000, 415, 12, 1], [480, 415, 480, 1070, 6], [172, 1000, 268, 1090, 6], [480, 1000, 345, 1064, 6], [172, 1235, 895, 1235, 7],
+    ridges: [[338, 415, 560, 415, 7], [560, 415, 1000, 415, 12, 1], [480, 415, 480, 1070, 6], [172, 1000, 268, 1090, 6], [480, 1000, 345, 1064, 6], [172, 1235, 895, 1235, 10, 1],
       [585, 510, 585, 925, 6], [585, 925, 660, 975, 6], [660, 975, 852, 975, 6], [715, 975, 715, 1235, 6]],
     // balls = the snowballs of the event: x of the three lanes, y of the foot of the rock face and of the place where they burst, y of the cliffs they hop over
     balls: { xs: [700, 775, 850], y0: 436, y1: 955, hops: [525, 635, 745, 855] },

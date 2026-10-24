@@ -8,14 +8,14 @@ import { stampLine } from './volcanomap.js';
 // The map is tall (1000 x 1500): the lift on the left edge, the bob run on top, the wood, the serpentines on the right, the lake at the bottom.
 // Nothing can be cut off: the fence between lift and wood, solid massifs at the edge, ridges and cliffs between the serpentines (CLAUDE.md, principle 4).
 
-export const LIFT = 70, POWDER = 71;
+export const LIFT = 70, POWDER = 71, RIM = 28; // (RIM: the strip along the shore of the lake that never breaks)
 
 const K = Object.fromEntries(Object.entries({
   tileA: '#e8f4fb', tileB: '#9fd0e8',
   snow: '#eef4fa', snow1: '#e3ebf4', snow2: '#f9fbfe', snowB: '#cddbea', snowD: '#b7c8da', glit: '#ffffff',
   pow: '#f2f7fc', pow1: '#e6eef7', pow2: '#fbfdff', powT: '#cfdcea',
   road: '#dfe6ef', road1: '#d3dbe6', road2: '#e9eef5', roadE: '#aebdcd', rut: '#c6d0dc',
-  ice: '#bfe3f3', ice1: '#a9d6ec', ice2: '#d6eef8', iceL: '#ffffff', iceD: '#8cc3e0', lake: '#9fcfe6', lake1: '#8ac2de', lakeE: '#6fa6c8',
+  ice: '#bfe3f3', ice1: '#a9d6ec', ice2: '#d6eef8', iceL: '#ffffff', iceD: '#8cc3e0', lake: '#9fcfe6', lake1: '#8ac2de', lakeE: '#6fa6c8', thick: '#e4f3fb', thick1: '#d2e9f6', thickE: '#9ec6e0',
   bobW: '#8fb4d0', bobWL: '#d8ecf8', bobWD: '#5f86a6', blue: '#2f6fd8', red: '#d83a2c',
   wood: '#a8743c', woodD: '#6a4420', woodL: '#c99258', roofS: '#f4f8fc', roofD: '#c2d0de', win: '#ffd56a', winD: '#c8902a',
   rock: '#8a96a4', rockD: '#5e6a78', rockL: '#b4c0cc', rockDD: '#3e4856',
@@ -46,6 +46,12 @@ export function* iceTerrain(S) {
     if (e >= .9 + .2 * vnoise(x * .05, y * .05, 71) || (ter[j] !== 0 && ter[j] !== 1)) continue;
     ter[j] = 12; lakeM[j] = 1;
   }
+  // how far every lake pixel is from the shore (chamfer 3-4, in pixels, up to 60): the rim of the lake is thick ice that never breaks
+  const lakeD = new Uint8Array(A), qx0 = Math.max(0, lx - rx - 10), qy0 = Math.max(0, ly - ry - 10), qw = Math.min(MW, lx + rx + 10) - qx0, qh = Math.min(MH, ly + ry + 10) - qy0, D = new Uint16Array(qw * qh);
+  for (let y = 0; y < qh; y++) for (let x = 0; x < qw; x++) D[y * qw + x] = lakeM[(qy0 + y) * MW + qx0 + x] ? 9999 : 0;
+  for (let y = 1; y < qh; y++) for (let x = 1; x < qw - 1; x++) { const i = y * qw + x; D[i] = Math.min(D[i], D[i - 1] + 3, D[i - qw] + 3, D[i - qw - 1] + 4, D[i - qw + 1] + 4); }
+  for (let y = qh - 2; y >= 0; y--) for (let x = qw - 2; x >= 1; x--) { const i = y * qw + x; D[i] = Math.min(D[i], D[i + 1] + 3, D[i + qw] + 3, D[i + qw + 1] + 4, D[i + qw - 1] + 4); }
+  for (let y = 0; y < qh; y++) for (let x = 0; x < qw; x++) lakeD[(qy0 + y) * MW + qx0 + x] = Math.min(60, Math.round(D[y * qw + x] / 3));
   yield;
   // the wood: an open field of powder snow, the road through it is powder too (like the rally sand of the desert: no way back arrow, c.safe counts)
   const iA = nearestIdx(path, def.jump[0], def.jump[1]), iB = nearestIdx(path, 300, 1000), F = def.field;
@@ -107,7 +113,7 @@ export function* iceTerrain(S) {
   jumps.push({ x: jp.x, y: jp.y, tx: jt.x, ty: jt.y, lo: -HALF - 4, hi: HALF + 4, vz });
   const pushes = (def.slopes || []).map(([x0, y0, x1, y1, f]) => ({ i0: nearestIdx(path, x0, y0), i1: nearestIdx(path, x1, y1), f }));
   const serp = [nearestIdx(path, 570, 470), nearestIdx(path, 930, 910)];
-  return { alt, lakeM, fieldM, deepM, trees, bob, jumps, pushes, bay, serp };
+  return { alt, lakeM, lakeD, fieldM, deepM, trees, bob, jumps, pushes, bay, serp };
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, sd, r, RT }
@@ -222,7 +228,11 @@ export function* paintIce(S) {
       const inLane = RT.bay && RT.bay.lane[j], laneE = inLane && [-3, 3, -3 * MW, 3 * MW].some(o => ter[j + o] !== 1);
       if ((dist[j] > HALF - 3 && !inLane) || laneE) c = K.roadE; else if (Math.abs(dist[j] - 13) < 1.5 && h > .3) c = K.rut;
     } else if (t === 12) {
-      if (RT.lakeM[j]) { let e = false; for (const q of [j - 1, j + 1, j - MW, j + MW]) if (q >= 0 && q < A && ter[q] !== 12) e = true; c = e ? K.lakeE : iceCol(x, y, h, true); }
+      if (RT.lakeM[j]) {
+        // the rim (RIM px from the shore): thick, whitish ice with a snow edge, that never breaks; a darker line marks where it ends
+        const rd = RT.lakeD[j]; let e = false; for (const q of [j - 1, j + 1, j - MW, j + MW]) if (q >= 0 && q < A && ter[q] !== 12) e = true;
+        if (e) c = K.thickE; else if (rd <= 4) c = h < .5 ? K.snow2 : K.snow; else if (rd <= RIM) c = rd === RIM ? K.thickE : v < .35 ? K.thick1 : K.thick; else c = iceCol(x, y, h, true);
+      }
       else c = dist[j] > HALF - 2 ? K.iceD : iceCol(x, y, h, false);
     } else continue;
     set(j, c);
@@ -367,5 +377,5 @@ export function* paintIce(S) {
   const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= MW - 2 || Y >= MH - 2) return false; const j = Y * MW + X; if (ter[j] !== 0 || dist[j] < HALF + 10 || wallMask[j] || shore[j]) return false; } return true; };
   for (let k = 0, tries = 0; k < 6 && tries < 800; tries++) { const x = 8 + (S.r() * (MW - 16) | 0), y = 8 + (S.r() * (MH - 16) | 0); if (okOff(x, y, 9)) { snowman(x, y); k++; } }
 
-  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, trees: RT.trees, lakeM: RT.lakeM, fieldM: RT.fieldM, lake: def.lake, lift: def.lift, chess: def.chess, bay: RT.bay, foen: def.bay, serp: RT.serp, balls: def.balls };
+  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, trees: RT.trees, lakeM: RT.lakeM, fieldM: RT.fieldM, lake: def.lake, lakeD: RT.lakeD, lift: def.lift, chess: def.chess, bay: RT.bay, foen: def.bay, serp: RT.serp, balls: def.balls, animals: def.animals };
 }

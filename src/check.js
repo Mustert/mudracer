@@ -104,7 +104,7 @@ function simulate(T, o) {
   const keep = { mode: G.mode, track: PREFS.selTrack, count: PREFS.selCount, fx: PREFS.selFx, kids: PREFS.kids, gain: AU.m ? AU.m.gain.value : null, music: AU.music };
   if (AU.m) AU.m.gain.value = 0;
   AU.music = false;
-  G.mode = 'single'; PREFS.selTrack = TRACKS.indexOf(T); PREFS.selCount = 9;
+  G.mode = 'single'; PREFS.selTrack = TRACKS.indexOf(T); PREFS.selCount = (o.cars || 10) - 1;
   PREFS.selFx = o.fx; PREFS.kids = false; // (startRace reads these: without them the events would not start at all)
   for (const s of raceSets(T, singleField())) completeSet(s);
   startRace();
@@ -142,7 +142,7 @@ function simulate(T, o) {
 /**
  * Checks one track and returns the report as text.
  * @param {string|number} q the track name (WIESE) or its index in TRACKS
- * @param {{ sim?: boolean, diff?: number, fx?: boolean, maxT?: number }} [opt] sim: run a race (default true), diff 0..2 (default 2), fx: track events (default true)
+ * @param {{ sim?: boolean, diff?: number, fx?: boolean, maxT?: number, cars?: number }} [opt] cars: field size (default 10) sim: run a race (default true), diff 0..2 (default 2), fx: track events (default true)
  */
 export function check(q, opt = {}) {
   const o = { sim: true, diff: 2, fx: true, maxT: 400, ...opt }, T = trackOf(q);
