@@ -65,12 +65,13 @@ Werte `[Tempo, Seitenhaftung, Lenkung, Gas]` aus `surfOf` (`physics.js`), Wirkun
 | 12 | Blankeis | 1, wenig Haftung, Gas ½ | KI nimmt Gas weg |
 | 13 | Mondboden | wie Gras | Weltall |
 | 14 | Hängebrücke | .6 | Knarzen |
-| 15 | Lava | – | Fall (`'lava'`), rußig, heiß |
-| 16 | Kruste | wie Straße | Lava, wenn `T.volcano.hot` |
+| 15 | Lava | – | Fall (`'lava'`), rußig, „AUA, HEISS!“ |
+| 16 | frei (früher Kruste von Vulkan Rev 1) | – | – |
 | 17 | Plattform Schwerelosigkeit | wenig Haftung | Weltall |
 | 30–32, 41–48, 50–52 | Spielzimmer, Regenbogen, Strand-Volleyball | Hook `surf` | eigene Blöcke |
 | 60–61 | Wüste Rev 3: Rallysand, Treibsand-Vorstufe | Hook `surf` | siehe Abschnitt 14 |
 | 70–71 | Eis Rev 2: 70 Lifttrasse (Straße unter den Seilen), 71 Pulverschnee im Wald | Hook `surf`: 71 `[.9, 6, .9]`, 70 wie Straße | 70: das Auto wird eingehängt (`c.iceLift`), 71: offenes Feld, macht nicht weiß; siehe Abschnitt 15 |
+| 80–81 | Vulkan Rev 2: 80 Boden der Lavaröhre, 81 Obsidian | Hook `surf`: 80 `[.86, 9, .95]`, 81 `[1, 1,6·turn², .6, .6]` | 80: rau, im Dunkeln; 81: Glas, rutscht wie Blankeis, etwas gutmütiger; siehe Abschnitt 16 |
 
 Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil von `updateRace` (`c.surf`), also einen Schritt verzögert.
 
@@ -98,7 +99,7 @@ Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil
 ## 6. Physik eines Autos (`physics.js` `physics`)
 
 - Autowerte `CAR_DEFS` (`cars.js`): `speed`, `mud`, `acc`, `turn`, `engine`, `honk`; abgeleitet `soil`. Konstanten `core.js`: `MAXS = 135` px/s, `ACC = 230`, `MUD_A/B`, `LAPS = 3`.
-- Höchsttempo `MAXS · speed · Boden · (1 − soil·dirt) · Boost 1,5 · Windschatten · Gefälle (c.slope) · heiß .85`.
+- Höchsttempo `MAXS · speed · Boden · (1 − soil·dirt) · Boost 1,5 · Windschatten · Gefälle (c.slope) · Glutwolke .6 (c.vAsh, Vulkan)`.
 - Lenkung zum Zielwinkel `tgt`, max. `4.6 · turn · Bodenlenkung · …` rad/s, bei Stillstand schwächer. Seitliche Geschwindigkeit zerfällt mit `exp(−Haftung·dt)` (wenig Haftung = Rutschen).
 - Rollwiderstand `exp(−.25·dt)` mit Gas, `exp(−3·dt)` ohne; Bremse `exp(−6·dt)`; rückwärts höchstens 35 px/s.
 - Fliegend (`c.z > 0`): nur geradeaus weiter, keine Lenkung, kein Boden.
@@ -177,3 +178,13 @@ Im Dev-Server: `mudracer.G.T` (aktuelle Strecke), `mudracer.G.cars`, `mudracer.t
 - **Eisbruch:** `T.ev.iceLake` = Zellen (16 px, `T.ice.lakeD` = Abstand zum Ufer, Rand `RIM` = 28 bricht nie), `breakN()` Überfahrten je Autozahl, `safeCells`/`wayAcross` halten einen sicheren Weg quer offen, `lakeRespawn` (Hook `respawn`) setzt hinter dem Loch ab und dreht das Auto zur Route, `lakeRoute`/`lakeTarget` (Hook `target`) lassen die KI über die Zellen fahren (Dijkstra, Wegpunkt nur, wenn die Gerade frei von Löchern ist). Nicht über feste Spuren planen: Eis lenkt langsam, ein Auto, das zum falschen Punkt zeigt, fällt endlos in dasselbe Loch.
 - **Hook `progress`:** sucht ±200 Indizes um `c.idx` (Wald neben Bergauf, Serpentinen-Schenkel).
 - **Prüfung:** `mudracer.check('EIS', { diff, fx, cars })`; für Bilder im Rennen die Rennschleife anhalten (`window.requestAnimationFrame = () => 0`), Auto versetzen, `update` laufen lassen und `drawRace(1)` rufen.
+
+## 16. Vulkan Rev 2 in Kürze (Karte 1600 × 1100, Kegel, Kratersee, Röhre)
+
+- **Dateien:** `volcanomap.js` (`volcanoTerrain`: Kratersee mit Grat (`DIKE` = 22), Lavaströme aus Kreisketten `flows` (Süd: Straße wird Lava, Sprung; Südost: `bridge`, `bridgeM`), Nebenkegel `sub` (`subM`), Lavaröhre (`stampLine` mit Punkt-Index, `tubeAt`: Pixel → [Abstand, Punkt]), Waschbucht `bay`, Asche und Obsidian als Flecken, Sprung, Schübe; `paintVolcano`: Abstand zur Lava (Glutsaum), Boden mit Hangschattierung `hillShade` (Höhe und Licht auf 4-px-Raster), Kraterrand, Basaltrippen `levees` (enden von selbst an der Straße), Nebenkegel, Röhre (Dach `roof`, Licht `lit`, Katzenaugen, Portale), Brückenbrüstung, Rampe, Hornitos, Feuerwehr, Station, Warnschild, Kulisse), `volcano.js` (Laufzeit). `def`-Felder: `cone`, `crater`, `rim`, `flows`, `jump`, `sub`, `tube`, `levees`, `hornitos`, `ash`, `obsidian`, `bay`, `station`, `sign`, `cloud`, `bombs`, `serp`, `slopes`, `fountains`.
+- **Abkürzungen zu:** Kraterrand fest (Ring aus Kreisen, Lücken nur für Straße und Ströme), Ströme bis zum Kartenrand, Rippen zwischen den Serpentinen-Schenkeln und vom Nebenkegel zum Kraterrand und zum Höhenweg, Nebenkegel fest.
+- **Lavaröhre:** Zweig mit Boden 80 im Kegel (außen Straße), `alt`; Hook `progress` gibt Autos in der Röhre (`c.vTk`, im Hook `ground` gesetzt) den Index aus `tube.idx` (gleichmäßig zwischen Gabel und Mündung). Dunkel nur, wenn der Spieler drin ist (`drawTube`: Dach mit Dunkel füllen, Licht der Rinne, Scheinwerfer und Katzenaugen ausstanzen); sonst deckt das Dach die Röhre zu.
+- **KI:** Hook `target` = `tubeTarget` (an der Gabel einmal je Runde, 1 bis 26 Indizes davor: Röhre, wenn eine Glutwolke rollt oder gleich kommt, und etwa 30 % sowieso; dreckige Autos nie) oder `bayTarget` (dreckig, wie Fön und Wüsten-Waschbucht). `lane`: auf dem Grat mittig, weg von Bombenkreisen. `throttle`: Röhre .82, Bucht .6, Grat .92, vor Kehren weniger.
+- **Ereignis `ausbruch`:** ab Runde 2 des Spielers (`T.ev.vlLate`): Bomben nur im Abschnitt `bombs` (Lavafeld), gezielt 30–54 Indizes vor ein Auto dort, nie an der Rampe; Lavafleck 5 s, dann Asche (`snap` nur über das Lavafeld). Roter Himmel, Aschenregen, Rauchsäule, Hubschrauber.
+- **Ereignis `glutwolke`:** `T.ev.vlCloud` rollt 46 Indizes/s von `cloud[0]` bis `cloud[1]` über den Höhenweg (Zähler nur, solange ein Auto vor dem Rand oder auf dem Weg ist); erst 1,8 s Fahne am Westrand (`warn`), Warnlampe an der Gabel, Paukenwirbel. Wer zwischen Schwanz und Front (−36 … +12 Indizes, `c.off` < `HALF` + 16) ist und nicht in Röhre oder Bucht: `c.vAsh` (Physik .6), Dreck +1,3/s.
+- **Lied `volcano`:** Schichten über `raceLap()` (ab Runde 2 Doublebass und Chor, letzte Runde Blech mit der Melodie), keine Tempoänderung mehr.

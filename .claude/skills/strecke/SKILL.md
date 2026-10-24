@@ -22,7 +22,7 @@ Gilt für neue Strecken und Überarbeitungen. Die Streckendesign-Grundsätze 1�
 |---|---|
 | Nummer und Cup | Strecke n gehört in Cup ⌈n/3⌉ (`cups.js` `CUPS`). Schwierigkeit steigt mit n (Grundsatz 1). |
 | Kartengröße | Standard 800×450; größer über `W`/`H` im `TRACK_DEFS`-Eintrag. Mehr Fläche heißt längere Bauzeit und Runde (`ROADMAP.md` 1P). |
-| Boden-Codes | Die Liste aller vergebenen Codes steht über `physics.js` `surfOf`: 0–17 gemeinsam (Straße, Matsch, Wasser, Schlucht, Eis, Lava …), eigene Blöcke 30–32 (Spielzimmer), 41–48 (Regenbogen), 50–52 (Strand-Volleyballfeld) 60–61 (Wüste Rev 3: Rallysand, Treibsand-Vorstufe) und 70–71 (Eis Rev 2: Lifttrasse, Pulverschnee). Eine neue Strecke nimmt 80–89, beantwortet ihre Codes im Hook `surf` und trägt sie in die Liste ein (ANALYSE.md T21). |
+| Boden-Codes | Die Liste aller vergebenen Codes steht über `physics.js` `surfOf`: 0–17 gemeinsam (Straße, Matsch, Wasser, Schlucht, Eis, Lava …), eigene Blöcke 30–32 (Spielzimmer), 41–48 (Regenbogen), 50–52 (Strand-Volleyballfeld) 60–61 (Wüste Rev 3: Rallysand, Treibsand-Vorstufe) 70–71 (Eis Rev 2: Lifttrasse, Pulverschnee) und 80–81 (Vulkan Rev 2: Boden der Lavaröhre, Obsidian); 16 ist frei. Eine neue Strecke nimmt 90–99, beantwortet ihre Codes im Hook `surf` und trägt sie in die Liste ein (ANALYSE.md T21). |
 | Felder in `T.ev` | mit dem Kürzel der Strecke beginnen (z. B. `toyRobot`), nie allgemeine Namen wie `wind`, `storm` oder `msg` (T22; `checkAll` listet, was doppelt ist). Der Kern liest aus `T.ev` nur `obst` (Hindernisse, denen die KI ausweicht, gewollt gemeinsam); Kräfte wie den Wüstenwind wendet die Strecke selbst an (`desert.js`, Hook `update`; die Wüste trägt das Kürzel `ds`). |
 | Ereignisse | Schlüssel in `def.events`, Schalter in `PREFS.events` (`state.js`), Anzeigename in `FX_NAMES` (`raceopts.js`), Start im Hook `events` der Strecke (`events: { spielzeug: initToyEvents }`, siehe Abschnitt 3). |
 | Lied | eigener Schlüssel in `SONGS` (`music.js`), `song` im `TRACK_DEFS`-Eintrag (Grundsatz 8). |
@@ -41,10 +41,10 @@ Der Kern fragt nicht mehr nach einzelnen Strecken (`if (G.T.toys) …`), sondern
 | `tracks.js` | `MAPS`: Schalter, `decor`, `terrain`, `paint` aus `<name>map.js` (eine Zeile, plus Import); dazu `THEMES` (Farben, `goo`, `landCol`) und `TRACK_DEFS` (Eintrag). `paint` gibt den Zustand der Strecke zurück, darin optional `jumps`, `pushes`, `alt` (Bausteine aus `trackfx.js`). |
 | `cars.js` / `race.js` | eigener Schmutz-Satz (`goo`, `goo2`: Liste `KINDS` und `newSet`) |
 | `audio.js` | eigene Geräusche in `SFX` |
-| `music.js` | `SONGS.<lied>` (Wechsel über `swap`, wie Vulkan, Spielzimmer, Regenbogen) |
+| `music.js` | `SONGS.<lied>`; Schichten nach Runde über `raceLap()` (Eis, Vulkan), ein anderes Lied über `swap` (Weltall, Regenbogen; kann an der Rundengrenze ruckeln, 1M-1) |
 | `state.js`, `raceopts.js`, `cups.js` | `PREFS.events`, `FX_NAMES`, Cup-Eintrag |
 
-Nicht über Hooks, weil die Streckenmodule sie selbst importieren (Import-Kreis): `trackfx.js` liest Daten aus dem Streckenzustand (`T.volcano.hot`, `T.jungle.quick`; ein Sprung bringt über `land` den Rückkehrpunkt selbst mit, eine Schlucht fällt im Boden-Hook, siehe `desert.js`), `music.js` fragt in den Liedern nach `G.T.<flag>`. Braucht eine neue Strecke dort etwas, lieber Daten im Streckenzustand oder im Theme ablegen als eine neue Abfrage.
+Nicht über Hooks, weil die Streckenmodule sie selbst importieren (Import-Kreis): `trackfx.js` liest Daten aus dem Streckenzustand (`T.jungle.quick`; ein Sprung bringt über `land` den Rückkehrpunkt selbst mit, eine Schlucht fällt im Boden-Hook, siehe `desert.js`), `music.js` fragt in den Liedern nach `G.T.<flag>`. Braucht eine neue Strecke dort etwas, lieber Daten im Streckenzustand oder im Theme ablegen als eine neue Abfrage.
 
 Hilfen, die es schon gibt (nicht neu schreiben): `core.js` (`hash`, `vnoise`, `rng`, `hex`, `clamp`, `mk`, `inRange` für Abschnitte der Mittellinie, `smooth`), `bau.js` (`nearestIdx`; für die Kartenmodule `paintTools(S)` mit `px`, `dk`, `solid`, `off` und `startLine(S)`), `volcanomap.js` (`polyPts` abgerundete Linie, `stampLine`), `trackfx.js` (Sprünge `jumps`, Schübe `pushes`, `fallCar`, Landung; `near`, `inView`, `lastLap`), `gfx.js` (`disc`, `ell`, `R1`, `text`, `swirl`), `grid.js` (Hindernisse), `particles.js` (`addP`, `drop`, `splash`, `mudBurst`).
 

@@ -40,7 +40,10 @@ function volcanoUpdate(T, dt) {
     ev.vlLate = true;
     if (ev.vlErOn) {
       ev.vlErupt = { t: 0, next: 1.5, n: 0 };
-      snap(T, 0, 0, T.W, T.H); // (lava spots turn to ash on the ground; this puts it back after the race)
+      // (lava spots turn to ash on the ground; this puts it back after the race. Only the lava field, where the bombs land: the whole map would make it jolt)
+      const [z0, z1] = V.bombs; let x0 = T.W, y0 = T.H, x1 = 0, y1 = 0;
+      for (let i = z0; i !== z1; i = (i + 1) % T.N) { const p = T.path[i]; x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
+      snap(T, Math.floor(x0 - HALF - 24), Math.floor(y0 - HALF - 24), Math.ceil(x1 - x0 + 2 * HALF + 48), Math.ceil(y1 - y0 + 2 * HALF + 48));
       SFX.bang(); G.jumpShake = .9; ev.vlQuake = 2;
     }
   }
@@ -91,7 +94,7 @@ const dirtyAt = () => [.4, .55, .7][G.raceDiff || 0];
 function tubeTarget(c) {
   const T = G.T, tb = T.volcano.tube, N = T.N, ev = T.ev; if (!tb || !ev || c.finished) return null;
   if (!c.vTube) {
-    const ahead = (tb.fork - c.idx + N) % N; if (ahead < 2 || ahead > 40 || c.vDecide === c.lap) return null;
+    const ahead = (tb.fork - c.idx + N) % N; if (ahead > 26 || ahead < 1 || c.vDecide === c.lap) return null; // (close to the fork: the way in is within reach)
     c.vDecide = c.lap;
     const cl = ev.vlCloud, soon = ev.vlGlutOn && ev.vlLate && ev.vlCloudCd < 3.5;
     const want = c.dirt <= dirtyAt() && ((cl && (cl.warn || cl.s < (T.volcano.cloud[1] - T.volcano.cloud[0] + N) % N * .75)) || soon || (c.seed * 7.7) % 1 < .3);
@@ -438,5 +441,7 @@ function drawVolcanoSky(cx, cy) {
 export const volcanoHooks = {
   init: initVolcano, update: volcanoUpdate, events: { ausbruch: T => { T.ev.vlErOn = true; }, glutwolke: T => { T.ev.vlGlutOn = true; } },
   surf: volcanoSurf, progress: volcanoProgress, target: c => tubeTarget(c) || bayTarget(c), lane: volcanoLane, throttle: volcanoThrottle, ground: volcanoGround,
+  // (back on the road after the lava: a puff of smoke, not a splash of water)
+  respawn(c) { for (let i = 0; i < 10; i++) addP({ t: 'smoke', x: c.x + (Math.random() - .5) * 16, y: c.y + (Math.random() - .5) * 12, vx: (Math.random() - .5) * 16, vy: -10, life: .8, ml: .8 }); },
   drawGround: drawVolcanoGround, drawAbove: drawVolcanoAbove, drawSky: drawVolcanoSky,
 };

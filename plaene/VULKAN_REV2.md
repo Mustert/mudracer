@@ -77,4 +77,4 @@ Werte (stehen in `TRACK_DEFS`, `src/tracks.js`):
 | V4 | Löschstation (Bucht, Feuerwehr, Wasserbögen), KI nur dreckig; Obsidian (Code 81) | erledigt |
 | V5 | Ereignis `ausbruch` (Bomben nur im Lavafeld) und `glutwolke` (Wolke, Ankündigung, Wirkung, KI-Wahl) | erledigt |
 | V6 | Alte Mechaniken raus (Geysir, Hitze, Kruste 16, Furt, Wasserfall); Lied an die Runden, Paukenwirbel vor der Wolke | erledigt |
-| V7 | Prüfung (`check` auf allen Stufen, `checkPic`, Bilder), Feinschliff, Doku (ROADMAP 1S10, Strecken.md, Skills) | in Arbeit |
+| V7 | Prüfung (`check` auf allen Stufen, `checkPic`, Bilder), Feinschliff, Doku (ROADMAP 1S10, Strecken.md, Skills) | erledigt (offen bleibt die Abnahme durch den Nutzer, ROADMAP 1S10-12) |
