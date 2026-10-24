@@ -9,7 +9,7 @@ const K = C({
   slab: '#c3bfb4', slab2: '#b5b1a6', rim: '#8f8b80', seam: '#a39f94', void: '#2c2824', col: '#dcd8cc', colS: '#6f6b62', rebar: '#7a4a32',
   yel: '#e0b020', yelD: '#8a6a10', blk: '#2a2826', sand: '#d8c28a', sandD: '#b89c5e', sandL: '#ead7a4', gravel: '#9a9a96', gravelD: '#6e6e6a', gravelL: '#bdbdb8',
   brick: '#b5502f', brickD: '#86361f', brickL: '#cf6c48', wood: '#c9a46a', woodD: '#8a6a3c', woodL: '#e0c088', tarp: '#2f6fb8', tarpD: '#1f4f88', tarpL: '#5a9ad8',
-  white: '#e6e9ec', grey: '#9aa0a8', greyD: '#636a72', orange: '#f08a1f', orangeD: '#b8600a', cone: '#ff7a1a', coneD: '#c24e08', red: '#d6382e',
+  white: '#e6e9ec', grey: '#9aa0a8', greyD: '#636a72', orange: '#f08a1f', orangeD: '#b8600a', cone: '#ff7a1a', coneD: '#c24e08', coneP: '#d8a070', red: '#d6382e',
   bOut: '#4a4640', bOr: '#e8742a', bWh: '#f1ede2', earth: '#6a4b2e', earthD: '#4a321d', earthDD: '#2f2112', earthL: '#8a6440', pitW: '#4d7690', pitWL: '#7aa8bf',
   cem: '#8c9097', cemD: '#6b6f76', cemL: '#aeb3b9', paint: '#e8b020',
 });
@@ -133,9 +133,13 @@ export function paintSite(S) {
   };
 
   // ----- narrow places: concrete barriers, cones before and after, an amber warning lamp -----
+  // (a cone seen from above, big and with a dark outline and a shadow so that it stands out of the earth road: orange base, white ring, orange tip; 1S5-6)
   const cone = (cx, cy) => {
-    cx = Math.round(cx); cy = Math.round(cy); S.darken(cx, cy, 2, 2, 2);
-    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const dd = dx * dx + dy * dy; if (dd > 5) continue; S.px(cx + dx, cy + dy, dd <= 1 ? K.white : dd <= 2 ? K.cone : K.coneD); }
+    cx = Math.round(cx); cy = Math.round(cy); S.darken(cx, cy, 4, 2, 3);
+    for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+      const dd = dx * dx + dy * dy; if (dd > 18) continue;
+      S.px(cx + dx, cy + dy, dd > 12 ? K.blk : dd > 8 ? K.coneD : dd > 4 ? K.cone : dd > 1 ? K.white : K.cone);
+    }
   };
   for (const [x, y, side] of def.narrows || []) {
     const i = nearestIdx(path, x, y), p = path[i], tg = tan[i], nm = nrm[i];
@@ -145,7 +149,7 @@ export function paintSite(S) {
     });
     for (const a of [-8, 0, 8]) walls.push({ x: p.x + tg.x * a + nm.x * side * 19.5, y: p.y + tg.y * a + nm.y * side * 19.5, r: 4.5 });
     for (const [a, l] of [[-54, 34], [-42, 30], [-30, 26], [-18, 22], [22, 23], [34, 28]]) {
-      const cx = p.x + tg.x * a + nm.x * side * l, cy = p.y + tg.y * a + nm.y * side * l; cone(cx, cy); walls.push({ x: cx, y: cy, r: 2.5 });
+      const cx = p.x + tg.x * a + nm.x * side * l, cy = p.y + tg.y * a + nm.y * side * l; cone(cx, cy); walls.push({ x: cx, y: cy, r: 3.5 });
     }
     lights.push({ x: p.x - tg.x * 12 + nm.x * side * 20, y: p.y - tg.y * 12 + nm.y * side * 20, k: lights.length });
   }
@@ -155,7 +159,7 @@ export function paintSite(S) {
   for (const [x, y] of def.cones || []) {
     const i = nearestIdx(path, x, y), p = path[i], tg = tan[i], nm = nrm[i];
     for (const side of [-1, 1]) for (const [a, l] of [[-34, 28], [-26, 25], [-18, 22], [-10, 19], [0, 19], [10, 19], [18, 22], [26, 26]]) {
-      const cx = p.x + tg.x * a + nm.x * side * l, cy = p.y + tg.y * a + nm.y * side * l; cone(cx, cy); walls.push({ x: cx, y: cy, r: 2.5 });
+      const cx = p.x + tg.x * a + nm.x * side * l, cy = p.y + tg.y * a + nm.y * side * l; cone(cx, cy); walls.push({ x: cx, y: cy, r: 3.5 });
     }
     tight.push(i);
   }
@@ -282,7 +286,8 @@ export function paintSite(S) {
   S.scatter(14, 8, (x, y) => { S.darken(x + 4, y, 6, 2, 2); for (let k = 0; k < 3; k++) for (let xx = 0; xx < 12; xx++) S.px(x + xx, y + k * 2, k % 2 ? K.woodD : K.wood); });
   S.scatter(8, 4, (x, y) => { S.darken(x, y, 3, 2, 2); for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const dd = dx * dx + dy * dy; if (dd > 10) continue; S.px(x + dx, y + dy, dd < 2 ? K.grey : dd < 6 ? K.blk : K.greyD); } });
   S.scatter(7, 3, (x, y) => { S.darken(x, y, 3, 2, 2); for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const dd = dx * dx + dy * dy; if (dd > 10) continue; S.px(x + dx, y + dy, dd > 7 ? K.blk : dx + dy < -1 ? K.white : K.red); } });
-  S.scatter(10, 3, (x, y) => { cone(x, y); cone(x + 6, y + 2); });
+  // (cones lying off the road are small and pale, so nobody mistakes them for the big ones that narrow the road, principle 10)
+  S.scatter(10, 3, (x, y) => { for (const [ox, oy] of [[0, 0], [6, 2]]) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) S.px(x + ox + dx, y + oy + dy, dx || dy ? K.coneP : K.white); });
   S.scatter(6, 12, (x, y) => { S.darken(x + 6, y, 8, 2, 2); for (let k = 0; k < 12; k++) for (let w = 0; w < 4; w++) S.px(x + k, y + w, w === 0 || w === 3 ? K.sandD : (k % 3 ? K.sand : K.sandL)); });
 
   // ----- the tower crane: the foundation lies in the crane strip, jib and counter-jib are on the top layer (cars drive underneath) with the pipe on its hook -----

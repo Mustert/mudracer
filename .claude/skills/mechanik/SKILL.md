@@ -105,17 +105,18 @@ Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil
 ## 7. Fallen, Sprünge, Schübe (`trackfx.js`)
 
 - `c.fall > 0`: Auto ist weg (zählt herunter, dann `respawn`). Arten über `fallCar(c, kind, at)`: `'abyss'` (Schlucht), `'sand'`, `'lava'`, `'space'`, `'cloud'`; Wasser über `sinkCar` (ohne `fallKind`). Gezeichnet über Hook `drawFall`.
-- Sprung `{x, y, tx, ty, lo, hi, vz, push, off, land}`: abheben beim Überqueren der Kante vorwärts (≥ 30 px/s), Schwerkraft 380; `land` prüft den Boden (11/15/48 → Fall, 3/5 → Spritzer), schiefe große Landung → `stun`.
+- Sprung `{x, y, tx, ty, lo, hi, vz, push, off, land}`: abheben beim Überqueren der Kante vorwärts (≥ 30 px/s), Schwerkraft 380; `land` prüft den Boden (11/15/48 → Fall, 3/5 → Spritzer), schiefe große Landung (über 0,7 s in der Luft) → `stun`.
 - Schub `{i0, i1, f}` entlang der Straße (Gefälle) oder `{rect, fx, fy}` (Strömung).
 - `T.jumps` ist immer ein Feld (sonst `[]`, Schanzen aus `def.jumps` oder von der Sonderstrecke), daher laufen `pushCars` und `groundFx` auf jeder Strecke; `airborne` nur bei Sprüngen oder in der Luft.
 
 ## 8. KI (`physics.js` `aiTarget`, `update.js`, `diff.js`)
 
 - Ziel: Punkt `18 + Tempo/8` Indizes voraus auf der Mittellinie, seitlich versetzt um `lane = sin(Zeit·.4 + seed) · wander` (`DIFFS.wander` 14/11/8 px, Hook `wander`, 1,5 auf dem Steg, 1 an Engstellen).
-- Ausweichen vor Matsch/Zement/Gras/tiefem Wasser/Kies/Öl (`sticky`): nur Autos mit `mud < 1.15` (oder Hook `avoidAll`), Anteil `DIFFS.avoid` (0 / .5 / 1). Danach Hook `lane`, dann `steerAround` (Kühe, Reifen, `T.ev.obst`, 75 px voraus).
+- Ausweichen vor Matsch/Zement/Gras/tiefem Wasser/Kies/Öl (`sticky`): nur Autos mit `mud < 1.15` (oder Hook `avoidAll`), Anteil `DIFFS.avoid` (0 / .5 / 1). Danach Hook `lane`, dann `steerAround` (Kühe, Reifen, `T.ev.obst`, 75 px voraus; nur was im Weg liegt, seitlich höchstens `r + 24` px, und alles zusammen höchstens 55 px Versatz). `steerAround` gilt auch für das Ziel aus dem Hook `target`, darum keine Hindernisse in `T.ev.obst` legen, die in schmalen Wegen liegen (Wüste: Skarabäen nicht, 1S8-10).
 - Hook `target` ersetzt das Ziel ganz (Boxengasse, Eissee, Doppelregenbogen).
 - Gas = `c.skill` (`aiSkill`, je Stufe `DIFFS.skill`), Gummiband (`ahead`/`slow`, `behind`/`catchUp`), Blankeis/Plattform weniger in Kurven, Hook `throttle`.
-- Festgefahren: unter 12 px/s länger als 1,2 s → 0,9 s rückwärts (nicht während eines Boxenstopps, `c.boxT`).
+- Festgefahren: tatsächliche Bewegung im letzten Schritt (`c.lx`/`c.ly`) oder Tempo unter 12 px/s länger als 1,2 s → 0,9 s rückwärts (nicht während eines Boxenstopps, `c.boxT`). Die Bewegung zählt, weil ein Auto, das gegen eine Leitplanke drückt, etwas Tempo behält.
+- Boxengasse (Rennstrecke, `ringPitTarget`): das Ziel der Gasse endet hinter ihrem letzten freien Punkt (`pit.k1`), danach übernimmt die Mittellinie (sonst fuhr ein abgedrängtes Auto zurück zum Ende der Gasse, 1S7-5).
 
 ## 9. Fortschritt, Runden, Platzierung
 
@@ -159,5 +160,6 @@ Im Dev-Server: `mudracer.G.T` (aktuelle Strecke), `mudracer.G.cars`, `mudracer.t
 - **Feld ohne Straße:** Die Mittellinie läuft durch das Feld (Fortschritt, KI), aber ihr Straßenstreifen wird zu Rallysand 60 (desertTerrain, iA/iB = Indexbereich des Feldes). Das ganze Feld ist T.alt (kein Zurück-Pfeil, c.safe zählt). KI: Hook lane fährt dort dreimal so breit, meidet Weichsand (Code 0, nur Autos mit mud < 1,15 je nach Stufe) und für alle Treibsand (10, 61); Hook 	arget schickt dreckige Autos zu Oasen und in die Waschbucht.
 - **Pyramide:** Fußabdruck def.pyramid ist fest (walls entlang jeder Straßenkante innen, Dach als eigenes Bild), die Straße ist hineingeschnitten. Gabelungen: das Stück der Mittellinie zwischen rom und 	o wird Wand, die zwei Zweige sind Nebenwege (stampLine, lt); die KI wählt den Zweig im Hook 	arget und folgt dessen Punkten. Schacht = Code 11 über die Zweigbreite, Sprung { land } mit dem Rückkehrindex hinter der Gabelung; im Hook ground fällt das Auto mit allCar 'abyss'. Der Hook progress hält Autos im Feld vom Pyramiden-Index fern.
 - **Dunkelheit:** drawDark setzt je Frame eine Lichtkarte in Bildschirmgröße zusammen (Dunkel über der Pyramide, das Glimmen des Bodens und der stockdunkle Zweig aus zwei vorgerechneten Karten in Pyramidengröße, Fackeln und Autolampen als einmal erzeugte Sprites). Nur wenn der Spieler innen ist (T.desert.inside), sonst wird das Dach gezeichnet.
-- **Ereignis sandsturm:** T.ev.dsStorm (ab Runde 2), T.ev.dsQuick (Treibsand-Felder: 0 fest, 1 Warnung = Code 61 und dunkles Bild, 2 offen = Code 10 mit sinkInSand); Bild und 	er werden vorher mit snap gesichert (nur über das Feld). Der Sturm ist rein optisch (Nebelkarte, Licht an allen Autos). Schalter sandsturm schaltet beides ab.
+- **Ereignis sandsturm:** T.ev.dsStorm (ab Runde 2), T.ev.dsQuick (Treibsand-Felder: 0 fest, 1 Warnung = Code 61 und dunkles Bild, 2 offen = Code 10 mit sinkInSand); Bild und 	er werden vorher mit snap gesichert (nur über das Feld). Der Sturm ist rein optisch (Nebelkarte, Licht an allen Autos). Schalter sandsturm schaltet beides ab. Die Treibsand-Felder liegen auf der Linie (`def.quick`, Versatz nahe 0).
+- **Sprünge im Feld:** Dünen sind nur `DUNE` = 55 px zu jeder Seite der Linie breit (man kann vorbei), jede Landung im Feld gibt 0,4 s Schub, es gibt keinen Dreher nach der Landung (1S8-12). Weichsand liegt nie direkt hinter einem Dünenkamm. Palmen stehen nur auf der Rückseite der Oasen.
 - Dateien: desertmap.js (Gelände und Bild), desert.js (Laufzeit und Hooks).

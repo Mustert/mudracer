@@ -126,7 +126,10 @@ function ringPitTarget(c) {
   c.pitK = k;
   // a car that missed the entry (outside the pit wall) gives up and stays on the track
   const pj = (c.y | 0) * G.T.W + (c.x | 0), missed = k > R.pit.k0 && R.pitD && R.pitD[pj] > R.pit.half + 3;
-  if (k >= P.length - 4 || bd > 70 * 70 || missed) { c.pitting = false; return null; }
+  // (past the last point of the lane that is clear of the track it is back on the track: the centre line takes over. Before, a car knocked off course
+  // there, by a tyre in turn 1, still had the end of the lane as its target and drove back down the start straight to it, 1S7-5)
+  const back = R.pit.k1 > 0 && k > R.pit.k1;
+  if (k >= P.length - 4 || bd > 70 * 70 || missed || back) { c.pitting = false; return null; }
   const t = P[Math.min(P.length - 1, k + 12)];
   return [t.x, t.y];
 }

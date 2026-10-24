@@ -21,11 +21,12 @@ const WARN = 61; // the quicksand that is about to open: harmless, but you see a
 function initDesert(T) {
   const ev = T.ev, D = T.desert;
   ev.dsCacti = D.cacti.map(c => ({ x: c.x, y: c.y, r: c.r, cool: 0, ouch: 0 }));
-  // the scarab swarms of the second fork (slalom for the cars: they are obstacles to steer round, and slow you a little when you drive through)
+  // the scarab swarms of the second fork (they slow you a little when you drive through; the computer cars do not swerve for them: the branch is too
+  // narrow for that, they would end up against its walls)
   ev.dsBugs = D.bugs.map((b, k) => ({ x: b.x, y: b.y, cx: b.x, cy: b.y, r: 8, ph: k * 1.9, bugs: Array.from({ length: 12 }, (_, q) => ({ a: q * 2.4, r: 3 + (q % 4) * 3, ph: q * .7 })) }));
   // the quicksand fields of the event (st: 0 firm, 1 about to open, 2 open)
   ev.dsQuick = D.quick.map((q, k) => ({ ...q, st: 0, openAt: STORM.wall + STORM.first + k * STORM.gap }));
-  ev.obst = D.obst.concat(ev.dsCacti, ev.dsBugs); ev.dsStorm = null; ev.dsStormOn = false;
+  ev.obst = D.obst.concat(ev.dsCacti); ev.dsStorm = null; ev.dsStormOn = false;
 }
 
 // is (x, y) inside the pyramid, past its doorways (then the roof is see-through and no storm blows)
@@ -41,21 +42,12 @@ function desertUpdate(T, dt) {
   // the water that falls in the arch of the car wash
   if (D.bay) { const [x0, y0, x1, y1] = T.def.bay.wash; if (inView((x0 + x1) / 2, (y0 + y1) / 2, 60)) for (let k = 0; k < 3; k++) addP({ t: 'd', x: x0 + Math.random() * (x1 - x0), y: y0 + Math.random() * (y1 - y0), z: 12, vx: 0, vy: 0, vz: -15, col: ['#8ee0dc', '#46bcc2', '#d8f4f4'][k], s: 1, life: 1, ml: 1 }); }
   if (T.ev.dsStormOn) updateStorm(T, dt);
-  // a crooked landing makes the car spin (the sand takes the wheels)
+  // every landing on a dune gives a little push (no spin after a jump: a punishment you could not see coming)
   for (const c of G.cars) {
     if (c.fall > 0) { c.dsAir = false; continue; }
     if (c.z > 0) c.dsAir = true;
-    else if (c.dsAir) { c.dsAir = false; if (!crookedLanding(c) && c.y < D.field[1]) c.boost = Math.max(c.boost, .4); } // (a straight landing on a dune: a little push)
+    else if (c.dsAir) { c.dsAir = false; if (c.y < D.field[1]) c.boost = Math.max(c.boost, .4); }
   }
-}
-
-// a crooked landing: the car points away from where it flies, at speed the sand grabs the wheels and it spins round (nobody falls, but it costs)
-function crookedLanding(c) {
-  const sp = Math.hypot(c.vx, c.vy), mv = Math.atan2(c.vy, c.vx), d = Math.atan2(Math.sin(c.ang - mv), Math.cos(c.ang - mv));
-  if (sp < 45 || Math.abs(d) < .38 || c.stun) return false;
-  c.stun = .55; c.spin = Math.sign(d) * 8; c.boost = 0; c.vx *= .6; c.vy *= .6;
-  for (let i = 0; i < 12; i++) drop(c.x, c.y, Math.random() * TAU, 30 + Math.random() * 50, 30 + Math.random() * 40, ['#e3c48c', '#d4b074', '#f0d9a6'][i % 3], .9, false);
-  return true;
 }
 
 // rally sand: [speed, grip, steering] a little below the road (the sand that is about to open is the same)
@@ -175,7 +167,7 @@ function desertProgress(c, best) {
 
 // ======================================================= event "sandsturm"
 // From lap 2 (as soon as you start it): a wall of sand sweeps over the field from the right (you see less far, every car drives with its lamps on, the
-// tyre tracks blow away); behind it the quicksand fields beside the line open one after the other: three seconds before, the sand darkens, bubbles and trickles,
+// tyre tracks blow away); behind it the quicksand fields on the line open one after the other: three seconds before, the sand darkens, bubbles and trickles,
 // then it turns. Nothing of it reaches into the pyramid. The switch "sandsturm" turns off both.
 
 function initStorm(T) { T.ev.dsStormOn = true; }

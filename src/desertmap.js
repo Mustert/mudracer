@@ -12,6 +12,7 @@ import { stampLine } from './volcanomap.js';
 // 11 shaft (no ground: you fall).
 
 export const RALLY = 60;
+const DUNE = 55; // (half the width of a dune across the line)
 
 const K = Object.fromEntries(Object.entries({
   sand: '#ecca8a', sand1: '#e2bf7c', sand2: '#f4d69e', sandD: '#d2ac6c', sandL: '#fae4b4', peb: '#a07a48', pebL: '#f2dcb0',
@@ -67,7 +68,10 @@ export function* desertTerrain(S) {
   yield;
   // the car wash: a lane that leaves the start straight below the bay and comes back above it (the cars drive through the arch)
   let bay = null;
-  if (def.bay) { const P = stampLine(def.bay.lane, def.bay.half, j => { if (ter[j] === 0) { ter[j] = 1; alt[j] = 1; } }, MW, MH); bay = { P, i0: nearestIdx(path, def.bay.lane[0][0], def.bay.lane[0][1]) }; }
+  if (def.bay) {
+    const lane = new Uint8Array(A), P = stampLine(def.bay.lane, def.bay.half, j => { lane[j] = 1; if (ter[j] === 0) { ter[j] = 1; alt[j] = 1; } }, MW, MH);
+    bay = { P, i0: nearestIdx(path, def.bay.lane[0][0], def.bay.lane[0][1]), lane };
+  }
   yield;
   // places in the field are given along the line (x on the field, offset to the side of the line: positive is to its right)
   const lineAt = x => { const i = path.findIndex((p, k) => k >= iA && k <= iB && p.x >= x); return i < 0 ? iB : i; };
@@ -95,9 +99,9 @@ export function* desertTerrain(S) {
     return O;
   });
   yield;
-  // the dunes to jump over: broad crests across the field, square to the line, as wide as the field is tall; blocks of sandstone (the cars go round
-  // them), cacti, signposts
-  const jumps = (def.dunes || []).map(x => { const o = onLine(x, 0); return { x: o.x, y: o.y, tx: o.tx, ty: o.ty, lo: -120, hi: 120, vz: 64, dune: true }; });
+  // the dunes to jump over: narrow crests across the line, square to it (DUNE px to both sides: you can also drive round them); blocks of sandstone
+  // (the cars go round them), cacti, signposts
+  const jumps = (def.dunes || []).map(x => { const o = onLine(x, 0); return { x: o.x, y: o.y, tx: o.tx, ty: o.ty, lo: -DUNE, hi: DUNE, vz: 64, dune: true }; });
   // (the jumps over the shafts: from the lip to the west, the whole width of the branch; if it falls short it is set down behind the fork)
   for (const f of forks) if (f.shaftR) jumps.push({ x: f.shaftR.lip, y: f.shaftR.y, tx: -1, ty: 0, lo: -30, hi: 30, vz: 100, land: f.shaftR.landI, shaft: true });
   const blocks = (def.blocks || []).map(([x, off]) => { const o = onLine(x, off); return { x: o.x, y: o.y, nx: o.nx, ny: o.ny, tx: o.tx, ty: o.ty }; });
@@ -135,7 +139,9 @@ export function* paintDesert(S) {
     } else if (t === 1) {
       const v = vnoise(x / 7, y / 7, sd + 41) * .55 + h * .45;
       c = v < .33 ? K.road1 : v > .7 ? K.road2 : K.road;
-      if (dist[j] > HALF - 3 && !RT.alt[j]) c = K.roadE; else if (h > .992) c = K.pebL; else if (h < .008) c = K.peb;
+      // (the edge of the road: along the centre line, and round the lane of the car wash, which is an ordinary road)
+      const inLane = RT.bay && RT.bay.lane[j], laneE = inLane && [-3, 3, -3 * MW, 3 * MW].some(o => ter[j + o] !== 1);
+      if ((dist[j] > HALF - 3 && !RT.alt[j] && !inLane) || laneE) c = K.roadE; else if (h > .992) c = K.pebL; else if (h < .008) c = K.peb;
     } else if (t === 3) {
       const v = vnoise(x / 6, y / 4, sd + 46);
       c = v < .35 ? K.water1 : v > .72 ? K.water2 : K.water;
@@ -158,13 +164,13 @@ export function* paintDesert(S) {
   // ----- the dunes across the field: bright where you drive up, the crest, a shadow behind it (the ends fade out into the field) -----
   for (const J of RT.jumps) {
     if (!J.dune) continue;
-    const nx = -J.ty, ny = J.tx, R = 135;
+    const nx = -J.ty, ny = J.tx, R = DUNE + 30;
     for (let y = Math.floor(J.y - R); y <= J.y + R; y++) for (let x = Math.floor(J.x - R); x <= J.x + R; x++) {
       if (x < 0 || y < 0 || x >= MW || y >= MH) continue;
       const j = y * MW + x; if (ter[j] !== RALLY) continue;
       const dx = x + .5 - J.x, dy = y + .5 - J.y, a = dx * J.tx + dy * J.ty, l = dx * nx + dy * ny;
-      if (a < -26 || a > 14 || Math.abs(l) > 120) continue;
-      const fade = smooth(clamp((120 - Math.abs(l)) / 30, 0, 1)), k = 1 + (a < 0 ? .14 * (1 + a / 26) : -.22 * (1 - a / 14)) * fade, i = j * 4;
+      if (a < -26 || a > 14 || Math.abs(l) > DUNE) continue;
+      const fade = smooth(clamp((DUNE - Math.abs(l)) / 16, 0, 1)), k = 1 + (a < 0 ? .14 * (1 + a / 26) : -.22 * (1 - a / 14)) * fade, i = j * 4;
       d[i] = clamp(d[i] * k, 0, 255); d[i + 1] = clamp(d[i + 1] * k, 0, 255); d[i + 2] = clamp(d[i + 2] * k, 0, 255);
       if (Math.abs(a) < .8 && fade > .5) set(j, K.sandL);
     }
@@ -208,7 +214,7 @@ export function* paintDesert(S) {
     for (let k = 0; k < 10; k++) {
       const a = k / 10 * TAU + .3, gap = Math.abs(Math.atan2(Math.sin(a - O.open), Math.cos(a - O.open)));
       const x = Math.round(O.x + Math.cos(a) * (O.rx + 12)), y = Math.round(O.y + Math.sin(a) * (O.ry + 12));
-      if (gap < 1.1 || y < 6 || y > def.field[1] - 10) continue;
+      if (gap < 1.9 || y < 6 || y > def.field[1] - 10) continue; // (only on the far side: nothing in the way in or out)
       const t = ter[y * MW + x]; if (t === 3 || t === 2 || t === 1) continue;
       palm(x, y);
     }

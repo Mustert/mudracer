@@ -77,7 +77,9 @@ export function* ringTerrain(S) {
     });
     for (let j = 0; j < A; j++) if (pitD[j] < P.half) { if (dist[j] >= HALF) pitMask[j] = 1; if (ter[j] === 0 || ter[j] === 7) ter[j] = 1; }
     // where the pit lane forks off and where it comes back, the wedge between the two roads is asphalt with white hatching
-    for (let j = 0; j < A; j++) if (ter[j] === 0 && dist[j] < HALF + 14 && pitD[j] < P.half + 14) { ter[j] = 1; hatch[j] = 1; }
+    // (only beside the lane itself, not round its two round ends: those left patches of asphalt on the grass, 1S7-7)
+    const last = pts.length - 1;
+    for (let j = 0; j < A; j++) if (ter[j] === 0 && dist[j] < HALF + 14 && pitD[j] < P.half + 14 && pitK[j] > 0 && pitK[j] < last) { ter[j] = 1; hatch[j] = 1; }
     pit = { pts, half: P.half, ie: nearestIdx(path, pts[0].x, pts[0].y), box: P.box, wall: P.wall, garage: P.garage };
   }
   return { kc, cross, kerb, pitMask, pitD, pitK, pit, hatch };

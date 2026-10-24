@@ -120,13 +120,17 @@ export function eventCollisions() {
 export function steerAround(c, tx, ty) {
   const ev = G.T.ev; if (!ev || !(ev.cows.length || (ev.tyres && ev.tyres.length) || (ev.obst && ev.obst.length))) return [tx, ty];
   const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
+  // (only what lies in the way, not things off to the side, and all of it together at most 55 px: several tyres lying about used to add up and
+  // turn a car round, back down the straight, 1S7-5)
+  let sum = 0;
   for (const w of ev.cows.concat(ev.tyres || [], ev.obst || [])) {
     const dx = w.x - c.x, dy = w.y - c.y, d = Math.hypot(dx, dy);
     if (d > 75 || d < 1 || dx * fx + dy * fy < 0) continue;
-    const side = dx * -fy + dy * fx, k = (1 - d / 75) * 55 * (side > 0 ? -1 : 1);
-    tx += -fy * k; ty += fx * k;
+    const side = dx * -fy + dy * fx; if (Math.abs(side) > (w.r || 8) + 24) continue;
+    sum += (1 - d / 75) * 55 * (side > 0 ? -1 : 1);
   }
-  return [tx, ty];
+  sum = clamp(sum, -55, 55);
+  return [tx - fy * sum, ty + fx * sum];
 }
 
 function drawCow(w) {
@@ -539,7 +543,7 @@ function updateKipper(T, dt) {
       s.cloud = { x: s.p.x + s.ox * (HALF + 2 - cu * 6) + s.tg.x * cu * 2, y: s.p.y + s.oy * (HALF + 2 - cu * 6) + s.tg.y * cu * 2, r, a };
       for (const c of G.cars) {
         if (c.fall > 0 || c.z > 0 || Math.hypot(c.x - s.cloud.x, c.y - s.cloud.y) > r * .95) continue;
-        c.dirt = Math.min(1, c.dirt + 2.6 * a * dt); c.mudTrail = Math.max(c.mudTrail, 1.2);
+        c.dirt = Math.min(1, c.dirt + 2.6 * a * dt); c.mudTrail = Math.max(c.mudTrail, 1.2); c.cem = false; // (earth, not cement: the car turns brown, 1S5-4)
       }
     } else s.cloud = null;
   }
@@ -557,7 +561,7 @@ function truckCollisions() {
         if (d >= mn || d === 0) continue;
         const nx = dx / d, ny = dy / d, vn = c.vx * nx + c.vy * ny;
         c.x = px + nx * mn; c.y = py + ny * mn;
-        c.dirt = Math.min(1, c.dirt + .12);
+        c.dirt = Math.min(1, c.dirt + .12); c.cem = false;
         if (vn < 0) { c.vx -= 1.5 * vn * nx; c.vy -= 1.5 * vn * ny; if (!c.ai && -vn > 35) SFX.bump(); }
       }
     }

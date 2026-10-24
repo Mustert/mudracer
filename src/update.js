@@ -92,11 +92,15 @@ function updateRace(dt) {
           if (diff > G.T.N * D.ahead) thr *= D.slow; else if (diff < -G.T.N * D.behind) thr = Math.min(1, c.skill * D.catchUp, thr * 1.15);
         }
         // stuck (against a tree or the edge, e.g. after a cow threw it there): back up for a moment, turning towards the track
+        // (stuck means it does not get anywhere: measured by how far it really moved in the last step, because a car that pushes against a barrier
+        // keeps a little speed that the collision takes away again every step)
         if (G.state === 'race' && !c.finished) {
+          const moved = c.lx === undefined ? 99 : Math.hypot(c.x - c.lx, c.y - c.ly) / dt;
           if (c.rev > 0) { c.rev -= dt; thr = -1; }
-          else if (Math.hypot(c.vx, c.vy) < 12 && !(c.boxT > 0)) { c.stuckT = (c.stuckT || 0) + dt; if (c.stuckT > 1.2) { c.rev = .9; c.stuckT = 0; } }
+          else if (Math.min(moved, Math.hypot(c.vx, c.vy)) < 12 && !(c.boxT > 0)) { c.stuckT = (c.stuckT || 0) + dt; if (c.stuckT > 1.2) { c.rev = .9; c.stuckT = 0; } }
           else c.stuckT = 0;
         }
+        c.lx = c.x; c.ly = c.y;
       }
     }
     physics(c, dt, thr, tgt);

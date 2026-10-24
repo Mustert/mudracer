@@ -142,12 +142,13 @@ const TRACK_DEFS = [
   // The building site: the road is packed earth. Everything inside the ring road is yard (solid, see bau.js), the road narrows at barriers, a crane
   // holds a concrete pipe over the road, a cement mixer leaks a grey puddle onto it, and dump trucks tip earth beside it (event kipper).
   // poly = [x, y, curve radius] (rounded corners), mudAt/waterAt/cement = [x, y, half length along the road, half width across]
-  { name: 'BAUSTELLE', rev: 3, seed: 6, theme: 'baustelle', song: 'site', events: ['kipper'], wall: [], wash: 0, washAt: [215, 375],
+  { name: 'BAUSTELLE', rev: 4, seed: 6, theme: 'baustelle', song: 'site', events: ['kipper'], wall: [], wash: 0, washAt: [215, 375],
     poly: [[75, 130, 0], [75, 75, 30], [265, 75, 45], [265, 215, 45], [405, 215, 45], [405, 75, 45], [725, 75, 45], [725, 185, 45], [565, 185, 45], [565, 280, 45], [725, 280, 45], [725, 375, 52],
       [475, 375, 45], [475, 300, 45], [335, 300, 45], [335, 375, 45], [75, 375, 30]],
     mud: [], water: [], ponds: [],
     // no puddles: whoever got dirty washes at one of the two hoses or in the car wash at the end of the lap (grey cement stays until then)
-    mudAt: [[98, 98, 24, 18], [650, 280, 15, 17], [475, 340, 30, 34]],
+    // (rev 4: the puddle in the bend at the top left, right after the line, is gone, 1S5-5)
+    mudAt: [[650, 280, 15, 17], [475, 340, 30, 34]],
     // cement on the inner side of the left bend (the mixer leaks onto it); the outer 28 px stay clean, a longer line around it
     cement: [[283, 150, 22, 20]],
     yards: [[96, 96, 610, 270], [296, -10, 82, 120], [366, 350, 78, 110], [690, 196, 120, 60]],
@@ -211,16 +212,18 @@ const TRACK_DEFS = [
   // pit wall [x, y from, to], garages [x0, y0, x1, y1]; rollers = [x, y, seconds between two tyres, first one] (event reifen: the first tyre
   // at each place comes about when the field gets there in lap 1; only in turn 1 and the chicane after it it waits until the field has gone.
   // The times count from the start of the countdown, the race starts at 3 s: turn 1 throws first 8 s, the chicane 9 s into the race, 1S7-6)
-  { name: 'RENNSTRECKE', rev: 3, seed: 7, theme: 'ring', song: 'circuit', events: ['reifen'], wall: [], wash: null, ring: true,
-    poly: [[70, 130, 0], [70, 55, 55], [165, 55, 22], [195, 100, 22], [255, 100, 22], [285, 55, 22], [345, 55, 60], [540, 395, 65], [730, 395, 55], [730, 55, 48], [630, 55, 48],
-      [630, 175, 50], [270, 395, 65], [70, 395, 55]],
+  // Rev 4: the start line moved back down the straight (y 150; the bend at the bottom left is tighter so that the grid still fits on the straight), the pit lane
+  // comes back onto the track after the line (1S7-8)
+  { name: 'RENNSTRECKE', rev: 4, seed: 7, theme: 'ring', song: 'circuit', events: ['reifen'], wall: [], wash: null, ring: true,
+    poly: [[70, 150, 0], [70, 55, 55], [165, 55, 22], [195, 100, 22], [255, 100, 22], [285, 55, 22], [345, 55, 60], [540, 395, 65], [730, 395, 55], [730, 55, 48], [630, 55, 48],
+      [630, 175, 50], [270, 395, 65], [70, 395, 30]],
     mud: [], water: [], ponds: [],
     // the small patch on the lower right straight lies on the upper half of the road: along the lower edge there is a clean lane
     oilAt: [[730, 150, 30, 22], [300, 64, 22, 18], [340, 362, 26, 18], [640, 386, 17, 11]],
     gravel: [[40, 30, 85], [700, 22, 95], [760, 425, 70]], stacks: [[680, 125, 40]],
     // the pit lane forks off at the start of the bottom straight, runs behind the pit wall and joins the start straight again before turn 1.
     // The pit wall stands right at the edge of the lane, the barrier in front of the garages closes the other side: no way past the box.
-    pit: { pts: [[238, 381, 0], [148, 381, 32], [148, 214, 46], [93, 120, 0]], half: 15, box: [270, 306], wall: [126, 232, 350], garage: [174, 226, 212, 348] },
+    pit: { pts: [[238, 381, 0], [148, 381, 32], [148, 190, 40], [96, 104, 0]], half: 15, box: [270, 306], wall: [126, 232, 350], garage: [174, 226, 212, 348] },
     rollers: [[730, 262, 12, 11], [600, 395, 13, 9], [120, 55, 11, 11], [400, 316, 12, 16], [225, 100, 14, 12]],
     // scenery: stands [x, y, w, h, facing down 1 / up -1], team trucks [x, y, team], helipad, big screen, a flag mown into the grass, camera towers
     stands: [[405, 6, 168, 32, 1], [358, 410, 136, 36, -1]], heli: [530, 118], screen: [450, 58], flag: [575, 275, 56, 40], towers: [[268, 210], [380, 388]],
@@ -239,12 +242,13 @@ const TRACK_DEFS = [
     pyramid: [250, 400, 1560, 720], field: [1290, 400],
     // places in the field: [x along the line, offset to its right, ...]; soft = soft sand [x, off, rx, ry]; oases = [x, y, rx, ry]; dunes = x of the crests; blocks = sandstone
     // [x, off]; cacti and signs; avenue = [x of the mouth, y of its north end, y of its south end, x of the gate]; gate = middle of the two sphinxes
-    soft: [[290, 0, 50, 28], [560, -8, 54, 30], [820, 14, 52, 30], [1010, -6, 48, 28], [430, 80, 45, 26], [940, -95, 44, 26]],
-    oases: [[640, 345, 60, 26], [960, 62, 56, 24]],
-    dunes: [205, 540, 900], blocks: [[380, 22], [740, -26], [1075, 32]], cacti: [[470, -34], [690, 42], [905, -32], [1150, 36]], signs: [170, 420, 660, 860, 1050],
+    // (no soft sand right behind a dune: at least 30 px between the shadow of a crest and the rim of a patch)
+    soft: [[300, 0, 46, 26], [805, 10, 46, 28], [1040, -20, 44, 24], [430, 80, 45, 26], [1110, -75, 40, 24]],
+    oases: [[645, 295, 60, 26], [955, 135, 56, 24]],
+    dunes: [205, 540, 900], blocks: [[380, 22], [740, -26], [1075, 32]], cacti: [[520, -40], [690, 42], [905, -32], [1150, 36]], signs: [170, 420, 660, 860, 1050],
     avenue: [1090, 112, 398, 1325], gate: [1345, 240],
     // the event: quicksand fields [x along the line, offset, r] (they open from lap 2, see desert.js), the place where the air flickers in lap 1 [x0, y0, x1, y1] (not over the start grid)
-    quick: [[430, -55, 26], [660, -58, 26], [840, -66, 24], [1040, 52, 24]], heat: [[1380, 205, 1500, 275]],
+    quick: [[455, 4, 26], [630, -2, 26], [955, 6, 24], [1185, -16, 22]], heat: [[1380, 205, 1500, 275]],
     // the car wash: a bay beside the start straight (lane = the way in and out, half = half its width, wash = [x0, y0, x1, y1] of the washing floor under the arch,
     // wall = [x, y0, y1] of the low wall between the road and the bay (wall2: the one on the far side), sign = [x, y] of the signpost before the entrance)
     bay: { lane: [[85, 520, 0], [160, 505, 40], [160, 395, 40], [85, 380, 0]], half: 22, wash: [138, 440, 182, 464], wall: [127, 428, 472], wall2: [191, 420, 490], sign: [142, 540] },
