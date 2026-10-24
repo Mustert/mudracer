@@ -1,6 +1,6 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { LAPS, SS, TAU, VH, VW, clamp, ctx } from './core.js';
+import { LAPS, SS, TAU, VH, VW, angDiff, clamp, ctx } from './core.js';
 import { R1, ell, text } from './gfx.js';
 import { dirHeld } from './input.js';
 import { addP } from './particles.js';
@@ -18,6 +18,30 @@ function iceUpdate(T) {
   const out = [];
   for (const o of I.trees) for (const c of G.cars) if (c.ai && Math.abs(c.x - o.x) < 90 && Math.abs(c.y - o.y) < 90) { out.push(o); break; }
   ev.obst = out;
+}
+
+// ======================================================= the foehn (the only way to get clean)
+
+// a dirty computer car turns into the foehn lane beside the climb (only when it is really dirty, the same limits as the desert), drives through under the hut and comes
+// out above it; the washing itself is the ordinary washMask (it does not wash at once)
+function foenTarget(c) {
+  const T = G.T, B = T.ice.bay, N = T.N; if (!B) return null;
+  if (!c.iceBay && G.state === 'race' && c.dirt > [.4, .55, .7][G.raceDiff || 0] && (B.i0 - c.idx + N) % N < 40) c.iceBay = { k: 0 };
+  const W = c.iceBay; if (!W) return null;
+  const P = B.P; let k = W.k, bd = 1e9;
+  for (let q = W.k; q < Math.min(P.length, W.k + 30); q++) { const dd = (P[q].x - c.x) ** 2 + (P[q].y - c.y) ** 2; if (dd < bd) { bd = dd; k = q; } }
+  W.k = k;
+  if (k >= P.length - 4 || bd > 70 * 70 || G.state !== 'race') { c.iceBay = null; return null; }
+  const p = P[Math.min(P.length - 1, k + 9)];
+  return [p.x, p.y];
+}
+
+// the computer cars ease off before the hairpins of the serpentines and slowly through the foehn
+function iceThrottle(c, thr) {
+  if (c.iceBay) return Math.min(thr, .6);
+  const T = G.T, I = T.ice, N = T.N, i = c.idx; if (!I.serp || i < I.serp[0] - 40 || i > I.serp[1] + 20) return thr;
+  const a = Math.atan2(T.tan[i].y, T.tan[i].x), b = Math.atan2(T.tan[(i + 34) % N].y, T.tan[(i + 34) % N].x);
+  return thr * (1 - clamp((Math.abs(angDiff(a, b)) - .5) / 1.6, 0, .45));
 }
 
 // ======================================================= the chair lift
@@ -110,9 +134,23 @@ function drawLiftCables() {
   }
 }
 
+// the foehn in view: the glow of the coils pulses red-orange at the front edge of the hut, the blades of the blower turn, warm air shimmers above the lane,
+// and the washing floor steams a little
+function drawFoenSky() {
+  const T = G.T, B = T.ice.foen; if (!B) return;
+  const [wx0, wy0, wx1, wy1] = B.wash, cx = (wx0 + wx1) / 2;
+  if (!inView(cx, (wy0 + wy1) / 2, 60)) return;
+  const ay0 = wy0 + 4, ay1 = ay0 + 15, g = .5 + .5 * Math.sin(G.time * 5);
+  ctx.globalAlpha = .35 + .3 * g; R1(wx0 - 4, ay1 + 2, wx1 - wx0 + 8, 2, '#ff7a2e'); ctx.globalAlpha = .15 + .12 * g; R1(wx0 - 4, ay1 + 4, wx1 - wx0 + 8, 5, '#ff9a4e'); ctx.globalAlpha = 1;
+  const a = G.time * 9, cy = (ay0 + ay1) / 2;
+  for (let k = 0; k < 4; k++) { const an = a + k * Math.PI / 2; for (let r = 1; r <= 5; r++) R1(Math.round(cx + Math.cos(an) * r), Math.round(cy + Math.sin(an) * r), 1, 1, '#c8ced6'); }
+  if (Math.random() < .5) addP({ t: 'smoke', x: wx0 + Math.random() * (wx1 - wx0), y: wy1 + 2, vx: (Math.random() - .5) * 6, vy: -16 - Math.random() * 10, life: 1.1, ml: 1.1 });
+}
+
 // the chess players under the lift: Santa Claus (left) and the Grinch (right) at a stump. Every 2.4 s one of them moves a piece, every fourth move the
 // Grinch loses his temper (arms up, shaking), Santa Claus strokes his beard
 function drawChess() {
+  const F = G.T.ice.foen; if (F && inView(F.sign[0], F.sign[1], 120)) text('FOEN', F.sign[0], F.sign[1] - 20, 6, '#ff8a3c', 'center');
   const C = G.T.ice.chess; if (!C || !inView(C[0], C[1], 40)) return;
   const [cx, cy] = C, t = G.time / 2.4, k = Math.floor(t), u = t - k, santa = k % 2 === 0, rage = k % 4 === 3 && u > .35 && !santa;
   const body = (x, y, col, dark, hat, f, armsUp, sh) => {
@@ -138,7 +176,7 @@ function drawChess() {
 // above the cars: the snowed-in lump over a car (the shaking shows while it is held), the polar light in the last lap
 function drawIceAbove() {
   const T = G.T, I = T.ice;
-  drawLiftCables();
+  drawLiftCables(); drawFoenSky();
   for (const c of G.cars) if (c.snowT > 0 && inView(c.x, c.y, 30)) {
     const X = Math.round(c.x), Y = Math.round(c.y), w = Math.round(Math.sin(G.time * 40) * (c.shake || 0) * 2);
     ell(X + w, Y, 16, 12, '#9fb2c6'); ell(X + w, Y - 1, 15, 11, '#eef4fa'); ell(X - 4 + w, Y - 4, 8, 5, '#ffffff');
@@ -178,7 +216,7 @@ function iceSurf(c) { return c.surf === POWDER ? [.9, 6, .9] : null; }
 /** @type {import('./_template.js').TrackHooks} */
 export const iceHooks = {
   init(T) { T.ev.obst = []; }, update: iceUpdate,
-  surf: iceSurf, progress: iceProgress, wander: .5,
+  surf: iceSurf, progress: iceProgress, wander: .5, target: foenTarget, throttle: iceThrottle,
   stuck(c, dt, racing) {
     if (c.iceLift) { liftStep(c, dt); return true; }
     if (!(c.snowT > 0)) return false; iceStuck(c, dt, racing); return true;

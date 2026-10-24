@@ -1,5 +1,6 @@
 import { HALF, clamp, hash, hex, rng, vnoise } from './core.js';
 import { nearestIdx, paintTools, startLine } from './bau.js';
+import { stampLine } from './volcanomap.js';
 
 // ---------- Eis Rev 2: the winter-sports mountain (plaene/EIS_REV2.md) ----------
 // Terrain: 1 packed snow (the road), 0 snow beside the road, 2 deep snow (like mud, it makes the car white), 12 sheet ice (the bob run, the lake),
@@ -10,6 +11,7 @@ import { nearestIdx, paintTools, startLine } from './bau.js';
 export const LIFT = 70, POWDER = 71;
 
 const K = Object.fromEntries(Object.entries({
+  tileA: '#e8f4fb', tileB: '#9fd0e8',
   snow: '#eef4fa', snow1: '#e3ebf4', snow2: '#f9fbfe', snowB: '#cddbea', snowD: '#b7c8da', glit: '#ffffff',
   pow: '#f2f7fc', pow1: '#e6eef7', pow2: '#fbfdff', powT: '#cfdcea',
   road: '#dfe6ef', road1: '#d3dbe6', road2: '#e9eef5', roadE: '#aebdcd', rut: '#c6d0dc',
@@ -71,7 +73,7 @@ export function* iceTerrain(S) {
   const deepM = new Uint8Array(A), blob = (cx, cy, ex, ey, a, k) => {
     const R2 = Math.ceil(Math.max(ex, ey) * 1.3) + 2, ca = Math.cos(a), sa = Math.sin(a);
     for (let y = Math.max(0, Math.floor(cy - R2)); y <= Math.min(MH - 1, cy + R2); y++) for (let x = Math.max(0, Math.floor(cx - R2)); x <= Math.min(MW - 1, cx + R2); x++) {
-      const j = y * MW + x; if (ter[j] !== POWDER) continue;
+      const j = y * MW + x; if (ter[j] !== POWDER && ter[j] !== 0) continue;
       const dx = x + .5 - cx, dy = y + .5 - cy, e = ((dx * ca + dy * sa) / ex) ** 2 + ((-dx * sa + dy * ca) / ey) ** 2;
       if (e < .8 + .4 * vnoise(x * .1, y * .1, 80 + k) && !trees.some(t => (t.x - x) ** 2 + (t.y - y) ** 2 < 100)) { ter[j] = 2; deepM[j] = 1; }
     }
@@ -83,6 +85,13 @@ export function* iceTerrain(S) {
   const [lx0, ly0, ly1] = def.lift, lA = nearestIdx(path, lx0, ly0), lB = nearestIdx(path, lx0, ly1 + 22);
   for (let y = Math.max(0, ly1 - HALF); y <= Math.min(MH - 1, ly0 + HALF); y++) for (let x = Math.max(0, lx0 - HALF - 2); x <= Math.min(MW - 1, lx0 + HALF + 2); x++) {
     const j = y * MW + x; if (ter[j] === 1 && near[j] >= lA && near[j] <= lB) ter[j] = LIFT;
+  }
+  yield;
+  // the foehn: a lane that leaves the road beside the climb and comes back (road, like the car wash lane of the desert; the way back arrow and c.safe know it as alt)
+  let bay = null;
+  if (def.bay) {
+    const lane = new Uint8Array(A), P = stampLine(def.bay.lane, def.bay.half, j => { lane[j] = 1; if (ter[j] === 0 || ter[j] === 1) { ter[j] = 1; alt[j] = 1; } }, MW, MH);
+    bay = { P, i0: nearestIdx(path, def.bay.lane[0][0], def.bay.lane[0][1]), lane };
   }
   yield;
   // the bob run: sheet ice on the road
@@ -97,7 +106,8 @@ export function* iceTerrain(S) {
   const jumps = [], [jx, jy, vz] = def.jump, ji = nearestIdx(path, jx, jy), jp = path[ji], jt = S.tan[ji];
   jumps.push({ x: jp.x, y: jp.y, tx: jt.x, ty: jt.y, lo: -HALF - 4, hi: HALF + 4, vz });
   const pushes = (def.slopes || []).map(([x0, y0, x1, y1, f]) => ({ i0: nearestIdx(path, x0, y0), i1: nearestIdx(path, x1, y1), f }));
-  return { alt, lakeM, fieldM, deepM, trees, bob, jumps, pushes };
+  const serp = [nearestIdx(path, 570, 470), nearestIdx(path, 930, 910)];
+  return { alt, lakeM, fieldM, deepM, trees, bob, jumps, pushes, bay, serp };
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, sd, r, RT }
@@ -150,6 +160,35 @@ function paintLift(S, lift, chess) {
   }
 }
 
+// the foehn: a washing floor of pale tiles under a hut with a big hot-air blower (the roof is on the top layer: you drive under it), low stone walls between the road
+// and the lane, a signpost. The glow of the coils, the rotating blades and the shimmer are drawn while racing (ice.js)
+function paintFoen(S, B) {
+  const { MW, set, setT, walls, wallMask, washMask, ter } = S, { px, dk } = paintTools(S), [wx0, wy0, wx1, wy1] = B.wash;
+  for (let y = wy0; y < wy1; y++) for (let x = wx0; x < wx1; x++) { const j = y * MW + x; if (ter[j] === 1) { washMask[j] = 1; set(j, ((x >> 2) + (y >> 2)) & 1 ? K.tileA : K.tileB); } }
+  const low = (bx, by0, by1) => { // a low wall of grey stone blocks capped with snow
+    for (let y = by0; y <= by1; y++) {
+      for (let x = bx - 6; x <= bx + 5; x++) if (x === bx - 6 || x === bx + 5 || y === by0 || y === by1) dk(x + 3, y + 4, .8);
+      for (let x = bx - 5; x <= bx + 4; x++) { const edge = x === bx - 5 || x === bx + 4 || y === by0 || y === by1; px(x, y, edge ? K.rockDD : (y % 9 === 0 || x === bx) ? K.rockD : x < bx - 1 ? K.rockL : K.rock); wallMask[y * MW + x] = 1; }
+      if ((y - by0) % 6 === 0) walls.push({ x: bx, y, r: 5 });
+    }
+  };
+  low(...B.wall); low(...B.wall2);
+  // the hut: two pillars at the edges of the lane (solid), the snowy roof across (top layer) with the round vent of the blower, glowing coils at its front edge
+  const wa0 = wx0 - 8, wa1 = wx1 + 8, ay0 = wy0 + 4, ay1 = ay0 + 15;
+  for (const pxl of [wa0 + 3, wa1 - 3]) walls.push({ x: pxl, y: (ay0 + ay1) / 2, r: 5 });
+  for (let y = ay1 + 1; y <= ay1 + 7; y++) for (let x = wa0 + 6; x <= wa1 - 6; x++) dk(x, y, .74); // (its shadow on the floor)
+  roof(S, wa0, ay0, wa1 - wa0, ay1 - ay0);
+  const cx = (wa0 + wa1) / 2, cy = (ay0 + ay1) / 2;
+  for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const d = Math.hypot(dx, dy); if (d <= 6) setT(cx + dx, cy + dy, d > 5 ? K.rockDD : d > 4 ? K.rockL : d > 1.5 ? K.rockD : K.rockDD); }
+  for (let x = wa0 + 6; x <= wa1 - 6; x++) { setT(x, ay1, K.red); setT(x, ay1 + 1, (x & 3) < 2 ? [255, 150, 60] : K.red); }
+  // the signpost before the way in: a board with a flame
+  const [sx, sy] = B.sign;
+  walls.push({ x: sx, y: sy, r: 2 });
+  for (let k = 0; k < 14; k++) setT(sx, sy - k, K.woodD);
+  for (let yy = 0; yy < 9; yy++) for (let xx = -7; xx <= 7; xx++) setT(sx + xx, sy - 22 + yy, yy === 0 || yy === 8 || Math.abs(xx) === 7 ? K.woodD : [250, 240, 220]);
+  for (const [dx, dy, c] of /** @type {Array<[number, number, number[]]>} */ ([[0, 0, [240, 90, 40]], [-1, 1, [240, 90, 40]], [1, 1, [240, 90, 40]], [0, 1, [255, 190, 60]], [0, 2, [255, 190, 60]], [-1, 3, [240, 90, 40]], [0, 3, [240, 90, 40]], [1, 3, [240, 90, 40]]])) setT(sx + dx, sy - 20 + dy, c);
+}
+
 export function* paintIce(S) {
   const { MW, MH, def, set, setT, path, nrm, N, ter, dist, near, walls, wallMask, shore, bridgeMask, sd, RT } = S, A = MW * MH;
   const { px, dk, solid } = paintTools(S);
@@ -180,7 +219,8 @@ export function* paintIce(S) {
       c = e ? K.snowB : Math.sin((x * .8 + y * .5) + vnoise(x / 10, y / 10, sd + 43) * 6) > .55 ? K.snow2 : v < .3 ? K.snow1 : K.snow;
     } else if (t === 1 || t === LIFT) {
       c = v < .33 ? K.road1 : v > .7 ? K.road2 : K.road;
-      if (dist[j] > HALF - 3) c = K.roadE; else if (Math.abs(dist[j] - 13) < 1.5 && h > .3) c = K.rut;
+      const inLane = RT.bay && RT.bay.lane[j], laneE = inLane && [-3, 3, -3 * MW, 3 * MW].some(o => ter[j + o] !== 1);
+      if ((dist[j] > HALF - 3 && !inLane) || laneE) c = K.roadE; else if (Math.abs(dist[j] - 13) < 1.5 && h > .3) c = K.rut;
     } else if (t === 12) {
       if (RT.lakeM[j]) { let e = false; for (const q of [j - 1, j + 1, j - MW, j + MW]) if (q >= 0 && q < A && ter[q] !== 12) e = true; c = e ? K.lakeE : iceCol(x, y, h, true); }
       else c = dist[j] > HALF - 2 ? K.iceD : iceCol(x, y, h, false);
@@ -244,13 +284,14 @@ export function* paintIce(S) {
     for (let k = 0; k <= n; k++) walls.push({ x: x0 + (x1 - x0) * k / n, y: y0 + (y1 - y0) * k / n, r: w });
     for (let a = -w; a <= len + w; a++) {
       const wob = (vnoise(a * .09, 5, sd + 64) - .5) * 3;
-      for (let b = -w - 6; b <= w + 6; b++) {
+      for (let b = -w - 6; b <= w + (cliff ? 10 : 6); b++) {
         const X = x0 + ux * a - uy * (b + wob), Y = y0 + uy * a + ux * (b + wob), t = Math.abs(b), end = a < 0 ? -a : a > len ? a - len : 0;
-        if (Math.hypot(t, end) > w + 5) continue;
+        if (Math.hypot(t, end) > w + (cliff ? 9 : 5)) continue;
         if (Math.hypot(t, end) <= w) {
           solid(X, Y, 1);
-          px(X, Y, t > w - 1.5 ? K.rockDD : hash(a, b, sd + 65) < .35 ? K.rockL : b < -1 ? K.snow2 : b > w * (cliff ? .1 : .4) ? K.rockD : K.rock);
-        } else if (b > 0) dk(X, Y, .84 - .02 * (Math.hypot(t, end) - w)); // shadow to one side
+          // (a cliff: a snow cap on the north edge, below it layers of rock, dark at the foot)
+          px(X, Y, t > w - 1.5 ? K.rockDD : cliff ? (b < -w * .62 ? (hash(a, b, sd + 65) < .2 ? K.snow : K.snow2) : b > w * .55 ? (Math.floor(a / 5 + b / 4) & 1 ? K.rockDD : K.rockD) : hash(a, b, sd + 65) < .18 ? K.rockL : (Math.floor((b + 40) / 4) + Math.floor(a / 37)) & 1 ? K.rock : K.rockD) : hash(a, b, sd + 65) < .35 ? K.rockL : b < -1 ? K.snow2 : b > w * .4 ? K.rockD : K.rock);
+        } else if (b > 0) dk(X, Y, cliff ? .68 + .02 * (Math.hypot(t, end) - w) : .84 - .02 * (Math.hypot(t, end) - w)); // shadow to one side (a cliff: a hard, long one)
       }
     }
     for (let a = 4; a < len - 3; a += 9) { const b = (hash(a, 7, sd + 66) - .5) * 3, X = x0 + ux * a - uy * b, Y = y0 + uy * a + ux * b; px(X, Y, K.snow2); px(X + 1, Y, K.snow2); }
@@ -274,6 +315,11 @@ export function* paintIce(S) {
   yield;
   // ----- the chair lift: masts with a cross arm over the line (top layer), the two stations, the chess players under the line -----
   paintLift(S, def.lift, def.chess);
+  yield;
+  // ----- the climb: the slope is lighter at the top and falls into shade down the valley (the road climbs north along it) -----
+  // (soft at all four edges, so that no rectangle shows)
+  for (let y = 470; y < 1080; y++) for (let x = 470; x < 600; x++) { const j = y * MW + x; if (!wallMask[j]) dk(x, y, 1 - .13 * (y - 470) / 610 * Math.min(1, (x - 470) / 30, (600 - x) / 30, (y - 470) / 50, (1080 - y) / 50)); }
+  paintFoen(S, def.bay);
   yield;
   // ----- the pines: a shadow on the snow, the crown on the top layer, the trunk is a solid circle (the cars in the air fly over the ones where the jump lands) -----
   { const C = S.th.treeCol.map(hex);
@@ -319,5 +365,5 @@ export function* paintIce(S) {
   const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= MW - 2 || Y >= MH - 2) return false; const j = Y * MW + X; if (ter[j] !== 0 || dist[j] < HALF + 10 || wallMask[j] || shore[j]) return false; } return true; };
   for (let k = 0, tries = 0; k < 6 && tries < 800; tries++) { const x = 8 + (S.r() * (MW - 16) | 0), y = 8 + (S.r() * (MH - 16) | 0); if (okOff(x, y, 9)) { snowman(x, y); k++; } }
 
-  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, trees: RT.trees, lakeM: RT.lakeM, fieldM: RT.fieldM, lake: def.lake, lift: def.lift, chess: def.chess };
+  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, trees: RT.trees, lakeM: RT.lakeM, fieldM: RT.fieldM, lake: def.lake, lift: def.lift, chess: def.chess, bay: RT.bay, foen: def.bay, serp: RT.serp };
 }

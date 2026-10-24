@@ -8,7 +8,8 @@ Zum Weiterarbeiten in einer neuen Session: erst `plaene/EIS_REV2.md` (Plan, Arbe
 - **E2 erledigt** (Sessellift).
 - **E3 erledigt** (Bobbahn: `def.slopes = [[150, 70, 700, 355, 40]]`, Eis läuft 40 Indizes (80 px) über die Bande hinaus).
 - **E4 erledigt** (Schanze und Wald): Bäume entstehen in `iceTerrain` (`RT.trees`, Poisson-Scheiben, `ground: true` für y < 800), Tiefschnee-Senken `def.deep` plus Wehen im Lee einiger Bäume (`deepM`), „8“ `def.eight`; `iceUpdate` legt nahe Bäume in `T.ev.obst`; Hook `airTop` (neu, allgemein) zeichnet Autos über den Kronen. Funnel-Wandenden so gekürzt, dass sie nicht in die Straße am U-Bogen ragen.
-- **E5 bis E8 offen** (Reihenfolge laut Plan). Nichts publisht, `ROADMAP.md` und Obsidian-Doku erst in E8 (Plan Abschnitt „Arbeitspakete“).
+- **E5 erledigt** (Fön, Bergauf, Serpentinen): `def.bay` = { lane, half, wash, wall, wall2, sign } an der Bergauf-Straße (x = 520, y 965–1052); `iceTerrain` stempelt die Spur (`stampLine`, `RT.bay = { P, i0, lane }`, `alt`), `paintFoen` malt Boden, Mauern, Hütte, Schild; `foenTarget` (Hook `target`) und `iceThrottle` (Hook `throttle`, auch Gas vor den Kehren) in `ice.js`; `T.ice.serp` = Indexbereich der Serpentinen. Die Grate um die Fön-Tasche liegen jetzt bei [585,510→925], [585,925→660,975], [660,975→852,975], [715,975→1235].
+- **E6 bis E8 offen** (Reihenfolge laut Plan). Nichts publisht, `ROADMAP.md` und Obsidian-Doku erst in E8 (Plan Abschnitt „Arbeitspakete“).
 
 ## Was E1 festgelegt hat (nicht im Plan)
 
