@@ -296,7 +296,9 @@ export function* paintIce(S) {
     }
     for (let a = 4; a < len - 3; a += 9) { const b = (hash(a, 7, sd + 66) - .5) * 3, X = x0 + ux * a - uy * b, Y = y0 + uy * a + ux * b; px(X, Y, K.snow2); px(X + 1, Y, K.snow2); }
   };
-  for (const [x0, y0, x1, y1, w] of def.ridges) rockLine(x0, y0, x1, y1, w, false);
+  for (const [x0, y0, x1, y1, w, cliff] of def.ridges) rockLine(x0, y0, x1, y1, w, !!cliff);
+  // the three places where the snowballs come loose: a mound of snow hanging at the foot of the face
+  for (const bx of def.balls.xs) for (let dy = -5; dy <= 5; dy++) for (let dx = -16; dx <= 16; dx++) if ((dx / 16) ** 2 + (dy / 5) ** 2 <= 1) px(bx + dx, def.balls.y0 - 2 + dy, dy < -1 ? K.snow2 : dy > 2 ? K.snowB : K.snow);
   yield;
   // the cliffs between the serpentine legs: high rock with a hard shadow edge to the south
   for (const [x0, y0, x1, y1] of def.klippen) rockLine(x0, y0, x1, y1, 20, true);
@@ -365,5 +367,5 @@ export function* paintIce(S) {
   const okOff = (x, y, m) => { for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) { const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= MW - 2 || Y >= MH - 2) return false; const j = Y * MW + X; if (ter[j] !== 0 || dist[j] < HALF + 10 || wallMask[j] || shore[j]) return false; } return true; };
   for (let k = 0, tries = 0; k < 6 && tries < 800; tries++) { const x = 8 + (S.r() * (MW - 16) | 0), y = 8 + (S.r() * (MH - 16) | 0); if (okOff(x, y, 9)) { snowman(x, y); k++; } }
 
-  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, trees: RT.trees, lakeM: RT.lakeM, fieldM: RT.fieldM, lake: def.lake, lift: def.lift, chess: def.chess, bay: RT.bay, foen: def.bay, serp: RT.serp };
+  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, trees: RT.trees, lakeM: RT.lakeM, fieldM: RT.fieldM, lake: def.lake, lift: def.lift, chess: def.chess, bay: RT.bay, foen: def.bay, serp: RT.serp, balls: def.balls };
 }

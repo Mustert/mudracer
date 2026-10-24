@@ -1,23 +1,71 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
-import { LAPS, SS, TAU, VH, VW, angDiff, clamp, ctx } from './core.js';
-import { R1, ell, text } from './gfx.js';
+import { LAPS, SS, TAU, VH, VW, angDiff, clamp, ctx, hash } from './core.js';
+import { R1, disc, ell, text } from './gfx.js';
 import { dirHeld } from './input.js';
 import { addP } from './particles.js';
 import { cam } from './state.js';
 import { inView, near } from './trackfx.js';
 import { LIFT, POWDER } from './icemap.js';
 
-// ---------- Eis Rev 2 while racing (the chair lift, the chess players,  (plaene/EIS_REV2.md): the chair lift (every car that reaches the line is hooked on at once, no waiting: its own chair the moment it arrives), powder snow behind the cars, a crooked landing after the ski jump snows the car in,
-// the progress through the wood and the serpentines (parts of the centre line lie close together), the polar light in the last lap. ----------
+// ---------- Eis Rev 2 while racing (plaene/EIS_REV2.md): the chair lift (every car that reaches the line is hooked on at once, no waiting: its own chair the moment it
+// arrives), the chess players, powder snow behind the cars, a crooked landing after the ski jump snows the car in, the foehn, the progress through the wood and the serpentines
+// (parts of the centre line lie close together), the polar light in the last lap.
+// Event "schneeball": every 8 to 14 s a snowball comes loose from the rock face above the serpentines and rolls straight down over all the legs, growing and hopping over the cliffs;
+// who it hits is snowed in until shaken free. ----------
 
 // the computer cars steer round the pines near them: only those within 90 px of a car go into T.ev.obst (steerAround, physics.js), not the whole wood
-function iceUpdate(T) {
+function iceUpdate(T, dt) {
   const ev = T.ev, I = T.ice;
-  ev.obst = ev.obst.length ? [] : ev.obst;
   const out = [];
   for (const o of I.trees) for (const c of G.cars) if (c.ai && Math.abs(c.x - o.x) < 90 && Math.abs(c.y - o.y) < 90) { out.push(o); break; }
+  if (ev.iceBalls) for (const b of ev.iceBalls) if (b.on) out.push({ x: b.bx, y: b.y, r: b.r + 4 });
   ev.obst = out;
+  if (ev.iceBallOn) ballsUpdate(T, dt);
+}
+
+// ======================================================= event "schneeball"
+
+// def.balls = { xs: the three lanes (x), y0: the foot of the rock face, y1: where the ball bursts, hops: y of the cliffs }. The timer only runs while a car is on the
+// serpentines (so there is always one coming for whoever is there), at most two balls at a time. First a warning (snow trickles down the face, a shadow lies along the lane,
+// a rumble), then the roll (it gets faster and bigger, hops over each cliff), at the end it bursts without leaving a heap.
+const BALL = { warn: 2.4, roll: 5.2, first: 4, per: [8, 14], max: 2 };
+
+function initBalls(T) { const ev = T.ev; ev.iceBallOn = true; ev.iceBalls = []; ev.iceBallCd = BALL.first; ev.iceBallK = 0; }
+
+function ballsUpdate(T, dt) {
+  const ev = T.ev, I = T.ice, B = I.balls, N = T.N; if (!B) return;
+  if (G.cars.some(c => !c.finished && !c.iceLift && (c.idx - (I.serp[0] - 140) + N) % N < I.serp[1] - I.serp[0] + 160)) ev.iceBallCd -= dt;
+  if (ev.iceBallCd <= 0 && ev.iceBalls.length < BALL.max) {
+    const k = ev.iceBallK++, x = B.xs[Math.floor(hash(k, 1, 95) * B.xs.length)];
+    ev.iceBalls.push({ x, t: 0, hit: new Set(), y: B.y0, r: 6, z: 0, on: false, warn: true, p: 0, bx: x, burst: false });
+    ev.iceBallCd = BALL.per[0] + hash(k, 2, 95) * (BALL.per[1] - BALL.per[0]);
+    if (near(x, (B.y0 + B.y1) / 2) < 520) SFX.rumble();
+  }
+  for (const b of ev.iceBalls) {
+    b.t += dt; b.warn = b.t < BALL.warn;
+    const u = clamp((b.t - BALL.warn) / BALL.roll, 0, 1); b.p = u; b.on = b.t >= BALL.warn && u < 1;
+    b.y = B.y0 + (B.y1 - B.y0) * Math.pow(u, 1.45); b.r = 6 + 11 * u; b.bx = b.x + Math.sin(u * 9 + b.x) * 4;
+    b.z = 0; for (const ky of B.hops) if (Math.abs(b.y - ky) < 24) b.z = 13 * Math.sin(Math.PI * (b.y - ky + 24) / 48);
+    if (u >= 1 && !b.burst) {
+      b.burst = true;
+      for (let i = 0; i < 40; i++) addP({ t: 'd', x: b.bx, y: b.y, z: 6, vx: Math.cos(i / 40 * TAU) * (60 + Math.random() * 60), vy: Math.sin(i / 40 * TAU) * (40 + Math.random() * 40), vz: 60, col: i % 3 ? '#ffffff' : '#dce8f2', s: 2, life: .8, ml: .8 });
+      if (near(b.bx, b.y) < 360) SFX.crunch(1);
+    }
+    // the trickle of snow at the foot of the face while it is coming loose
+    if (b.warn && Math.random() < dt * 25 && inView(b.x, B.y0, 60)) addP({ t: 'd', x: b.x + (Math.random() - .5) * 18, y: B.y0 - 4 + Math.random() * 6, z: 10, vx: (Math.random() - .5) * 6, vy: 8 + Math.random() * 10, vz: -10, col: '#ffffff', s: 1, life: .7, ml: .7 });
+  }
+  ev.iceBalls = ev.iceBalls.filter(b => b.t < BALL.warn + BALL.roll + .15);
+}
+
+// the balls hit the cars on the road (not while it hops over a cliff, not a car in the air or on the lift)
+function iceCollisions() {
+  const ev = G.T.ev; if (!ev || !ev.iceBalls) return;
+  for (const b of ev.iceBalls) if (b.on && b.z < 6) for (const c of G.cars) {
+    if (c.fall > 0 || c.z > 0 || c.snowT > 0 || c.ghost > 0 || c.iceLift || b.hit.has(c) || Math.hypot(c.x - b.bx, c.y - b.y) > b.r + 10) continue;
+    b.hit.add(c); c.snowT = 1.05; c.vx = c.vy = 0; c.stun = 0; c.boost = 0; c.shake = 1;
+    if (!c.ai) SFX.crash(); else if (near(c.x, c.y) < 260) SFX.crunch(.4);
+  }
 }
 
 // ======================================================= the foehn (the only way to get clean)
@@ -134,6 +182,16 @@ function drawLiftCables() {
   }
 }
 
+// the snowballs: a faint shadow along the lane while it is coming loose, the shadow of the ball while it rolls
+function drawBallsGround() {
+  const ev = G.T.ev, B = G.T.ice.balls; if (!ev || !ev.iceBalls || !B) return;
+  for (const b of ev.iceBalls) {
+    if (!inView(b.x, (B.y0 + B.y1) / 2, 300)) continue;
+    if (b.warn) { ctx.globalAlpha = .07 + .06 * Math.abs(Math.sin(G.time * 6)); R1(b.x - 9, B.y0, 18, B.y1 - B.y0, '#304860'); ctx.globalAlpha = 1; }
+    else if (b.on) { ctx.globalAlpha = .28; ell(Math.round(b.bx + 3 + b.z * .5), Math.round(b.y + b.r * .6 + b.z * .8), Math.round(b.r + 4), Math.round(b.r * .5 + 2), '#304860'); ctx.globalAlpha = 1; }
+  }
+}
+
 // the foehn in view: the glow of the coils pulses red-orange at the front edge of the hut, the blades of the blower turn, warm air shimmers above the lane,
 // and the washing floor steams a little
 function drawFoenSky() {
@@ -175,8 +233,17 @@ function drawChess() {
 
 // above the cars: the snowed-in lump over a car (the shaking shows while it is held), the polar light in the last lap
 function drawIceAbove() {
-  const T = G.T, I = T.ice;
+  const T = G.T, I = T.ice, ev = T.ev;
   drawLiftCables(); drawFoenSky();
+  if (ev && ev.iceBalls) for (const b of ev.iceBalls) {
+    if (b.on) {
+      const x = Math.round(b.bx), y = Math.round(b.y - b.z), r = Math.round(b.r), rot = b.p * 22;
+      disc(x, y, r + 1, '#9fb2c6'); disc(x, y, r, '#f4f8fc'); disc(x - Math.round(r * .3), y - Math.round(r * .3), Math.round(r * .45), '#ffffff');
+      for (let q = 0; q < 5; q++) R1(Math.round(x + Math.cos(rot + q * 1.3) * r * .6), Math.round(y + Math.sin(rot + q * 1.3) * r * .6), 2, 2, '#c8d6e4');
+      if (Math.random() < .6) addP({ t: 'd', x: b.bx + (Math.random() - .5) * b.r * 2, y: b.y - b.r * .5, z: 3, vx: (Math.random() - .5) * 40, vy: -20, vz: 30, col: '#ffffff', s: 2, life: .5, ml: .5 });
+    }
+    if (b.warn && G.player && near(b.x, b.y) < 460 && ((G.time * 4) | 0) % 2 === 0) text('SCHNEEBALL!', Math.round(G.player.x), Math.round(G.player.y - 40), 8, '#ff6b6b', 'center');
+  }
   for (const c of G.cars) if (c.snowT > 0 && inView(c.x, c.y, 30)) {
     const X = Math.round(c.x), Y = Math.round(c.y), w = Math.round(Math.sin(G.time * 40) * (c.shake || 0) * 2);
     ell(X + w, Y, 16, 12, '#9fb2c6'); ell(X + w, Y - 1, 15, 11, '#eef4fa'); ell(X - 4 + w, Y - 4, 8, 5, '#ffffff');
@@ -222,5 +289,5 @@ export const iceHooks = {
     if (!(c.snowT > 0)) return false; iceStuck(c, dt, racing); return true;
   },
   noRespawn: t => t === LIFT, drawCar: drawLiftCar, airTop: c => c.z > 22,
-  ground: iceGround, drawGround: drawChess, drawAbove: drawIceAbove,
+  ground: iceGround, drawGround() { drawChess(); drawBallsGround(); }, collisions: iceCollisions, events: { schneeball: initBalls }, drawAbove: drawIceAbove,
 };
