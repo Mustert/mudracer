@@ -160,11 +160,14 @@ export const SFX = {
   ouch: v => { voice({ type: 'square', f: 620, to: 900, a: .01, hold: .06, d: .1, vol: .07 * v, lp: 2400 }); voice({ t: .14, type: 'square', f: 900, to: 420, a: .01, hold: .1, d: .2, vol: .07 * v, lp: 2400 }); },
   storm: () => { noise({ type: 'bandpass', f: 300, to: 1400, a: 2.5, hold: 3, d: 2, vol: .22, q: .8 }); noise({ type: 'lowpass', f: 200, a: 1.5, hold: 3, d: 2, vol: .2 }); },
   windLoop: () => { noise({ type: 'bandpass', f: 500 + Math.random() * 300, to: 900, a: 1.5, hold: 3, d: 2, vol: .09, q: 1.2 }); },
-  // ice: the springy bob wall, cracking ice, the ice breaking, the frost coming, the avalanche rumbling, shaking free of the snow, a penguin
+  // ice: the springy bob wall, cracking ice, the ice breaking, the snowball rumbling, shaking free of the snow
   bonk: () => { voice({ f: 220, to: 120, d: .12, vol: .3 }); voice({ type: 'triangle', f: 440, to: 300, d: .08, vol: .08 }); },
   crack: v => { for (let i = 0; i < 4; i++) noise({ t: i * .03 + Math.random() * .02, type: 'highpass', f: 3500, d: .025, vol: .12 * v }); voice({ type: 'square', f: 2400, to: 900, d: .05, vol: .03 * v, lp: 5000 }); },
+  // ice: the chair lift (a soft clack of the wheel over a mast), the foehn (hot air), a chess piece put down on the board
+  lift: () => { noise({ type: 'bandpass', f: 520, q: 2, d: .05, vol: .09 }); voice({ type: 'triangle', f: 150, to: 110, d: .06, vol: .05 }); },
+  foen: v => { noise({ type: 'bandpass', f: 900, to: 2600, q: .8, a: .15, hold: .5, d: .6, vol: .12 * v }); },
+  tock: () => { voice({ type: 'triangle', f: 330, to: 220, d: .06, vol: .1 }); },
   iceBreak: v => { for (let i = 0; i < 10; i++) noise({ t: i * .025, type: 'highpass', f: 2500 + i * 200, d: .04, vol: .14 * v }); noise({ t: .2, type: 'lowpass', f: 2500, to: 400, d: .45, vol: .35 * v }); },
-  frost: () => { for (let i = 0; i < 7; i++) voice({ t: i * .12, type: 'sine', f: 2093 * [1, 1.26, 1.5, 1.68, 2, 1.5, 2.52][i], a: .002, d: .5, vol: .04 }); noise({ type: 'highpass', f: 6000, a: .8, hold: 1, d: 1.5, vol: .05 }); },
   rumble: () => { noise({ type: 'lowpass', f: 160, to: 90, a: 1, hold: 1.5, d: 1.5, vol: .5, q: .7 }); voice({ f: 48, to: 36, a: .8, hold: 1.4, d: 1.2, vol: .25 }); },
   crunch: v => { for (let i = 0; i < 8; i++) noise({ t: i * .04 + Math.random() * .03, type: 'bandpass', f: 1400 + Math.random() * 1600, q: 1.5, d: .05, vol: .16 * v }); },
   // volcano: hissing steam and lava, the crust crackling, a hot engine coughing, the eruption, a lava bomb whistling down and hitting, "aua, heiss!"
@@ -206,7 +209,6 @@ export const SFX = {
   zap: () => { for (let i = 0; i < 7; i++) voice({ t: i * .045, type: 'square', f: 900 + Math.random() * 900, to: 260, a: .002, d: .04, vol: .05, lp: 4200 }); },
   sunburst: () => { for (const f of [523, 659, 784, 1047]) voice({ type: 'sawtooth', f: f / 2, to: f, toAt: 1, a: .8, hold: .8, d: 1.2, vol: .035, lp: 2200 }); [1047, 1319, 1568, 2093].forEach((f, i) => bell(f, 1 + i * .1, .1)); },
   firework: v => { voice({ type: 'sine', f: 500, to: 1600, d: .25, vol: .03 * v }); noise({ t: .25, type: 'lowpass', f: 1400, to: 160, d: .5, vol: .3 * v }); for (let i = 0; i < 8; i++) noise({ t: .3 + Math.random() * .5, type: 'bandpass', f: 2500 + Math.random() * 3500, q: 3, d: .03, vol: .07 * v }); },
-  quack: v => { for (const t of [0, .16]) voice({ t, type: 'sawtooth', f: 700, to: 420, a: .01, hold: .04, d: .09, vol: .06 * v, bp: 1200, q: 4 }); },
   rain: () => noise({ type: 'highpass', f: 4200, q: .5, a: 1.2, hold: 5.5, d: 2.5, vol: .09 }),
   thunder: () => { noise({ type: 'lowpass', f: 300, to: 70, a: .05, d: 2, vol: .45, q: .7 }); voice({ f: 62, to: 34, d: 1.6, vol: .3 }); },
   flood: () => { noise({ type: 'lowpass', f: 260, to: 1100, a: 2, hold: 4, d: 3.5, vol: .28, q: .6 }); noise({ type: 'bandpass', f: 2500, to: 700, a: 1, hold: 3, d: 3, vol: .1 }); },

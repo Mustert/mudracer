@@ -22,7 +22,7 @@ Gilt für neue Strecken und Überarbeitungen. Die Streckendesign-Grundsätze 1�
 |---|---|
 | Nummer und Cup | Strecke n gehört in Cup ⌈n/3⌉ (`cups.js` `CUPS`). Schwierigkeit steigt mit n (Grundsatz 1). |
 | Kartengröße | Standard 800×450; größer über `W`/`H` im `TRACK_DEFS`-Eintrag. Mehr Fläche heißt längere Bauzeit und Runde (`ROADMAP.md` 1P). |
-| Boden-Codes | Die Liste aller vergebenen Codes steht über `physics.js` `surfOf`: 0–17 gemeinsam (Straße, Matsch, Wasser, Schlucht, Eis, Lava …), eigene Blöcke 30–32 (Spielzimmer), 41–48 (Regenbogen), 50–52 (Strand-Volleyballfeld) und 60–61 (Wüste Rev 3: Rallysand, Treibsand-Vorstufe). Eine neue Strecke nimmt 70–79, beantwortet ihre Codes im Hook `surf` und trägt sie in die Liste ein (ANALYSE.md T21). |
+| Boden-Codes | Die Liste aller vergebenen Codes steht über `physics.js` `surfOf`: 0–17 gemeinsam (Straße, Matsch, Wasser, Schlucht, Eis, Lava …), eigene Blöcke 30–32 (Spielzimmer), 41–48 (Regenbogen), 50–52 (Strand-Volleyballfeld) 60–61 (Wüste Rev 3: Rallysand, Treibsand-Vorstufe) und 70–71 (Eis Rev 2: Lifttrasse, Pulverschnee). Eine neue Strecke nimmt 80–89, beantwortet ihre Codes im Hook `surf` und trägt sie in die Liste ein (ANALYSE.md T21). |
 | Felder in `T.ev` | mit dem Kürzel der Strecke beginnen (z. B. `toyRobot`), nie allgemeine Namen wie `wind`, `storm` oder `msg` (T22; `checkAll` listet, was doppelt ist). Der Kern liest aus `T.ev` nur `obst` (Hindernisse, denen die KI ausweicht, gewollt gemeinsam); Kräfte wie den Wüstenwind wendet die Strecke selbst an (`desert.js`, Hook `update`; die Wüste trägt das Kürzel `ds`). |
 | Ereignisse | Schlüssel in `def.events`, Schalter in `PREFS.events` (`state.js`), Anzeigename in `FX_NAMES` (`raceopts.js`), Start im Hook `events` der Strecke (`events: { spielzeug: initToyEvents }`, siehe Abschnitt 3). |
 | Lied | eigener Schlüssel in `SONGS` (`music.js`), `song` im `TRACK_DEFS`-Eintrag (Grundsatz 8). |
@@ -36,7 +36,7 @@ Der Kern fragt nicht mehr nach einzelnen Strecken (`if (G.T.toys) …`), sondern
 
 | Datei | Stelle |
 |---|---|
-| `src/_template.js` | **Vorlage**: alle Hooks mit Signatur und je einer Zeile, wann der Kern sie aufruft (`init`, `events`, `update`, `collisions`, `surf`, `target`, `wander`, `avoidAll`, `lane`, `throttle`, `stuck`, `ground`, `noRespawn`, `respawn`, `drawCar`, `drawFall`, `drawGround`, `drawAbove`, `drawSky`). In `src/<name>.js` am Ende ein Objekt `export const <name>Hooks = { … }` mit nur den Hooks, die die Strecke braucht (Beispiele: Ende von `toys.js`, `rainbow.js`). |
+| `src/_template.js` | **Vorlage**: alle Hooks mit Signatur und je einer Zeile, wann der Kern sie aufruft (`init`, `events`, `update`, `collisions`, `surf`, `target`, `wander`, `avoidAll`, `lane`, `throttle`, `stuck`, `ground`, `noRespawn`, `respawn`, `drawCar`, `drawFall`, `airTop`, `drawGround`, `drawAbove`, `drawSky`). In `src/<name>.js` am Ende ein Objekt `export const <name>Hooks = { … }` mit nur den Hooks, die die Strecke braucht (Beispiele: Ende von `toys.js`, `rainbow.js`). |
 | `hooks.js` | `HOOKS`: Schalter → Hook-Objekt (eine Zeile, plus Import) |
 | `tracks.js` | `MAPS`: Schalter, `decor`, `terrain`, `paint` aus `<name>map.js` (eine Zeile, plus Import); dazu `THEMES` (Farben, `goo`, `landCol`) und `TRACK_DEFS` (Eintrag). `paint` gibt den Zustand der Strecke zurück, darin optional `jumps`, `pushes`, `alt` (Bausteine aus `trackfx.js`). |
 | `cars.js` / `race.js` | eigener Schmutz-Satz (`goo`, `goo2`: Liste `KINDS` und `newSet`) |
@@ -55,7 +55,7 @@ Preview starten und stumm schalten (CLAUDE.md), dann im Tab per JavaScript:
 ```js
 mudracer.check('NAME')                  // Bericht als Text: Bau, Grundsätze 4, 5, 7, 8, Boden-Codes, ganzes Rennen
 mudracer.check('NAME', { fx: false })   // dasselbe ohne Ereignisse (zeigt, ob ein Problem vom Ereignis kommt)
-mudracer.check('NAME', { diff: 0 })     // LEICHT; Standard ist SCHWER (diff 2); { sim: false } ohne Rennen
+mudracer.check('NAME', { diff: 0 })     // LEICHT; Standard ist SCHWER (diff 2); { sim: false } ohne Rennen; { cars: 4 } Feldgröße (Standard 10)
 mudracer.checkPic('NAME')               // ganze Karte mit Befunden über der Seite, dann EIN Screenshot
 mudracer.checkAll({ sim: true })        // alle Strecken als Tabelle (~30 s): Steigerung, doppelte Codes und T.ev-Felder
 ```

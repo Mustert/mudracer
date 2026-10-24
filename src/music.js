@@ -307,8 +307,8 @@ const SONGS = {
       else if (s === 0 && bi === 0) M.crash(t);
     } },
   // ice: B minor, it builds up with the race. Lap 1: celesta, a glockenspiel echo, soft strings, sleigh bells, hardly any bass (it feels like 84 BPM).
-  // From the frost (lap 2): a fast breakbeat, a deep sub bass and quick arpeggios ("ice crystals"). Last lap: a choir, strings in sixteenths, timpani.
-  // Before every avalanche a low timpani roll.
+  // From lap 2: a fast breakbeat, a deep sub bass and quick arpeggios ("ice crystals"). Last lap: a choir, strings in sixteenths, timpani.
+  // Before every snowball a low timpani roll.
   ice: { bpm: 168, swing: 0,
     chords: { Hm: { r: 35, n: [59, 62, 66] }, G: { r: 43, n: [59, 62, 67] }, D: { r: 38, n: [62, 66, 69] }, A: { r: 45, n: [61, 64, 69] }, Em: { r: 40, n: [59, 64, 67] },
       'F#7': { r: 42, n: [61, 64, 66, 70] }, 'F#m': { r: 42, n: [61, 66, 69] } },
@@ -321,8 +321,7 @@ const SONGS = {
     lead(M, m, t, d) { M.celesta(hz(m - 12), t, d); M.glock(hz(m), t + 3 * M.sd, .5); },
     band(M, s, t, bi, ch, sec) {
       const P = G.player, ev = G.T && G.T.ev, lap = P && !G.T.run && (G.state === 'race' || G.state === 'finish') ? P.lap : 1;
-      // the fast layers belong to the event frost: without it (switched off) the winter song stays soft in every lap
-      const frost = lap >= 2 && !!(ev && ev.iceFrostOn), last = frost && lap >= LAPS;
+      const frost = lap >= 2, last = lap >= LAPS;
       if (s === 0) M.pad(ch.n, t, 16 * M.sd, frost ? .012 : .018);
       if (s % 2 === 0) M.sleigh(t, s % 4 === 0 ? 1 : .55);
       if (!frost) { if (s === 0 && bi % 2 === 0) M.bassWarm(hz(ch.r - 12), t, 14 * M.sd); }
@@ -338,8 +337,8 @@ const SONGS = {
         M.strings(hz(ch.n[[0, 1, 2, 1][s & 3] % ch.n.length]), t);
         if (s === 0 || (s === 8 && bi % 2)) M.timp(hz(ch.r), t);
       }
-      // a low roll before the avalanche
-      if (ev && ev.iceAval && ev.iceAval.warn) M.timp(hz(ch.r - 12), t, .45);
+      // a low roll before every snowball
+      if (ev && ev.iceBalls && ev.iceBalls.some(b => b.warn)) M.timp(hz(ch.r - 12), t, .45);
       if (s === 0 && bi === 0) M.crash(t);
     } },
 };

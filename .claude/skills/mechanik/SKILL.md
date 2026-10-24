@@ -69,6 +69,8 @@ Werte `[Tempo, Seitenhaftung, Lenkung, Gas]` aus `surfOf` (`physics.js`), Wirkun
 | 16 | Kruste | wie Straße | Lava, wenn `T.volcano.hot` |
 | 17 | Plattform Schwerelosigkeit | wenig Haftung | Weltall |
 | 30–32, 41–48, 50–52 | Spielzimmer, Regenbogen, Strand-Volleyball | Hook `surf` | eigene Blöcke |
+| 60–61 | Wüste Rev 3: Rallysand, Treibsand-Vorstufe | Hook `surf` | siehe Abschnitt 14 |
+| 70–71 | Eis Rev 2: 70 Lifttrasse (Straße unter den Seilen), 71 Pulverschnee im Wald | Hook `surf`: 71 `[.9, 6, .9]`, 70 wie Straße | 70: das Auto wird eingehängt (`c.iceLift`), 71: offenes Feld, macht nicht weiß; siehe Abschnitt 15 |
 
 Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil von `updateRace` (`c.surf`), also einen Schritt verzögert.
 
@@ -134,7 +136,7 @@ Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil
 
 ## 11. Zeichnen (`draw.js` `drawRace`)
 
-Reihenfolge: `base` → Reifenspuren `tctx` → Wasserglitzern → Strand → Tiere → `drawEventsGround` → Hook `drawGround` → Geist → Autos am Boden (nach `y` sortiert; Ring-Brücke dazwischen) → Zug → Autos in der Luft (`z > 0`, über dem Zug, 1S4-9) → Partikel, Rauch → `top` (Baumkronen, Geländer) → Bahnübergänge (je ein Warnlicht, `cr.lx/ly` aus `buildTrack`) → Windmühle, Vögel → Zurück-Pfeil → `drawEventsAbove` → Hook `drawAbove` → Nacht → Regen → Hook `drawSky` → Stimmung → 1P-Schild → HUD → Countdown/Ziel. Auto: `drawCar` (Hook `drawCar`, `drawFall`), Schmutzstufe `round(dirt·5)`.
+Reihenfolge: `base` → Reifenspuren `tctx` → Wasserglitzern → Strand → Tiere → `drawEventsGround` → Hook `drawGround` → Geist → Autos am Boden (nach `y` sortiert; Ring-Brücke dazwischen) → Zug → Autos in der Luft (`z > 0`, über dem Zug, 1S4-9; ein Hook `airTop(c)` kann sie hinter `top` verschieben, EIS: über die Baumkronen) → Partikel, Rauch → `top` (Baumkronen, Geländer) → Bahnübergänge (je ein Warnlicht, `cr.lx/ly` aus `buildTrack`) → Windmühle, Vögel → Zurück-Pfeil → `drawEventsAbove` → Hook `drawAbove` → Nacht → Regen → Hook `drawSky` → Stimmung → 1P-Schild → HUD → Countdown/Ziel. Auto: `drawCar` (Hook `drawCar`, `drawFall`), Schmutzstufe `round(dirt·5)`.
 
 ## 12. Zustand, Menüs, Speichern, Ton
 
@@ -163,3 +165,15 @@ Im Dev-Server: `mudracer.G.T` (aktuelle Strecke), `mudracer.G.cars`, `mudracer.t
 - **Ereignis sandsturm:** T.ev.dsStorm (ab dem ersten Auto, das in Runde 1 aus der Pyramide kommt: `T.ev.dsIn`, `T.ev.dsOut`; der Treibsand öffnet 6 bis 9,6 s danach), T.ev.dsQuick (Treibsand-Felder: 0 fest, 1 Warnung = Code 61 und dunkles Bild, 2 offen = Code 10 mit sinkInSand); Bild und 	er werden vorher mit snap gesichert (nur über das Feld). Der Sturm ist rein optisch (Nebelkarte, Licht an allen Autos). Schalter sandsturm schaltet beides ab. Die Treibsand-Felder liegen auf der Linie (`def.quick`, Versatz nahe 0).
 - **Sprünge im Feld:** Dünen sind nur `DUNE` = 55 px zu jeder Seite der Linie breit (man kann vorbei), jede Landung im Feld gibt 0,4 s Schub, es gibt keinen Dreher nach der Landung (1S8-12). Weichsand liegt nie direkt hinter einem Dünenkamm. Palmen stehen nur auf der Rückseite der Oasen.
 - Dateien: desertmap.js (Gelände und Bild), desert.js (Laufzeit und Hooks).
+
+## 15. Eis Rev 2 in Kürze (hochkante Karte 1000 × 1500, Lift, Wald, See)
+
+- **Dateien:** `icemap.js` (`iceTerrain`: See, Wald-Feld mit Pinienverteilung und Tiefschnee, Lift, Fön-Spur, Bobbahn, Sprung, Schübe; `paintIce`: Boden, Massive, Grate, Klippen, Zaun, Lift-Masten und Stationen, Fön, Pinien, Dorf), `ice.js` (Laufzeit: Lift, Schach, Schneeball, Eisbruch, Tiere, Polarlicht, KI-Hooks). `def`-Felder: `lift`, `chess`, `bob`, `jump`, `slopes`, `field` (Polygon), `deep`, `eight`, `bay`, `fence`, `blocks`, `ridges` (sechster Wert 1 = Klippen-Stil), `klippen`, `balls`, `lake`, `animals`, `village`.
+- **Abkürzungen zu:** Zaun x = 172, Massive an Rand und Bobbahn, Grate (Felswand y = 415, Waldrand, Trichter, Wand vor dem See, Bergauf-Ostgrat), Klippen zwischen den Serpentinen (Kreise r = 20, an einem Ende am Grat). Wandenden dürfen nicht in die Straße ragen (Bogenmitte: Abstand zur Bogenmitte gegen `HALF` rechnen).
+- **Lift:** Hook `ground` hängt das Auto ein (`c.iceLift`, nicht `c.lift` – das gehört der Regenbogen-Rampe in `draw.js`), Hook `stuck` fährt es mit 190 px/s (kein Physik-Schritt, `c.ghost` hält Auto-Kollisionen aus, `c.idx` aus y), `drawCar` zeichnet Sessel und Schatten, `noRespawn` sperrt Code 70.
+- **Wald:** Bäume in `T.ice.trees` (Kreise mit `ground: true` bis y 800: wer in der Luft ist, ignoriert sie, `update.js`), Kronen im `top`-Bild, `airTop` zeichnet Autos mit z > 22 darüber. `T.ev.obst` enthält nur Bäume nahe KI-Autos und rollende Schneebälle.
+- **Fön:** wie die Wüsten-Waschbucht: Spur (`stampLine`, `alt`), Waschboden `washMask`, Hook `target` (`foenTarget`) nur dreckig, Hook `throttle` .6.
+- **Schneeball:** `T.ev.iceBalls`, Zähler läuft nur mit einem Auto im Index-Bereich `T.ice.serp`; Treffer `c.snowT`, `iceStuck` (Hook `stuck`).
+- **Eisbruch:** `T.ev.iceLake` = Zellen (16 px, `T.ice.lakeD` = Abstand zum Ufer, Rand `RIM` = 28 bricht nie), `breakN()` Überfahrten je Autozahl, `safeCells`/`wayAcross` halten einen sicheren Weg quer offen, `lakeRespawn` (Hook `respawn`) setzt hinter dem Loch ab und dreht das Auto zur Route, `lakeRoute`/`lakeTarget` (Hook `target`) lassen die KI über die Zellen fahren (Dijkstra, Wegpunkt nur, wenn die Gerade frei von Löchern ist). Nicht über feste Spuren planen: Eis lenkt langsam, ein Auto, das zum falschen Punkt zeigt, fällt endlos in dasselbe Loch.
+- **Hook `progress`:** sucht ±200 Indizes um `c.idx` (Wald neben Bergauf, Serpentinen-Schenkel).
+- **Prüfung:** `mudracer.check('EIS', { diff, fx, cars })`; für Bilder im Rennen die Rennschleife anhalten (`window.requestAnimationFrame = () => 0`), Auto versetzen, `update` laufen lassen und `drawRace(1)` rufen.

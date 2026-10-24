@@ -19,6 +19,7 @@ import { LIFT, POWDER, RIM } from './icemap.js';
 // the computer cars steer round the pines near them: only those within 90 px of a car go into T.ev.obst (steerAround, physics.js), not the whole wood
 function iceUpdate(T, dt) {
   const ev = T.ev, I = T.ice;
+  const mv = Math.floor(G.time / 2.4); if (mv !== ev.iceMove) { ev.iceMove = mv; if (I.chess && near(I.chess[0], I.chess[1]) < 300) SFX.tock(); }
   const out = [];
   for (const o of I.trees) for (const c of G.cars) if (c.ai && Math.abs(c.x - o.x) < 90 && Math.abs(c.y - o.y) < 90) { out.push(o); break; }
   if (ev.iceBalls) for (const b of ev.iceBalls) if (b.on) out.push({ x: b.bx, y: b.y, r: b.r + 4 });
@@ -268,7 +269,8 @@ function liftIn(c) {
 
 function liftStep(c, dt) {
   const T = G.T, I = T.ice, L = c.iceLift, [lx, , ly1] = I.lift;
-  L.s += LIFT_V * dt;
+  const s0 = L.s; L.s += LIFT_V * dt;
+  if (!c.ai && Math.floor(s0 / 150) !== Math.floor(L.s / 150)) SFX.lift(); // (a clack at every mast)
   const u = clamp(L.s / 36, 0, 1), sway = Math.sin(G.time * 2.4 + L.ph) * 1.6 * u, xt = lx - CABLE + L.off * .3;
   c.x = L.x0 + (xt - L.x0) * (u * u * (3 - 2 * u)) + sway; c.y = L.y0 - L.s; c.ang = -Math.PI / 2; c.vx = c.vy = 0; c.ghost = Math.max(c.ghost, .1);
   c.idx = clamp(Math.round(L.y0 - L.s - T.path[0].y) / -2 | 0, 0, T.N - 1); c.off = Math.abs(c.x - lx); c.safe = c.idx;
@@ -279,6 +281,7 @@ function liftStep(c, dt) {
 
 // the ground under a car: powder snow and steam of snow behind it
 function iceGround(c, j, sp, dt) {
+  if (G.T.washMask[j]) { if (!c.iceWash) { c.iceWash = true; if (!c.ai || near(c.x, c.y) < 260) SFX.foen(c.ai ? .4 : 1); } } else c.iceWash = false;
   if (G.T.ev.iceBreakOn) lakeGround(c, j, sp);
   if (c.surf === LIFT && !c.iceLift && !c.finished && c.y > G.T.ice.lift[1] - 60 && c.vy < 0) { liftIn(c); return; }
   // a crooked landing after the big jump (trackfx.js land() spins the car): it ploughs into the snow and is snowed in until it shakes free
