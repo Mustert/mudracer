@@ -12,6 +12,9 @@ Stand 2026-10-14, Branch `map_pack`. Die Strecken 1 bis 6 sind umgesetzt, 7 bis 
 ## 1. Wiese
 Status: **umgesetzt** (Streckenereignis Kühe), **abgenommen** (2026-10-22)
 
+Grafik (aus der echten Strecke erzeugt):
+![[Mockups/WIESE.svg]]
+
 Vorher:
 ![[Pasted image 20261006220058.png]]
 Simpler Rundkurs
@@ -33,6 +36,9 @@ Offen: nichts aus der Änderungsliste.
 
 ## 2. Wald
 Status: **umgesetzt** (dunkle Strecke mit Scheinwerfern, Streckenereignis Regen), **abgenommen** (2026-10-22)
+
+Grafik (aus der echten Strecke erzeugt):
+![[Mockups/WALD.svg]]
 
 Vorher (die roten Markierungen sind die Löcher, die Vorlage für den Regen):
 ![[Pasted image 20261006220109.png]]
@@ -59,6 +65,9 @@ Offen: nichts aus der Änderungsliste. Die Auswahl- und Vorschaubilder zeigen di
 ## 3. Strand
 Status: **umgesetzt** (Strandduschen, Flut), **abgenommen** (2026-10-22, Stand Rev 3). Rev 2 (2026-10-21): Start auf der geraden Oberkante (5° statt 101°, Strecke oben geradegezogen, Rundenrichtung gleich), Matsch wie nasser Sand, die Eckpfütze rechts liegt im Trockenen und die kleine Pfütze auf der gefluteten Gerade ist weg (drei statt vier Pfützen), die Duschen waschen etwa doppelt so lange. Rekorde starten neu (`-r2`).
 Rev 3 (2026-10-21): Beachvolleyballfeld statt der Lagune mit schmaler Abkürzung mitten über das Feld, die Dusche hinter der Ziellinie steht jetzt links vor ihr an der oberen Geraden, die Pfeiler am Steg bleiben bei der Flut stehen, Meer und Flut bremsen etwas mehr. Rekorde starten neu (`-r3`).
+
+Grafik (aus der echten Strecke erzeugt):
+![[Mockups/STRAND.svg]]
 
 Vorher (die roten Linien zeigen, wo der Steg bleiben soll):
 ![[Pasted image 20261006220122.png]]
@@ -96,6 +105,9 @@ Offen: nichts aus der Änderungsliste. Die Auswahl- und Vorschaubilder zeigen de
 
 ## 4. Zug
 Status: **umgesetzt, Rev 4** (Tunnel, zwei Bahnlinien mit je einem Zug, Autos halten nicht mehr an der Bahn; seit Rev 1 größer, Startgerade, Sprungschanze, Zug kommt von Runde zu Runde öfter; seit Rev 2 Matsch neu verteilt, bayerisches Dorf als Kulisse; seit Rev 3 an jedem Übergang eine Schanze in einer eigenen Spur; seit Rev 4 statt Schranken je Übergang ein Warnlicht), **abgenommen** (2026-10-22, Stand Rev 4).
+
+Grafik (aus der echten Strecke erzeugt):
+![[Mockups/ZUG.svg]]
 - **Rev 4 (ROADMAP 1S4-8, 1S4-9):** Keine Schranken und keine Verkehrsinseln mehr. Die Schanzenspur ist einfach verbreiterte Straße, die Schanze beginnt 4 px neben dem normalen Straßenrand. Auf der anderen Seite steht je Übergang vor den Gleisen ein Warnlicht (Andreaskreuz, rote Lampe, fester Pfosten), das blinkt, wenn auf dieser Linie ein Zug kommt; Pfiff, Glocke und „ZUG KOMMT“ bleiben. Wer über den Zug springt, ist jetzt über dem Zug zu sehen (Autos in der Luft werden nach den Zügen gezeichnet).
 - **Rev 3 (ROADMAP 1S4-6, 1S4-7):** An allen vier Bahnübergängen eine graue Schanze. Vor und hinter jedem Übergang ist die Straße auf einer Seite um eine Spur breiter (oben außen, unten innen). Die Schanze liegt in dieser Spur, neben dem Schrankenpfosten; der Pfosten steht auf einer kleinen festen Verkehrsinsel zwischen Straße und Spur. Die Schranken sperren nur die Straße, gesprungen wird daneben. Jeder Sprung startet mit 170 bis 200 px/s und landet sicher hinter den Gleisen, auch wer langsam aus dem Matsch kommt (vorher landeten langsame Autos auf dem Gleis und wurden vom Zug erwischt). Oben sind die Felder etwas schmaler, unten Weizen, Sonnenblumen und Kuhweide etwas kleiner.
 - **Rev 1 (Mehr Eskalation, ROADMAP 1S4-1):** Karte 1120×630 statt 800×450 (Runde ca. 17 s statt 14 s). Start auf der langen Geraden links (Startaufstellung 7° statt 85°), die Waschanlage liegt jetzt unten links zwischen Teich und Bahn. Der Zug kommt von Runde zu Runde öfter: Pause zwischen zwei Zügen in Runde 1 7–12 s, Runde 2 etwa 4,5–8 s, Runde 3 etwa 3–5,5 s. Neue **Sprungschanze** (Holzrampe mit gelb-schwarzer Kante) auf der äußeren Hälfte der unteren Geraden kurz vor dem rechten Bahnübergang: wer mit Schwung (ab etwa 160 px/s) drüberfährt, springt über den Zug; wer langsam ist (z. B. direkt aus dem Matsch davor), wird erwischt. Die innere Hälfte bleibt flach, die Schanze ist freiwillig.
@@ -114,6 +126,9 @@ Streckenereignis: Der Zug (schon im Spiel).
 
 ## 5. Baustelle
 Status: **umgesetzt** (Streckenname `BAUSTELLE`, Streckenereignis Kipplaster `kipper`, neue Oberfläche „Zement“), **abgenommen** (2026-10-22, Stand Rev 3), die gemeldeten Bugs sind behoben (Rev 4, 2026-10-24, `ROADMAP.md` 1S5-4 bis 1S5-6). Im Cup SILBER eingetragen (Zug, Baustelle, Garten). Zeitfahr-Revision 4 (`rev: 4`; Rev 3: Startgerade links, keine Pfützen mehr, zwei Wasserschläuche, Zementumfahrung, Erdhaufen als Matsch auf der Fahrbahn; Rev 4: der Matsch in der Kurve oben links direkt nach der Linie ist weg, die Pylonen an den Engstellen sind groß, mit dunklem Umriss und Schatten, die Pylonen neben der Strecke klein und blass, der Kipper macht Autos braun statt grau). ✅ umgesetzt (Rev 4)
+
+Grafik (aus der echten Strecke erzeugt):
+![[Mockups/BAUSTELLE.svg]]
 
 Umsetzung: Die Strecke ist ein Erdweg (Matsch und Pfützen bleiben wie gehabt, drei Matschstellen, seit Rev 3 keine Pfützen mehr). Fahrtrichtung im Uhrzeigersinn, Start links, es geht zuerst nach oben. Wie im Garten ist die Strecke ein Ring mit Ausbuchtungen: oben ein U nach unten (um das Betonwerk), rechts ein Zickzack (Haarnadel nach links und wieder zurück), unten ein ∩ nach oben (um die Baugrube). Alles innerhalb des Rings sind **Baustellenhöfe**: feste Fläche, die niemand betreten kann (ein Ring aus festen Kreisen am Rand, dadurch gibt es keine Abkürzungen). Die Höfe sind nur Kulisse: Rohbau mit Säulen und Aufzugschacht, Materiallager mit Betonrohren, Ziegelpaletten, Sand und Kies, Bauwagen und Dixis, Baugrube mit Bagger, Betonwerk mit Silos, Containerdorf, Fundament mit Armierung, Holzstapel. Außerhalb der Strecke liegen Schutt, Bretter, Fässer, Reifen und Pylonen. Der Rand der Strecke ist mit orangem Bauzaun gesäumt.
 - **Engstellen:** An drei Stellen ragt eine Betonleitwand (orange-weiß, fest) von einer Seite in die Fahrbahn, davor und dahinter Pylonen (fest), dazu eine blinkende Warnlampe. Die Fahrbahn wird dort auf etwa drei Viertel schmal.
@@ -138,6 +153,9 @@ Streckenereignis: (Vorschlag) Ein Abrissbirnen-Kran schwingt periodisch über di
 
 ## 6. Japanischer Garten
 Status: **umgesetzt** (Streckenname `GARTEN`, Streckenereignis Kois, neue Mechanik „Ins Wasser fallen"), **abgenommen** (2026-10-22, Stand Rev 4). Im Cup SILBER eingetragen (Zug, Baustelle, Garten).
+
+Grafik (aus der echten Strecke erzeugt):
+![[Mockups/GARTEN.svg]]
 
 Umsetzung (Abweichungen von der Skizze, weil die Welt 800x450 quer ist): Start auf der Geraden in der linken Hälfte (seit Rev 3), es geht zuerst die Schlängellinie nach oben (drei Bahnen), dann oben das U um den Teich mit dem Fluss von oben (Stein-Abkürzung über den Teich), rechts außen runter, über die rechte Brücke, unten über die zweite Brücke nach links, über die schräge Brücke und unten links herum zurück zum Start. Zwischen den drei Brücken liegt der große See: Der Fluss vom rechten Rand fließt unter der rechten Brücke hinein, der See läuft unter der unteren Brücke nach Süden und durch einen Kanal unter der schrägen Brücke in den Teich unten links ab. Brücken: 3 (Geländer sind fest, die Enden gerade). Heckenwände verhindern das Abkürzen quer durch den Garten, das Wasser sperrt den Rest.
 - Große Abkürzung (Rev 3): Von der rechten Straße vor der rechten Brücke geht es über Trittsteine und den großen Stein quer über den See bis in die Kurve nach der schrägen Brücke. Sie spart alle drei Brücken (etwa 1,5 s), aber zwei Kois springen über den Weg, und der Spuck-Koi neben dem großen Stein schiebt einen ins Wasser.
@@ -179,6 +197,9 @@ Reihenfolge in Einzelstrecke und Zeitfahren: … Garten, **Rennstrecke, Wüste, 
 
 ## 7. Rennstrecke
 Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `RENNSTRECKE`, Theme `ring`, Musik `circuit`, Streckenereignis Reifen `reifen`; Code in `src/ringmap.js` und `src/ring.js`). Im Cup GOLD eingetragen (mit Wüste und Eis). **Abgenommen** (2026-10-22, Stand Rev 3), die gemeldeten Bugs sind behoben (Rev 4, 2026-10-24, `ROADMAP.md` 1S7-5, 1S7-7, 1S7-8): die Ziellinie liegt weiter hinten auf der Geraden (y 150 statt 130), die Kurve unten links ist enger, damit die Aufstellung gerade bleibt, die Boxenausfahrt mündet hinter der Linie ein, keine Asphaltflecken mehr an der Ausfahrt; Computerautos fahren nach einem Reifentreffer nicht mehr zur Boxenausfahrt zurück. Neue Rekorde mit Rev 4. Danach (1S7-9 bis 1S7-11): dreckige Computerautos fahren fast alle in die Box (bis zu sechs zugleich, die nächsten warten in der Gasse), an der Ausfahrt keine Schraffur und kein Leitplanken-Splitter mehr, die Startampel ragt nicht mehr über die Gasse. ✅ umgesetzt
+
+Grafik (aus der echten Strecke erzeugt):
+![[Mockups/RENNSTRECKE.svg]]
 
 Abweichungen vom Vorschlag: Start-Ziel-Gerade ist die linke Gerade (Start links, es geht nach oben, wie bei den anderen Strecken). Die Boxengasse zweigt am Anfang der unteren Geraden ab (weiße Trennlinie, schraffierte Sperrfläche), läuft hinter einer Boxenmauer neben der Start-Ziel-Geraden und fädelt hinter der Ziellinie vor Kurve 1 wieder ein. Rundherum Leitplanken, an den Kiesbetten Reifenstapel. Kulisse: zwei Tribünen mit winkenden Fans, Fahrerlager mit Team-Trucks, Hubschrauberlandeplatz, Großbildleinwand (zeigt deinen Platz), in die Wiese gemähte Zielflagge, Kameratürme.
 
@@ -242,6 +263,9 @@ Streckenereignis: Reifenstapel/Reifen liegen auf der Strecke und rollen gelegent
 
 ## 8. Wüste
 Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `WUESTE`, Theme `wueste`, Musik `desert`, Streckenereignis Sandsturm `sandsturm`; Code in `src/desertmap.js` und `src/desert.js`, gemeinsame Bausteine in `src/trackfx.js`). Im Cup GOLD eingetragen. **Rev 1** (Rework, 2026-10-16): Start auf der langen linken Geraden, S-Kurve rechts, Felsketten durch die Mitte, Oase in der oberen linken Kurve, neue Kakteen und Schlucht, Hitzeflimmern. Alte Rekorde der Wüste bleiben, die Strecke startet mit Rev 1 frisch. **Rev 2** (aus den Meldungen vom 2026-10-17, 2026-10-21): Karte 800×560, die Oase liegt oben an einem eigenen Nebenweg, die Hängebrücke an einem eigenen langen Weg unten, die Pyramide ist anderthalbmal so groß, Treibsand neben der Straße, Felskämme statt Findlingsketten, der Sturm ohne Wind, Böen und Steppenläufer. Neue Rekorde mit Rev 2. **Rev 3** (2026-10-23, Plan in plaene/WUESTE_REV3.md, Mockup Screenshots/WUESTE_improvements.jpg): die Strecke ist komplett neu (Karte 1600×720): Wüstenrally über ein offenes Feld, Sphinx-Tor, lange dunkle Fahrt durch die große Pyramide mit zwei Gabelungen und Sprüngen über Schächte, Waschanlage an der Startgeraden, ab Runde 2 Sandsturm und Treibsand. Hängebrücke, Schlucht, Oase am Nebenweg und Verwehungen entfallen. Neue Rekorde mit Rev 3, vom Nutzer abgenommen am 2026-10-24 (ROADMAP.md 1S8-5). Feinschliff nach den Meldungen vom 2026-10-24 (1S8-8 bis 1S8-14, Rev bleibt 3, weil Rev 3 noch nicht veröffentlicht ist): Zufahrt der Waschanlage als normale Straße, schmale Dünen, Weichsand nicht direkt hinter Dünen, Skarabäen sind kein Ausweich-Hindernis mehr (die KI fuhr in der Ruine gegen die Wand), Palmen nur hinter den Oasen, kein Dreher nach Sprüngen, Treibsand auf der Linie, Oasen näher an der Linie. ✅ umgesetzt. Zweiter Feinschliff nach den Meldungen vom 2026-10-24 abends (1S8-18 bis 1S8-21): große Schilder mit dickem schwarzem, pixelgenauem Pfeil, die Widderreihen liegen auf einem durchgehenden Sockel (man sieht, dass sie eine Mauer sind), schönere Obelisken, eine kräftige Mauer aus Sandsteinblöcken vom Tor bis zur Pyramide. ✅ umgesetzt
+
+Grafik (aus der echten Strecke erzeugt):
+![[Mockups/WUESTE.svg]]
 
 Abweichungen vom Vorschlag (erster Wurf): Die Strecke ist ein Rechteck mit runden Ecken. ✅ umgesetzt (Rev 1: S-Kurve rechts, Felsketten schließen die Mitte, noch kein Wadi mit Kämmen an beiden Rändern). An der Oase gibt es keinen Matsch, nur flaches Wasser, das wäscht. ✅ umgesetzt (Rev 1: Matschufer um die Oase). Kein Hitzeflimmern. ✅ umgesetzt (Rev 1: die Luft flimmert über den langen Geraden oben und unten).
 
@@ -393,6 +417,9 @@ Reihenfolge in Einzelstrecke und Zeitfahren: … Eis, **Vulkan, Dschungel, Welta
 
 ## 10. Vulkan
 Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `VULKAN`, Theme `vulkan`, Musik `volcano`, Streckenereignis Ausbruch `ausbruch`; Code in `src/volcanomap.js` und `src/volcano.js`). Im Cup PLATIN eingetragen.
+
+Grafik (aus Rev 2 auf Branch `vulkan_rev2` erzeugt, noch nicht abgenommen):
+![[Mockups/VULKAN.svg]]
 
 Abweichungen vom Vorschlag (erster Wurf): Die Serpentine hat zwei Kehren und eine Kurve. Zwischen den beiden Brücken der Furt steht ein fester Steinsteg (sonst fuhren zu viele in die Lavalücke). Der Lavastrom des Ausbruchs überspült nur eine Hälfte der Straße an der mittleren oder oberen Kehre (keine eigene Geröllspur). In der letzten Runde steigt der Lavasee nicht. Die Computerautos nehmen die Geysir-Abkürzung nie. Kein Hitzeflimmern.
 
