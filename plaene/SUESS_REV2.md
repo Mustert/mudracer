@@ -4,6 +4,10 @@ Stand: 2026-10-31, Branch `map_pack`. Eigener Plan für den Komplettumbau des S�
 
 **Status je Paket** wird hier gepflegt. Erst beim Abschluss (S8) wird `ROADMAP.md` nachgezogen: 1S13, Tabelle, 1A-2, 1P-1, 1P-2, 3B-4.
 
+Grobes Mockup von Claude (2026-10-31, ersetzt kein Mockup des Nutzers): [mockups/SUESS_REV2.svg](mockups/SUESS_REV2.svg)
+
+![Mockup SUESS Rev 2](mockups/SUESS_REV2.svg)
+
 ## Ziel in einem Satz
 
 Das Süßigkeitenland wird zur Landschaft um den Schokoberg: vom Lebkuchendorf durch den Lollipop-Wald mit Gummibärchen-Trampolinen, über das klebrige Karamellmoor, den Zuckerwatte-Pass hinauf und über den Schokofluss unter der Quelle, mitten durch eine Bonbonfabrik mit Fließbändern und Bonbonpresse, über das Brausefeld zurück, und ab Runde 2 läuft der Schokobrunnen auf dem Gipfel über.

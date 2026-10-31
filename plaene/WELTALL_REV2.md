@@ -4,6 +4,10 @@ Stand: 2026-10-31, Branch `map_pack`. Eigener Plan für den Komplettumbau der We
 
 **Status je Paket** wird hier gepflegt. Erst beim Abschluss (W8) wird `ROADMAP.md` nachgezogen: 1S12, Tabelle „Strecken im Überblick“, 1M-1, 1M-2, 1P-1, 1P-2.
 
+Grobes Mockup von Claude (2026-10-31, ersetzt kein Mockup des Nutzers): [mockups/WELTALL_REV2.svg](mockups/WELTALL_REV2.svg)
+
+![Mockup WELTALL Rev 2](mockups/WELTALL_REV2.svg)
+
 ## Ziel in einem Satz
 
 Das Weltall wird zum Orbit: aus dem Hangar einer drehenden Raumstation hinaus auf schwerelose Plattformen, in einem weiten Swing-by um einen Ringplaneten (wer auf dem Ring innen fährt, wird schneller, aber stärker gezogen), durch ein offenes Asteroidenfeld oder durchs Wurmloch, mit einem langen Mondsprung über einen Krater und durch die Dekontaminations-Schleuse zurück, während ab Runde 2 ein schwarzes Loch die Bahnen verbiegt.

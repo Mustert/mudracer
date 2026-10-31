@@ -6,6 +6,10 @@ Stand: 2026-10-31, Branch `map_pack`. Eigener Plan für den Umbau des Regenbogen
 
 **Status je Paket** wird hier gepflegt. Erst beim Abschluss (R8) wird `ROADMAP.md` nachgezogen: 1S15, Tabelle, 1M-1, 1M-2, 1M-3, 1P-1, 1P-2, 1P-3.
 
+Grobes Mockup von Claude (2026-10-31, ersetzt kein Mockup des Nutzers): [mockups/REGENBOGEN_REV2.svg](mockups/REGENBOGEN_REV2.svg)
+
+![Mockup REGENBOGEN Rev 2](mockups/REGENBOGEN_REV2.svg)
+
 ## Ziel in einem Satz
 
 Der Regenbogen wird zum Finale über den Wolken: eine Ehrenrunde über fünf Münzinseln, auf denen je ein Wahrzeichen der überarbeiteten Strecken steht (Kühe und Pfütze, Zug-Schanze und Kois, Sphinx-Tor und Sessellift, Lavaröhre, Liane und Wurmloch), dazwischen die Regenbogenstraße mit Farbbahnen, der größte Sprung des Spiels und Wolkenwege zur Wahl; die drei Runden erzählen Sonnenaufgang, Gewitter und den Regenbogen in voller Pracht.

@@ -12,6 +12,8 @@ Stand: 2026-10-31, Branch `map_pack`. Gemeinsamer Rahmen für die fünf Strecken
 
 Die Pläne sind **Vorschläge von Claude**. Anders als bei Wüste und Eis gibt es noch kein Mockup des Nutzers. Jeder Plan nennt darum am Anfang die offenen Fragen; kommt ein Mockup (`Obsidian/Mudracer/Screenshots/<NAME>_improvements.jpg`), gehen Grundriss und Elemente nach dem Mockup, wie bei EIS Rev 2.
 
+Grobe Mockups von Claude zu allen fünf Plänen liegen in `plaene/mockups/` (SVG, je Strecke eins, Ziffern wie in den Plänen).
+
 ## Was aus Wüste Rev 3, Eis Rev 2 und Vulkan Rev 2 übernommen wird
 
 Vulkan Rev 2 liegt fertig auf dem Branch `vulkan_rev2`, ist aber **noch nicht abgenommen und nicht in `map_pack` gemergt** (ROADMAP 1S10-12). Was dort neu ist (Codes 80/81, Löschstation, Lavaröhre, Glutwolke), gilt hier als Vorbild, aber nicht als vorhandener Code auf `map_pack`.

@@ -4,6 +4,10 @@ Stand: 2026-10-31, Branch `map_pack`. Eigener Plan für den Umbau des Spielzimme
 
 **Status je Paket** wird hier gepflegt. Erst beim Abschluss (K8) wird `ROADMAP.md` nachgezogen: 1S14, Tabelle, 1A-4, 1M-2, 1P-1, 1P-2, 3E-6.
 
+Grobes Mockup von Claude (2026-10-31, ersetzt kein Mockup des Nutzers): [mockups/SPIELZIMMER_REV2.svg](mockups/SPIELZIMMER_REV2.svg)
+
+![Mockup SPIELZIMMER Rev 2](mockups/SPIELZIMMER_REV2.svg)
+
 ## Ziel in einem Satz
 
 Das Spielzimmer wird größer und bekommt eine echte Wahl in der Höhe: vom Spielteppich über Parkett und Holzeisenbahn an die Bücherrampe, dann **über das Bett** (Kissen-Sprung auf den Schreibtisch, schnell, wer fällt, landet unten) **oder unter dem Bett** durch Staub und Dunkelheit hinauf zum Schreibtisch, über Lineal und Malkasten, die Murmelbahn hinunter in eine Klemmbaustein-Stadt; ab Runde 2 jagt der Saugroboter auf dem Boden, in der letzten Runde geht das Licht aus.

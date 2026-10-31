@@ -4,6 +4,10 @@ Stand: 2026-10-31, Branch `map_pack`. Eigener Plan für den Komplettumbau der Ds
 
 **Status je Paket** wird hier gepflegt (Abschnitt „Arbeitspakete“). Erst beim Abschluss (J8) wird `ROADMAP.md` nachgezogen: 1S11 auf den neuen Stand, Tabelle „Strecken im Überblick“, 1A-4, 1A-7, 1P-1, 1P-2.
 
+Grobes Mockup von Claude (2026-10-31, ersetzt kein Mockup des Nutzers): [mockups/DSCHUNGEL_REV2.svg](mockups/DSCHUNGEL_REV2.svg)
+
+![Mockup DSCHUNGEL Rev 2](mockups/DSCHUNGEL_REV2.svg)
+
 ## Ziel in einem Satz
 
 Der Dschungel wird zur Expedition durch ein Flusstal: vom Lager durch den Mangrovensumpf, quer durch die Furt mit Krokodilen, unter dem dichten Laubdach hinauf, an der Lianenschlucht unter dem Wasserfall über den Fluss und durch eine dunkle Tempelpyramide, in der ab Runde 2 eine Steinkugel rollt, die Tempeltreppe hinunter zurück ins Lager.
