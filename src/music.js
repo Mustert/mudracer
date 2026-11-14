@@ -280,7 +280,7 @@ const SONGS = {
       if (erupt) { M.kick(t, s % 4 === 0 ? 1 : .6); if (s === 0) M.choir(ch.n.map(m => m - 12), t, 16 * M.sd); }
       else if (s % 4 === 0) M.kick(t);
       if (s % 2 === 1) M.hat(t, false, .5);
-      if (ev && ev.vlCloud && ev.vlCloud.warn) M.taiko(s % 2 ? 70 : 58, t, .55); // (a roll while the glowing cloud builds up)
+      if (ev && ev.vlFords && G.player && G.T.volcano.fords.some((F, q) => ev.vlFords[q].ph === 'pre' && Math.hypot(F.mid.x - G.player.x, F.mid.y - G.player.y) < 420)) M.taiko(s % 2 ? 70 : 58, t, .55); // (a roll while a lava ford near you is about to run)
       if (s === 0 && bi === 0) M.crash(t);
     } },
   // jungle: E minor, 126 BPM, tribal. Bongos and congas take turns, a shaker in sixteenths, a wood block; a pan flute plays the tune, a marimba

@@ -1,29 +1,29 @@
 import { HALF, clamp, hash, hex, mk, vnoise } from './core.js';
 import { nearestIdx, paintTools, startLine } from './bau.js';
 
-// ---------- Vulkan Rev 2 (plaene/VULKAN_REV2.md): the volcano you can see. A cone of black basalt with its crater lake in the middle; the road of red scoria
-// starts at its foot, jumps a lava stream in the lava field, crosses the south-east stream on a basalt bridge, climbs the east flank in a serpentine, runs on a
-// narrow dike right through the crater lake and at the west rim forks: the open way over the north-west flank and down the west edge (flows of glassy obsidian,
-// the fire brigade's washing bay) or the lava tube through the cinder cone (dark, narrow, lit by a lava rill). Nothing can be cut off: a solid crater rim, the
-// lava streams, basalt levees between the serpentine legs and round the cinder cone, the solid cinder cone (CLAUDE.md, principle 4).
-// Terrain: 0 black basalt beside the road, 1 the road of red scoria (lapilli), 2 ash (like mud, it makes the car sooty), 15 lava (you burn: gone for a moment),
-// 80 the floor of the lava tube (rough, a little slower), 81 obsidian (black glass: full speed, hardly any grip; volcano.js surf).
+// ---------- Vulkan Rev 4 (plaene/VULKAN_REV4.md, on Rev 2: plaene/VULKAN_REV2.md): the volcano you can see. A cone of black basalt with its crater lake in the
+// middle; the road of red scoria starts at its foot, jumps a lava stream in the lava field (hornitos on the road), crosses the south-east stream on a basalt bridge,
+// climbs the east flank in a serpentine (the fireballs fall there), crosses the crater lake on a causeway of basalt pavers with lanterns and comes down over the
+// north-west flank and the west edge (the fire brigade's washing bay) through three lava fords: gullies of old lava that a vent fills in pulses (volcano.js).
+// Nothing can be cut off: a solid crater rim, the lava streams, basalt levees between the serpentine legs and from the rim to the cinder cone and on to the top,
+// the solid cinder cone, a lava pond inside the bend (CLAUDE.md, principle 4).
+// Terrain: 0 black basalt beside the road, 1 the road of red scoria (lapilli), 15 lava (you burn: gone for a moment). The gullies of the fords are 0 or 1 while
+// they are cold and 15 while the lava runs in them (volcano.js). (2 ash: only the soot when you fall into the lava; Rev 3 had ash drifts and obsidian.)
 
-export const TUBE = 80, GLASS = 81, DIKE = 22; // (DIKE: half the width of the dike through the crater lake)
+export const DIKE = 22; // (half the width of the causeway through the crater lake)
 
 const K = Object.fromEntries(Object.entries({
   gnd: '#2b2523', gnd1: '#241f1e', gnd2: '#352d2a', rope: '#3f3531', speck: '#5e3428', grey: '#5a5450', high: '#5a4238',
-  gl: '#25223c', gl1: '#2c2948', gl2: '#3c3a66', glL: '#8a8ad0', glW: '#f0f2ff',
   rd: '#7c4634', rd1: '#6f3e2e', rd2: '#88503c', rdL: '#a46650', rdD: '#58321f', kerb: '#bcab98', kerbD: '#8c7c6c', rut: '#6a3a2a',
-  ash: '#aaa49c', ash1: '#9a948c', ash2: '#bcb6ae', ashE: '#7c766e', ashL: '#d2ccc4',
-  lava: '#ff7a1a', lava1: '#ffa21f', lava2: '#ffd04a', lavaD: '#d4481a', crust: '#3a1e16', crustL: '#5c2c1a', glowC: '#ff7a24',
-  bas: '#5c6470', basL: '#8a94a2', basD: '#3a404a', basDD: '#1e2128', basT: '#727c8a',
-  cin: '#4a2a24', cin1: '#3c221e', cin2: '#5c3428', cinL: '#7a4636', cinD: '#2a1814',
-  tub: '#9a7a5e', tub1: '#8a6c52', tub2: '#aa8a6c', curb: '#cdbca6', curbD: '#7a6a5a',
-  tile: '#4e6a7a', tile2: '#3e5868', fire: '#d6382e', fireD: '#9a2018', white: '#f0ece4', chrome: '#b8c0c8', tyre: '#1a1818',
+  lava: '#ff7a1a', lava1: '#ffa21f', lava2: '#ffd04a', lavaD: '#d4481a', lavaW: '#fff2b0', crust: '#3a1e16', crustL: '#5c2c1a', crustD: '#26140f',
+  bas: '#5c6470', basL: '#8a94a2', basD: '#3a404a', basDD: '#1e2128', basT: '#727c8a', basS: '#4a515c',
+  cin: '#4a2a24', cin1: '#3c221e', cin2: '#5c3428', cinL: '#7a4636', cinD: '#2a1814', cinH: '#a2603e', throat: '#1a0c08',
+  wal: '#3a2e2a', wal1: '#4a3a32', wal2: '#5c3a2c', wal3: '#2e2422',
+  fire: '#d6382e', fireD: '#9a2018', white: '#f0ece4', chrome: '#b8c0c8', tyre: '#1a1818',
+  tile: '#4e6a7a', tile2: '#3e5868',
   cont: '#d8d4cc', contD: '#8a867e', contO: '#e8742a', ant: '#9aa0a8', sul: '#e8d24a', sulD: '#a89428', obs: '#16141c', obsL: '#5a6a8e',
-  yel: '#f2c230', blk: '#1b1612', slab: '#7e8690', slabD: '#5a626c', slabL: '#a2aab4',
-  rn: '#5a4c46', rn1: '#524540', rn2: '#64554e', rnR: '#74645a', rnD: '#3a302c',
+  yel: '#f2c230', blk: '#1b1612', slab: '#6e7680', slabD: '#555c66', slabL: '#8c949e', slabT: '#7a828c', iron: '#2a2624',
+  rn: '#4a3e3a', rn1: '#433834', rn2: '#544640', rnR: '#66564e', rnD: '#2a221f', rnL: '#7a685e',
 }).map(([k, v]) => [k, hex(v)]));
 
 // a polyline with rounded corners ([x, y, r]) sampled every 2px
@@ -57,14 +57,26 @@ export function stampLine(P, half, fn, MW, MH) {
   return pts;
 }
 
-// a lava stream: a chain of circles [x, y, half width], sampled every 2 px
+// a lava stream: a chain of circles [x, y, half width], sampled every 2 px (one point per 2 px: k * 2 is about the way along it)
 function chainPts(C) {
   const out = [];
   for (let k = 1; k < C.length; k++) {
     const [ax, ay, aw] = C[k - 1], [bx, by, bw] = C[k], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / 2));
-    for (let s = 0; s <= m; s++) { const f = s / m; out.push({ x: ax + (bx - ax) * f, y: ay + (by - ay) * f, w: aw + (bw - aw) * f }); }
+    for (let s = k > 1 ? 1 : 0; s <= m; s++) { const f = s / m; out.push({ x: ax + (bx - ax) * f, y: ay + (by - ay) * f, w: aw + (bw - aw) * f }); }
   }
   return out;
+}
+
+// cells of irregular polygons (Worley noise): the plates of crust on the lava lake, the basalt pavers of the causeway. seam = how close to the edge of its cell
+// (0 on the edge), id = which cell
+function cells(x, y, C, sd) {
+  const gx = Math.floor(x / C), gy = Math.floor(y / C);
+  let d1 = 1e9, d2 = 1e9, id = 0;
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    const cx = gx + dx, cy = gy + dy, px = (cx + .15 + hash(cx, cy, sd) * .7) * C, py = (cy + .15 + hash(cx, cy, sd + 1) * .7) * C, d = Math.hypot(x - px, y - py);
+    if (d < d1) { d2 = d1; d1 = d; id = cx * 7919 + cy; } else if (d < d2) d2 = d;
+  }
+  return { seam: d2 - d1, id };
 }
 
 // the height of the mountain on a coarse grid (4 px) and from it the light on the slopes (light from the north-west): the cone rises to the crater rim and falls into
@@ -93,10 +105,10 @@ function hillShade(def, MW, MH) {
 
 // terrain, before the ground is painted. S: { def, ter, dist, near, path, tan, nrm, N, stampAt }
 export function* volcanoTerrain(S) {
-  const { MW, MH, def, ter, dist, path, tan, N } = S, A = MW * MH;
-  const alt = new Uint8Array(A), lakeM = new Uint8Array(A), bridgeM = new Uint8Array(A), subM = new Uint8Array(A), laneM = new Uint8Array(A), rinM = new Uint8Array(A), damM = new Uint8Array(A);
+  const { MW, MH, def, ter, dist, near, path, tan, N } = S, A = MW * MH;
+  const alt = new Uint8Array(A), lakeM = new Uint8Array(A), bridgeM = new Uint8Array(A), subM = new Uint8Array(A), laneM = new Uint8Array(A), pondM = new Uint8Array(A);
   yield;
-  // the crater lake: lava, the dike through it stays road (DIKE px to each side of the line, a ragged edge)
+  // the crater lake: lava, the causeway through it stays road (DIKE px to each side of the line, a ragged edge)
   const [kx, ky, krx, kry] = def.crater;
   for (let y = Math.max(0, ky - kry - 12); y < Math.min(MH, ky + kry + 12); y++) for (let x = Math.max(0, kx - krx - 12); x < Math.min(MW, kx + krx + 12); x++) {
     const j = y * MW + x, e = ((x + .5 - kx) / krx) ** 2 + ((y + .5 - ky) / kry) ** 2;
@@ -120,86 +132,56 @@ export function* volcanoTerrain(S) {
     }
     yield;
   }
-  // the cinder cone on the west flank: solid (painted in paintVolcano), only the lava tube runs through it
+  // the cinder cone on the west flank: solid (painted in paintVolcano)
   const [sx, sy, srx, sry] = def.sub;
   for (let y = Math.max(0, sy - sry - 12); y < Math.min(MH, sy + sry + 12); y++) for (let x = Math.max(0, sx - srx - 12); x < Math.min(MW, sx + srx + 12); x++) {
     const j = y * MW + x; if (ter[j] !== 0 || Math.hypot((x + .5 - sx) / srx, (y + .5 - sy) / sry) >= 1 + (vnoise(x * .05, y * .05, 94) - .5) * .08) continue;
     subM[j] = 1;
   }
   yield;
-  // the lava tube: a narrow branch from the fork at the west rim through the cinder cone down to the start straight. Inside the cone its floor is 80 (rough), outside
-  // it is road. tubeAt: corridor pixel -> [distance to the line, nearest point] (walls, roof, light)
-  const T = def.tube, tubeAt = new Map();
-  const tubePts = stampLine(T.pts, T.half + 12, (j, dd, k) => {
-    tubeAt.set(j, [dd, k]);
-    if (dd >= T.half || (ter[j] !== 0 && ter[j] !== 1)) return;
-    if (subM[j]) ter[j] = TUBE; else if (ter[j] === 0) ter[j] = 1;
-    if (dist[j] >= HALF) alt[j] = 1;
-  }, MW, MH);
-  yield;
-  // the old lava channel: the third way down, straight from the fork between the cinder cone and the south stream to the start straight. Its floor is cooled ropy lava
-  // (road, painted in paintVolcano), basalt levees on both sides (paintVolcano). rinAt: pixel -> [distance to the line, nearest point]. It is fed from a breach in the
-  // crater rim that a plug of crust closes (damM: solid); in lap 2 the plug bursts and the channel fills with lava (volcano.js)
-  const RN = def.rinne, rinAt = new Map();
-  const rinPts = stampLine(RN.pts, RN.half + 14, (j, dd, k) => {
-    rinAt.set(j, [dd, k]);
-    if (dd >= RN.half || (ter[j] !== 0 && ter[j] !== 1)) return;
-    const q = tubeAt.get(j); if (q && q[0] < T.half) return;
-    if (ter[j] === 0) ter[j] = 1;
-    rinM[j] = 1; if (dist[j] >= HALF) alt[j] = 1;
-  }, MW, MH);
-  { const [x0, y0, x1, y1, bw] = RN.breach; stampLine([[x0, y0, 0], [x1, y1, 0]], bw, j => { if (ter[j] === 0 && !rinM[j]) damM[j] = 1; }, MW, MH); }
-  yield;
-  // the fire brigade's bay beside the open way down: a lane that leaves the road and comes back (road; the way back arrow and c.safe know it as alt)
+  // the fire brigade's bay beside the way down: a lane that leaves the road and comes back (road; the way back arrow and c.safe know it as alt)
   const B = def.bay, bayPts = stampLine(B.lane, B.half, j => { laneM[j] = 1; if (ter[j] === 0 || ter[j] === 1) { if (ter[j] === 0) ter[j] = 1; if (dist[j] >= HALF) alt[j] = 1; } }, MW, MH);
   yield;
-  // ash: drifts in the lee of the cone and in hollows, some reach into the inside of a bend (a shorter line through ash against a longer clean one);
-  // obsidian: flows of black glass that run across the open way (on the road and beside it)
-  const blobs = (list, code, sd) => {
-    for (const [ax, ay, ex, ey, an] of list || []) {
-      const R2 = Math.ceil(Math.max(ex, ey) * 1.3) + 2, ca = Math.cos(an || 0), sa = Math.sin(an || 0);
-      for (let y = Math.max(0, ay - R2); y <= Math.min(MH - 1, ay + R2); y++) for (let x = Math.max(0, ax - R2); x <= Math.min(MW - 1, ax + R2); x++) {
-        const j = y * MW + x; if ((ter[j] !== 0 && ter[j] !== 1) || alt[j] || laneM[j] || lakeM[j] || subM[j] || bridgeM[j]) continue;
-        const dx = x + .5 - ax, dy = y + .5 - ay, e = ((dx * ca + dy * sa) / ex) ** 2 + ((-dx * sa + dy * ca) / ey) ** 2;
-        if (e < .8 + .4 * vnoise(x * .09, y * .09, sd)) ter[j] = code;
+  // the lava fords: a gully of old lava from a vent across the road, into a lava pond or off the edge of the map. While it is cold it is what it was (road or
+  // basalt); in a pulse the lava runs down it (volcano.js). Per ford: its pixels sorted by how far down (j, k = point of the chain, u = how far from its middle
+  // 0..1, the old terrain), where it crosses the road (points of the chain kRoad..kEnd, points of the centre line r0..r1)
+  const fordAt = new Map(), fords = [];
+  def.fords.forEach((F, q) => {
+    if (F.pond) {
+      const [px, py, prx, pry] = F.pond;
+      for (let y = Math.max(0, py - pry - 8); y < Math.min(MH, py + pry + 8); y++) for (let x = Math.max(0, px - prx - 8); x < Math.min(MW, px + prx + 8); x++) {
+        const j = y * MW + x; if (ter[j] !== 0 || dist[j] < HALF + 4) continue;
+        if (((x + .5 - px) / prx) ** 2 + ((y + .5 - py) / pry) ** 2 < .85 + .3 * vnoise(x * .06, y * .06, 99)) { ter[j] = 15; pondM[j] = 1; }
       }
     }
-  };
-  blobs(def.ash, 2, 95); blobs(def.obsidian, GLASS, 96);
-  // (an ash drift on the inside of a bend of the channel: a shorter line through ash against the clean outside)
-  for (const [ax, ay, ex, ey, an] of RN.ash || []) {
-    const R2 = Math.ceil(Math.max(ex, ey) * 1.3) + 2, ca = Math.cos(an), sa = Math.sin(an);
-    for (let y = ay - R2; y <= ay + R2; y++) for (let x = ax - R2; x <= ax + R2; x++) {
-      const j = y * MW + x; if (!rinM[j] || ter[j] !== 1) continue;
-      const dx = x + .5 - ax, dy = y + .5 - ay, e = ((dx * ca + dy * sa) / ex) ** 2 + ((-dx * sa + dy * ca) / ey) ** 2;
-      if (e < .8 + .4 * vnoise(x * .09, y * .09, 97)) ter[j] = 2;
-    }
-  }
+    const pts = chainPts(F.c), D = new Map();
+    pts.forEach((p, k) => {
+      const R = Math.ceil(p.w + 3);
+      for (let y = Math.max(0, Math.floor(p.y - R)); y <= Math.min(MH - 1, p.y + R); y++) for (let x = Math.max(0, Math.floor(p.x - R)); x <= Math.min(MW - 1, p.x + R); x++) {
+        const j = y * MW + x; if ((ter[j] !== 0 && ter[j] !== 1) || lakeM[j] || laneM[j] || subM[j] || bridgeM[j]) continue;
+        const dd = Math.hypot(x + .5 - p.x, y + .5 - p.y), wn = p.w + (vnoise(x * .12, y * .12, 98 + q) - .5) * 4; if (dd >= wn) continue;
+        const o = D.get(j); if (!o || dd < o[2]) D.set(j, [k, dd / wn, dd]);
+      }
+    });
+    const L = [...D].sort((a, b) => a[1][0] - b[1][0] || a[0] - b[0]);
+    const J = Int32Array.from(L, e => e[0]), Kk = Int32Array.from(L, e => e[1][0]), U = Float32Array.from(L, e => e[1][1]), old = Uint8Array.from(L, e => ter[e[0]]);
+    let kRoad = 1e9, kEnd = -1, r0 = 1e9, r1 = -1;
+    L.forEach(([j, [k]]) => {
+      fordAt.set(j, [q, D.get(j)[1], k]);
+      if (dist[j] < HALF + 3) { kRoad = Math.min(kRoad, k); kEnd = Math.max(kEnd, k); }
+      if (dist[j] < HALF) { r0 = Math.min(r0, near[j]); r1 = Math.max(r1, near[j]); }
+    });
+    fords.push({ pts, J, K: Kk, U, old, kRoad, kEnd, r0, r1, vent: { x: F.c[0][0], y: F.c[0][1] } });
+  });
   yield;
   // the jump over the south stream: the lip a few px before the lava on the line; push: everybody who reaches the lip clears the stream
   const jumps = [];
   let lavaI = -1; for (let i = 0; i < N; i++) { const p = path[i]; if (ter[Math.round(p.y) * MW + Math.round(p.x)] === 15) { lavaI = i; break; } }
   if (lavaI >= 0) { const i = (lavaI - 5 + N) % N, p = path[i], tg = tan[i]; jumps.push({ x: p.x, y: p.y, tx: tg.x, ty: tg.y, lo: -HALF - 8, hi: HALF + 8, vz: def.jump.vz, push: def.jump.push }); }
   const pushes = (def.slopes || []).map(([x0, y0, x1, y1, f]) => ({ i0: nearestIdx(path, x0, y0), i1: nearestIdx(path, x1, y1), f }));
-  // where the tube leaves the road and where it comes back: every point of the tube stands for a place in the lap (volcano.js progress)
-  const forkI = nearestIdx(path, tubePts[0].x, tubePts[0].y), mergeI = nearestIdx(path, tubePts[tubePts.length - 1].x, tubePts[tubePts.length - 1].y), span = (mergeI - forkI + N) % N;
-  const tubeIdx = tubePts.map((p, k) => (forkI + Math.round(span * k / (tubePts.length - 1))) % N);
   const at = ([x, y]) => nearestIdx(path, x, y);
-  // the same for the channel (it leaves at the fork and comes back just before the start line)
-  const rForkI = at([rinPts[0].x, rinPts[0].y]), rMergeI = at([rinPts[rinPts.length - 1].x, rinPts[rinPts.length - 1].y]), rSpan = (rMergeI - rForkI + N) % N;
-  const rinIdx = rinPts.map((p, k) => (rForkI + Math.round(rSpan * k / (rinPts.length - 1))) % N);
-  // what the lava fills: in lap 2 the channel (from the top, down to RN.flood of its length), in lap 3 it spills over into the lava tube (from the fork, down to
-  // T.flood of it). Never the road itself; sorted by how far down, so that the front can run down (volcano.js)
-  const flood = (at2, pts, half, upTo, own) => {
-    const kMax = Math.round(pts.length * upTo), L = [];
-    for (const [j, [dd, k]] of at2) if (k <= kMax && dd < half + 2 && dist[j] >= HALF + 1 && !lakeM[j] && own(j, dd) && ter[j] !== 15) L.push(k * 1e7 + j);
-    L.sort((a, b) => a - b);
-    return { j: Int32Array.from(L, v => v % 1e7), k: Int32Array.from(L, v => Math.floor(v / 1e7)), kMax };
-  };
-  const floodR = flood(rinAt, rinPts, RN.half, RN.flood, (j, dd) => { const q = tubeAt.get(j); return !q || q[0] > dd; });
-  const floodT = flood(tubeAt, tubePts, T.half, T.flood, (j, dd) => { const q = rinAt.get(j); return !q || q[0] >= dd || q[1] > 40; });
-  return { alt, lakeM, bridgeM, subM, laneM, rinM, damM, rinAt, rinPts, rinIdx, rForkI, rMergeI, floodR, floodT, tubeAt, tubePts, tubeIdx, forkI, mergeI, bayPts, bayI: at(B.lane[0]), jumps, pushes, lavaI,
-    cloud: def.cloud.map(at), dike: [at([kx + krx + 20, ky]), at([kx - krx - 20, ky])], serp: def.serp.map(at) };
+  return { alt, lakeM, bridgeM, subM, laneM, pondM, fordAt, fords, bayPts, bayI: at(B.lane[0]), jumps, pushes, lavaI,
+    dike: [at([kx + krx + 20, ky]), at([kx - krx - 20, ky])], serp: def.serp.map(at) };
 }
 
 // painting, after the ground. S: { def, d, set, setT, band, path, tan, nrm, N, ter, dist, near, walls, wallMask, shore, sd, th, r, RT }
@@ -208,11 +190,13 @@ export function* paintVolcano(S) {
   const { px, dk, solid } = paintTools(S);
   const { shade, height } = hillShade(def, MW, MH);
   const put = (j, c, s = 1) => { const o = j * 4; d[o] = clamp(c[0] * s, 0, 255); d[o + 1] = clamp(c[1] * s, 0, 255); d[o + 2] = clamp(c[2] * s, 0, 255); d[o + 3] = 255; };
+  const mix = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
   const lavaCol = (x, y, h) => {
     // glowing lava with small dark plates of crust drifting on it, brighter streaks where it runs fast
     const v = vnoise(x / 7, y / 7, sd + 60), pl = vnoise(x / 7 + 3, y / 7, sd + 61);
     return pl > .76 ? (pl > .81 ? K.crust : K.crustL) : v > .7 ? K.lava2 : v > .45 ? K.lava1 : h < .05 ? K.lavaD : K.lava;
   };
+  const [kx, ky, krx, kry] = def.crater, RIM = def.rim, rx2 = krx + RIM, ry2 = kry + RIM, rm = (rx2 + ry2) / 2;
 
   yield;
   // how far every pixel is from lava (chamfer, up to 12 px): the glow along the lava, the gaps of the rim, the scenery keeps clear
@@ -224,201 +208,163 @@ export function* paintVolcano(S) {
   yield;
 
   // ----- the ground -----
-  const [kx, ky] = def.crater, [sx, sy, srx, sry] = def.sub, lavaPix = [];
+  const [sx, sy, srx, sry] = def.sub, lavaPix = [];
   for (let j = 0; j < A; j++) {
     if (j % 40000 === 39999) yield;
-    const x = j % MW, y = j / MW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 6, y / 6, sd + 41) * .55 + h * .45;
+    const x = j % MW, y = j / MW | 0, t = ter[j], h = hash(x, y, sd + 40), v = vnoise(x / 6, y / 6, sd + 41) * .55 + h * .45, fa = RT.fordAt.get(j);
     let c, s;
     if (RT.subM[j]) {
       // the cinder cone: red-black scoria, a little crater on top, the light on its slopes
       // (layers of scoria as rings round the top, rusty and lighter higher up)
       const es = Math.hypot((x - sx) / srx, (y - sy) / sry), ring = Math.abs(Math.sin(es * 30 + vnoise(x / 12, y / 12, sd + 47) * 3)) > .94;
       c = es < .17 ? K.cinD : es < .24 ? (v > .5 ? K.cinL : K.cin2) : ring ? K.cin1 : v < .3 ? K.cin1 : v > .72 ? K.cin2 : K.cin; if (h < .02) c = K.cinL;
-      const up = es < .24 ? 0 : clamp((1 - es) * .55, 0, .4); c = [c[0] + (K.cinL[0] - c[0]) * up, c[1] + (K.cinL[1] - c[1]) * up, c[2] + (K.cinL[2] - c[2]) * up];
+      const up = es < .24 ? 0 : clamp((1 - es) * .55, 0, .4); c = mix(c, K.cinL, up);
       s = shade(x, y);
+    } else if (fa) {
+      // the gully of a lava ford, cold: old ropy lava, grey-brown, the ropes bent downstream, a dark bank on the north-west (in its own shadow) and a lit one on
+      // the other side; a pale kerb where the road meets it so that the crossing stands out
+      const [q, u, k] = fa, p = RT.fords[q].pts[k];
+      const rope = Math.abs(Math.sin(k * .6 - u * u * 3.4 + vnoise(x / 14, y / 14, sd + 73) * 2)) > .9;
+      const nw = (x + .5 - p.x) * -.6 + (y + .5 - p.y) * -.8 > 0;
+      c = u > .84 ? (nw ? K.rnD : K.rnL) : rope ? K.rnR : v < .3 ? K.rn1 : v > .72 ? K.rn2 : K.rn;
+      if (u <= .84 && Math.abs(vnoise(x / 8, y / 8, sd + 74) - .5) < .014) c = K.rnD;
+      if (u < .5) c = mix(c, K.crustL, .35 * (1 - u / .5)); // (still warm in the middle: rusty, a spark here and there)
+      if (u < .6 && h < .012) c = K.lavaD;
+      if (t === 1 && dist[j] > HALF - 3) c = (Math.floor((x + y) / 4) & 1) ? K.yel : K.blk; // (yellow and black where the gully crosses the kerb)
+      s = .82 + .18 * shade(x, y);
     } else if (t === 0) {
       // black basalt: ropes of pahoehoe lava round the crater, red scoria and grey grit here and there; higher up the mountain it turns a warmer brown, and the
-      // light on the slopes shows its shape
-      const r = Math.hypot(x - kx, (y - ky) * 1.2), rope = Math.abs(Math.sin(r * .33 + vnoise(x / 16, y / 16, sd + 42) * 7)) > .94;
-      c = rope ? K.rope : v < .3 ? K.gnd1 : v > .72 ? K.gnd2 : K.gnd;
-      if (h < .012) c = K.speck; else if (h > .992) c = K.grey;
-      if (RT.bridgeM[j]) c = K.basDD;
-      const hv = clamp((height(x, y) - .28) / .5, 0, .7);
-      if (hv > 0) c = [c[0] + (K.high[0] - c[0]) * hv, c[1] + (K.high[1] - c[1]) * hv, c[2] + (K.high[2] - c[2]) * hv];
+      // light on the slopes shows its shape. Inside the crater rim the wall falls in layers to the lake: dark and rusty bands, yellow sulphur
+      const er = Math.hypot((x + .5 - kx) / rx2, (y + .5 - ky) / ry2);
+      if (er < 1 && !RT.lakeM[j]) {
+        const band = Math.floor(er * rm / 5 + vnoise(x / 18, y / 18, sd + 77) * 2.2) & 3, su = vnoise(x / 9, y / 9, sd + 78);
+        c = [K.wal, K.wal1, K.wal2, K.wal3][band]; if (h < .06) c = K.wal3; else if (h > .97) c = K.wal2;
+        if (su > .78 && (y < ky + kry * .3)) c = su > .84 ? (h < .4 ? K.sul : K.sulD) : mix(c, K.sulD, .5);
+      } else {
+        const r = Math.hypot(x - kx, (y - ky) * 1.2), rope = Math.abs(Math.sin(r * .33 + vnoise(x / 16, y / 16, sd + 42) * 7)) > .94;
+        c = rope ? K.rope : v < .3 ? K.gnd1 : v > .72 ? K.gnd2 : K.gnd;
+        if (h < .012) c = K.speck; else if (h > .992) c = K.grey;
+        if (RT.bridgeM[j]) c = K.basDD;
+        const hv = clamp((height(x, y) - .28) / .5, 0, .7);
+        if (hv > 0) c = mix(c, K.high, hv);
+      }
       s = shade(x, y);
-    } else if (t === GLASS) {
-      // obsidian: a flat sheet of glass, smooth and glossy like ice (no rim, no shadow: you drive on it), long streaks of violet sheen, white glints
-      const st = Math.sin((x * .8 - y * .55) * .12 + vnoise(x / 22, y / 22, sd + 44) * 4);
-      c = st > .9 ? K.glL : st > .55 ? K.gl2 : v < .45 ? K.gl1 : K.gl; if (h < .008) c = K.glW;
-      s = 1;
-    } else if (t === 1 && RT.rinM[j] && dist[j] >= HALF - 2) {
-      // the old lava channel: cooled ropy lava, grey-brown and smooth, the ropes bent downhill (pahoehoe), dark cracks; a pale kerb of ash along its levees
-      const [dd, k] = RT.rinAt.get(j), u = dd / def.rinne.half, rope = Math.abs(Math.sin(k * .55 - u * u * 3.2 + vnoise(x / 14, y / 14, sd + 73) * 2)) > .9;
-      c = u > .86 ? (u > .94 ? K.kerbD : K.kerb) : rope ? K.rnR : v < .3 ? K.rn1 : v > .72 ? K.rn2 : K.rn;
-      if (u <= .86 && Math.abs(vnoise(x / 8, y / 8, sd + 74) - .5) < .015) c = K.rnD;
-      s = .85 + .15 * shade(x, y);
-    } else if (t === 1 || t === TUBE) {
+    } else if (t === 1) {
       if (RT.bridgeM[j]) { c = (x + y) % 9 === 0 || (x - y + 900) % 9 === 0 ? K.slabD : h < .1 ? K.slabL : K.slab; put(j, c); continue; } // (basalt slabs on the bridge)
-      // red scoria: fine gravel with lighter and darker grains, two worn ruts, a pale kerb of ash along the edge so that the road stands out against the black;
-      // on the dike through the lake the edge is dark crusted rock instead
-      c = v < .33 ? K.rd1 : v > .7 ? K.rd2 : K.rd; if (h < .03) c = K.rdD; else if (h > .975) c = K.rdL;
-      const lane = RT.alt[j] || RT.laneM[j], laneE = lane && [-3, 3, -3 * MW, 3 * MW].some(o => { const q = ter[j + o]; return q !== 1 && q !== TUBE && q !== 2; });
-      if (RT.lakeM[j]) { if (ld[j] <= 2) c = h < .4 ? K.basDD : K.crust; else if (ld[j] <= 3 && h < .5) c = K.rdD; }
-      else if ((!lane && dist[j] > HALF - 3) || laneE) c = (!lane && dist[j] > HALF - 1.2) ? K.kerbD : K.kerb;
-      else if (!lane && Math.abs(dist[j] - 13) < 1.3 && h > .35) c = K.rut;
-      s = .85 + .15 * shade(x, y);
-    } else if (t === 2) {
-      // ash: pale grey, rippled by the wind, a darker rim
-      let e = false; for (const q of [j - 2, j + 2, j - 2 * MW, j + 2 * MW]) if (q >= 0 && q < A && ter[q] !== 2) e = true;
-      c = e ? K.ashE : Math.sin(x * .7 + y * .4 + vnoise(x / 10, y / 10, sd + 43) * 6) > .6 ? K.ashL : v < .3 ? K.ash1 : v > .72 ? K.ash2 : K.ash;
-      s = .9 + .1 * shade(x, y);
-    } else if (t === 15) { c = lavaCol(x, y, h); if (h < .03) lavaPix.push(j); put(j, c); continue; }
-    else continue;
+      if (RT.lakeM[j]) {
+        // the causeway through the lake: pavers of basalt (the tops of columns, irregular polygons) with dark joints; a raised kerb of light stone, at the very
+        // edge crust that glows where it meets the lava
+        const cl = cells(x, y, 8, sd + 82), tone = hash(cl.id, 3, sd + 83);
+        c = cl.seam < 1.1 ? K.basDD : tone < .3 ? K.slabD : tone < .62 ? K.slab : tone < .88 ? K.slabT : K.slabL;
+        if (cl.seam > 1.1 && cl.seam < 2.2 && tone < .62) c = mix(c, K.slabL, .25);
+        if (ld[j] <= 1) c = h < .5 ? K.crustD : K.crust; else if (ld[j] <= 2) c = (Math.floor(x / 5) & 1) ? K.basL : K.basS; else if (ld[j] <= 3) c = K.basDD;
+        s = 1;
+      } else {
+        // red scoria: fine gravel with lighter and darker grains, two worn ruts, a pale kerb of ash along the edge so that the road stands out against the black
+        c = v < .33 ? K.rd1 : v > .7 ? K.rd2 : K.rd; if (h < .03) c = K.rdD; else if (h > .975) c = K.rdL;
+        const lane = RT.alt[j] || RT.laneM[j], laneE = lane && [-3, 3, -3 * MW, 3 * MW].some(o => ter[j + o] !== 1);
+        if ((!lane && dist[j] > HALF - 3) || laneE) c = (!lane && dist[j] > HALF - 1.2) ? K.kerbD : K.kerb;
+        else if (!lane && Math.abs(dist[j] - 13) < 1.3 && h > .35) c = K.rut;
+        s = .85 + .15 * shade(x, y);
+      }
+    } else if (t === 15) {
+      if (RT.lakeM[j]) {
+        // the crater lake: plates of black crust drifting on it, glowing seams between them; molten and bright along its shore and along the causeway
+        const e = Math.hypot((x + .5 - kx) / krx, (y + .5 - ky) / kry), edge = Math.max(clamp((e - .84) / .12, 0, 1), clamp(1 - (dist[j] - DIKE) / 7, 0, 1));
+        const cl = cells(x + vnoise(x / 30, y / 30, sd + 84) * 14, y, 15, sd + 85), sm = cl.seam;
+        c = sm < 1.2 ? (h < .5 ? K.lavaW : K.lava2) : sm < 2.6 ? K.lava1 : sm < 4 ? K.lavaD : hash(cl.id, 5, sd + 86) < .5 ? K.crust : K.crustL;
+        if (sm >= 4 && h < .04) c = K.crustD;
+        if (edge > .4 && sm >= 2.6) c = edge > .75 ? (v > .55 ? K.lava2 : K.lava1) : (sm < 5 ? K.lava : K.lavaD);
+      } else c = lavaCol(x, y, h);
+      if (h < .03) lavaPix.push(j); put(j, c); continue;
+    } else continue;
     // the glow of the lava on everything close to it (it shows the danger from far away)
     const g = ld[j] <= 8 ? .6 * (1 - ld[j] / 9) ** 2 : 0;
     if (g > 0) { const o = j * 4; d[o] = clamp(c[0] * s * (1 - g) + 255 * g, 0, 255); d[o + 1] = clamp(c[1] * s * (1 - g) + 118 * g, 0, 255); d[o + 2] = clamp(c[2] * s * (1 - g) + 34 * g, 0, 255); d[o + 3] = 255; }
     else put(j, c, s);
   }
   yield;
-  // a soft fringe of ash grains round every drift (it is blown there, it has no hard edge)
-  for (const [ax, ay, ex, ey] of def.ash) {
-    const R2 = Math.ceil(Math.max(ex, ey) * 1.3) + 8;
-    for (let y = Math.max(5, ay - R2); y <= Math.min(MH - 6, ay + R2); y++) for (let x = Math.max(5, ax - R2); x <= Math.min(MW - 6, ax + R2); x++) {
-      const j = y * MW + x; if (ter[j] !== 0 || RT.subM[j]) continue;
-      let dd = 9; for (let q = -5; q <= 5 && dd > 1; q++) for (let p = -5; p <= 5; p++) if (ter[j + q * MW + p] === 2) dd = Math.min(dd, Math.hypot(p, q));
-      if (dd < 6 && hash(x, y, sd + 49) < .75 * (1 - dd / 6)) set(j, dd < 2.5 ? K.ash1 : K.ashE);
-    }
-  }
-  yield;
   startLine(S);
 
   yield;
-  // ----- the crater rim: a ring of solid blue-grey basalt round the lake, open only where the road and the lava streams pass; a hard shadow outside to the south-east -----
-  const [, , krx, kry] = def.crater, RIM = def.rim, rx2 = krx + RIM, ry2 = kry + RIM, rm = (rx2 + ry2) / 2;
-  const rimOK = j => dist[j] >= HALF + 2 && ter[j] !== 15 && ld[j] > 2 && !RT.alt[j] && !RT.damM[j] && !RT.rinAt.has(j);
+  // ----- the crater rim: a ring of solid basalt round the lake, open only where the road and the lava streams pass, crowned with blocks and boulders (light from
+  // the north-west, dark joints); a hard shadow outside to the south-east -----
+  const rimOK = j => dist[j] >= HALF + 2 && ter[j] !== 15 && ld[j] > 2 && !RT.alt[j];
   for (let y = Math.max(0, ky - ry2 - 20); y < Math.min(MH, ky + ry2 + 20); y++) for (let x = Math.max(0, kx - rx2 - 20); x < Math.min(MW, kx + rx2 + 20); x++) {
     const j = y * MW + x, e = Math.hypot((x + .5 - kx) / rx2, (y + .5 - ky) / ry2), dr = (e - 1) * rm, w = 7 + (vnoise(x * .1, y * .1, sd + 44) - .5) * 3;
     if (!rimOK(j)) continue;
     if (Math.abs(dr) <= w) {
       const top = (x - kx) * -.5 + (y - ky) * -.7 < 0; // (the inner and the outer face: lit from the north-west)
-      const h = hash(x, y, sd + 45);
-      set(j, Math.abs(dr) > w - 1.2 ? K.basDD : h < .12 ? K.basL : (Math.floor((x + y) / 5) & 1) && Math.abs(dr) < 2.5 ? K.basT : dr < 0 === top ? K.bas : K.basD);
+      set(j, Math.abs(dr) > w - 1.2 ? K.basDD : dr < 0 === top ? K.basS : K.basD);
       wallMask[j] = 1;
-    } else if (dr > w && dr < w + 8 && (x - kx) * .6 + (y - ky) > 0) dk(x, y, .62 + .04 * (dr - w));
+    } else if (dr > w && dr < w + 9 && (x - kx) * .6 + (y - ky) > 0) dk(x, y, .6 + .04 * (dr - w));
+  }
+  {
+    // the blocks on the rim: irregular boulders of different sizes, lit on the north-west, a crack or two
+    let a = 0, q = 0;
+    while (a < Math.PI * 2) {
+      const br = 4 + hash(q, 1, sd + 87) * 4.5, jit = (hash(q, 2, sd + 87) - .5) * 4, x0 = kx + Math.cos(a) * (rx2 + jit), y0 = ky + Math.sin(a) * (ry2 + jit);
+      a += (br * 1.5) / rm; q++;
+      const j0 = Math.round(y0) * MW + Math.round(x0); if (x0 < 0 || y0 < 0 || x0 >= MW || y0 >= MH || !rimOK(j0)) continue;
+      for (let dy = -Math.ceil(br) - 1; dy <= br + 1; dy++) for (let dx = -Math.ceil(br) - 1; dx <= br + 1; dx++) {
+        const X = Math.round(x0 + dx), Y = Math.round(y0 + dy), j = Y * MW + X; if (X < 0 || Y < 0 || X >= MW || Y >= MH || !rimOK(j)) continue;
+        const dd = Math.hypot(dx, dy * 1.15) + (vnoise(X * .3, Y * .3, sd + 88 + q) - .5) * 2.2; if (dd > br) continue;
+        const l = (dx * -.6 + dy * -.8) / Math.max(1, dd);
+        set(j, dd > br - 1.1 ? K.basDD : l > .45 && dd > br * .4 ? K.basL : l > -.1 ? K.basT : l > -.5 ? K.bas : K.basD);
+        if (Math.abs(vnoise(X / 3, Y / 3, sd + 89 + q) - .5) < .03 && dd < br - 1.5) set(j, K.basD);
+        wallMask[j] = 1;
+      }
+    }
   }
   for (let a = 0; a < Math.PI * 2; a += 6 / rm) {
     const x = kx + Math.cos(a) * rx2, y = ky + Math.sin(a) * ry2, j = Math.round(y) * MW + Math.round(x);
-    if (x < 0 || y < 0 || x >= MW || y >= MH || dist[j] < HALF + 8 || ld[j] < 4 || RT.alt[j] || RT.damM[j] || (RT.rinAt.get(j) || [99])[0] < def.rinne.half + 8) continue;
+    if (x < 0 || y < 0 || x >= MW || y >= MH || dist[j] < HALF + 8 || ld[j] < 4 || RT.alt[j]) continue;
     walls.push({ x, y, r: 7 });
   }
 
   yield;
-  // ----- levees: rows of solid blue-grey basalt columns between the serpentine legs and from the cinder cone to the rim; seen from above the columns are hexagons
-  // with light tops, a long hard shadow to the south-east -----
-  const column = (x, y, rr, edge) => {
+  // ----- basalt columns: hexagonal prisms seen from above and a little from the south (a lit top, a face below it with the edges of the prism), different
+  // heights, a long shadow to the south-east. Levees of them between the serpentine legs, from the rim to the cinder cone and on to the top -----
+  const column = (x, y, rr, hg) => {
+    const inHex = (dx, dy) => Math.abs(dx) * .5 + Math.abs(dy) * .87 <= rr * .9 && Math.abs(dx) <= rr * .95;
+    for (let dy = 0; dy <= rr + hg + 6; dy++) for (let dx = 0; dx <= rr + 8; dx++) if (Math.hypot(dx - 3, (dy - 3) * .8) < rr + 1) dk(x + dx, y + dy, .66);
+    // the face: for every column of the hexagon from its lower edge down hg px
+    for (let dx = -rr; dx <= rr; dx++) {
+      let yb = -99; for (let dy = rr; dy >= -rr; dy--) if (inHex(dx, dy)) { yb = dy; break; }
+      if (yb === -99) continue;
+      const ax = Math.abs(dx), edge = Math.abs(ax - rr * .48) < .8, side = dx < -rr * .48 ? K.bas : dx > rr * .48 ? K.basD : K.basS;
+      for (let s = 1; s <= hg; s++) setT(x + dx, y - hg + yb + s, s === hg || ax >= rr * .95 - .5 ? K.basDD : edge ? K.basD : (hash(dx, s, x + y) < .08 ? K.basDD : side));
+    }
+    // the top
     for (let dy = -rr; dy <= rr; dy++) for (let dx = -rr; dx <= rr; dx++) {
-      const ax = Math.abs(dx), ay = Math.abs(dy); if (ax * .5 + ay * .87 > rr * .9 || ax > rr * .95) continue;
-      const rim = ax * .5 + ay * .87 > rr * .9 - 1.3 || ax > rr * .95 - 1.3;
-      setT(x + dx, y + dy, rim ? K.basDD : edge ? K.basD : dy < -1 && dx < 1 ? K.basL : dy > 1 ? K.basD : K.basT);
+      if (!inHex(dx, dy)) continue;
+      const rim = !inHex(dx + (dx > 0 ? 1.3 : -1.3), dy) || !inHex(dx, dy + (dy > 0 ? 1.3 : -1.3)), l = dx * -.6 + dy * -.8;
+      setT(x + dx, y - hg + dy, rim ? (l > rr * .3 ? K.basL : K.basDD) : l > rr * .45 ? K.basL : l < -rr * .45 ? K.bas : (hash(dx, dy, x * 3 + y) < .06 ? K.basS : K.basT));
     }
   };
   const levee = (x0, y0, x1, y1, w) => {
     const len = Math.hypot(x1 - x0, y1 - y0), ux = (x1 - x0) / len, uy = (y1 - y0) / len, cols = [];
     for (let a = 0; a <= len; a += 6) {
       const x = x0 + ux * a, y = y0 + uy * a, j = Math.round(y) * MW + Math.round(x);
-      if (x < 0 || y < 0 || x >= MW || y >= MH || dist[j] < HALF + w + 1 || ter[j] === 15 || RT.alt[j]) continue;
-      walls.push({ x, y, r: w }); solid(x, y, w); cols.push([x, y]);
+      if (x < 0 || y < 0 || x >= MW || y >= MH || dist[j] < HALF + w + 1 || ter[j] === 15 || RT.alt[j] || RT.fordAt.has(j)) continue;
+      walls.push({ x, y, r: w }); solid(x, y, w); cols.push([x, y, cols.length]);
     }
-    for (const [x, y] of cols) for (let dy = 0; dy <= w + 6; dy++) for (let dx = 0; dx <= w + 8; dx++) if (Math.hypot(dx - 4, dy - 4) < w + 3) dk(x + dx, y + dy, .7);
-    cols.forEach(([x, y], k) => { column(Math.round(x + (hash(k, 1, sd) - .5) * 2), Math.round(y + (hash(k, 2, sd) - .5) * 2), w + 1 + (hash(k, 3, sd) * 2 | 0), false); });
+    // (a column for every second wall point: a row of prisms that touch, a little out of line, of different heights)
+    cols.filter(([, , k]) => k % 2 === 0).map(([x, y, k]) => [Math.round(x + (hash(k, 1, sd) - .5) * 3 - uy * (hash(k, 5, sd) - .5) * 4), Math.round(y + (hash(k, 2, sd) - .5) * 3 + ux * (hash(k, 5, sd) - .5) * 4), k])
+      .sort((a, b) => a[1] - b[1]).forEach(([x, y, k]) => column(x, y, w + 2 + (hash(k, 3, sd) * 2 | 0), 4 + (hash(k, 4, sd) * 7 | 0)));
   };
   for (const [x0, y0, x1, y1, w] of def.levees) levee(x0, y0, x1, y1, w);
-  // the natural levees of the old channel: basalt columns on both sides all the way down (nobody drives round it when it is full of lava)
-  {
-    const P = RT.rinPts, RH = def.rinne.half, w = 6, cols = [], [bx0, by0, bx1, by1, bw] = def.rinne.breach, bl = Math.hypot(bx1 - bx0, by1 - by0);
-    const nearDam = (x, y) => { const t = clamp(((x - bx0) * (bx1 - bx0) + (y - by0) * (by1 - by0)) / (bl * bl), 0, 1); return Math.hypot(x - bx0 - (bx1 - bx0) * t, y - by0 - (by1 - by0) * t) < bw + w + 2; };
-    for (let k = 0; k < P.length; k += 3) {
-      const q = P[Math.min(P.length - 1, k + 2)], o = P[Math.max(0, k - 2)], l = Math.hypot(q.x - o.x, q.y - o.y) || 1, nx = -(q.y - o.y) / l, ny = (q.x - o.x) / l;
-      for (const s of [-1, 1]) {
-        const x = P[k].x + nx * s * (RH + w + 3), y = P[k].y + ny * s * (RH + w + 3), j = Math.round(y) * MW + Math.round(x), tq = RT.tubeAt.get(j);
-        if (x < 0 || y < 0 || x >= MW || y >= MH || dist[j] < HALF + w + 2 || ter[j] === 15 || RT.lakeM[j] || RT.alt[j] || (tq && tq[0] < def.tube.half + 4) || nearDam(x, y)) continue;
-        walls.push({ x, y, r: w }); solid(x, y, w); cols.push([x, y]);
-      }
-    }
-    for (const [x, y] of cols) for (let dy = 0; dy <= w + 6; dy++) for (let dx = 0; dx <= w + 8; dx++) if (Math.hypot(dx - 4, dy - 4) < w + 3) dk(x + dx, y + dy, .7);
-    cols.forEach(([x, y], k) => { column(Math.round(x + (hash(k, 5, sd) - .5) * 2), Math.round(y + (hash(k, 6, sd) - .5) * 2), w + 1 + (hash(k, 7, sd) * 2 | 0), false); });
-  }
-  // the plug in the breach: a lid of black crust with glowing cracks between the lava lake and the channel (solid; in lap 2 it bursts, volcano.js)
-  const dam = [];
-  for (let j = 0; j < A; j++) {
-    if (!RT.damM[j]) continue;
-    const x = j % MW, y = j / MW | 0, h = hash(x, y, sd + 75), cr = Math.abs(vnoise(x / 5, y / 5, sd + 76) - .5) < .05;
-    set(j, cr ? (h < .5 ? K.lava2 : K.lava) : h < .25 ? K.crustL : h > .9 ? K.basDD : K.crust); dam.push(j);
-  }
-  { const [x0, y0, x1, y1, bw] = def.rinne.breach, n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 5); for (let q = 0; q <= n; q++) walls.push({ x: x0 + (x1 - x0) * q / n, y: y0 + (y1 - y0) * q / n, r: bw - 2 }); }
 
   yield;
-  // ----- the cinder cone: solid all round (circles on its outline, gaps for the tube), a shadow to the south-east -----
+  // ----- the cinder cone: solid all round (circles on its outline), a shadow to the south-east -----
   {
-    const tubeNear = (x, y) => { const q = RT.tubeAt.get(Math.round(y) * MW + Math.round(x)); return q && q[0] < def.tube.half + 9; };
-    for (let j = 0; j < A; j++) if (RT.subM[j] && !(RT.tubeAt.get(j) && RT.tubeAt.get(j)[0] < def.tube.half + 4)) wallMask[j] = 1;
-    for (let a = 0; a < Math.PI * 2; a += 6 / ((srx + sry) / 2)) {
-      const x = sx + Math.cos(a) * (srx - 4), y = sy + Math.sin(a) * (sry - 4);
-      if (!tubeNear(x, y)) walls.push({ x, y, r: 6 });
-    }
+    for (let j = 0; j < A; j++) if (RT.subM[j]) wallMask[j] = 1;
+    for (let a = 0; a < Math.PI * 2; a += 6 / ((srx + sry) / 2)) walls.push({ x: sx + Math.cos(a) * (srx - 4), y: sy + Math.sin(a) * (sry - 4), r: 6 });
     for (let y = sy - sry; y < sy + sry + 14; y++) for (let x = sx - srx; x < sx + srx + 14; x++) {
       if (x < 0 || y < 0 || x >= MW || y >= MH) continue;
       const j = y * MW + x; if (RT.subM[j] || ter[j] !== 0) continue;
       const e = Math.hypot((x - sx - 6) / srx, (y - sy - 8) / sry); if (e < 1) dk(x, y, .66);
     }
-  }
-
-  yield;
-  // ----- the lava tube. The roof is a picture of the cone over the corridor (drawn over the cars while you are outside); under it the floor, a pale curb on both
-  // sides, a lava rill on the right that lights the way, cat's eyes along the edges. light: how much the lava rill lights every pixel of the corridor -----
-  let tube;
-  {
-    const TH = def.tube.half, P = RT.tubePts, nv = P.map((p, k) => { const q = P[Math.min(P.length - 1, k + 2)], o = P[Math.max(0, k - 2)], l = Math.hypot(q.x - o.x, q.y - o.y) || 1; return { x: -(q.y - o.y) / l, y: (q.x - o.x) / l }; });
-    const inRoof = (j, dd) => dd < TH + 9 && RT.subM[j];
-    let x0 = MW, y0 = MH, x1 = 0, y1 = 0;
-    for (const [j, [dd]] of RT.tubeAt) if (inRoof(j, dd)) { const x = j % MW, y = j / MW | 0; x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
-    const W = x1 - x0 + 1, H = y1 - y0 + 1, roof = mk(W, H), lit = mk(W, H), ri = roof.getContext('2d').createImageData(W, H), li = lit.getContext('2d').createImageData(W, H), mask = new Uint8Array(W * H);
-    for (const [j, [dd, k]] of RT.tubeAt) {
-      if (!inRoof(j, dd)) continue;
-      const x = j % MW, y = j / MW | 0, q = ((y - y0) * W + x - x0) * 4, p = P[k], o = (x + .5 - p.x) * nv[k].x + (y + .5 - p.y) * nv[k].y;
-      for (let c = 0; c < 3; c++) ri.data[q + c] = d[j * 4 + c]; ri.data[q + 3] = 255; mask[q >> 2] = 1;
-      // the light of the rill (alpha = how bright), a little everywhere so that the walls show
-      li.data[q + 3] = Math.round(255 * clamp(.1 + .9 * Math.max(0, 1 - Math.abs(o - (TH + 8)) / 32) ** 1.5, 0, 1));
-      // the floor: rough pale rock with glowing cracks; the curb; the rill; the dark rock wall
-      const h = hash(x, y, sd + 70), v = vnoise(x / 5, y / 5, sd + 71);
-      let c;
-      if (Math.abs(o) < TH - 2) { c = v < .3 ? K.tub1 : v > .7 ? K.tub2 : K.tub; if (Math.abs(vnoise(x / 9, y / 9, sd + 72) - .5) < .02) c = K.rdD; if (h < .02) c = K.curbD; }
-      else if (Math.abs(o) < TH + 2) c = Math.abs(o) < TH ? K.curb : K.curbD;
-      else if (o > TH + 4 && o < TH + 12) c = lavaCol(x, y, h);
-      else c = o > TH + 2 && o <= TH + 4 ? K.curbD : v < .4 ? K.basDD : K.basD;
-      set(j, c);
-    }
-    roof.getContext('2d').putImageData(ri, 0, 0); lit.getContext('2d').putImageData(li, 0, 0);
-    // walls on both sides inside the cone (and a little beyond the portals); cat's eyes every 20 px
-    const eyes = [];
-    for (let k = 0; k < P.length; k += 3) {
-      const p = P[k], inC = Math.hypot((p.x - sx) / srx, (p.y - sy) / sry) < 1.03;
-      if (!inC) continue;
-      for (const s of [-1, 1]) walls.push({ x: p.x + nv[k].x * s * (TH + 4), y: p.y + nv[k].y * s * (TH + 4), r: 4 });
-      if (k % 10 === 0) for (const s of [-1, 1]) eyes.push({ x: Math.round(p.x + nv[k].x * s * (TH - 1)), y: Math.round(p.y + nv[k].y * s * (TH - 1)), s });
-    }
-    // the portals: a dark arch across the way in and out (top layer), the glow of the tube in the mouth
-    const portals = [];
-    for (const k of [P.findIndex(p => RT.subM[Math.round(p.y) * MW + Math.round(p.x)]), P.length - 1 - [...P].reverse().findIndex(p => RT.subM[Math.round(p.y) * MW + Math.round(p.x)])]) {
-      if (k < 0 || k >= P.length) continue;
-      const p = P[k];
-      for (let a = -TH - 6; a <= TH + 6; a++) for (let b = -2; b <= 2; b++) {
-        const q = P[Math.min(P.length - 1, Math.max(0, k + b))];
-        setT(q.x + nv[k].x * a, q.y + nv[k].y * a, Math.abs(a) > TH + 3 ? K.basDD : b === 0 ? K.basL : K.basD);
-      }
-      portals.push({ x: p.x, y: p.y });
-    }
-    tube = { roof, lit, mask, x: x0, y: y0, W, H, eyes, portals, pts: P, idx: RT.tubeIdx, fork: RT.forkI, merge: RT.mergeI, half: TH, at: RT.tubeAt, flood: RT.floodT };
   }
 
   yield;
@@ -429,6 +375,29 @@ export function* paintVolcano(S) {
       const x = p.x + nrm[i].x * s * (HALF + 2), y = p.y + nrm[i].y * s * (HALF + 2);
       if (i % 4 === 0) walls.push({ x, y, r: 3 });
       for (let q = -2; q <= 2; q++) for (let a = -1; a <= 1; a++) px(x + nrm[i].x * q + S.tan[i].x * a, y + nrm[i].y * q + S.tan[i].y * a, Math.abs(q) === 2 ? K.basDD : q * s < 0 ? K.basL : K.bas);
+    }
+  }
+
+  yield;
+  // ----- the lanterns on the causeway: iron posts on both edges every 64 px, a lamp on each (it glows, volcano.js) -----
+  const lanterns = [];
+  {
+    const [i0, i1] = RT.dike;
+    for (let k = 0, i = (i0 + 10) % N; k < 400 && i !== i1; k++, i = (i + 1) % N) {
+      if (k % 30 !== 0) continue;
+      for (const s of [-1, 1]) {
+        // (on the kerb: the last paver before the lava, a little in)
+        let o = DIKE - 8; while (o < DIKE + 6 && ter[Math.round(path[i].y + nrm[i].y * s * (o + 1)) * MW + Math.round(path[i].x + nrm[i].x * s * (o + 1))] !== 15) o++;
+        o -= 3;
+        const x = Math.round(path[i].x + nrm[i].x * s * o), y = Math.round(path[i].y + nrm[i].y * s * o), j = y * MW + x;
+        if (!RT.lakeM[j] || ter[j] === 15 || o < DIKE - 8) continue;
+        walls.push({ x, y, r: 2 });
+        for (let q = 0; q < 3; q++) dk(x + 1 + q, y + 1, .6);
+        for (let q = 0; q < 13; q++) { setT(x, y - q, q < 2 ? K.basDD : K.iron); if (q > 1) setT(x + 1, y - q, K.basD); }
+        for (let dy = -17; dy <= -13; dy++) for (let dx = -2; dx <= 2; dx++) setT(x + dx, y + dy, Math.abs(dx) === 2 || dy === -17 || dy === -13 ? K.iron : K.lava2);
+        setT(x - 1, y - 18, K.iron); setT(x, y - 18, K.iron); setT(x + 1, y - 18, K.iron); setT(x, y - 19, K.iron);
+        lanterns.push({ x, y: y - 15 });
+      }
     }
   }
 
@@ -444,16 +413,61 @@ export function* paintVolcano(S) {
   }
 
   yield;
-  // ----- hornitos in the lava field: little spatter cones on the road (solid), a glowing vent on top; the cars go round them -----
-  const hornitos = [];
-  for (const [hx, hy, hr] of def.hornitos) {
-    walls.push({ x: hx, y: hy, r: hr }); solid(hx, hy, hr); hornitos.push({ x: hx, y: hy, r: hr + 4 });
-    for (let dy = 0; dy <= hr + 6; dy++) for (let dx = 0; dx <= hr + 8; dx++) if (Math.hypot(dx - 3, dy - 3) < hr + 2) dk(hx + dx, hy + dy, .6);
-    for (let dy = -hr - 2; dy <= hr + 2; dy++) for (let dx = -hr - 2; dx <= hr + 2; dx++) {
-      const dd = Math.hypot(dx, dy) + (vnoise((hx + dx) * .5, (hy + dy) * .5, sd + 46) - .5) * 2; if (dd > hr + 1) continue;
-      setT(hx + dx, hy + dy, dd < 2.2 ? K.lava2 : dd < 3.4 ? K.lavaD : dd > hr ? K.cinD : dx + dy < -2 ? K.cinL : dx + dy > 3 ? K.cin1 : K.cin2);
+  // ----- spatter cones: the hornitos on the road in the lava field and the vents of the fords. A lumpy cone of red-black scoria (lit on the north-west, spatter
+  // blobs, frozen drips running down), a dark throat with glowing lava in it, a shadow to the south-east (solid; the glow of the throat pulses, volcano.js) -----
+  const spatter = (hx, hy, hr, sdq) => {
+    for (let dy = -2; dy <= hr + 7; dy++) for (let dx = -2; dx <= hr + 9; dx++) if (Math.hypot(dx - 4, (dy - 4) * 1.1) < hr + 2) dk(hx + dx, hy + dy, .55);
+    const mouth = hr * .4;
+    for (let dy = -hr - 3; dy <= hr + 3; dy++) for (let dx = -hr - 3; dx <= hr + 3; dx++) {
+      const X = hx + dx, Y = hy + dy, dd = Math.hypot(dx, dy) + (vnoise(X * .45, Y * .45, sd + 46 + sdq) - .5) * 2.6; if (dd > hr + .5) continue;
+      const a = Math.atan2(dy, dx), l = (dx * -.6 + dy * -.8) / Math.max(1, Math.hypot(dx, dy)), hh = hash(X, Y, sd + 90);
+      let c;
+      if (dd < mouth * .5) c = hh < .4 ? K.lavaW : K.lava2;
+      else if (dd < mouth * .8) c = hh < .5 ? K.lava1 : K.lavaD;
+      else if (dd < mouth) c = K.throat;
+      else if (dd < mouth + 1.4) c = l > 0 ? K.cinD : K.lavaD; // (the lip of the throat: its far side glows)
+      else if (dd < mouth + 2.6 && l < 0) c = K.cinH;
+      else if (dd > hr - 1) c = K.cinD;
+      else {
+        c = l > .55 && dd > hr * .55 ? K.cinH : l > .3 ? K.cinL : l > -.05 ? K.cin2 : l > -.45 ? K.cin : K.cin1;
+        if (Math.abs(Math.sin(a * 5 + sdq * 1.7)) > .965 && dd < hr - 2) c = l > 0 ? K.lavaD : K.crustL; // (frozen drips of spatter)
+        else if (hh < .07) c = K.cinL; else if (hh > .95) c = K.blk;
+      }
+      setT(X, Y, c);
     }
-  }
+  };
+  const hornitos = [];
+  def.hornitos.forEach(([hx, hy, hr], q) => { walls.push({ x: hx, y: hy, r: hr }); solid(hx, hy, hr); hornitos.push({ x: hx, y: hy, r: hr + 4 }); spatter(hx, hy, hr + 3, q); });
+
+  yield;
+  // ----- the lava fords: the vent (a spatter cone at the top of the gully), a lava picture and a crust picture of the gully (drawn over it while the lava
+  // runs and while it cools, volcano.js), warning lights on both sides of the road before the crossing -----
+  const fords = RT.fords.map((F, q) => {
+    let x0 = MW, y0 = MH, x1 = 0, y1 = 0;
+    for (const j of F.J) { const x = j % MW, y = j / MW | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    const W = x1 - x0 + 1, H = y1 - y0 + 1, lava = mk(W, H), crust = mk(W, H), li = lava.getContext('2d').createImageData(W, H), ci = crust.getContext('2d').createImageData(W, H);
+    F.J.forEach((j, n) => {
+      const x = j % MW, y = j / MW | 0, o = ((y - y0) * W + x - x0) * 4, h = hash(x, y, sd + 91), u = F.U[n];
+      const lc = u > .9 ? K.lavaD : lavaCol(x, y, h), cr = Math.abs(vnoise(x / 6, y / 6, sd + 92) - .5) < .05 ? (h < .5 ? K.lava2 : K.lava) : h < .25 ? K.crustL : u > .85 ? K.crustD : K.crust;
+      for (let c = 0; c < 3; c++) { li.data[o + c] = lc[c]; ci.data[o + c] = cr[c]; }
+      li.data[o + 3] = 255; ci.data[o + 3] = 255;
+    });
+    lava.getContext('2d').putImageData(li, 0, 0); crust.getContext('2d').putImageData(ci, 0, 0);
+    const v = F.vent; walls.push({ x: v.x, y: v.y, r: 8 }); solid(v.x, v.y, 7); spatter(v.x, v.y, 10, 7 + q);
+    // the lights: 24 px before the gully on both sides of the road, a post with a sign (a red and white triangle) and a red lamp
+    const i = (F.r0 - 12 + N) % N, lights = [];
+    for (const s of [-1, 1]) {
+      const x = Math.round(path[i].x + nrm[i].x * s * (HALF + 6)), y = Math.round(path[i].y + nrm[i].y * s * (HALF + 6));
+      walls.push({ x, y, r: 2 });
+      for (let k = 0; k < 4; k++) dk(x + 1 + k, y + 1, .6);
+      for (let k = 0; k < 14; k++) setT(x, y - k, k % 4 < 2 ? K.white : K.fire);
+      for (let r2 = 0; r2 < 7; r2++) for (let c = -r2; c <= r2; c++) setT(x + c, y - 26 + r2, r2 === 6 || Math.abs(c) === r2 ? K.fire : r2 > 2 && Math.abs(c) < 2 && r2 < 5 ? K.blk : K.white);
+      for (let dy = -18; dy <= -15; dy++) for (let dx = -2; dx <= 2; dx++) setT(x + dx, y + dy, Math.abs(dx) === 2 || dy === -18 || dy === -15 ? K.blk : [90, 20, 16]);
+      lights.push({ x, y: y - 16 });
+    }
+    const m = F.pts[Math.round((F.kRoad + F.kEnd) / 2)] || F.pts[0];
+    return { ...F, lava, crust, x0, y0, W, H, lights, mid: { x: m.x, y: m.y } };
+  });
 
   yield;
   // ----- the fire brigade's washing bay: wet tiles, a low basalt wall between the road and the lane, the fire engine parked behind it, a hydrant, a signpost -----
@@ -500,27 +514,20 @@ export function* paintVolcano(S) {
   }
 
   yield;
-  // ----- the board at the fork: a post with a lamp (it blinks red while a glowing cloud rolls down) and an arrow for each way down (volcano.js) -----
-  { const [fx, fy] = def.sign; walls.push({ x: fx, y: fy, r: 3 }); for (let k = 0; k < 16; k++) setT(fx, fy - k, K.basL); for (let yy = 0; yy < 12; yy++) for (let xx = -16; xx <= 16; xx++) setT(fx + xx, fy - 28 + yy, yy === 0 || yy === 11 || Math.abs(xx) === 16 ? K.blk : K.yel); }
-
-  yield;
   // ----- scenery: basalt columns in groups at the edges of the map (solid), fumaroles with yellow sulphur (steaming), obsidian boulders, charred stumps -----
   const okOff = (x, y, m) => {
     for (let dy = -m; dy <= m; dy += 2) for (let dx = -m; dx <= m; dx += 2) {
       const X = x + dx, Y = y + dy; if (X < 2 || Y < 2 || X >= MW - 2 || Y >= MH - 2) return false;
-      const j = Y * MW + X; if (ter[j] !== 0 || dist[j] < HALF + 10 || wallMask[j] || RT.alt[j] || RT.laneM[j] || RT.subM[j] || RT.lakeM[j] || ld[j] < 5 || RT.tubeAt.has(j) || RT.rinAt.has(j) || RT.damM[j]) return false;
+      const j = Y * MW + X; if (ter[j] !== 0 || dist[j] < HALF + 10 || wallMask[j] || RT.alt[j] || RT.laneM[j] || RT.subM[j] || RT.lakeM[j] || ld[j] < 5 || RT.fordAt.has(j)) return false;
     }
     return true;
   };
   for (let k = 0, tries = 0; k < 26 && tries < 4000; tries++) {
     const x = 6 + (S.r() * (MW - 12) | 0), y = 6 + (S.r() * (MH - 12) | 0), edge = x < 50 || y < 40 || x > MW - 60 || y > MH - 26;
     if (!edge || !okOff(x, y, 16)) continue;
-    const n = 3 + (S.r() * 5 | 0);
-    for (let q = 0; q < n; q++) {
-      const a = S.r() * 6.28, rr = q ? 7 + S.r() * 6 : 0, X = Math.round(x + Math.cos(a) * rr), Y = Math.round(y + Math.sin(a) * rr);
-      for (let dy = 0; dy < 10; dy++) for (let dx = 0; dx < 12; dx++) if (Math.hypot(dx - 4, dy - 4) < 7) dk(X + dx, Y + dy, .72);
-      column(X, Y, 5, false); walls.push({ x: X, y: Y, r: 4 }); solid(X, Y, 5);
-    }
+    const n = 3 + (S.r() * 5 | 0), grp = [];
+    for (let q = 0; q < n; q++) { const a = S.r() * 6.28, rr = q ? 7 + S.r() * 6 : 0; grp.push([Math.round(x + Math.cos(a) * rr), Math.round(y + Math.sin(a) * rr), 3 + (S.r() * 6 | 0)]); }
+    grp.sort((a, b) => a[1] - b[1]).forEach(([X, Y, hg]) => { column(X, Y, 5, hg); walls.push({ x: X, y: Y, r: 4 }); solid(X, Y, 5); });
     k++;
   }
   const vents = [];
@@ -545,7 +552,6 @@ export function* paintVolcano(S) {
     walls.push({ x, y, r: 3 }); k++;
   }
 
-  const rinne = { pts: RT.rinPts, idx: RT.rinIdx, fork: RT.rForkI, merge: RT.rMergeI, half: def.rinne.half, at: RT.rinAt, flood: RT.floodR, dam, breach: def.rinne.breach };
-  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, tube, rinne, bay, station, vents, hornitos, lavaPix, crater: def.crater, fountains: def.fountains, sign: def.sign,
-    cloud: RT.cloud, jumpI: RT.lavaI, dike: RT.dike, serp: RT.serp, laneM: RT.laneM };
+  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, fords, bay, station, vents, hornitos, lanterns, lavaPix, crater: def.crater, fountains: def.fountains,
+    jumpI: RT.lavaI, dike: RT.dike, serp: RT.serp, laneM: RT.laneM };
 }
