@@ -47,8 +47,9 @@ export const THEMES = {
     water: ['#2c98a6', '#3eb2ba', '#5ac8c8', '#a4ece8'], shore: ['#9aa8b6', '#8b99a8'], grass: ['#eef4fa', '#e3ebf4', '#f9fbfe'], grassEdge: '#cfdbe8', tuft: '#d6e0ec',
     track: ['#dfe6ef', '#d3dbe6', '#e9eef5'], trackEdge: '#aebdcd', trail: '#c4d0dc', roadTrail: '#8f9eb0', trailA: .14, decor: 'eis', tree: 'pine', treeCol: ['#2b5a45', '#e6f0f6', '#ffffff', '#163428'], trees: 0,
     landCol: ['#ffffff', '#e6eef6', '#cfdcea'] },
-  // volcano (Rev 2): a road of red scoria on black basalt (it stands out), ash instead of mud (goo 'ash': sooty cars), lava (terrain 15) burns, the fire brigade washes
-  vulkan: { ...MUDDY, mud: ['#aaa49c', '#9a948c', '#bcb6ae'], mudEdge: '#7c766e', mudHi: '#d2ccc4', mudP: ['#bcb6ae', '#9a948c', '#7c766e', '#d2ccc4'], mudTrail: ['#7c766e', '#9a948c'], goo: 'ash',
+  // volcano (Rev 3): a road of red scoria on black basalt (it stands out), ash instead of mud (goo 'ash': sooty cars), lava (terrain 15) burns, the fire brigade washes;
+  // a burning car is put out with an extinguisher and is white with foam afterwards (goo2 'foam', the second set)
+  vulkan: { ...MUDDY, mud: ['#aaa49c', '#9a948c', '#bcb6ae'], mudEdge: '#7c766e', mudHi: '#d2ccc4', mudP: ['#bcb6ae', '#9a948c', '#7c766e', '#d2ccc4'], mudTrail: ['#7c766e', '#9a948c'], goo: 'ash', goo2: 'foam',
     water: ['#2a7fa8', '#3a98c2', '#58b4d8', '#9edcf0'], shore: ['#3a3634', '#2e2a28'], grass: ['#2b2523', '#241f1e', '#352d2a'], grassEdge: '#1e1a19', tuft: '#3f3531',
     track: ['#7c4634', '#6f3e2e', '#88503c'], trackEdge: '#bcab98', trail: '#4a2a20', roadTrail: '#4a2a20', trailA: .14, decor: 'vulkan', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#140c0a'], trees: 0,
     landCol: ['#5c3428', '#3a2622', '#9a948c'] },
@@ -297,18 +298,20 @@ const TRACK_DEFS = [
     // lake = [x, y, rx, ry south of the middle, r north of it (wider and flatter: up to the rock wall), the y of the foot of the wall]
     lake: [600, 1390, 270, 105, 146, 1246],
     village: [140, 1290] },
-  // The volcano (Rev 2, plaene/VULKAN_REV2.md): from the foot of the cone through the lava field (a jump over the south stream, a basalt bridge over the south-east
-  // stream, hornitos), up the east flank in a serpentine, on a dike right through the crater lake, and at the west rim the fork: the open way over the north-west
-  // flank and down the west edge (glassy obsidian, the fire brigade's washing bay) or the lava tube through the cinder cone (see volcanomap.js, volcano.js).
+  // The volcano (Rev 3, plaene/VULKAN_REV2.md and plaene/VULKAN_REV3.md): from the foot of the cone through the lava field (a jump over the south stream, a basalt
+  // bridge over the south-east stream, hornitos), up the east flank in a serpentine, on a dike right through the crater lake, and at the west rim the fork with three
+  // ways down: the open way over the north-west flank and down the west edge (glassy obsidian, the fire brigade's washing bay), the lava tube through the cinder
+  // cone, or the old lava channel straight down (the shortest). In lap 2 the channel fills with lava, in lap 3 the tube too (event lavastrom; see volcanomap.js, volcano.js).
   // cone = the main cone [x, y, radius of its foot] (light on the slopes); crater = the lava lake [x, y, rx, ry], rim = how far out the solid crater rim stands;
   // flows = lava streams as chains of circles [x, y, half width] (bridge: a basalt bridge where the road crosses, else the road is lava there: the jump);
-  // jump = speed upwards and the least speed forwards over the south stream; sub = the cinder cone [x, y, rx, ry]; tube = the lava tube (points, half width);
+  // jump = speed upwards and the least speed forwards over the south stream; sub = the cinder cone [x, y, rx, ry]; tube = the lava tube (points, half width,
+  // flood = how much of it the lava fills in lap 3); rinne = the old lava channel (points, half width, flood = how much of it fills in lap 2, ash = drifts in it,
+  // breach = the plugged breach in the crater rim it is fed from [x0, y0, x1, y1, half width]);
   // levees = basalt columns [x0, y0, x1, y1, r] (they stop at the road by themselves); hornitos = spatter cones on the road [x, y, r]; ash = drifts [x, y, ax, ay, angle];
   // obsidian = flows of black glass across the open way [x, y, ax, ay, angle] (slippery);
   // bay = the fire brigade (lane, half width, wash = tiled floor [x0, y0, x1, y1], wall = low wall [x, y0, y1], engine, hydrant, sign, crew = the hoses [x, y]);
-  // station = research station [x, y]; sign = the warning board at the fork; cloud = where the glowing cloud rolls (from, to on the road); bombs = the stretch of the
-  // road where lava bombs land; serp = the serpentine (from, to); slopes = pushes [x0, y0, x1, y1, f]; fountains = lava fountains in the lake [x, y]
-  { name: 'VULKAN', rev: 2, seed: 10, W: 1600, H: 1100, theme: 'vulkan', song: 'volcano', events: ['ausbruch', 'glutwolke'], wall: [], wash: null, volcano: true,
+  // station = research station [x, y]; sign = the board at the fork (which ways are open); cloud = where the glowing cloud rolls (from, to on the road); serp = the serpentine (from, to); slopes = pushes [x0, y0, x1, y1, f]; fountains = lava fountains in the lake [x, y]
+  { name: 'VULKAN', rev: 3, seed: 10, W: 1600, H: 1100, theme: 'vulkan', song: 'volcano', events: ['ausbruch', 'glutwolke', 'lavastrom'], wall: [], wash: null, volcano: true,
     poly: [[560, 990, 0], [1480, 990, 70], [1480, 850, 70], [1110, 850, 70], [1110, 710, 70], [1480, 710, 70], [1480, 570, 70], [1120, 570, 50], [1040, 440, 50],
       [580, 440, 60], [430, 160, 70], [150, 160, 80], [150, 990, 80]],
     mud: [], water: [], ponds: [],
@@ -321,8 +324,10 @@ const TRACK_DEFS = [
     jump: { vz: 135, push: 115 },
     sub: [330, 680, 140, 220],
     tube: { pts: [[578, 452, 0], [470, 505, 30], [360, 545, 45], [252, 600, 45], [300, 670, 45], [420, 720, 45], [360, 790, 45], [272, 820, 40], [300, 895, 30],
-      [432, 988, 0]], half: 20 },
-    levees: [[985, 920, 1480, 920, 8], [1110, 780, 1605, 780, 8], [955, 640, 1480, 640, 8], [466, 640, 690, 553, 8], [330, 180, 330, 474, 8]],
+      [432, 988, 0]], half: 20, flood: .5 },
+    rinne: { pts: [[594, 446, 0], [590, 530, 50], [576, 640, 70], [536, 750, 70], [502, 860, 60], [500, 940, 45], [550, 990, 0]], half: 18, flood: .7,
+      ash: [[541, 705, 7, 38, .35]], breach: [694, 514, 606, 498, 11] },
+    levees: [[985, 920, 1480, 920, 8], [1110, 780, 1605, 780, 8], [955, 640, 1480, 640, 8], [548, 502, 440, 552, 7], [330, 180, 330, 474, 8]],
     hornitos: [[1112, 970, 11], [1192, 1011, 11]],
     ash: [[1446, 920, 13, 34, 0], [1446, 640, 13, 34, 0], [1146, 780, 13, 34, 0], [198, 942, 26, 16, .78], [870, 1046, 60, 24, 0], [1320, 1033, 50, 18, 0],
       [1300, 528, 70, 18, 0], [600, 150, 60, 16, -.4]],
@@ -330,7 +335,7 @@ const TRACK_DEFS = [
     bay: { lane: [[144, 548, 0], [85, 605, 26], [85, 775, 26], [144, 832, 0]], half: 15, wash: [70, 650, 101, 740], wall: [111, 615, 765], engine: [38, 700],
       hydrant: [52, 636], sign: [96, 538], crew: [[57, 662], [57, 726]] },
     station: [470, 1062], sign: [500, 445],
-    cloud: [[585, 440], [150, 940]], bombs: [[600, 990], [1440, 990]], serp: [[1480, 950], [1120, 570]],
+    cloud: [[585, 440], [150, 940]], serp: [[1480, 950], [1120, 570]],
     slopes: [[1480, 950, 1120, 570, -26], [520, 370, 150, 940, 28]],
     fountains: [[720, 372], [880, 366], [790, 512], [690, 496], [905, 500]] },
   // The jungle: from the expedition camp under a canopy of leaves (you only see round your own car; under it the road forks into a fast swampy way

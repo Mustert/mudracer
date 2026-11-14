@@ -64,7 +64,7 @@ export function physics(c, dt, thr, tgt) {
   // slipstream (race circuit): right behind another car you get up to 7 % faster
   const spd = G.T.th.flat ? 1 + (c.def.speed - 1) * G.T.th.flat : c.def.speed;
   // downhill (ice) the car runs faster than its top speed
-  const max = MAXS * spd * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1) * (1 + .07 * c.draft) * (1 + (c.slope || 0)) * (c.vAsh > 0 ? .6 : 1); // (vAsh: in the glowing cloud of the volcano)
+  const max = MAXS * spd * sp * (1 - soil * dirt) * (c.boost > 0 ? 1.5 : 1) * (1 + .07 * c.draft) * (1 + (c.slope || 0)) * (c.vAsh > 0 ? .6 : 1) * (c.vFire > 0 ? .85 : 1); // (vAsh: in the glowing cloud of the volcano, vFire: the car burns)
   if (thr > 0 && vf < max * thr) {
     const sput = 1 - .35 * (soil / .18) * dirt * (.5 + .5 * Math.sin(G.time * 11 + c.seed * 3));
     vf += ACC * c.def.acc * sput * (.5 + .5 * sp) * (c.rocket > 0 ? 2.4 : 1) * am * dt; // rocket start: a good start pushes hard for a moment

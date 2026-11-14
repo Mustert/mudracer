@@ -284,6 +284,8 @@ const OIL = ['#17171b', '#26262c', '#0c0c0e'].map(hex);
 const SAND = ['#d9b878', '#c9a263', '#ead09a'].map(hex), SNOW = ['#f6f9fc', '#dde8f2', '#ffffff'].map(hex);
 // the volcano makes them sooty: grey and black ash
 const ASH = ['#55524e', '#77736d', '#34312e'].map(hex);
+// the fire brigade's extinguisher leaves them white with foam (volcano: a burning car is put out)
+const FOAM = ['#ffffff', '#e6ecf0', '#cdd6dc'].map(hex);
 // the jungle swamp makes them green
 const SWAMP = ['#4e6a26', '#6a8a34', '#34481a'].map(hex);
 // moon dust makes them silver
@@ -296,10 +298,10 @@ const KNETE = ['#e04848', '#3c6ee0', '#f2cc30', '#40b850'].map(hex);
 const STORM = ['#6e7480', '#8a909c', '#545a66'].map(hex);
 export function carSet(def, goo, cem) {
   const kind = cem ? 'cem' : typeof goo === 'string' ? goo : 'mud', key = '_' + kind;
-  return def[key] || (def[key] = newSet(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, ash: ASH, swamp: SWAMP, dust: DUST, choco: CHOCO, caramel: CARAMEL, knete: KNETE, storm: STORM, mud: DIRT }[kind]));
+  return def[key] || (def[key] = newSet(def, def.k, { cem: CEM, oil: OIL, sand: SAND, snow: SNOW, ash: ASH, foam: FOAM, swamp: SWAMP, dust: DUST, choco: CHOCO, caramel: CARAMEL, knete: KNETE, storm: STORM, mud: DIRT }[kind]));
 }
 
-const KINDS = ['_mud', '_cem', '_oil', '_sand', '_snow', '_ash', '_swamp', '_dust', '_choco', '_caramel', '_knete', '_storm'];
+const KINDS = ['_mud', '_cem', '_oil', '_sand', '_snow', '_ash', '_foam', '_swamp', '_dust', '_choco', '_caramel', '_knete', '_storm'];
 
 // the sprite sets of one car (a new paint makes them again)
 export function dropSets(def) { for (const k of KINDS) delete def[k]; }
