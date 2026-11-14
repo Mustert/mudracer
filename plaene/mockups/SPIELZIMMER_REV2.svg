@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000">
+<style>
+text{font-family:'Segoe UI',Arial,sans-serif;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round;fill:#3a2a1a}
+.t{font-size:24px}.s{font-size:18px;font-weight:600}.h{font-size:34px}
+.n{fill:#1e88e5;stroke:#fff;stroke-width:3}
+.nt{font-size:20px;fill:#fff;stroke:none;text-anchor:middle;dominant-baseline:central}
+.road{fill:none;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<defs>
+<pattern id="parquet" width="80" height="40" patternUnits="userSpaceOnUse"><rect width="80" height="40" fill="#c99a66"/><path d="M0 20H80M40 0V20M0 20V40M80 20V40" stroke="#a87b4b" stroke-width="2"/><path d="M20 20V40M60 20V40" stroke="#a87b4b" stroke-width="2"/></pattern>
+<pattern id="studs" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#5aa05a"/><circle cx="12" cy="12" r="6" fill="#6cbf6c" stroke="#3f7a3f" stroke-width="1.5"/></pattern>
+</defs>
+<rect width="1600" height="1000" fill="url(#parquet)"/>
+<!-- walls -->
+<rect x="0" y="0" width="1600" height="1000" fill="none" stroke="#e8dcc8" stroke-width="48"/>
+<rect x="24" y="24" width="1552" height="952" fill="none" stroke="#8d6e4a" stroke-width="6"/>
+<!-- play mat -->
+<rect x="210" y="280" width="680" height="420" rx="10" fill="#4f9a4f" stroke="#2f6a2f" stroke-width="4"/>
+<g fill="#9e9e9e" opacity=".5"><rect x="250" y="470" width="600" height="18"/><rect x="540" y="300" width="18" height="380"/></g>
+<g fill="#e57373" opacity=".7"><rect x="290" y="390" width="40" height="30"/><rect x="640" y="560" width="40" height="30"/></g>
+<!-- shelf, window -->
+<rect x="24" y="24" width="160" height="40" fill="#795548"/>
+<rect x="24" y="420" width="10" height="160" fill="#bbdefb"/>
+<!-- train loop -->
+<ellipse cx="620" cy="140" rx="200" ry="90" fill="none" stroke="#a1887f" stroke-width="14"/>
+<ellipse cx="620" cy="140" rx="200" ry="90" fill="none" stroke="#6d4c41" stroke-width="3" stroke-dasharray="4 8"/>
+<g fill="#d32f2f"><rect x="560" y="44" width="40" height="18" rx="4"/><rect x="606" y="46" width="30" height="14" rx="3" fill="#1976d2"/></g>
+<!-- bed (above) and the space under it -->
+<rect x="950" y="30" width="610" height="400" rx="16" fill="#90caf9" stroke="#1565c0" stroke-width="6"/>
+<g fill="#bbdefb" opacity=".8"><rect x="980" y="60" width="140" height="120"/><rect x="1150" y="200" width="140" height="120"/><rect x="1320" y="60" width="140" height="120"/></g>
+<rect x="1380" y="300" width="150" height="110" rx="30" fill="#fff" stroke="#90a4ae" stroke-width="4"/>
+<circle cx="1230" cy="140" r="34" fill="#a1887f" stroke="#5d4037" stroke-width="4"/>
+<!-- desk -->
+<rect x="1000" y="520" width="560" height="340" rx="6" fill="#d7b98a" stroke="#8d6e4a" stroke-width="6"/>
+<path d="M1260 520V860" stroke="#5d4037" stroke-width="16"/>
+<!-- block city -->
+<rect x="300" y="720" width="600" height="240" rx="6" fill="url(#studs)"/>
+<g stroke="#333" stroke-width="3"><rect x="360" y="740" width="60" height="50" fill="#e53935"/><rect x="520" y="900" width="70" height="40" fill="#fdd835"/><rect x="700" y="740" width="60" height="60" fill="#1e88e5"/><rect x="460" y="740" width="40" height="40" fill="#43a047"/><rect x="800" y="900" width="60" height="40" fill="#fb8c00"/></g>
+<!-- marble run -->
+<circle cx="950" cy="830" r="60" fill="#ffe082" stroke="#ff6f00" stroke-width="6"/>
+<path d="M950 830m-40 0a40 40 0 1 0 80 0a30 30 0 1 0-60 0a20 20 0 1 0 40 0" fill="none" stroke="#ef6c00" stroke-width="5"/>
+<!-- roads -->
+<g class="road" stroke="#455a64" stroke-width="58">
+<path d="M130 640L130 200Q130 140 200 140L900 140"/>
+<path d="M900 140L1000 100L1440 100Q1460 100 1460 140L1460 380"/>
+<path d="M1460 560L1460 800Q1460 830 1430 830L1010 830"/>
+<path d="M890 840L330 850"/>
+<path d="M330 850L200 850Q130 850 130 780L130 640"/>
+</g>
+<g class="road" stroke="#78909c" stroke-width="48">
+<path d="M130 640L130 200Q130 140 200 140L900 140"/>
+<path d="M1460 560L1460 800Q1460 830 1430 830L1010 830"/>
+<path d="M890 840L330 850"/>
+<path d="M330 850L200 850Q130 850 130 780L130 640"/>
+</g>
+<path class="road" d="M900 140L1000 100L1440 100Q1460 100 1460 140L1460 380" stroke="#fff3e0" stroke-width="44"/>
+<g class="road" stroke="#fff" stroke-width="3" stroke-dasharray="14 12"><path d="M130 640L130 200Q130 140 200 140L900 140"/><path d="M890 840L330 850"/></g>
+<!-- under the bed: dark path, dust, stair of blocks -->
+<path class="road" d="M900 150Q975 200 980 300L985 420L1040 560L1440 600" stroke="#263238" stroke-width="44" stroke-dasharray="16 6"/>
+<g fill="#9e9e9e" opacity=".85"><ellipse cx="1000" cy="250" rx="26" ry="12"/><ellipse cx="960" cy="360" rx="22" ry="10"/></g>
+<g fill="#ff7043"><rect x="1015" y="460" width="34" height="14"/><rect x="1025" y="480" width="34" height="14"/><rect x="1035" y="500" width="34" height="14"/></g>
+<!-- book ramp, pillow jump -->
+<g fill="#8e24aa"><rect x="880" y="112" width="26" height="56"/><rect x="908" y="108" width="26" height="60" fill="#3949ab"/></g>
+<path d="M1460 400Q1500 480 1460 560" stroke="#ff6d00" stroke-width="6" fill="none" stroke-dasharray="8 6"/>
+<!-- ruler, paint box -->
+<rect x="1252" y="580" width="16" height="80" fill="#ffee58" stroke="#f9a825" stroke-width="3"/>
+<rect x="1100" y="740" width="120" height="40" fill="#fff" stroke="#1565c0" stroke-width="3"/>
+<g fill="#e53935"><circle cx="1120" cy="760" r="8"/></g><g fill="#43a047"><circle cx="1150" cy="760" r="8"/></g><g fill="#1e88e5"><circle cx="1180" cy="760" r="8"/></g>
+<!-- robot dock, car wash bay -->
+<circle cx="60" cy="900" r="26" fill="#37474f" stroke="#4fc3f7" stroke-width="4"/>
+<path class="road" d="M310 850Q310 935 250 935L210 935Q170 935 170 870" stroke="#4fc3f7" stroke-width="30"/>
+<!-- start -->
+<rect x="102" y="416" width="56" height="8" fill="#fff"/>
+<g fill="none" stroke="#fff" stroke-width="2"><rect x="108" y="440" width="14" height="26"/><rect x="138" y="440" width="14" height="26"/><rect x="108" y="480" width="14" height="26"/><rect x="138" y="480" width="14" height="26"/><rect x="108" y="520" width="14" height="26"/><rect x="138" y="520" width="14" height="26"/><rect x="108" y="560" width="14" height="26"/><rect x="138" y="560" width="14" height="26"/></g>
+<!-- numbers -->
+<g><circle class="n" cx="180" cy="500" r="16"/><text class="nt" x="180" y="500">1</text></g>
+<g><circle class="n" cx="80" cy="140" r="16"/><text class="nt" x="80" y="140">2</text></g>
+<g><circle class="n" cx="620" cy="200" r="16"/><text class="nt" x="620" y="200">3</text></g>
+<g><circle class="n" cx="1300" cy="60" r="16"/><text class="nt" x="1300" y="60">4a</text></g>
+<g><circle class="n" cx="925" cy="300" r="16"/><text class="nt" x="925" y="300">4b</text></g>
+<g><circle class="n" cx="1380" cy="700" r="16"/><text class="nt" x="1380" y="700">5</text></g>
+<g><circle class="n" cx="950" cy="745" r="16"/><text class="nt" x="950" y="745">6</text></g>
+<g><circle class="n" cx="620" cy="790" r="16"/><text class="nt" x="620" y="790">7</text></g>
+<g><circle class="n" cx="330" cy="950" r="16"/><text class="nt" x="330" y="950">8</text></g>
+<!-- labels -->
+<text class="t" x="320" y="330">Spielteppich</text>
+<text class="s" x="40" y="250">Parkett</text>
+<text class="s" x="510" y="250">Holzeisenbahn</text>
+<text class="t" x="1150" y="270" fill="#0d47a1">BETT (oben)</text>
+<text class="s" x="1180" y="135">Teddy</text><text class="s" x="1380" y="290">Kissen</text>
+<text class="s" x="1475" y="480">Sprung ↓</text>
+<text class="s" x="860" y="460">unter dem Bett</text><text class="s" x="860" y="482">(dunkel, Staub)</text>
+<text class="s" x="1070" y="520">Bauklotz-Treppe</text>
+<text class="t" x="1290" y="560">SCHREIBTISCH</text>
+<text class="s" x="1275" y="640">Lineal</text><text class="s" x="1100" y="730">Malkasten</text>
+<text class="s" x="870" y="920">Murmelbahn</text>
+<text class="t" x="400" y="820">Klemmbaustein-Stadt</text>
+<text class="s" x="90" y="870">Roboter-Dock</text>
+<text class="s" x="190" y="975">Waschbucht (W)</text>
+<text class="s" x="160" y="410">Start / Ziel ↑</text>
+<text class="h" x="300" y="560">SPIELZIMMER Rev 2</text>
+<text class="s" x="300" y="588">Mockup zu plaene/SPIELZIMMER_REV2.md</text>
+<text class="s" x="300" y="612">1600 × 1000 · im Uhrzeigersinn</text>
+<text class="s" x="300" y="636">gestrichelt dunkel = Weg unter dem Bett</text>
+</svg>

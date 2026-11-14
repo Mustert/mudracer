@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1000">
+<style>
+text{font-family:'Segoe UI',Arial,sans-serif;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round;fill:#1d2a12}
+.t{font-size:24px}.s{font-size:18px;font-weight:600}.h{font-size:34px}
+.n{fill:#c62828;stroke:#fff;stroke-width:3}
+.nt{font-size:20px;fill:#fff;stroke:none;text-anchor:middle;dominant-baseline:central}
+.road{fill:none;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<!-- ground -->
+<rect width="1500" height="1000" fill="#3f6b2c"/>
+<g fill="#36602a"><circle cx="300" cy="500" r="120"/><circle cx="560" cy="420" r="90"/><circle cx="1250" cy="900" r="110"/><circle cx="420" cy="650" r="70"/></g>
+<!-- Tafelberg -->
+<path d="M0 0H1500V40Q1200 75 900 48Q790 75 680 48Q400 75 0 55Z" fill="#7a6a58"/>
+<path d="M0 55Q400 75 680 48Q790 75 900 48Q1200 75 1500 40V52Q1200 88 900 60Q790 88 680 60Q400 88 0 68Z" fill="#544636"/>
+<!-- river: waterfall, canyon, deep middle, ford, out to the south -->
+<path d="M790 20V300" stroke="#2f6f8f" stroke-width="64" fill="none"/>
+<path d="M745 60Q720 180 750 300M835 60Q865 180 830 300" stroke="#6b5a45" stroke-width="14" fill="none"/>
+<rect x="778" y="10" width="24" height="70" fill="#e8f6ff"/>
+<path d="M700 300Q630 530 705 765L880 765Q950 530 880 300Z" fill="#2f6f8f"/>
+<path d="M705 765Q690 800 700 840Q720 880 760 885L840 885Q880 880 890 840Q900 800 880 765Z" fill="#7fb0b8"/>
+<path d="M800 880L830 1000" stroke="#2f6f8f" stroke-width="90" fill="none"/>
+<g fill="#cdbf95"><ellipse cx="740" cy="800" rx="26" ry="12"/><ellipse cx="850" cy="850" rx="24" ry="11"/></g>
+<!-- mangrove swamp -->
+<g fill="#5d6a26" opacity=".9"><ellipse cx="480" cy="790" rx="60" ry="26"/><ellipse cx="600" cy="850" rx="70" ry="24"/><ellipse cx="540" cy="760" rx="40" ry="14"/></g>
+<g fill="#3a2a1a"><ellipse cx="640" cy="760" rx="18" ry="12"/><ellipse cx="460" cy="900" rx="20" ry="12"/></g>
+<g fill="#244a1b"><circle cx="440" cy="745" r="14"/><circle cx="520" cy="890" r="14"/><circle cx="660" cy="900" r="14"/><circle cx="580" cy="745" r="12"/></g>
+<!-- canopy over the undergrowth -->
+<rect x="980" y="110" width="470" height="600" rx="50" fill="#0f3a12" opacity=".55"/>
+<g fill="#5a3f22"><path d="M1130 260q40-30 80 0q-20 50-80 0z"/><path d="M1180 470q60-20 90 20q-50 40-90-20z"/><path d="M1230 330q40 10 50 50q-50 0-50-50z"/><circle cx="1150" cy="580" r="22"/><circle cx="1310" cy="230" r="18"/></g>
+<!-- temple pyramid -->
+<rect x="120" y="60" width="500" height="300" rx="6" fill="#857c62"/>
+<rect x="150" y="85" width="440" height="250" fill="#9c9478"/>
+<rect x="185" y="110" width="370" height="200" fill="#b0a888"/>
+<circle cx="380" cy="215" r="34" fill="#cfe9ff" opacity=".8"/>
+<!-- camp -->
+<g fill="#d9b25a" stroke="#7a5a20" stroke-width="3"><path d="M30 640l30-45 30 45z"/><path d="M60 720l30-45 30 45z"/></g>
+<rect x="20" y="540" width="60" height="30" rx="6" fill="#4f6b3a"/>
+<circle cx="45" cy="770" r="8" fill="#ff8a1e"/>
+<!-- roads -->
+<g class="road" stroke="#4a2f17" stroke-width="58">
+<path d="M170 820L1000 820Q1050 820 1050 760L1050 720"/>
+<path d="M1050 720L1080 650L1080 160"/>
+<path d="M1050 720Q1380 700 1390 450Q1400 160 1100 130"/>
+<path d="M1080 160Q1080 130 1050 130L880 130"/>
+<path d="M720 160L620 180L240 180"/>
+<path d="M600 205Q420 330 260 220"/>
+<path d="M240 180Q110 180 110 360L110 760Q110 820 170 820"/>
+</g>
+<g class="road" stroke="#9a6b3a" stroke-width="48">
+<path d="M170 820L1000 820Q1050 820 1050 760L1050 720"/>
+<path d="M1050 720Q1380 700 1390 450Q1400 160 1100 130"/>
+<path d="M1080 160Q1080 130 1050 130L880 130"/>
+<path d="M240 180Q110 180 110 360L110 760Q110 820 170 820"/>
+</g>
+<path class="road" d="M1050 720L1080 650L1080 160" stroke="#6b5a2a" stroke-width="48"/>
+<path class="road" d="M720 160L620 180L240 180" stroke="#d8cfae" stroke-width="44"/>
+<path class="road" d="M600 205Q420 330 260 220" stroke="#d8cfae" stroke-width="40"/>
+<!-- boardwalk -->
+<path class="road" d="M420 830Q560 930 700 838" stroke="#c8a26a" stroke-width="24" stroke-dasharray="7 3"/>
+<!-- liana and log over the canyon -->
+<path d="M880 125L720 158" stroke="#b07a3a" stroke-width="10" stroke-dasharray="14 6"/>
+<path d="M800 40Q770 120 730 120" stroke="#2f7a1e" stroke-width="7" fill="none"/>
+<circle cx="730" cy="120" r="7" fill="#2f7a1e"/>
+<!-- start line and grid -->
+<g fill="#fff"><rect x="378" y="792" width="8" height="56"/></g>
+<g fill="none" stroke="#fff" stroke-width="2" opacity=".85"><rect x="320" y="800" width="26" height="14"/><rect x="320" y="826" width="26" height="14"/><rect x="276" y="800" width="26" height="14"/><rect x="276" y="826" width="26" height="14"/><rect x="232" y="800" width="26" height="14"/><rect x="232" y="826" width="26" height="14"/><rect x="188" y="800" width="26" height="14"/><rect x="188" y="826" width="26" height="14"/></g>
+<!-- rotten trees, crocodiles, stone ball, basin, signs -->
+<g fill="#6b4a2a" stroke="#2b1a0a" stroke-width="3"><circle cx="160" cy="470" r="12"/><circle cx="160" cy="640" r="12"/><circle cx="1360" cy="610" r="12"/><circle cx="1420" cy="300" r="12"/></g>
+<g fill="#3d6b2a"><ellipse cx="770" cy="845" rx="20" ry="6"/><ellipse cx="820" cy="790" rx="18" ry="6"/><ellipse cx="560" cy="860" rx="18" ry="6"/></g>
+<circle cx="520" cy="180" r="16" fill="#8d8d8d" stroke="#444" stroke-width="3"/>
+<ellipse cx="250" cy="410" rx="38" ry="18" fill="#2f6f8f"/>
+<g fill="#ffd54a" stroke="#5a3f10" stroke-width="2"><path d="M1000 690l26-10v20z"/><path d="M1105 690l26-10v20z"/></g>
+<!-- numbers -->
+<g><circle class="n" cx="270" cy="775" r="16"/><text class="nt" x="270" y="775">1</text></g>
+<g><circle class="n" cx="560" cy="955" r="16"/><text class="nt" x="560" y="955">2</text></g>
+<g><circle class="n" cx="790" cy="920" r="16"/><text class="nt" x="790" y="920">9</text></g>
+<g><circle class="n" cx="985" cy="740" r="16"/><text class="nt" x="985" y="740">3</text></g>
+<g><circle class="n" cx="1230" cy="400" r="16"/><text class="nt" x="1230" y="400">4</text></g>
+<g><circle class="n" cx="800" cy="210" r="16"/><text class="nt" x="800" y="210">5</text></g>
+<g><circle class="n" cx="380" cy="100" r="16"/><text class="nt" x="380" y="100">6</text></g>
+<g><circle class="n" cx="60" cy="440" r="16"/><text class="nt" x="60" y="440">7</text></g>
+<g><circle class="n" cx="100" cy="590" r="16"/><text class="nt" x="100" y="590">8</text></g>
+<!-- labels -->
+<text class="s" x="1000" y="34">Tafelberg</text><text class="s" x="820" y="30">Wasserfall</text>
+<text class="t" x="1150" y="150">Laubdach / Unterholz</text>
+<text class="s" x="1093" y="520">Sumpfrinne</text><text class="s" x="1250" y="690">Trampelpfad</text>
+<text class="s" x="905" y="110">Liane</text><text class="s" x="905" y="190">Baumstamm</text>
+<text class="s" x="250" y="160">Kugelgang</text><text class="s" x="300" y="290">Wasserfallgrotte (W)</text>
+<text class="t" x="230" y="345">Tempelpyramide</text>
+<text class="s" x="130" y="540">Tempeltreppe</text>
+<text class="s" x="270" y="420">Becken</text>
+<text class="t" x="730" y="550">tiefer Fluss</text>
+<text class="s" x="720" y="985">Furt (Krokodile)</text>
+<text class="s" x="440" y="740">Mangroven</text><text class="s" x="490" y="985">Bohlenweg</text>
+<text class="s" x="20" y="520">Lager</text>
+<text class="s" x="200" y="870">Start / Ziel →</text>
+<text class="h" x="1040" y="880">DSCHUNGEL Rev 2</text>
+<text class="s" x="1040" y="910">Mockup zu plaene/DSCHUNGEL_REV2.md</text>
+<text class="s" x="1040" y="935">1500 × 1000 · gegen den Uhrzeigersinn</text>
+<text class="s" x="1040" y="960">(W) = Waschen · ● morsche Bäume</text>
+</svg>

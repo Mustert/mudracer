@@ -35,5 +35,7 @@ function bugInbox() {
 export default defineConfig({
   plugins: [viteSingleFile(), bugInbox()],
   server: { port: 5177, strictPort: true },
+  // (the working copies of other sessions under .claude/worktrees have their own tests)
+  test: { exclude: ['**/node_modules/**', '.claude/**', 'dist/**'] },
   define: { 'import.meta.env.MUDRACER_COMMIT': JSON.stringify(commit) },
 });
