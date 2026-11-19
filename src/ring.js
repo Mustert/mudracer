@@ -30,7 +30,6 @@ export function ringUpdate(dt) {
   for (const c of G.cars) {
     c.lvl = level(c, R);
     c.rocket = Math.max(0, c.rocket - dt);
-    c.msgT = Math.max(0, (c.msgT || 0) - dt);
     // slipstream: right behind another car on asphalt, going the same way, the car gets faster (up to 7 %)
     let tgt = 0;
     const sp = Math.hypot(c.vx, c.vy);
@@ -47,7 +46,7 @@ export function ringUpdate(dt) {
   // rocket start: gas within a quarter of a second after the lights go out (and not held before) gives a short push
   const P = G.player;
   if (P && G.state === 'race' && G.stateTime < .3 && !P.early && !P.launched && gas()) {
-    P.launched = true; P.rocket = .8; P.msg = 'RAKETENSTART!'; P.msgT = 1.4; SFX.boost(1);
+    P.launched = true; P.rocket = .8; SFX.boost(1);
   }
   if (P && P.early && G.state === 'race' && G.stateTime < .7 && Math.random() < dt * 40) smoke(P);
 }
@@ -89,19 +88,18 @@ function ringGround(c, j, sp, dt) {
   const R = G.T.ring; if (!R) return;
   c.kerb = !!R.kerb[j]; c.oilT = Math.max(0, c.oilT - dt);
   const pit = !!R.pitMask[j], B = boxPose(R);
-  if (pit && !c.pit && !c.ai && !boxShut(c)) { c.msg = 'BOX BOX!'; c.msgT = 1.6; SFX.radio(); }
+  if (pit && !c.pit && !c.ai && !boxShut(c)) SFX.radio();
   c.pit = pit;
   if (!pit) c.boxDone = false;
   if (B && pit && !c.boxDone && !boxShut(c) && Math.abs(c.y - B.y) < 6 && !G.cars.some(o => o.boxT > 0)) {
     // (a computer car is quicker when others queue behind it)
     c.boxDone = true; c.boxT = c.ai && G.cars.some(o => o !== c && o.pitting && !o.boxDone) ? STOP * .6 : STOP;
-    if (!c.ai) { c.msg = 'BOXENSTOPP!'; c.msgT = STOP; }
     if (near(c.x, c.y) < 300) { SFX.wrench(c.ai ? .4 : 1); setTimeout(() => SFX.wrench(c.ai ? .3 : .8), 380); }
   }
   if (c.boxT > 0) {
     c.boxT -= dt; c.x = B.x; c.y = B.y; c.ang = B.ang; c.vx = c.vy = 0; c.boost = 0;
     c.dirt = Math.max(0, c.dirt - dt * 2);
-    if (c.boxT <= 0) { c.boxT = 0; c.dirt = 0; if (!c.ai) { c.msg = 'LOS!'; c.msgT = .9; } SFX.boost(c.ai ? .2 : .6); }
+    if (c.boxT <= 0) { c.boxT = 0; c.dirt = 0; SFX.boost(c.ai ? .2 : .6); }
   }
   if (c.surf === 7 && sp > 20) {
     if (Math.random() < dt * 30) addP({ t: 'dust', x: c.x - Math.cos(c.ang) * 12 + (Math.random() - .5) * 14, y: c.y - Math.sin(c.ang) * 12 + (Math.random() - .5) * 14, vx: (Math.random() - .5) * 30, vy: (Math.random() - .5) * 30, life: .8, ml: .8 });
@@ -413,8 +411,6 @@ function drawRingAbove() {
     }
     if (c.rocket > 0 && Math.random() < .6) addP({ t: 'dust', x: c.x - Math.cos(c.ang) * 14, y: c.y - Math.sin(c.ang) * 14, vx: 0, vy: 0, life: .4, ml: .4 });
   }
-  const P = G.player;
-  if (P && P.msgT > 0) text(P.msg, Math.round(P.x), Math.round(P.y - 34 - (1.6 - P.msgT) * 6), 8, P.msg === 'BOX BOX!' ? '#9fd6ff' : '#ffd23f', 'center');
 }
 
 // the start lights in the middle of the screen, instead of the 3-2-1

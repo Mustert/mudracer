@@ -1,7 +1,7 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
 import { HALF, LAPS, SS, TAU, VH, VW, clamp, ctx, hash, inRange, rotIndex } from './core.js';
-import { R1, disc, ell, swirl, text } from './gfx.js';
+import { R1, disc, ell, swirl } from './gfx.js';
 import { WATC, addP } from './particles.js';
 import { cam } from './state.js';
 import { fallCar, inView, near } from './trackfx.js';
@@ -28,11 +28,11 @@ const lead = () => G.cars.reduce((m, c) => Math.max(m, c.lap), 0);
 
 function initRainbow(T) {
   const ev = T.ev, def = T.def;
-  Object.assign(ev, { unis: [], trail: [], uniOn: false, uniN: 0, uniNext: 3.5, stormOn: false, storm: null, sun: null, bolts: [], flash: 0, fw: [], fwNext: 0, texts: [], obst: [], msg: null, dblT: 0 });
+  Object.assign(ev, { unis: [], trail: [], uniOn: false, uniN: 0, uniNext: 3.5, stormOn: false, storm: null, sun: null, bolts: [], flash: 0, fw: [], fwNext: 0, obst: [], dblT: 0 });
   // the two cows of the bronze coin (like on the meadow, only slower)
   if (eventOn('kuehe')) ev.cows = (def.cows || []).map(([x, y, range, ph], k) => {
     const i = nearestIdx(T.path, x, y), tg = T.tan[i], a = ph * .45, ca = Math.cos(a), sa = Math.sin(a);
-    return { bx: x, by: y, dx: tg.x * ca - tg.y * sa, dy: tg.x * sa + tg.y * ca, range, ph, x, y, face: k % 2 ? -1 : 1, graze: 0, mooT: 0, cool: 0, k, sp: .3 };
+    return { bx: x, by: y, dx: tg.x * ca - tg.y * sa, dy: tg.x * sa + tg.y * ca, range, ph, x, y, face: k % 2 ? -1 : 1, graze: 0, cool: 0, k, sp: .3 };
   });
   // the koi of the silver coin leap across the bridge, from the pond on one side to the other
   if (eventOn('kois') && def.pond) {
@@ -84,8 +84,6 @@ function rainbowUpdate(T, dt) {
   if (ev.uniOn) updateUnicorns(T, dt);
   if (ev.stormOn) updateStorm(T, dt);
   ev.flash = Math.max(0, ev.flash - dt * 3);
-  ev.texts = ev.texts.filter(s => (s.t -= dt) > 0);
-  if (ev.msg && (ev.msg.t -= dt) <= 0) ev.msg = null;
   // the computer cars steer round unicorns that are about to cross in front of them
   ev.obst = ev.unis.filter(u => u.t > .3 && u.t < u.dur - .3);
 }
@@ -165,7 +163,6 @@ function rainbowCollisions() {
     const dx = c.x - u.x, dy = c.y - u.y, d = Math.hypot(dx, dy); if (d > UNI.hit || !d) continue;
     u.hits.push(c);
     c.vx = dx / d * 150 + u.vx * .3; c.vy = dy / d * 150 + u.vy * .3; c.spin = 12; c.stun = 1.1; c.boost = 0;
-    ev.texts.push({ s: 'WIEHER!', x: u.x, y: u.y, t: 1.2 });
     if (!c.ai) { SFX.crash(); SFX.neigh(1); } else if (near(c.x, c.y) < 260) SFX.bump();
   }
 }
@@ -180,7 +177,7 @@ function updateStorm(T, dt) {
   if (!ev.storm) {
     if (lap() < 2) return;
     ev.storm = { t: 0, grey: 0, spot: 0, next: STORM.front * .6, n: 0, rumble: 6 };
-    ev.msg = { s: 'GEWITTER!', t: 2.6 }; SFX.thunder();
+    SFX.thunder();
   }
   const s = ev.storm; s.t += dt;
   s.grey = clamp((s.t - 1) / STORM.grey, 0, 1);
@@ -227,7 +224,6 @@ function strike(T, b) {
     if (c.fall > 0 || c.z > 0 || Math.hypot(c.x - b.x, c.y - b.y) > BOLT.r) continue;
     // electric: it turns, it is grey, sparks fly for a moment
     c.zap = 1.4; c.spin = (hash(b.seed, c.seed | 0, 163) < .5 ? -1 : 1) * 10; c.stun = .9; c.vx *= .3; c.vy *= .3; c.boost = 0; c.dirt = 1; c.cem = false;
-    ev.texts.push({ s: 'BZZZT!', x: c.x, y: c.y, t: 1.1 });
     if (!c.ai) { SFX.zap(); G.jumpShake = Math.max(G.jumpShake, .4); }
   }
 }
@@ -235,7 +231,7 @@ function strike(T, b) {
 // the sun breaks through: rain stops, storm clouds turn to glitter, the double rainbow opens, fireworks
 function sunBreak(T) {
   const ev = T.ev, R = T.rainbow, b = bctx(T);
-  ev.sun = { t: 0 }; ev.rain = null; ev.bolts = []; ev.msg = { s: 'DIE SONNE KOMMT!', t: 3 };
+  ev.sun = { t: 0 }; ev.rain = null; ev.bolts = [];
   const glitter = (x, y) => { if (near(x, y) < 340) for (let k = 0; k < 24; k++) addP({ t: 'glit', x: x + (Math.random() - .5) * 50, y: y + (Math.random() - .5) * 30, vx: (Math.random() - .5) * 30, vy: -10 - Math.random() * 30, life: 1.2, ml: 1.2, col: RB[k % 6] }); };
   // the storm clouds that the storm brought
   for (const sp of R.stormSpots) if (sp.on) { sp.on = false; for (const j of sp.px) T.ter[j] = LANE + R.lane[j] - 1; glitter(sp.x, sp.y); }
@@ -451,7 +447,6 @@ function drawRainbowAbove() {
       }
       ctx.globalAlpha = 1;
     }
-    for (const s of ev.texts) text(s.s, Math.round(s.x), Math.round(s.y - 18 - (1.2 - s.t) * 10), 8, s.s === 'BZZZT!' ? '#ffe04a' : '#ffffff', 'center');
   }
   for (const p of G.parts) {
     if (p.t === 'glit') { ctx.globalAlpha = p.life / p.ml; R1(Math.round(p.x), Math.round(p.y), 2, 2, p.col); if (((G.time * 10) | 0) % 2) R1(Math.round(p.x), Math.round(p.y), 1, 1, '#ffffff'); }
@@ -495,10 +490,6 @@ function drawRainbowSky() {
     ctx.globalAlpha = 1;
   }
   if (ev.flash > 0) { ctx.fillStyle = 'rgba(255,255,240,' + (ev.flash * .55).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); }
-  if (ev.msg && ((G.time * 4) | 0) % 2) {
-    text(ev.msg.s, VW / 2, 34, 8, ev.sun ? '#ffd23f' : '#c8d0ff', 'center');
-    if (ev.sun) text('DOPPELTER REGENBOGEN!', VW / 2, 46, 8, RB[((G.time * 6) | 0) % 6], 'center');
-  }
 }
 
 // ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------

@@ -71,7 +71,6 @@ function volcanoGround(c, j, sp, dt) {
   const T = G.T;
   if (T.washMask[j]) { if (!c.vWash) { c.vWash = true; if (!c.ai || near(c.x, c.y) < 260) SFX.hose(c.ai ? .4 : 1); } } else c.vWash = false;
   if (c.dirt < .03) c.cem = false;
-  c.burnT = Math.max(0, (c.burnT || 0) - dt);
 }
 
 // in the maze the progress goes by the height (the gullies lie side by side); elsewhere parts of the centre line lie close together (the serpentine legs):
@@ -239,7 +238,7 @@ function updateRescue(T, dt) {
       // (and in the column that is whole in that row)
       const bl = H ? new Set(B.holes.filter((o, q) => o.i === H.i && T.ev.vlHoles[q].ph !== 'closed').map(o => o.col)) : new Set();
       c.vHeliO = ([0, -1, 1].find(k => !bl.has(k)) ?? 0) * 19;
-      c.fallKind = 'bridge'; c.fall = c.fallT0 = HELI.t; c.respawnI = c.vHeliI; c.burnT = 0; c.vHeli = true; c.vSplash = false; c.vRotor = false; c.vHoleN = (c.vHoleN || 0) + 1;
+      c.fallKind = 'bridge'; c.fall = c.fallT0 = HELI.t; c.respawnI = c.vHeliI; c.vHeli = true; c.vSplash = false; c.vRotor = false; c.vHoleN = (c.vHoleN || 0) + 1;
       if (!c.ai) SFX.fall(1);
       G.parts = G.parts.filter(p => !(p.t === 'smoke' && Math.hypot(p.x - c.fx0, p.y - c.fy0) < 24)); // (the puff of the lava would hide the tumbling)
     }
@@ -536,9 +535,9 @@ function drawBridgeFall(c, F, lv) {
   ctx.drawImage(F.frames[lv][rotIndex(Math.atan2(tg.y, tg.x) + Math.sin(G.time * 3) * .15)], Math.round(P.x - S / 2), Math.round(P.y + 30 - S / 2), S, S);
 }
 
-// over the cars: lava fountains, fireballs, fires, burning cars and their extinguishers, the hornitos, the smoke, the helicopters, the base camp, words
+// over the cars: lava fountains, fireballs, fires, burning cars and their extinguishers, the hornitos, the smoke, the helicopters, the base camp
 function drawVolcanoAbove() {
-  const T = G.T, V = T.volcano, ev = T.ev, P = G.player;
+  const T = G.T, V = T.volcano, ev = T.ev;
   V.fountains.forEach(([x, y], q) => {
     const f = fountain(q); if (!f.on || !inView(x, y, 60)) return;
     const hgt = f.big ? 46 : 30;
@@ -551,8 +550,6 @@ function drawVolcanoAbove() {
   for (const h of V.hornitos) if (inView(h.x, h.y, 20)) { ctx.globalAlpha = .25 + .2 * Math.sin(G.time * 3 + h.x); disc(Math.round(h.x), Math.round(h.y), 6, '#ff7a24'); ctx.globalAlpha = 1; }
   // the warning signs before the bridge blink while plates are falling; "LAVA!" at a gate before its tongue runs
   if (ev.vlHoles && ev.vlHoles.some(h => h.ph === 'warn')) for (const s of V.signs) if (inView(s.x, s.y, 30) && ((G.time * 4) | 0) % 2) { ctx.globalAlpha = .5; disc(s.x, s.y - 22, 9, '#ff3b2a'); ctx.globalAlpha = 1; }
-  if (ev.vlTongues) V.maze.tongues.forEach((F, q) => { if (ev.vlTongues[q].ph === 'pre' && P && near(F.gate.x, F.gate.y) < 320 && ((G.time * 4) | 0) % 2 === 0) text('LAVA!', F.gate.x, F.gate.y - 18, 8, '#ff9a3a', 'center'); });
-  if (ev.vlHoles && P && ev.vlHoles.some(h => h.ph === 'warn')) { const H = V.bridge.holes.find((_, q) => ev.vlHoles[q].ph === 'warn'); if (H && near(H.c.x, H.c.y) < 320 && ((G.time * 4) | 0) % 2 === 0) text('ES KNACKT!', Math.round(H.c.x), Math.round(H.c.y - 26), 8, '#ff9a3a', 'center'); }
   // fires on the ground: tongues of flame
   for (const f of ev.vlFires) {
     if (!inView(f.x, f.y)) continue;
@@ -607,9 +604,6 @@ function drawVolcanoAbove() {
   }
   drawCamp(V);
   drawCrew(V);
-  for (const c of G.cars) if (c.burnT > 0) text('AUA, HEISS!', Math.round(c.fx0 || c.x), Math.round((c.fy0 || c.y) - 24 - (1.3 - c.burnT) * 10), 8, '#ffb02e', 'center');
-  if (P && P.vFire > 0 && !(P.fall > 0)) text(P.vExt ? 'PFFFT!' : 'ES BRENNT!', Math.round(P.x), Math.round(P.y - 44), 8, P.vExt ? '#f4f8fa' : '#ff8a3a', 'center');
-  if (P && P.fall > 0 && P.fallKind === 'bridge' && P.fallT0 - P.fall > HELI.come) text('HILFE KOMMT!', Math.round(P.fx0), Math.round(P.fy0 - 30), 8, '#f4f8fa', 'center');
   const B = V.bay; if (B && inView(B.sign[0], B.sign[1], 120)) text('FEUERWEHR', B.sign[0], B.sign[1] - 30, 6, '#ff6b5a', 'center');
 }
 

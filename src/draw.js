@@ -388,7 +388,6 @@ export function drawRace() {
       const sx = VW / 2, sy = 44;
       disc(sx, sy, 19, '#1b120c'); disc(sx, sy, 18, '#ffffff'); disc(sx, sy, 15, '#d62828');
       text('STOP', sx + 1, sy - 4, 8, '#ffffff', 'center', null);
-      text('ZUG KOMMT!', sx, sy + 24, 8, '#ffd23f', 'center');
     }
   }
   // countdown

@@ -497,7 +497,6 @@ function drawChess() {
   if (mv > 0) { R1(Math.round(px + (qx - px) * mv), cy - 1, 4, 2, santa ? '#d83a2c' : '#4c9a32'); }
   R1(Math.round(qx) - 1, cy - 1, 3, 3, santa ? '#ffffff' : '#222');
   if (santa && u > .5 && u < .9) R1(cx - 20, cy + 2, 4, 3, '#ffffff'); // strokes his beard
-  if (rage) text('!#*?', cx + 22, cy - 18, 6, '#ff6b6b', 'center');
 }
 
 // above the cars: the snowed-in lump over a car (the shaking shows while it is held), the polar light in the last lap

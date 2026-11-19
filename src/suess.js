@@ -1,7 +1,7 @@
 import { G } from './g.js';
 import { SFX, noise, voice } from './audio.js';
 import { TAU, VH, VW, clamp, ctx, hash, mk, smooth } from './core.js';
-import { R1, disc, ell, text } from './gfx.js';
+import { R1, disc, ell } from './gfx.js';
 import { nearObstacles } from './grid.js';
 import { addP, drop } from './particles.js';
 import { cam } from './state.js';
@@ -47,7 +47,7 @@ export const SX = {
 function initSuess(T) {
   const ev = T.ev, S = T.suess;
   ev.bubbles = S.gum.map(([x, y], k) => ({ x, y, t: (k * 2.9) % BUB.cyc, r: 0, pop: 0 }));
-  ev.obst = []; ev.pops = []; ev.msg = null; ev.schoko = null; ev.watte = null; ev.sprinkle = false;
+  ev.obst = []; ev.schoko = null; ev.watte = null; ev.sprinkle = false;
   // the chocolate of the last race is gone again
   S.chocoM.fill(0);
   for (const st of S.streams) {
@@ -84,14 +84,12 @@ function suessUpdate(T, dt) {
     const g = b.t - BUB.rest; b.r = g > 0 && g < BUB.grow ? BUB.max * smooth(g / BUB.grow) : 0;
     b.pop = Math.max(0, b.pop - dt);
     if (g0 < BUB.grow && g >= BUB.grow) {
-      b.pop = .6; ev.pops.push({ x: b.x, y: b.y, t: .9 });
+      b.pop = .6;
       for (let k = 0; k < 14; k++) { const a = k / 14 * TAU; addP({ t: 'gum', x: b.x + Math.cos(a) * 10, y: b.y + Math.sin(a) * 10, vx: Math.cos(a) * 70, vy: Math.sin(a) * 70, life: .45, ml: .45 }); }
       for (const c of G.cars) if (c.fall <= 0 && c.z <= 0 && Math.hypot(c.x - b.x, c.y - b.y) < BUB.max + 14) c.gumT = BUB.stick;
       const d = near(b.x, b.y); if (d < 320) SFX.plopp();
     }
   }
-  ev.pops = ev.pops.filter(p => (p.t -= dt) > 0);
-  if (ev.msg && (ev.msg.t -= dt) <= 0) ev.msg = null;
   for (const c of G.cars) {
     // into the chocolate: it comes out brown (with cream on top)
     if (c.fall > 0 && !c.fallKind) {
@@ -185,7 +183,7 @@ function updateSchoko(T, dt) {
   const ev = T.ev, sc = ev.schoko, S = T.suess;
   if (sc.t < 0) {
     if (!G.player || G.player.lap < 2) return;
-    sc.t = 0; ev.msg = { s: 'SCHOKOLADE!', col: '#c8885a', t: 2.6 }; SX.schoko();
+    sc.t = 0; SX.schoko();
   }
   sc.t += dt;
   S.streams.forEach((st, k) => {
@@ -201,7 +199,7 @@ function updateSchoko(T, dt) {
   });
   // the last lap: sprinkles rain over the map
   if (lastLap()) {
-    if (!ev.sprinkle) { ev.sprinkle = true; ev.msg = { s: 'STREUSELREGEN!', col: '#ff9ac8', t: 2.4 }; SX.sprinkle(); }
+    if (!ev.sprinkle) { ev.sprinkle = true; SX.sprinkle(); }
     for (let q = 0; q < 3; q++) if (Math.random() < dt * 25) addP({ t: 'spr', x: cam.x + Math.random() * VW, y: cam.y + Math.random() * VH, z: 50 + Math.random() * 40, col: SPR[(Math.random() * 7) | 0], v: Math.random() < .5, life: 3, ml: 3 });
   }
 }
@@ -316,7 +314,7 @@ function drawSuessAbove() {
   // the candyfloss machine: the drum turns, it puffs when it makes a cloud
   const [mx, my] = S.machine;
   if (inView(mx, my)) { for (let q = 0; q < 6; q++) { const a = G.time * 6 + q * TAU / 6; R1(Math.round(mx + Math.cos(a) * 5), Math.round(my + Math.sin(a) * 5), 2, 2, q % 2 ? '#ff7ab8' : '#ffffff'); } if (ev.watte && ev.watte.puffT > 0) { ctx.globalAlpha = ev.watte.puffT; disc(mx - 16, my, Math.round(6 + (1 - ev.watte.puffT) * 10), '#ffd2e6'); ctx.globalAlpha = 1; } }
-  // bubblegum bubbles: pink, glossy, they wobble; PLOPP when they burst
+  // bubblegum bubbles: pink, glossy, they wobble
   for (const b of ev.bubbles || []) {
     if (!inView(b.x, b.y)) continue;
     if (b.r >= 1) {
@@ -326,7 +324,6 @@ function drawSuessAbove() {
       ell(x - Math.round(r * .4), y - Math.round(r * .45), Math.max(1, Math.round(r * .3)), Math.max(1, Math.round(r * .18)), '#ffffff');
     }
   }
-  for (const p of ev.pops || []) text('PLOPP!', Math.round(p.x), Math.round(p.y - 22 - (.9 - p.t) * 14), 8, '#ff7ab8', 'center');
   // what sticks to the cars: cream (after the chocolate), a scrap of floss, gum, glitter (after the lemonade)
   for (const c of G.cars) {
     if (c.fall > 0 || !inView(c.x, c.y)) continue;
@@ -351,7 +348,6 @@ function drawSuessAbove() {
 function drawSuessSky() {
   const ev = G.T.ev; if (!ev) return;
   if (G.player && G.player.inCloud) { ctx.fillStyle = 'rgba(255,170,210,.18)'; ctx.fillRect(0, 0, VW, VH); }
-  if (ev.msg && ((G.time * 4) | 0) % 2) text(ev.msg.s, VW / 2, 34, 8, ev.msg.col, 'center');
 }
 
 

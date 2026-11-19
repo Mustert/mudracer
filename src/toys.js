@@ -1,7 +1,7 @@
 import { G } from './g.js';
 import { SFX, noise, voice } from './audio.js';
 import { HALF, LAPS, SS, TAU, VH, VW, clamp, ctx, hash, mk, rotIndex } from './core.js';
-import { R1, disc, ell, text } from './gfx.js';
+import { R1, disc, ell } from './gfx.js';
 import { nearObstacles } from './grid.js';
 import { addP } from './particles.js';
 import { fallCar, inView, near } from './trackfx.js';
@@ -59,7 +59,7 @@ function initToys(T) {
   // the train waits at its station at the top of the loop (that is where it stays when the event is off)
   ev.train = { th: -Math.PI / 2, wait: 2, prev: -Math.PI / 2 };
   ev.windup = null; ev.marbles = []; ev.marbleN = 0; ev.marbleNext = 5; ev.marbleWarn = 0; ev.domino = null; ev.robot = null;
-  ev.dark = 0; ev.darkOn = false; ev.msg = null; ev.msgT = 0; ev.pops = []; ev.obst = [];
+  ev.dark = 0; ev.darkOn = false; ev.obst = [];
 }
 
 function initToyEvents(T) {
@@ -87,10 +87,8 @@ function toyUpdate(T, dt) {
   if (ev.toyOn) { updateWind(T, dt); updateMarbles(T, dt); updateDomino(T, dt); }
   if (ev.robotOn) updateRobot(T, dt);
   // the light goes out in the last lap (with the robot vacuum)
-  if (ev.robotOn && lastLap() && !ev.darkOn) { ev.darkOn = true; SND.click(); say(ev, 'SCHLAFENSZEIT!', '#ffe9a0', 2.8); }
+  if (ev.robotOn && lastLap() && !ev.darkOn) { ev.darkOn = true; SND.click(); }
   ev.dark = clamp(ev.dark + (ev.darkOn ? dt / .5 : -dt), 0, 1);
-  ev.msgT = Math.max(0, ev.msgT - dt);
-  ev.pops = ev.pops.filter(p => (p.t -= dt) > 0);
   // the computer cars steer round the robot, the wind-up car and rolling marbles
   ev.obst = [];
   if (ev.robot && ev.robot.out) ev.obst.push(ev.robot);
@@ -101,8 +99,6 @@ function toyUpdate(T, dt) {
   if (inView(W.x, W.y) && Math.random() < dt * 14) addP({ t: 'bub', x: W.x + W.nm.x * (Math.random() - .5) * 2 * HALF, y: W.y + W.nm.y * (Math.random() - .5) * 2 * HALF, vx: (Math.random() - .5) * 10, vy: -10 - Math.random() * 10, life: .9, ml: .9 });
 }
 
-function say(ev, s, col, t) { ev.msg = { s, col }; ev.msgT = t; }
-const pop = (ev, s, x, y, col) => ev.pops.push({ s, x, y, col, t: 1.1 });
 
 // ----- the wooden train: round the loop, a stop at the station at the top, the barriers close while it is near a crossing -----
 function updateTrain(T, dt) {
@@ -212,7 +208,7 @@ function updateRobot(T, dt) {
   const R = T.ev.robot, S = T.toys, [x0, y0, x1, y1] = S.robot.box;
   if (!R.out) {
     if (!G.player || G.player.lap < 2) return;
-    R.out = true; SND.beep(); say(T.ev, 'SAUGROBOTER!', '#8fd8ff', 2.4);
+    R.out = true; SND.beep();
   }
   R.chew = Math.max(0, R.chew - dt);
   if (R.chew <= 0) {
@@ -246,7 +242,6 @@ function toyCollisions() {
     const dx = c.x - p.x, dy = c.y - p.y, d = Math.hypot(dx, dy); if (d > TRAIN.hit + 9 || d === 0) continue;
     c.vx = Math.cos(p.a) * 150 + dx / d * 70; c.vy = Math.sin(p.a) * 150 + dy / d * 70; c.spin = 14; c.stun = 1.1; c.boost = 0;
     if (!c.ai) SFX.crash(); else if (near(c.x, c.y) < 260) SFX.bump();
-    pop(ev, 'TUUT!', p.x, p.y, '#ffe9a0');
   }
   // the wooden barriers fold away when a car drives through them
   S.cross.forEach((cr, k) => {
@@ -280,7 +275,7 @@ function toyCollisions() {
   // the domino tower falls when a car touches it
   const D = ev.domino, Q = S.domino;
   if (D && D.st === 'up') for (const c of G.cars) if (c.lvl === 2 && c.fall <= 0 && c.z <= 0 && Math.hypot(c.x - Q.x, c.y - Q.y) < 17 && Math.hypot(c.vx, c.vy) > 15) {
-    D.st = 'fall'; D.t = 0; D.k = -1; D.gone = []; pop(ev, 'KLACK!', Q.x, Q.y - 14, '#ffffff'); break;
+    D.st = 'fall'; D.t = 0; D.k = -1; D.gone = []; break;
   }
   // the robot swallows a car that comes too close
   const R = ev.robot;
@@ -290,7 +285,6 @@ function toyCollisions() {
     c.fall = 1.2; c.fallT0 = 1.2; c.fallKind = 'suck'; c.fx0 = c.x; c.fy0 = c.y; c.vx = c.vy = 0; c.boost = 0; c.stun = 0; c.spit = R;
     R.chew = 1.2; R.eaten++;
     SND.slurp(c.ai ? vol(c.x, c.y, .6) : 1); SND.chew(c.ai ? vol(c.x, c.y, .4) : .8);
-    pop(ev, 'SCHLUERF!', R.x, R.y - 16, '#8fd8ff');
   }
 }
 
@@ -518,7 +512,6 @@ function drawToyAbove() {
     const kw = Math.round(Math.abs(Math.cos(G.time * 6 + c.seed)) * 6) + 1, x = Math.round(c.x - Math.cos(c.ang) * 6), y = Math.round(c.y - Math.sin(c.ang) * 6) - 14;
     R1(x - 1, y, 3, 8, '#1b120c'); R1(x, y + 1, 1, 6, '#d8d8e0'); R1(x - kw, y - 2, kw * 2 + 1, 4, '#1b120c'); R1(x - kw + 1, y - 1, kw * 2 - 1, 2, '#e8c890');
   }
-  for (const p of ev.pops) text(p.s, Math.round(p.x), Math.round(p.y - 14 - (1.1 - p.t) * 12), 8, p.col, 'center');
 }
 
 // ----- the dark room in the last lap: a veil with holes for the headlights, the night light and the star projector -----
@@ -585,7 +578,6 @@ function drawToySky(cx, cy) {
     const R = ev.robot;
     if (R && R.out) { const x = Math.round(R.x - cx), y = Math.round(R.y - cy); ctx.globalAlpha = .45 * k; disc(x, y, 8, '#4ab8ff'); ctx.globalAlpha = 1; R1(x - 1, y - 1, 3, 3, '#bfe8ff'); }
   }
-  if (ev.msgT > 0 && ev.msg && ((G.time * 4) | 0) % 2) text(ev.msg.s, VW / 2, 34, 8, ev.msg.col, 'center');
   // where the computer cars and you are: an arrow when the robot is close behind you
   const P = G.player, R = ev.robot;
   if (R && R.out && P && P.lvl === 2 && Math.hypot(P.x - R.x, P.y - R.y) < 140 && !inView(R.x, R.y, -10) && ((G.time * 6) | 0) % 2) {

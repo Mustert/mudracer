@@ -2,7 +2,7 @@ import { G } from './g.js';
 import { SFX } from './audio.js';
 import { HALF, TAU, VH, VW, clamp, ctx, hash, mk, vnoise } from './core.js';
 import { DIFFS } from './diff.js';
-import { R1, disc, text } from './gfx.js';
+import { R1, disc } from './gfx.js';
 import { addP, drop } from './particles.js';
 import { cam } from './state.js';
 import { fallCar, inView, near, sinkInSand } from './trackfx.js';
@@ -34,7 +34,7 @@ const inPyr = (T, x, y, m = 4) => { const P = T.desert.pyr; return x > P.x + m &
 
 function desertUpdate(T, dt) {
   const D = T.desert, P = G.player;
-  for (const k of T.ev.dsCacti) { k.cool = Math.max(0, k.cool - dt); k.ouch = Math.max(0, k.ouch - dt); }
+  for (const k of T.ev.dsCacti) { k.cool = Math.max(0, k.cool - dt); }
   // the swarms wander slowly across their branch
   for (const b of T.ev.dsBugs) { b.x = b.cx + Math.sin(T.ev.t * .3 + b.ph * 2) * 10; b.y = b.cy + Math.sin(T.ev.t * .55 + b.ph) * 15; }
   for (const c of G.cars) c.dsBugT = Math.max(0, (c.dsBugT || 0) - dt);
@@ -108,7 +108,7 @@ function desertLane(c, i, lane) {
   return lane;
 }
 
-// cacti on the line: a hard hit makes you spin (spines fly, "AUTSCH!"), a slow touch only pushes you back
+// cacti on the line: a hard hit makes you spin (spines fly), a slow touch only pushes you back
 function desertCollisions() {
   const ev = G.T.ev; if (!ev || !ev.dsCacti) return;
   // a swarm of scarabs: whoever drives through is slowed a little (no spin) and the bugs rustle away
@@ -126,7 +126,7 @@ function desertCollisions() {
     if (vn < -45 && !c.stun) {
       c.vx = nx * 90; c.vy = ny * 90; c.spin = 8; c.stun = .6; c.boost = 0;
       for (let i = 0; i < 12; i++) addP({ t: 'd', x: k.x, y: k.y, z: 6, vx: Math.cos(i / 12 * TAU) * 70, vy: Math.sin(i / 12 * TAU) * 70, vz: 40, col: i % 2 ? '#f4f0d0' : '#3f9a4a', s: 1, life: .5, ml: .5 });
-      if (k.cool <= 0) { k.cool = 1.2; k.ouch = 1.1; const v = c.ai ? clamp(1 - near(k.x, k.y) / 300, 0, .5) : 1; if (v > .02) SFX.ouch(v); }
+      if (k.cool <= 0) { k.cool = 1.2; const v = c.ai ? clamp(1 - near(k.x, k.y) / 300, 0, .5) : 1; if (v > .02) SFX.ouch(v); }
     } else if (vn < 0) { c.vx -= 1.5 * vn * nx; c.vy -= 1.5 * vn * ny; }
   }
 }
@@ -225,7 +225,7 @@ function quickPaint(T, q, open) {
 // above the cars: the roof of the pyramid (only the part on the screen; see-through when you are inside)
 function drawDesertAbove(cx, cy) {
   const T = G.T, D = T.desert, py = D.pyr;
-  // a vulture circles over the field, its shadow on the ground; "AUTSCH!" over a cactus that stung
+  // a vulture circles over the field, its shadow on the ground
   const va = G.time * .25, vx = 640 + Math.cos(va) * 420, vy = 190 + Math.sin(va) * 90;
   if (near(vx, vy) < 360) {
     const flap = ((G.time * 3) | 0) % 2, dir = -Math.sin(va) > 0 ? 1 : -1;
@@ -233,7 +233,6 @@ function drawDesertAbove(cx, cy) {
     const x = Math.round(vx), y = Math.round(vy);
     R1(x - 9, y - (flap ? 2 : 0), 7, 2, '#3a2a20'); R1(x + 3, y - (flap ? 2 : 0), 7, 2, '#3a2a20'); R1(x - 2, y - 1, 5, 4, '#2a1c14'); R1(x + dir * 3, y - 2, 2, 2, '#e8c0a0');
   }
-  for (const k of T.ev.dsCacti) if (k.ouch > 0) text('AUTSCH!', Math.round(k.x), Math.round(k.y - 16 - (1.1 - k.ouch) * 8), 8, '#ffd23f', 'center');
   if (D.inside) { drawDark(cx, cy, py); return; }
   const sx = Math.max(py.x, cx), sy = Math.max(py.y, cy), ex = Math.min(py.x + py.W, cx + VW), ey = Math.min(py.y + py.H, cy + VH);
   if (ex <= sx || ey <= sy) return;

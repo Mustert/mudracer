@@ -1,7 +1,7 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
 import { SS, TAU, VH, VW, angDiff, clamp, ctx, hash, rotIndex } from './core.js';
-import { R1, disc, ell, swirl, text } from './gfx.js';
+import { R1, disc, ell, swirl } from './gfx.js';
 import { addP } from './particles.js';
 import { cam } from './state.js';
 import { fallCar, inView, lastLap, near } from './trackfx.js';
@@ -25,7 +25,7 @@ const STARS = [[46, .25, '#5a6090'], [30, .45, '#a8b0e0'], [16, .65, '#ffffff']]
 
 function initSpace(T) {
   const ev = T.ev;
-  ev.asts = []; ev.astOn = false; ev.astN = 0; ev.astNext = 4; ev.holeOn = false; ev.hole = null; ev.holeMsg = 0; ev.swings = []; ev.obst = []; ev.humT = 0;
+  ev.asts = []; ev.astOn = false; ev.astN = 0; ev.astNext = 4; ev.holeOn = false; ev.hole = null; ev.obst = []; ev.humT = 0;
   const S = T.space; S.ax = S.portals.a.x; S.ay = S.portals.a.y; // (where the purple mouth is)
   // asteroids only fly over the open platforms and the moon (not into the glass tube or the station)
   if (!S.astIdx) { S.astIdx = []; for (let i = 0; i < T.N; i += 2) { const p = T.path[i], j = (p.y | 0) * T.W + (p.x | 0), kd = S.kind[j]; if (kd !== 1 && kd !== 2) S.astIdx.push(i); } }
@@ -59,8 +59,6 @@ function spaceUpdate(T, dt) {
   }
   if (ev.astOn) updateAsteroids(T, dt);
   if (ev.holeOn) updateHole(T, dt);
-  ev.swings = ev.swings.filter(s => (s.t -= dt) > 0);
-  ev.holeMsg = Math.max(0, ev.holeMsg - dt);
   // the computer cars steer round asteroids that are about to cross the road in front of them
   ev.obst = ev.asts.filter(a => !a.dead && a.t > AST.warn - 1 && a.t < AST.warn + .4);
 }
@@ -74,7 +72,7 @@ function spaceGround(c, j, sp, dt) {
   const kd = S.kind[j], cn = S.conn[j];
   if (kd === 4) { const a = Math.atan2(c.y - S.planet[1], c.x - S.planet[0]) * 180 / Math.PI; if (!c.orbit) c.orbit = 1; if (c.orbit === 1 && a > -12 && a < 30) c.orbit = 2; }
   else if (cn === 2 && c.orbit === 2) {
-    c.orbit = 0; c.boost = 1.4; T.ev.swings.push({ x: c.x, y: c.y, t: 1.2 });
+    c.orbit = 0; c.boost = 1.4;
     if (!c.ai || near(c.x, c.y) < 300) SFX.swingby(c.ai ? .35 : 1);
   } else if (!cn) c.orbit = 0;
   // in zero gravity the car steers with little thruster puffs
@@ -164,7 +162,7 @@ function updateHole(T, dt) {
   const ev = T.ev;
   if (!ev.hole) {
     if (!G.player || G.player.lap < 2) return;
-    ev.hole = { t: 0, r: 0 }; ev.holeMsg = 2.6; SFX.holeOpen(); G.jumpShake = Math.max(G.jumpShake, .5);
+    ev.hole = { t: 0, r: 0 }; SFX.holeOpen(); G.jumpShake = Math.max(G.jumpShake, .5);
   }
   const h = ev.hole; h.t += dt;
   h.r = HOLE.r * Math.min(1, h.t / HOLE.open) * (lastLap() ? 1.4 : 1);
@@ -343,7 +341,6 @@ function drawSpaceAbove() {
     else if (p.t === 'warp') { ctx.globalAlpha = p.life / p.ml; R1(Math.round(p.x), Math.round(p.y), 2, 2, p.col); }
   }
   ctx.globalAlpha = 1;
-  if (ev) for (const s of ev.swings) text('SWING-BY!', Math.round(s.x), Math.round(s.y - 22 - (1.2 - s.t) * 12), 8, '#5fe8ff', 'center');
 }
 
 // on the screen: red arrows at the edge where an asteroid comes from, the message when the black hole opens, its violet shimmer
@@ -363,7 +360,6 @@ function drawSpaceSky() {
   }
   const h = ev.hole;
   if (h && P) { const d = Math.hypot(P.x - T.space.hole[0], P.y - T.space.hole[1]); if (d < 340) { ctx.fillStyle = 'rgba(70,20,120,' + (.16 * (1 - d / 340)).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH); } }
-  if (ev.holeMsg > 0 && ((G.time * 4) | 0) % 2) text('SCHWARZES LOCH!', VW / 2, 34, 8, '#c8a0ff', 'center');
 }
 
 // ---------- hooks: how the core calls this track (hooks.js; what each hook does: _template.js) ----------

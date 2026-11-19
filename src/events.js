@@ -2,7 +2,7 @@ import { G } from './g.js';
 import { reportError } from './errors.js';
 import { SFX } from './audio.js';
 import { HALF, TAU, VH, VW, clamp, ctx, hash, hex, mk, pick, vnoise } from './core.js';
-import { R1, disc, text } from './gfx.js';
+import { R1, disc } from './gfx.js';
 import { addP, drop, mudBurst, splash, WATC } from './particles.js';
 import { cam, onState } from './state.js';
 import { bctx, eventOn, snap } from './undo.js';
@@ -79,7 +79,7 @@ const COWS = [[.491, 4, 15, 0], [.544, -10, 12, .5], [.515, -46, 10, 1], [.583, 
 function initCows(T) {
   T.ev.cows = COWS.map(([t, off, range, ph], k) => {
     const i = Math.floor(t * T.N) % T.N, p = T.path[i], n = T.nrm[i], tg = T.tan[i], a = ph * .45, ca = Math.cos(a), sa = Math.sin(a);
-    return { bx: p.x + n.x * off, by: p.y + n.y * off, dx: tg.x * ca - tg.y * sa, dy: tg.x * sa + tg.y * ca, range, ph, x: 0, y: 0, face: k % 2 ? -1 : 1, graze: 0, mooT: 0, cool: 0, k };
+    return { bx: p.x + n.x * off, by: p.y + n.y * off, dx: tg.x * ca - tg.y * sa, dy: tg.x * sa + tg.y * ca, range, ph, x: 0, y: 0, face: k % 2 ? -1 : 1, graze: 0, cool: 0, k };
   });
 }
 
@@ -90,7 +90,7 @@ function updateCows(T, dt) {
     const vx = w.dx * v;
     if (Math.abs(vx) > .08) w.face = vx > 0 ? 1 : -1;
     w.graze = Math.abs(v) < .35;                  // at the turning points the cow stops and eats
-    w.mooT = Math.max(0, w.mooT - dt); w.cool = Math.max(0, w.cool - dt);
+    w.cool = Math.max(0, w.cool - dt);
   }
 }
 
@@ -111,7 +111,7 @@ export function eventCollisions() {
       c.vx = nx * 150; c.vy = ny * 150; c.spin = 12; c.stun = 1.1; c.boost = 0;
       mudBurst(c, 6);
       if (!c.ai) SFX.crash(); else SFX.bump();
-      if (w.cool <= 0) { w.mooT = 1.3; w.cool = 1.5; SFX.moo(); }
+      if (w.cool <= 0) { w.cool = 1.5; SFX.moo(); }
     } else if (vn < 0) { c.vx -= 1.4 * vn * nx; c.vy -= 1.4 * vn * ny; }
   }
 }
@@ -689,7 +689,6 @@ export function drawEventsAbove() {
   if (ev.koiSpit) drawSpit(ev.koiSpit);
   for (const s of ev.kipper) drawDust(s);
   if (ev.rollers) drawMarshals(ev);
-  for (const w of ev.cows) if (w.mooT > 0) text('MUH!', Math.round(w.x), Math.round(w.y - 16 - (1.3 - w.mooT) * 8), 8, '#ffffff', 'center');
 }
 
 // ======================================================= Wald: dusk and headlights

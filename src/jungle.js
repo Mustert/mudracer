@@ -1,7 +1,7 @@
 import { G } from './g.js';
 import { SFX } from './audio.js';
 import { HALF, TAU, VH, VW, clamp, ctx, hash, mk } from './core.js';
-import { R1, disc, ell, text } from './gfx.js';
+import { R1, disc, ell } from './gfx.js';
 import { addP } from './particles.js';
 import { inView, near } from './trackfx.js';
 
@@ -17,7 +17,7 @@ const LIANA = { per: 6, x: 562, y: 22 }, TREE = { creak: 2.2, fall: .6 }, BALL =
 function initJungle(T) {
   const ev = T.ev, J = T.jungle;
   J.jumps.length = J.baseJumps; // the trunks of the last race are gone
-  ev.trees = []; ev.crocs = []; ev.swimmer = null; ev.ball = null; ev.ballOn = false; ev.logs = []; ev.obst = []; ev.snaps = []; ev.plops = []; ev.parrots = 0;
+  ev.trees = []; ev.crocs = []; ev.swimmer = null; ev.ball = null; ev.ballOn = false; ev.logs = []; ev.obst = []; ev.parrots = 0;
   J.jumps[0].off = true;
 }
 
@@ -54,7 +54,6 @@ function jungleUpdate(T, dt) {
     for (let k = 0; k < 3; k++) addP({ t: 'parrot', x: P.x + (Math.random() - .5) * 60, y: P.y - 20, vx: (Math.random() - .5) * 80, vy: -40 - Math.random() * 30, life: 2.4, ml: 2.4, ph: Math.random() * 10, col: ['#e8452c', '#2f6fd8', '#f2c230', '#3aa845'][(Math.random() * 4) | 0] });
     SFX.parrot();
   }
-  ev.snaps = ev.snaps.filter(s => (s.t -= dt) > 0); ev.plops = ev.plops.filter(s => (s.t -= dt) > 0);
   ev.obst = ev.swimmer && ev.swimmer.on ? [ev.swimmer] : [];
 }
 
@@ -69,10 +68,10 @@ function jungleGround(c, j, sp, dt) {
   if (c.surf === 2 && sp > 20 && Math.random() < dt * 4 && !c.ai) SFX.blubb();
 }
 
-// flattened by the stone ball: a moment flat on the ground, then it pops back ("PLOPP")
+// flattened by the stone ball: a moment flat on the ground, then it pops back
 function jungleStuck(c, dt) {
   c.vx = c.vy = 0; c.flatT -= dt;
-  if (c.flatT <= 0) { c.flatT = 0; G.T.ev.plops.push({ x: c.x, y: c.y, t: .9 }); if (!c.ai || near(c.x, c.y) < 250) SFX.plopp(); }
+  if (c.flatT <= 0) { c.flatT = 0; if (!c.ai || near(c.x, c.y) < 250) SFX.plopp(); }
 }
 
 // ======================================================= the computer cars
@@ -165,7 +164,6 @@ function updateCrocs(T, dt) {
       for (const c of G.cars) {
         if (c.fall > 0 || c.z > 0 || Math.hypot(c.x - cr.x, c.y - cr.y) > 26) continue;
         const dx = c.x - cr.x, dy = c.y - cr.y, d = Math.hypot(dx, dy) || 1; c.vx = dx / d * 90; c.vy = dy / d * 90; c.boost = 0;
-        ev.snaps.push({ x: cr.x, y: cr.y, t: 1 });
       }
     }
   }
@@ -293,10 +291,6 @@ function drawJungleAbove() {
     } else ctx.drawImage(C.c, C.x, C.y);
     // the leaves move a little: bright flecks of sun wander over them
     for (let q = 0; q < 20; q++) { const x = C.x + hash(q, 1, 117) * C.W + Math.sin(G.time + q) * 3, y = C.y + hash(q, 2, 117) * C.H; if (!J.under || !P || Math.hypot(x - P.x, y - P.y) > 64) R1(Math.round(x), Math.round(y), 2, 1, '#9ad86a'); }
-  }
-  if (ev) {
-    for (const s of ev.snaps) text('SCHNAPP!', Math.round(s.x), Math.round(s.y - 16 - (1 - s.t) * 8), 8, '#ffffff', 'center');
-    for (const s of ev.plops) text('PLOPP!', Math.round(s.x), Math.round(s.y - 20 - (.9 - s.t) * 10), 8, '#ffd23f', 'center');
   }
   for (const p of G.parts) if (p.t === 'parrot') { const w = ((G.time * 12 + p.ph) | 0) % 2; R1(Math.round(p.x) - 1, Math.round(p.y), 3, 3, p.col); R1(Math.round(p.x) - 3, Math.round(p.y) - w, 2, 1, p.col); R1(Math.round(p.x) + 2, Math.round(p.y) - w, 2, 1, p.col); }
 }
