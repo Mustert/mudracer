@@ -192,6 +192,7 @@ Im Dev-Server: `mudracer.G.T` (aktuelle Strecke), `mudracer.G.cars`, `mudracer.t
 - **Tore `gates` `[x, y, Knoten, von?]`:**
   - mit `von` der Überlauf des Fächers am Westende der Brücke (Rinne aus Fels `conM` vom Fächer zum Tor);
   - ohne `von` eine Spalte im Hang, gezeichnet als glühender Riss, die vor ihrer Zunge dampft.
+- **Ampeln:** über jeder Rinnenmündung unter A hängt eine Ampel (`drawLamps`, Stellen `lampSpots` 85 px unter A): grün, wenn von dort ein Weg ohne gesperrte Knoten (`blockedNodes`) zu Z führt, rot blinkend sonst; neu berechnet bei jedem Wechsel der Zungen (`ev.vlMzVer`). Nur mit Ereignis `lavastrom`.
 - **KI:** `routeHere` plant von der Rinne, in der das Auto steht (nächste Kante, besseres Ende), nie quer durch den Fels zum nur scheinbar nächsten Knoten. Außerhalb des Labyrinths und weiter als 40 px von A übernimmt die Mittellinie.
 - **Fortschritt:** nach `rowIdx` nur oberhalb der Sammelrinne (`Y` − 18).
 - **Gefälle:** In den Rinnen `DOWNHILL` 34 px/s² längs des Autos, je nachdem, wie weit es hangabwärts zeigt (weg vom Kegel), nie seitlich. Die Serpentinen behalten den Schub −30.

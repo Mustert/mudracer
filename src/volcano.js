@@ -171,6 +171,49 @@ function mazeRoute(T, from, jit) {
   return { nodes, pts };
 }
 
+// the signal lamps at the mouths of the gullies under A (1S10-31): green where a way down without lava starts, red and blinking where the gully is
+// closed further down (you see it before you choose, not when the lava stands in front of you). Each hangs on a little gantry across the mouth of its
+// gully, 85 px down from A (where the gullies have parted), posts on both banks (cars drive under it)
+function lampSpots(T) {
+  const M = T.volcano.maze; if (M.lampSpots) return M.lampSpots;
+  return (M.lampSpots = M.G.adj.A.map(([b, q]) => {
+    const e = M.G.edges[q], P = e.a === 'A' ? e.pts : e.pts.slice().reverse();
+    let s = 0, k = 1; for (; k < P.length - 1 && s < 85; k++) s += Math.hypot(P[k].x - P[k - 1].x, P[k].y - P[k - 1].y);
+    const dx = P[k].x - P[k - 1].x, dy = P[k].y - P[k - 1].y, l = Math.hypot(dx, dy) || 1;
+    return { b, x: Math.round(P[k].x), y: Math.round(P[k].y), nx: -dy / l, ny: dx / l };
+  }));
+}
+function gullyLamps(T) {
+  const ev = T.ev, M = T.volcano.maze;
+  if (ev.vlLamps && ev.vlLampVer === ev.vlMzVer) return ev.vlLamps;
+  const bl = blockedNodes(T);
+  const down = b => {
+    if (bl.has(b)) return false;
+    const seen = new Set(['A', b]), todo = [b];
+    while (todo.length) { const n = todo.pop(); if (n === 'Z') return true; for (const [w] of M.G.adj[n]) if (!seen.has(w) && (!bl.has(w) || w === 'Z')) { seen.add(w); todo.push(w); } }
+    return false;
+  };
+  ev.vlLampVer = ev.vlMzVer;
+  return (ev.vlLamps = lampSpots(T).map(s => ({ ...s, ok: down(s.b) })));
+}
+function drawLamps(T) {
+  for (const L of gullyLamps(T)) {
+    if (!inView(L.x, L.y, 40)) continue;
+    const H = 12, w = 22, a = [Math.round(L.x + L.nx * w), Math.round(L.y + L.ny * w)], b = [Math.round(L.x - L.nx * w), Math.round(L.y - L.ny * w)];
+    // (shadow of the gantry on the floor of the gully, the two posts, the beam on top)
+    ctx.globalAlpha = .25; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(a[0] + 5, a[1] + 2); ctx.lineTo(b[0] + 5, b[1] + 2); ctx.stroke(); ctx.globalAlpha = 1;
+    for (const p of [a, b]) R1(p[0] - 1, p[1] - H, 3, H + 1, '#2a2420');
+    ctx.strokeStyle = '#3a322c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(a[0] + .5, a[1] - H + .5); ctx.lineTo(b[0] + .5, b[1] - H + .5); ctx.stroke();
+    ctx.strokeStyle = '#5a5048'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a[0] + .5, a[1] - H - .5); ctx.lineTo(b[0] + .5, b[1] - H - .5); ctx.stroke();
+    // (the lamp in the middle: green steady, red blinking hard)
+    const x = L.x, y = L.y - H, col = L.ok ? '#5aff6a' : '#ff3a2a', k = L.ok ? 1 : ((G.time * 3) | 0) % 2 ? 1 : .35;
+    ctx.globalAlpha = .3 * k; disc(x, y, L.ok ? 8 : 11, col); ctx.globalAlpha = 1;
+    R1(x - 5, y - 5, 11, 10, '#1b1612'); R1(x - 3, y - 3, 7, 6, L.ok ? '#1a4a20' : '#4a1410');
+    ctx.globalAlpha = k; R1(x - 3, y - 3, 7, 6, col); ctx.globalAlpha = 1;
+    R1(x - 2, y - 2, 2, 2, '#fff');
+  }
+}
+
 // is there a way down at all (dev check of def.maze.laps, check.js)
 export function mazeOpen(T, blocked) {
   const M = T.volcano.maze, seen = new Set(['A']), todo = ['A'];
@@ -592,6 +635,7 @@ function drawHoleGaps(T, V, ev) {
 function drawVolcanoAbove() {
   const T = G.T, V = T.volcano, ev = T.ev;
   if (ev.vlHoles) drawHoleGaps(T, V, ev);
+  if (ev.vlLavaOn && ev.vlTongues) drawLamps(T);
   V.fountains.forEach(([x, y], q) => {
     const f = fountain(q); if (!f.on || !inView(x, y, 60)) return;
     const hgt = f.big ? 46 : 30;

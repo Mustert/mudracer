@@ -428,6 +428,7 @@ Vom Nutzer gewünscht (2026-11-19, Chat und Meldungen aus dem Spiel):
 2. Die Metallstreben in den Brückenlöchern weg, sonst sieht es nicht nach Fallen aus. ✅ umgesetzt (L1: eine Reihe offener Platten ist ein Loch ohne Fuge, nichts quert es, am Brückenrand ist auch der Träger aufgerissen)
 3. Der Steinhintergrund des Labyrinths ergibt optisch keinen Sinn, oben rechts schaut ein Zipfel hinter der Strecke hervor. ✅ umgesetzt (L4)
 4. Das Labyrinth soll sich wie bergab anfühlen, allgemein das Gefühl, einen Vulkan hinauf- und hinunterzukraxeln; die beiden Lavaströme neben dem Hauptstrom braucht es optisch nicht. ✅ umgesetzt (L3 bis L5; entschieden: die Zungen kommen aus dem Überlauf des Fächers unter der Brücke und aus Spalten im Hang, das Rinnen-Netz ist neu gebaut)
+5. Testfahrt (F8): Man hat keine Vorwarnung, ob eine Rinne befahrbar sein wird, das fühlt sich unfair an. ✅ umgesetzt (Ampel über jeder Rinnenmündung: grün = von dort führt ein Weg ohne Lava nach unten, rot blinkend = weiter unten gesperrt)
 
 - **Rinnen am Westhang** (statt der Felsfläche):
   - Vier Stränge laufen den Hang hinab, leicht nach Westen, mit einigen Querverbindungen; unten sammelt eine Rinne alles zum Ausgang an der Geraden.
