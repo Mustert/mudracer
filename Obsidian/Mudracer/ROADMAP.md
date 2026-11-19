@@ -235,12 +235,12 @@ Umsetzungspläne: `plaene/VULKAN_REV2.md` (Rev 2, Komplettumbau, Pakete V1 bis V
 | 1S10-22 | M | offen (Plan `plaene/VULKAN_REV6.md` L1) | VULKAN: unten an der Startgeraden liegen Steine (Ende der Felsrippe bei x 1395) über der untersten Terrassenmauer; Felsrippen enden an der Mauer, nichts über Mauer oder Straße | Nutzer 2026-11-19 (Bild) |
 | 1S10-23 | H | offen (Plan L1) | VULKAN: in den Brückenlöchern laufen die Metallstreben weiter, das sieht nicht nach Fallen aus; im Loch keine Streben, nur der Schacht zur Lava | Nutzer 2026-11-19 (Bild) |
 | 1S10-24 | H | offen (Plan L4) | VULKAN: die graue Pflasterfläche des Labyrinths ergibt keinen Sinn, oben rechts schaut ein Zipfel hinter der Strecke hervor; Labyrinth als ausgewaschener Hang mit Rinnen und Graten, ohne Polygonkante | Nutzer 2026-11-19 (Bild) |
-| 1S10-25 | M | offen (Plan L3, Frage offen) | VULKAN: die beiden Lavaströme neben dem Hauptstrom (West, Ost) braucht es optisch nicht; entfernen, Quelle der Lavazungen neu (Überlauf des Fächers, Spalten im Hang) | Nutzer 2026-11-19 |
+| 1S10-25 | M | offen (Plan L3; Quelle entschieden: Überlauf des Fächers und Spalten im Hang) | VULKAN: die beiden Lavaströme neben dem Hauptstrom (West, Ost) braucht es optisch nicht; entfernen, Quelle der Lavazungen neu (Überlauf des Fächers, Spalten im Hang) | Nutzer 2026-11-19 |
 | 1S10-26 | H | offen (Plan L1) | VULKAN: unten hinter dem Labyrinth ist die Strecke offen (bei 341, 862 auf die Wiese); Fels unter den Rinnen schließen, nur `Z` mündet auf die Gerade | Meldung 2026-11-19 VULKAN |
 | 1S10-27 | M | offen (Plan L1) | VULKAN: die kleine Mauer zwischen Gerade und Feuerwehrbucht ragt in Ein- und Ausfahrt der Bucht; Mauer nur am parallelen Stück, Weg der Bucht in Asphaltfarbe | Meldung 2026-11-19 VULKAN |
 | 1S10-28 | M | offen (Plan L2) | VULKAN: nach einem Sturz in die Lava kein Ruß mehr (doppelte Strafe); dafür erdig werden, wenn man am Berg neben der Straße fährt | Meldung 2026-11-19 VULKAN (Idee) |
 | 1S10-29 | H | offen (Plan L4, L5) | VULKAN: das Labyrinth fühlt sich nicht wie bergab an, allgemein fehlt das Gefühl, einen Vulkan hinauf- und hinunterzukraxeln: Relief nach Hangrichtung, Rinnen in der Falllinie, Höhenstufen der Vegetation, höhere Stützmauern, Gefälle spürbar, Rauchsäule über dem Krater | Nutzer 2026-11-19 |
-| 1S10-30 | N | offen | VULKAN Rev 6 umsetzen nach `plaene/VULKAN_REV6.md` (L1 bis L6), drei offene Fragen dort zuerst klären | Nutzer 2026-11-19 |
+| 1S10-30 | N | offen | VULKAN Rev 6 umsetzen nach `plaene/VULKAN_REV6.md` (L1 bis L6); Fragen am 2026-11-19 entschieden: Zungen aus Überlauf und Spalten, Rinnen-Netz neu, erdig halb so schnell wie Matsch | Nutzer 2026-11-19 |
 
 ### 1S11 DSCHUNGEL
 Umsetzungsplan: `plaene/DSCHUNGEL_REV2.md` (Rev 2, Vorschlag von Claude, noch nicht begonnen; gemeinsamer Rahmen `plaene/REWORKS_CUP4_CUP5.md`).
