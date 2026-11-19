@@ -303,44 +303,45 @@ const TRACK_DEFS = [
   // The start straight at its foot (asphalt; the base camp of the press and the police below it, the fire brigade's washing bay beside it), the serpentine up the
   // east of the face (terraces with dry-stone walls; fireballs, event ausbruch), a steel bridge along the face below the crater over the lava that pours out of it
   // (from lap 2 plates fall out of the deck: slalom, event brueckenloch; who falls through is brought back by a helicopter), and down the west of the face through
-  // a maze of gullies, some of which a side stream of the lava fills, other ones from lap to lap (event lavastrom; see volcanomap.js, volcano.js).
+  // gullies washed into the slope, some of which lava fills, other ones from lap to lap (event lavastrom; Rev 6, plaene/VULKAN_REV6.md: the lava comes from
+  // the fan under the bridge, which overflows at its west end, and from cracks in the slope; see volcanomap.js, volcano.js).
   // cone = [x, y, radius] (the height for the light on the slopes and the colours); crater = the lava lake [x, y, rx, ry], rim = the solid crater rim;
   // fan = the lava under the steel bridge [x, y, rx, ry]; flows = lava streams as chains of circles [x, y, half width] (bridge: a steel bridge where the road
-  // crosses); pools = lava pools [x, y, rx, ry]; maze = the gullies: nodes {name: [x, y]}, edges 'A-B' (with a bend: [a, b, [x, y]]), area = the rock they
-  // are cut into (polygon), gw = half width of a gully, nr = radius of a node, route = the nodes the centre line takes, gates = where a feeder of lava
-  // meets the maze [x, y, node], tongues = the lava tongues {gate, nodes}, laps = which tongues run in lap 1, 2, 3 (every set leaves a way down,
+  // crosses); pools = lava pools [x, y, rx, ry]; maze = the gullies: nodes {name: [x, y]}, edges 'A-B' (with a bend: [a, b, [x, y]]), every gully has banks
+  // of rock (solid) and the slope lies between them, gw = half width of a gully, nr = radius of a node, route = the nodes the centre line takes, gates = where
+  // lava enters [x, y, node] (with a fourth [x, y]: the overflow of the fan from there; without: a crack in the slope), tongues = the lava tongues {gate,
+  // nodes} (along edges), laps = which tongues run in lap 1, 2, 3 (every set leaves a way down,
   // volcano.js mazeOpen); holes = plates of the bridge that fall [along 0..1, column -1/0/1, from lap] (two of three in a row: one column stays whole, it changes sides: a slalom); walls = [x0, y0, x1, y1, r, style] ('d' a dry-stone retaining wall between the serpentine legs, 'r' a ridge of boulders)
   // (they stop at the road by themselves); bay = the fire brigade on the start straight; camp = the base camp [x, y]; serp = the serpentine (from, to);
   // slopes = pushes [x0, y0, x1, y1, f]; fountains = lava fountains in the lake [x, y]; old = cold old lava flows on the face (chains); hornitos = [x, y, r]
-  { name: 'VULKAN', rev: 5, seed: 10, W: 1700, H: 1100, theme: 'vulkan', song: 'volcano', events: ['ausbruch', 'lavastrom', 'brueckenloch'], wall: [], wash: null, volcano: true,
+  { name: 'VULKAN', rev: 6, seed: 10, W: 1700, H: 1100, theme: 'vulkan', song: 'volcano', events: ['ausbruch', 'lavastrom', 'brueckenloch'], wall: [], wash: null, volcano: true,
     poly: [[790, 880, 0], [1630, 880, 50], [1630, 790, 47], [1440, 790, 47], [1440, 695, 47], [1640, 695, 47], [1640, 595, 47], [1300, 595, 50], [1300, 495, 50],
       [1600, 495, 50], [1600, 390, 55], [1180, 380, 150], [880, 430, 300], [600, 372, 90], [470, 282, 60], [320, 262, 60],
-      [305, 350, 30], [315, 470, 30], [380, 590, 40], [310, 700, 40], [395, 808, 40], [470, 868, 40], [565, 880, 25]],
+      [305, 350, 30], [255, 465, 30], [235, 590, 30], [215, 712, 30], [200, 818, 30], [235, 868, 30], [400, 872, 30], [565, 880, 25]],
     mud: [], water: [], ponds: [],
     cone: [880, 150, 1150], crater: [880, 150, 150, 85], rim: 24, fan: [880, 372, 245, 106],
     flows: [
       { c: [[880, 200, 30], [880, 262, 36], [880, 330, 60]] },
-      { c: [[905, 455, 40], [928, 540, 32], [946, 630, 28], [916, 730, 27], [876, 810, 26], [864, 880, 26], [870, 1000, 28], [880, 1110, 30]], bridge: true },
-      { c: [[772, 112, 10], [700, 104, 13], [560, 126, 15], [400, 158, 16], [230, 178, 16], [100, 208, 16], [54, 300, 16], [48, 450, 16], [48, 620, 16], [52, 780, 17], [75, 900, 19], [110, 960, 22]] },
-      { c: [[690, 432, 13], [638, 452, 14], [600, 486, 15], [584, 570, 15], [580, 690, 16], [588, 770, 18]] }],
-    pools: [[120, 985, 75, 50], [602, 798, 36, 28]],
+      { c: [[905, 455, 40], [928, 540, 32], [946, 630, 28], [916, 730, 27], [876, 810, 26], [864, 880, 26], [870, 1000, 28], [880, 1110, 30]], bridge: true }],
+    pools: [],
+    // the gullies run down the slope (south and a little west, away from the crater) in four strands with diagonal links between them; they gather at Y and Z
     maze: {
-      nodes: { A: [305, 350], B1: [180, 455], B2: [315, 470], B3: [460, 450], C1: [125, 580], C2: [245, 570], C3: [380, 590], C4: [495, 565],
-        D1: [175, 695], D2: [310, 700], D3: [450, 690], E1: [140, 805], E2: [265, 795], E3: [395, 808], Y: [330, 868], Z: [470, 868] },
-      edges: ['A-B1', 'A-B2', 'A-B3', 'B1-B2', 'B1-C1', 'B1-C2', 'B2-C2', 'B2-C3', 'B3-C3', 'B3-C4', 'C1-C2', 'C2-C3', 'C3-C4', 'C1-D1', 'C2-D1', 'C2-D2',
-        'C3-D2', 'C3-D3', 'C4-D3', 'D1-D2', 'D2-D3', 'D1-E1', 'D1-E2', 'D2-E2', 'D2-E3', 'D3-E3', 'E1-E2', 'E2-E3', ['E1', 'Y', [230, 850]], 'E2-Y', 'Y-Z', 'E3-Z'],
-      area: [[40, 318], [590, 318], [590, 800], [470, 830], [470, 905], [40, 905]], gw: 16, nr: 25, route: ['A', 'B2', 'C3', 'D2', 'E3', 'Z'],
-      gates: { gB3: [588, 452, 'B3'], gC4: [580, 566, 'C4'], wB1: [50, 455, 'B1'], wD1: [50, 695, 'D1'] },
-      tongues: [{ gate: 'gB3', nodes: ['B3', 'C3'] }, { gate: 'wD1', nodes: ['D1', 'E1'] }, { gate: 'gC4', nodes: ['C4', 'D3', 'E3'] }, { gate: 'wB1', nodes: ['B1', 'C2'] },
-        { gate: 'gB3', nodes: ['B3', 'C3', 'D2'] }, { gate: 'wB1', nodes: ['B1', 'C1'] }],
-      laps: [[0, 1], [2, 3], [2, 4, 5]] },
+      nodes: { A: [305, 350], B1: [130, 460], B2: [255, 465], B3: [390, 455], B4: [520, 450], C1: [115, 585], C2: [235, 590], C3: [365, 580], C4: [495, 575],
+        D1: [100, 705], D2: [215, 712], D3: [345, 700], D4: [470, 695], E1: [95, 815], E2: [200, 818], E3: [330, 812], E4: [445, 812], Y: [235, 868], Z: [400, 872] },
+      edges: ['A-B1', 'A-B2', 'A-B3', 'A-B4', 'B1-C1', 'B2-C2', 'B3-C3', 'B4-C4', 'C1-D1', 'C2-D2', 'C3-D3', 'C4-D4', 'D1-E1', 'D2-E2', 'D3-E3', 'D4-E4',
+        'B4-C3', 'C2-D1', 'D4-E3', 'C1-C2', 'D2-D3', 'E1-Y', 'E2-Y', 'E3-Z', 'E4-Z', 'Y-Z'],
+      gw: 16, nr: 23, route: ['A', 'B2', 'C2', 'D2', 'E2', 'Y', 'Z'],
+      gates: { gO: [590, 440, 'B4', [735, 445]], kW1: [50, 470, 'B1'], kM: [310, 520, 'C3'], kW2: [40, 705, 'D1'] },
+      tongues: [{ gate: 'kW1', nodes: ['B1', 'C1'] }, { gate: 'kM', nodes: ['C3', 'D3'] }, { gate: 'gO', nodes: ['B4', 'C4', 'D4'] }, { gate: 'kW2', nodes: ['D1', 'E1'] },
+        { gate: 'kW1', nodes: ['B1', 'C1', 'C2'] }, { gate: 'kM', nodes: ['C3', 'D3', 'D2'] }],
+      laps: [[0, 1], [2, 3, 4], [1, 3, 4, 5]] },
     holes: [[.1, 1, 2], [.1, 0, 2], [.64, 0, 2], [.64, -1, 2], [.37, 0, 3], [.37, -1, 3], [.91, 1, 3], [.91, 0, 3]],
     walls: [[1360, 835, 1700, 835, 7, 'd'], [1440, 742, 1700, 742, 7, 'd'], [1300, 645, 1700, 645, 7, 'd'], [1300, 545, 1700, 545, 7, 'd'], [1255, 446, 1700, 446, 7, 'd'],
       [960, 446, 1255, 446, 7, 'r'], [1255, 446, 1255, 650, 7, 'r'], [1255, 650, 1300, 648, 7, 'r'], [1395, 650, 1395, 835, 7, 'r']],
     bay: { lane: [[950, 880, 0], [1010, 945, 30], [1190, 945, 30], [1250, 880, 0]], half: 15, wash: [1050, 930, 1150, 961], wall: [1032, 1168, 918], engine: [1100, 1000],
       hydrant: [1030, 985], sign: [1245, 965], crew: [[1060, 985], [1140, 985]] },
     camp: [640, 1000], serp: [[1400, 880], [1560, 385]],
-    slopes: [[1400, 880, 1560, 385, -26], [305, 350, 470, 868, 22]],
+    slopes: [[1400, 880, 1560, 385, -30]],
     fountains: [[800, 120], [950, 130], [880, 185], [820, 175], [960, 175]],
     old: [[[1000, 470, 30], [1060, 600, 40], [1080, 760, 34], [1110, 840, 20]], [[700, 480, 22], [690, 620, 30], [720, 780, 26]], [[1250, 260, 26], [1420, 300, 34], [1650, 330, 30]]],
     hornitos: [[1000, 650, 11], [745, 700, 10], [1170, 560, 12]] },

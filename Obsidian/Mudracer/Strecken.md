@@ -418,16 +418,31 @@ Stand 2026-10-13, Branch `map_pack`. Vulkan, Dschungel und Weltall sind als **Pr
 Reihenfolge in Einzelstrecke und Zeitfahren: … Eis, **Vulkan, Dschungel, Weltall**, Süßigkeitenland, Spielzimmer, Regenbogen. Cup 4 (`PLATIN` in `src/cups.js`): `['VULKAN', 'DSCHUNGEL', 'WELTALL']` ✅ umgesetzt (Weltall-Prototyp).
 
 ## 10. Vulkan
-Status: **Rev 5 umgesetzt** auf Branch `map_pack` (2026-11-19, nach der Skizze des Nutzers `Mockups/VUlkan_rev_selber.png`; Plan `plaene/VULKAN_REV5.md`; Streckenname `VULKAN`, `rev: 5`, Theme `vulkan`, Musik `volcano`, Streckenereignisse Ausbruch `ausbruch` (Feuerbälle auf den Serpentinen, ab Runde 2 roter Himmel), Brückenloch `brueckenloch` (neu: Löcher in der Stahlbrücke ab Runde 2) und Lavaströme `lavastrom` (die Lavazungen im Rinnen-Labyrinth); Code in `src/volcanomap.js` und `src/volcano.js`; Karte 1700×1100, Runde 32–39 s mit dem Bot auf SCHWER). Im Cup PLATIN eingetragen. Abnahme durch den Nutzer: offen (ROADMAP 1S10-12).
+Status: **Rev 6 umgesetzt** auf Branch `map_pack` (2026-11-19: Rev 5 nach der Skizze des Nutzers `Mockups/VUlkan_rev_selber.png`, überarbeitet nach der ersten Testfahrt; Pläne `plaene/VULKAN_REV5.md`, `plaene/VULKAN_REV6.md`; Streckenname `VULKAN`, `rev: 6`, Theme `vulkan`, Musik `volcano`, Streckenereignisse Ausbruch `ausbruch` (Feuerbälle auf den Serpentinen, ab Runde 2 roter Himmel), Brückenloch `brueckenloch` (neu: Löcher in der Stahlbrücke ab Runde 2) und Lavaströme `lavastrom` (die Lavazungen im Rinnen-Labyrinth); Code in `src/volcanomap.js` und `src/volcano.js`; Karte 1700×1100, Runde 32–39 s mit dem Bot auf SCHWER). Im Cup PLATIN eingetragen. Abnahme durch den Nutzer: offen (ROADMAP 1S10-12).
 
 ![[Mockups/VUlkan_rev_selber.png]]
 
-### Rev 6: nach der ersten Testfahrt (in Arbeit, Plan `plaene/VULKAN_REV6.md`)
+### Rev 6: nach der ersten Testfahrt (gilt, `rev: 6`; Plan `plaene/VULKAN_REV6.md`; ersetzt im Labyrinth und bei den Strömen die Beschreibung von Rev 5 darunter)
 Vom Nutzer gewünscht (2026-11-19, Chat und Meldungen aus dem Spiel):
 1. Keine Steine (Felsrippe) über der untersten Mauer an der Startgeraden. ✅ umgesetzt (L1)
 2. Die Metallstreben in den Brückenlöchern weg, sonst sieht es nicht nach Fallen aus. ✅ umgesetzt (L1: eine Reihe offener Platten ist ein Loch ohne Fuge, nichts quert es, am Brückenrand ist auch der Träger aufgerissen)
-3. Der Steinhintergrund des Labyrinths ergibt optisch keinen Sinn, oben rechts schaut ein Zipfel hinter der Strecke hervor. (offen, L4)
-4. Das Labyrinth soll sich wie bergab anfühlen, allgemein das Gefühl, einen Vulkan hinauf- und hinunterzukraxeln; die beiden Lavaströme neben dem Hauptstrom braucht es optisch nicht. (offen, L3 bis L5; entschieden: die Zungen kommen aus dem Überlauf des Fächers unter der Brücke und aus Spalten im Hang, das Rinnen-Netz wird neu gebaut)
+3. Der Steinhintergrund des Labyrinths ergibt optisch keinen Sinn, oben rechts schaut ein Zipfel hinter der Strecke hervor. ✅ umgesetzt (L4)
+4. Das Labyrinth soll sich wie bergab anfühlen, allgemein das Gefühl, einen Vulkan hinauf- und hinunterzukraxeln; die beiden Lavaströme neben dem Hauptstrom braucht es optisch nicht. ✅ umgesetzt (L3 bis L5; entschieden: die Zungen kommen aus dem Überlauf des Fächers unter der Brücke und aus Spalten im Hang, das Rinnen-Netz ist neu gebaut)
+
+- **Rinnen am Westhang** (statt der Felsfläche):
+  - Vier Stränge laufen den Hang hinab, leicht nach Westen, mit einigen Querverbindungen; unten sammelt eine Rinne alles zum Ausgang an der Geraden.
+  - Jede Rinne hat Felsufer mit Licht- und Schattenseite. Dazwischen liegt der Hang in den Farben seiner Höhe: oben Asche und Schotter, unten trockenes Gras und Wiese. Der Hang ist nicht befahrbar.
+  - Die Rinnensohle wird nach unten hin heller und grüner.
+- **Woher die Lava kommt:**
+  - Der Lavafächer unter der Brücke läuft am Westende über, durch eine Felsrinne in den östlichen Strang.
+  - Drei Spalten im Hang (glühende Risse) dampfen und glühen, bevor ihre Zunge läuft.
+  - Jede Runde laufen andere Zungen. In Runde 3 bleibt nur der Oststrang frei.
+- **Ströme:** Nur der Hauptstrom fließt noch vom Krater unter Brücke und Gerade hindurch, die Ströme West und Ost entfallen.
+- **Berggefühl:**
+  - Oben liegt ein leichter Dunst über dem Bild, Asche treibt im Wind hangab.
+  - Über dem Krater steht immer eine hohe Rauchfahne.
+  - Die Stützmauern der Serpentinen werfen längere Schatten.
+  - Bergauf auf den Serpentinen bremst der Hang, in den Rinnen zieht das Gefälle, je mehr man hangab fährt.
 5. Unten hinter dem Labyrinth soll die Strecke zu sein. ✅ umgesetzt (L1: neben jeder Rinne liegt Fels)
 6. Die kleine Mauer darf nicht in den Weg der Feuerwehrbucht ragen, der Weg der Bucht bekommt Asphaltfarbe. ✅ umgesetzt (L1)
 7. Keine Asche nach einem Sturz in die Lava (doppelte Strafe), dafür erdig werden neben der Straße am Berg. ✅ umgesetzt (L2: halb so schnell wie Matsch, erdbraun)

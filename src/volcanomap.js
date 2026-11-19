@@ -4,8 +4,9 @@ import { nearestIdx, paintTools, startLine } from './bau.js';
 // ---------- Vulkan Rev 5 (plaene/VULKAN_REV5.md, the user's sketch Obsidian/Mudracer/Mockups/VUlkan_rev_selber.png): the south face of the volcano ----------
 // The start straight lies at the foot of the mountain (asphalt; the base camp of the press, the police and the scientists below it, the fire brigade's washing
 // bay beside it), a serpentine climbs the east of the face in terraces (dry-stone walls between the legs), a steel bridge runs along the face just below the
-// crater over the lava that pours out of it (its plates fall out from lap 2: volcano.js), and the way down leads through a maze of gullies cut into the rock
-// of the west face. The lava of a side stream runs along both sides of the maze and pushes tongues into it, other ones from lap to lap (volcano.js).
+// crater over the lava that pours out of it (its plates fall out from lap 2: volcano.js), and the way down leads through gullies washed into the west face
+// (Rev 6, plaene/VULKAN_REV6.md: banks of rock along every gully, the slope between them). Lava tongues run into them, other ones from lap to lap: from the
+// overflow of the fan at the west end of the bridge and from cracks in the slope (volcano.js).
 // Colours: green meadows at the foot, dry grass higher up, grey scree, black ash round the crater; light gravel roads, blue-grey basalt, green steel.
 // Nothing can be cut off: the crater rim, the lava, the guard rail along the straight, the dry-stone walls between the serpentine legs and on their west end,
 // the rock of the maze (solid along every gully), the girders of the bridges (CLAUDE.md, principle 4).
@@ -103,8 +104,6 @@ function cells(x, y, C, sd) {
   return { seam: d2 - d1, id };
 }
 
-const inPoly = (P, x, y) => { let c = false; for (let i = 0, k = P.length - 1; i < P.length; k = i++) { const [xi, yi] = P[i], [xk, yk] = P[k]; if ((yi > y) !== (yk > y) && x < (xk - xi) * (y - yi) / (yk - yi) + xi) c = !c; } return c; };
-
 // the height of the face (0 at the foot, 1 at the crater rim; wider than high: the mountain is seen from the south) on a coarse grid (4 px), and from it the
 // light on the slopes (from the north-west): height(x, y), shade(x, y) about 1 on flat ground
 function hillShade(def, MW, MH) {
@@ -115,7 +114,7 @@ function hillShade(def, MW, MH) {
     let v = clamp(1 - r / R, 0, 1);
     const e = Math.hypot((x - kx) / (krx + 30), (y - ky) / (kry + 30)); if (e < 1) v -= .3 * Math.pow(1 - e, .6);
     // ribs and runnels down the face, bumps
-    v += .012 * Math.sin(Math.atan2(y - cy, (x - cx) * .55) * 40 + vnoise(x / 60, y / 60, 7) * 6) * clamp(r / 300, 0, 1) + .02 * (vnoise(x / 45, y / 45, 8) - .5);
+    v += .018 * Math.sin(Math.atan2(y - cy, (x - cx) * .55) * 40 + vnoise(x / 60, y / 60, 7) * 6) * clamp(r / 300, 0, 1) + .02 * (vnoise(x / 45, y / 45, 8) - .5);
     h[gy * GW + gx] = v;
   }
   for (let gy = 1; gy < GH - 1; gy++) for (let gx = 1; gx < GW - 1; gx++) {
@@ -129,6 +128,9 @@ function hillShade(def, MW, MH) {
   };
   return { shade: (x, y) => at(s, x, y), height: (x, y) => at(h, x, y) };
 }
+
+// the box round the maze (its nodes, 60 px more on every side)
+const mazeBox = M => Object.values(M.nodes).reduce((b, [x, y]) => [Math.min(b[0], x - 60), Math.min(b[1], y - 60), Math.max(b[2], x + 60), Math.max(b[3], y + 60)], [1e9, 1e9, -1e9, -1e9]);
 
 // the maze from the def: nodes, edges (their points), the neighbours of every node
 export function mazeGraph(M) {
@@ -149,7 +151,7 @@ export function mazeGraph(M) {
 export function* volcanoTerrain(S) {
   const { MW, MH, def, ter, dist, near, path, nrm, N } = S, A = MW * MH;
   const alt = new Uint8Array(A), lakeM = new Uint8Array(A), bridgeM = new Uint8Array(A), fanM = new Uint8Array(A), laneM = new Uint8Array(A);
-  const areaM = new Uint8Array(A), gullyM = new Uint8Array(A), conM = new Uint8Array(A), gd = new Uint8Array(A);
+  const areaM = new Uint8Array(A), gullyM = new Uint8Array(A), conM = new Uint8Array(A), gd = new Uint8Array(A), islandM = new Uint8Array(A);
   const at = ([x, y]) => nearestIdx(path, x, y);
   yield;
   // the crater lake: lava
@@ -179,13 +181,9 @@ export function* volcanoTerrain(S) {
     }
   }
   yield;
-  // ----- the maze: gullies (road, 1) cut into rock (80) inside the area; gd = how far from the middle of a gully (x4) -----
-  const M = def.maze, G = mazeGraph(M), [ax0, ay0, ax1, ay1] = M.area.reduce((b, [x, y]) => [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)], [1e9, 1e9, -1e9, -1e9]);
-  for (let y = Math.max(0, ay0); y <= Math.min(MH - 1, ay1); y++) for (let x = Math.max(0, ax0); x <= Math.min(MW - 1, ax1); x++) {
-    // (the edge of the rock is not straight: it wobbles, except along the feeder in the east and near the way out at Z)
-    const f = clamp((540 - x) / 60, 0, 1) * clamp((Math.hypot(x - M.nodes.Z[0], y - M.nodes.Z[1]) - 40) / 60, 0, 1), wx = (vnoise(x / 34, y / 34, 161) - .5) * 110 * f, wy = (vnoise(x / 34, y / 34, 162) - .5) * 110 * f;
-    if (inPoly(M.area, x + .5 + wx, y + .5 + wy)) areaM[y * MW + x] = 1;
-  }
+  // ----- the maze (Rev 6): gullies (road, 1) washed into the slope, each with banks of rock (80) on both sides; between the banks the slope goes on (0, out
+  // of reach); gd = how far from the middle of a gully (x4) -----
+  const M = def.maze, G = mazeGraph(M), [ax0, ay0, ax1, ay1] = mazeBox(M);
   const gStamp = (x0, y0, w) => {
     const R = Math.ceil(w + 3);
     for (let y = Math.max(0, Math.floor(y0 - R)); y <= Math.min(MH - 1, y0 + R); y++) for (let x = Math.max(0, Math.floor(x0 - R)); x <= Math.min(MW - 1, x0 + R); x++) {
@@ -196,23 +194,25 @@ export function* volcanoTerrain(S) {
   for (const e of G.edges) { e.pts.forEach((p, k) => { if (k % 2 === 0) gStamp(p.x, p.y, M.gw); }); }
   for (const [x, y] of Object.values(M.nodes)) gStamp(x, y, M.nr);
   yield;
-  // the runnels of old lava from the feeders to the gates (only lava runs there: they stay rock)
+  // the runnels of old lava where it enters (a crack in the slope: from the crack to its node; the overflow of the fan: from the fan to the gate and on to
+  // its node); only lava runs there: they are rock
   const gates = {};
-  for (const [name, [gx, gy, node]] of Object.entries(M.gates)) {
-    const [nx, ny] = M.nodes[node];
-    stampLine([[gx, gy], [nx, ny]], 8, j => { if (!gullyM[j] && ter[j] !== 15) conM[j] = 1; }, MW, MH);
-    gates[name] = { x: gx, y: gy, node };
+  for (const [name, [gx, gy, node, from]] of Object.entries(M.gates)) {
+    const [nx, ny] = M.nodes[node], mark = j => { if (!gullyM[j] && ter[j] !== 15 && dist[j] >= HALF + 2) conM[j] = 1; };
+    stampLine([[gx, gy], [nx, ny]], from ? 8 : 5, mark, MW, MH);
+    if (from) stampLine([from, [gx, gy]], 9, mark, MW, MH);
+    gates[name] = { x: gx, y: gy, node, spill: !!from, ang: Math.atan2(ny - gy, nx - gx) };
   }
-  // (the road before and after the maze stays road: the rock only takes the centre line's road inside the maze)
+  // (the road before and after the maze stays road: inside the maze the centre line's road is only where a gully is)
   const iA = at(M.nodes.A), iZ = at(M.nodes.Z), inMaze = i => ((i - iA + N) % N) <= ((iZ - iA + N) % N);
   for (let j = 0; j < A; j++) {
     if (gullyM[j] && ter[j] !== 15) { ter[j] = 1; alt[j] = 1; continue; }
-    if (areaM[j] && (ter[j] === 0 || (ter[j] === 1 && (dist[j] >= HALF || inMaze(near[j]))))) ter[j] = 80;
+    if (ter[j] === 1 && dist[j] < HALF && inMaze(near[j])) ter[j] = 0;
+    if (conM[j] && ter[j] === 0) { ter[j] = 80; areaM[j] = 1; }
   }
-  // every gully has rock on both sides, also where the wobbly edge of the area comes close: open ground within 9 to 14 px of a gully becomes rock
-  // (otherwise a gully could open onto the meadow below the maze, 1S10-26); chamfer distance in the box of the maze
+  // every gully has banks of rock, 12 to 18 px wide (1S10-26: nowhere does a gully open onto the slope); chamfer distance in the box of the maze
   {
-    const bx0 = Math.max(0, ax0 - 30), by0 = Math.max(0, ay0 - 30), bx1 = Math.min(MW - 1, ax1 + 30), by1 = Math.min(MH - 1, ay1 + 30), BW = bx1 - bx0 + 1, BH = by1 - by0 + 1;
+    const bx0 = Math.max(0, ax0), by0 = Math.max(0, ay0), bx1 = Math.min(MW - 1, ax1), by1 = Math.min(MH - 1, ay1), BW = bx1 - bx0 + 1, BH = by1 - by0 + 1;
     const dg = new Uint16Array(BW * BH).fill(9999);
     for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) if (gullyM[(y + by0) * MW + x + bx0]) dg[y * BW + x] = 0;
     for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) {
@@ -227,8 +227,20 @@ export function* volcanoTerrain(S) {
     }
     for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) {
       const X = x + bx0, Y = y + by0, j = Y * MW + X;
-      if (ter[j] === 0 && dist[j] >= HALF + 6 && dg[y * BW + x] <= (9 + vnoise(X * .08, Y * .08, 163) * 5) * 3) { ter[j] = 80; areaM[j] = 1; }
+      if (ter[j] === 0 && (dist[j] >= HALF + 6 || inMaze(near[j])) && dg[y * BW + x] <= (12 + vnoise(X * .08, Y * .08, 163) * 6) * 3) { ter[j] = 80; areaM[j] = 1; }
     }
+    // the slope between the banks (cut off from the outside by them) is rock too (80: you cannot get stuck on it, no place to set a car down), but it is
+    // painted as the slope (islandM): flood the open ground from the edge of the box, what it does not reach is shut in
+    const seen = new Uint8Array(BW * BH), todo = [];
+    for (let x = 0; x < BW; x++) for (const y of [0, BH - 1]) todo.push(y * BW + x);
+    for (let y = 0; y < BH; y++) for (const x of [0, BW - 1]) todo.push(y * BW + x);
+    while (todo.length) {
+      const k = todo.pop(); if (seen[k]) continue;
+      const x = k % BW, y = k / BW | 0, t = ter[(y + by0) * MW + x + bx0]; if (t === 80 || gullyM[(y + by0) * MW + x + bx0]) continue;
+      seen[k] = 1;
+      if (x > 0) todo.push(k - 1); if (x < BW - 1) todo.push(k + 1); if (y > 0) todo.push(k - BW); if (y < BH - 1) todo.push(k + BW);
+    }
+    for (let k = 0; k < BW * BH; k++) { const j = ((k / BW | 0) + by0) * MW + k % BW + bx0; if (!seen[k] && ter[j] === 0) { ter[j] = 80; areaM[j] = 1; islandM[j] = 1; } }
   }
   yield;
   // the lava tongues: from a gate down the gullies to their last node; their pixels sorted by how far down (j, k = point of the chain, old = terrain)
@@ -283,7 +295,7 @@ export function* volcanoTerrain(S) {
   });
   yield;
   const pushes = (def.slopes || []).map(([x0, y0, x1, y1, f]) => ({ i0: nearestIdx(path, x0, y0), i1: nearestIdx(path, x1, y1), f }));
-  return { alt, lakeM, bridgeM, fanM, laneM, areaM, gullyM, conM, gd, deckM, G, gates, tongues, rowIdx, iA, iZ, holes, big, decks, deckBig, bayPts, bayI: at(B.lane[0]), jumps: [], pushes,
+  return { alt, lakeM, bridgeM, fanM, laneM, areaM, gullyM, conM, gd, islandM, deckM, G, gates, tongues, rowIdx, iA, iZ, holes, big, decks, deckBig, bayPts, bayI: at(B.lane[0]), jumps: [], pushes,
     serp: def.serp.map(at), straight: [at([480, 880]), at([1400, 880])] };
 }
 
@@ -323,7 +335,8 @@ export function* paintVolcano(S) {
   const rd = new Uint8Array(A);
   for (let j = 0; j < A; j++) rd[j] = ter[j] === 80 ? 60 : 0;
   // (only round the maze: the rock is nowhere else)
-  const [bx0, by0, bx1, by1] = M.area.reduce((b, [x, y]) => [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)], [1e9, 1e9, -1e9, -1e9]).map((v, k) => clamp(v + (k < 2 ? -70 : 70), 1, (k % 2 ? MH : MW) - 2));
+  // (the box of the maze, wide enough for the overflow of the fan in the east)
+  const [bx0, by0, bx1, by1] = mazeBox(M).map((v, k) => clamp(v + (k < 2 ? -10 : k === 2 ? 220 : 10), 1, (k % 2 ? MH : MW) - 2));
   for (let y = by0; y <= by1; y++) for (let x = bx0; x <= bx1; x++) { const j = y * MW + x; if (rd[j]) rd[j] = Math.min(rd[j], rd[j - 1] + 3, rd[j - MW] + 3, rd[j - MW - 1] + 4, rd[j - MW + 1] + 4); }
   for (let y = by1; y >= by0; y--) for (let x = bx1; x >= bx0; x--) { const j = y * MW + x; if (rd[j]) rd[j] = Math.min(rd[j], rd[j + 1] + 3, rd[j + MW] + 3, rd[j + MW + 1] + 4, rd[j + MW - 1] + 4); }
   yield;
@@ -357,7 +370,7 @@ export function* paintVolcano(S) {
       }
       if (h < .03) lavaPix.push(j); put(j, c); continue;
     }
-    if (t === 80) {
+    if (t === 80 && !(RT.islandM[j] && rd[j] > 30)) {
       // the rock of the maze: blue-grey basalt, its edge falls into the gullies (lit where it faces the north-west, in shadow on the south-east), columns on top
       const r3 = rd[j] / 3;
       if (RT.conM[j]) {
@@ -365,23 +378,28 @@ export function* paintVolcano(S) {
         c = Math.abs(vnoise(x / 5, y / 5, sd + 75) - .5) < .05 ? K.lavaD : v < .4 ? K.old1 : K.old;
         put(j, c); continue;
       }
-      if (r3 < 4) {
-        // the face of the rock: which way it faces (the gradient of the depth)
-        const gx = rd[j + 1] - rd[j - 1], gy = rd[j + MW] - rd[j - MW], l = (gx * .6 + gy * .8) / (Math.hypot(gx, gy) || 1);
-        c = r3 < 1.4 ? K.basDD : l > .35 ? K.basL : l > -.2 ? K.basT : l > -.6 ? K.bas : K.basD;
-      } else {
-        // (the top of the rock: the heads of basalt columns, lighter and darker patches, scree in the hollows)
-        const cl = cells(x, y, 9, sd + 76), big = vnoise(x / 34, y / 34, sd + 78);
-        c = cl.seam < 1 ? K.basD : hash(cl.id, 2, sd + 77) < .3 ? K.basS : hash(cl.id, 3, sd + 77) < .25 ? K.basT : K.bas;
-        if (cl.seam >= 1 && cl.seam < 2 && hash(cl.id, 4, sd + 77) < .5) c = K.basT;
-        if (big > .66) c = mix(c, K.s2, .35); else if (big < .3) c = mix(c, K.basDD, .3);
+      // (Rev 6) the bank of a gully: a face of rock that falls into the gully (lit where it faces the north-west, in shadow on the south-east, layers and
+      // streaks down the slope), its crest runs out into the slope beside it (the colour of the ground at that height): a ridge, not a slab
+      const gx = rd[j + 1] - rd[j - 1], gy = rd[j + MW] - rd[j - MW], l = (gx * .6 + gy * .8) / (Math.hypot(gx, gy) || 1);
+      const st = vnoise(x / 2.5, y / 11, sd + 76), lay = Math.abs(Math.sin((y + vnoise(x / 30, y / 30, sd + 77) * 18) * .55)) > .93;
+      c = r3 < 1.3 ? K.basDD : l > .45 ? K.basL : l > -.05 ? K.basT : l > -.5 ? K.bas : K.basD;
+      if (r3 >= 1.3 && st > .7) c = mix(c, K.basDD, .3); else if (r3 >= 1.3 && st < .25) c = mix(c, K.basL, .25);
+      if (r3 >= 1.3 && r3 < 7 && lay) c = mix(c, K.basDD, .25);
+      if (r3 > 5) {
+        const e = height(x, y) + (vnoise(x / 40, y / 40, sd + 43) - .5) * .09; let zi = 0; while (zi < 3 && e > ZH[zi]) zi++;
+        c = mix(c, ZC[zi][v < .3 ? 1 : v > .72 ? 2 : 0], clamp((r3 - 5) / 7, 0, .75));
       }
-      put(j, c, .92 + .1 * shade(x, y)); continue;
+      if (h > .985 && r3 >= 1.3) c = K.basL; // (loose stones)
+      put(j, c, .9 + .12 * shade(x, y)); continue;
     }
     if (t === 1 && RT.gullyM[j]) {
       // the floor of a gully: light ash, a little darker towards its walls, a hard shadow on the side of the north-west wall
+      // (Rev 6: ash up high, then it takes the colour of the slope it runs down; streaks of scree and runnels along the way down, pebbles)
       const gg = RT.gd[j] / 4, wall = ter[j - 3 * MW - 3] === 80 || ter[j - 2 * MW - 4] === 80 || ter[j - 4 * MW - 1] === 80;
       c = v < .3 ? K.gf1 : v > .72 ? K.gf2 : K.gf; if (h < .02) c = K.gfS;
+      { const e = height(x, y); let zi = 0; while (zi < 3 && e > ZH[zi]) zi++; c = mix(c, ZC[zi][2], zi < 2 ? .3 : .15); c = mix(c, K.gfS, .22); }
+      const rn = vnoise(x / 2.2, y / 13, sd + 79); if (rn > .74) c = mix(c, K.gfS, .45); else if (rn < .2) c = mix(c, K.gf2, .4);
+      if (h > .988) c = K.s1;
       if (wall) c = mix(c, K.gfS, .75); else if (gg > M.gw - 3) c = mix(c, K.gfS, .35);
       put(j, c); continue;
     }
@@ -413,7 +431,8 @@ export function* paintVolcano(S) {
       c = v < .33 ? K.rd1 : v > .7 ? K.rd2 : K.rd; if (h < .03) c = [150, 128, 96]; else if (h > .975) c = [222, 204, 170];
       if (dist[j] > HALF - 2.5) c = K.rdE; else if (Math.abs(Math.abs(o) - 12) < 1.4 && h > .3) c = K.rut;
       s = .9 + .1 * shade(x, y);
-    } else if (t === 0) {
+    } else if (t === 0 || t === 80) {
+      // (t === 80 here: the slope shut in between the banks of the gullies)
       const er = Math.hypot((x + .5 - kx) / rx2, (y + .5 - ky) / ry2);
       if (er < 1 && !RT.lakeM[j]) {
         // inside the crater rim: the wall falls in layers to the lake, dark and rusty bands, yellow sulphur
@@ -516,7 +535,8 @@ export function* paintVolcano(S) {
     for (let a = 0; a <= len; a += 1) {
       const X = Math.round(x0 + ux * a), Y = Math.round(y0 + uy * a); if (!ok(X, Y, w)) continue;
       // (the slope below the wall: darker near its foot)
-      for (let k = 7; k < 24; k++) { const j = (Y + k) * MW + X; if (Y + k < MH && ter[j] === 0 && dist[j] >= HALF) dk(X, Y + k, .6 + (k - 7) * .023); }
+      // (Rev 6: a longer shadow, the terraces stand higher)
+      for (let k = 7; k < 34; k++) { const j = (Y + k) * MW + X; if (Y + k < MH && ter[j] === 0 && dist[j] >= HALF) dk(X, Y + k, .52 + (k - 7) * .0175); }
       for (let c = -4; c <= 6; c++) {
         const course = Math.floor((c + 9) / 3), blk = Math.floor((a + course * 4) / 8), jn = ((a + course * 4) % 8) < 1 || (c + 9) % 3 === 0;
         px(X, Y + c, c < -2 ? (hash(Math.floor(a / 5), 7, sd + 52) < .35 ? K.dsL : [200, 192, 178]) : c === -2 ? K.dsDD : c === 6 ? K.dsDD : jn ? K.dsDD : hash(blk, course, sd + 50) < .35 ? K.dsD : hash(blk, course, sd + 51) < .3 ? K.ds : [128, 120, 108]);
@@ -646,8 +666,19 @@ export function* paintVolcano(S) {
     // (where the tongue meets the feeder: a little cone of spatter that spits before the lava comes)
     return { ...F, lava, crust, x0, y0, W, H, q };
   });
-  // the gates: a breach in the rock with a glowing lip
-  for (const g of Object.values(RT.gates)) for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const dd = Math.hypot(dx, dy); if (dd < 6) px(g.x + dx, g.y + dy, dd < 3 ? K.lava1 : K.lavaD); }
+  // where the lava comes in: the overflow of the fan is a breach with a glowing lip; a crack is a jagged fissure in the slope across the way down, glowing in
+  // its depth, black and scorched at its lips (it opens before its tongue runs, volcano.js)
+  for (const g of Object.values(RT.gates)) {
+    if (g.spill) { for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const dd = Math.hypot(dx, dy); if (dd < 6) px(g.x + dx, g.y + dy, dd < 3 ? K.lava1 : K.lavaD); } continue; }
+    const ux = -Math.sin(g.ang), uy = Math.cos(g.ang);
+    for (let a = -12; a <= 12; a += .5) {
+      const w = 2.4 * (1 - Math.abs(a) / 13), jag = (vnoise(a * .35, 3, sd + 170 + g.x) - .5) * 4, X = g.x + ux * a + Math.cos(g.ang) * jag, Y = g.y + uy * a + Math.sin(g.ang) * jag;
+      for (let c2 = -w - 2; c2 <= w + 2; c2 += .5) {
+        const PX = X + Math.cos(g.ang) * c2, PY = Y + Math.sin(g.ang) * c2, ac = Math.abs(c2);
+        px(PX, PY, ac < w * .45 ? K.lava2 : ac < w ? K.lavaD : K.cinD);
+      }
+    }
+  }
 
   yield;
   // ----- the fire brigade's washing bay beside the start straight: wet tiles, a low wall between the road and the lane, the fire engine behind it, a hydrant -----
@@ -766,7 +797,7 @@ export function* paintVolcano(S) {
     k++;
   }
 
-  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, bay, camp, vents, hornitos, signs, lavaPix, crater: def.crater, fountains: def.fountains, serp: RT.serp, laneM: RT.laneM,
+  return { jumps: RT.jumps, pushes: RT.pushes, alt: RT.alt, bay, camp, vents, hornitos, signs, lavaPix, crater: def.crater, cone: def.cone, fountains: def.fountains, serp: RT.serp, laneM: RT.laneM,
     maze: { G: RT.G, tongues, gates: RT.gates, gully: RT.gullyM, rowIdx: RT.rowIdx, iA: RT.iA, iZ: RT.iZ, laps: M.laps, area: M.area, nr: M.nr },
     bridge: { big: RT.big, decks: RT.decks, deckBig: RT.deckBig, deckM: RT.deckM, holes: RT.holes, r0: (RT.big[0] - 30 + N) % N } };
 }

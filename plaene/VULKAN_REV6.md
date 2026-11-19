@@ -1,6 +1,6 @@
 # VULKAN Rev 6 – Umsetzungsliste nach der ersten Testfahrt
 
-Stand: 2026-11-19, Branch `map_pack`. Baut auf Rev 5 auf (`plaene/VULKAN_REV5.md`). **L1 und L2 erledigt** (2026-11-19), L3 bis L6 offen. In `ROADMAP.md` stehen die Punkte als 1S10-22 bis 1S10-30; hier die Umsetzung im Detail.
+Stand: 2026-11-19, Branch `map_pack`. Baut auf Rev 5 auf (`plaene/VULKAN_REV5.md`). **L1 bis L6 umgesetzt** (2026-11-19, `rev: 6`); offen nur die Abnahme durch den Nutzer. In `ROADMAP.md` stehen die Punkte als 1S10-22 bis 1S10-30; hier die Umsetzung im Detail.
 
 ## Rückmeldung des Nutzers (2026-11-19)
 
@@ -32,7 +32,33 @@ Aus dem Spiel (F8, Rev 5, Build 7699955):
 
 - **L1 erledigt:** Felsbrocken einer Felsrippe liegen nie auf einer Trockensteinmauer (`onDry` in `rockRidge`, `volcanomap.js`); Brückenlöcher ohne Träger, die offenen Platten einer Reihe als ein Loch ohne Fuge, am Brückenrand ist der Träger aufgerissen (`drawHoles`, `drawHoleGaps` in `volcano.js`, über der oberen Ebene); Gelände bis 9–14 px neben jeder Rinne wird Fels (Abstandsfeld in `volcanoTerrain`), das Labyrinth ist unten zu; Mauer der Bucht x 1032–1168, Weg der Bucht Asphalt.
 - **L2 erledigt:** Lava lässt den Dreck (`fallCar`), am Vulkan macht Code 0 erdig (`EARTH` .27/s im Hook `ground`), Satz `ash` erdbraun.
-- Prüfung: `check` SCHWER und LEICHT, 10 Autos: alle im Ziel, keine Hinweise, keine Abkürzung; SCHWER Bot 31,7 / 33,7 / 36,8 s; Bau 4,0 s am Stück (verborgenes Vorschaufenster).
+- Prüfung nach L1/L2: `check` SCHWER und LEICHT, 10 Autos: alle im Ziel, keine Hinweise, keine Abkürzung; SCHWER Bot 31,7 / 33,7 / 36,8 s; Bau 4,0 s am Stück (verborgenes Vorschaufenster).
+- **L3 erledigt:**
+  - Die Ströme West und Ost und ihre Tümpel entfallen.
+  - Lava kommt aus dem Überlauf des Fächers am Westende der Brücke (Tor `gO` mit einer Felsrinne vom Fächer her) und aus drei Spalten im Hang (`kW1`, `kM`, `kW2`).
+  - Die Spalten sind als glühende Risse gezeichnet und dampfen, bevor ihre Zunge läuft.
+- **L4 erledigt:**
+  - Neues Netz: 19 Knoten, 26 Rinnen in vier Strängen den Hang hinab (Süd, leicht West). Querverbindungen gibt es nur noch als B4–C3, C2–D1, D4–E3, C1–C2 und D2–D3; unten führt die Sammelrinne Y–Z zum Ausgang.
+  - Halbe Breite 16, Knoten 23.
+  - Keine Felsplatte mehr: Jede Rinne hat Felsufer mit Licht- und Schattenseite, Schichten und Streifen hangab; der Kamm geht in die Farbe des Hangs über.
+  - Der Hang zwischen den Ufern ist fest (Code 80), aber in den Höhenfarben gemalt (oben Asche und Schotter, unten trockenes Gras und Wiese). Die Rinnensohle nimmt die Farbe der Höhe an.
+  - Zungen: `kW1` B1–C1 und B1–C1–C2, `kM` C3–D3 und C3–D3–D2, `gO` B4–C4–D4, `kW2` D1–E1.
+  - Runden: 1 `[kW1, kM]`, 2 `[gO, kW2, kW1 lang]`, 3 `[kM, kW2, kW1 lang, kM lang]`; in Runde 3 bleibt nur der Oststrang.
+- **L5 erledigt:**
+  - Je nach Höhe des Spielers liegen leichter Dunst und Asche im Wind über dem Bild.
+  - Über dem Krater steht immer eine hohe Rauchfahne, die nach Osten treibt.
+  - Die Stützmauern werfen längere Schatten, die Rippen am Hang sind deutlicher.
+  - In den Rinnen gibt es Gefälle längs der Fahrtrichtung (`DOWNHILL` 34). Die Serpentinen bremsen stärker bergauf (−30).
+  - Nicht gemacht: ein Motorgeräusch bergauf, denn der Motorton hängt nur am Tempo.
+- **KI:**
+  - Sie plant von der Rinne aus, in der sie steht (`routeHere`). Vorher fuhr sie zum scheinbar nächsten Knoten quer gegen den Fels und blieb an der langen Schräge A–B4 hängen.
+  - Außerhalb des Labyrinths folgt sie der Mittellinie.
+  - Unten an der Sammelrinne gilt nicht mehr der Fortschritt nach der Höhe; vorher kreiselten Autos bei Z.
+- **L6:** `rev: 6`. Prüfung mit `check`:
+  - SCHWER 2×, MITTEL 2×, LEICHT, SCHWER mit 4 Autos 2× und ohne Ereignisse: alle im Ziel, keine Abkürzungen, Start 1°.
+  - Bot SCHWER 34 / 34–36 / 42–45 s, ohne Ereignisse 32,5 s. Das ist etwas länger als Rev 5 (Umwege beim Lavawechsel, Gefälle).
+  - Selten meldet `check` ein Computerauto als „hängt fest“, das beim Lavawechsel aus einem jetzt gesperrten Strang wieder hinauffährt (gewollt: die Lava kommt, wo man gerade ist).
+  - Bau am Stück 1,8–3,1 s.
 
 ## Reihenfolge
 

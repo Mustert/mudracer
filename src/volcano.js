@@ -68,11 +68,17 @@ function volcanoUpdate(T, dt) {
 
 // the ground under a car: the fire brigade's water; beside the road on the mountain the car gets earthy (half as fast as mud, 1S10-28: a fall into the
 // lava leaves the dirt as it was); foam goes when the car is clean
-const EARTH = .27;
+const EARTH = .27, DOWNHILL = 34; // (px/s² along the car where it points straight down the slope)
 function volcanoGround(c, j, sp, dt) {
   const T = G.T;
   if (T.washMask[j]) { if (!c.vWash) { c.vWash = true; if (!c.ai || near(c.x, c.y) < 260) SFX.hose(c.ai ? .4 : 1); } } else c.vWash = false;
   if (T.ter[j] === 0 && sp > 8) { c.dirt = Math.min(1, c.dirt + EARTH * dt); c.cem = false; }
+  // in the gullies it goes downhill (Rev 6: the slope runs away from the crater): faster where the car points down the slope, slower against it; only along
+  // the car, never sideways (a push across would press it against the banks)
+  if (T.volcano.maze.gully[j] && sp > 5) {
+    const [kx, ky] = T.volcano.cone, fx = (c.x - kx) * .3, fy = c.y - ky, fl = Math.hypot(fx, fy) || 1, a = (Math.cos(c.ang) * fx + Math.sin(c.ang) * fy) / fl;
+    c.vx += Math.cos(c.ang) * a * DOWNHILL * dt; c.vy += Math.sin(c.ang) * a * DOWNHILL * dt;
+  }
   if (c.dirt < .03) c.cem = false;
 }
 
@@ -80,7 +86,8 @@ function volcanoGround(c, j, sp, dt) {
 // look for the nearest point a little further round
 function volcanoProgress(c, best) {
   const T = G.T, N = T.N, M = T.volcano.maze, y = Math.round(c.y);
-  if (inMaze(T, c.x, c.y) && y >= 0 && y < T.H && M.rowIdx[y] >= 0) return M.rowIdx[y];
+  // (not along the gully at the bottom, where Y and Z gather it: it runs across, the height says nothing there)
+  if (inMaze(T, c.x, c.y) && y >= 0 && y < M.G.nodes.Y[1] - 18 && M.rowIdx[y] >= 0) return M.rowIdx[y];
   let bi = best, bd = 1e9;
   for (let k = -200; k <= 200; k++) { const i = (c.idx + k + N) % N, p = T.path[i], d = (p.x - c.x) ** 2 + (p.y - c.y) ** 2; if (d < bd) { bd = d; bi = i; } }
   return bd < 22500 ? bi : best;
@@ -112,6 +119,8 @@ function updateTongues(T, dt) {
     const f = ev.vlTongues[q], v = clamp(1 - near(F.gate.x, F.gate.y) / 500, 0, 1);
     if (f.ph === 'pre') {
       if (Math.random() < dt * 16 && v > 0) addP({ t: 'd', x: F.gate.x, y: F.gate.y, z: 6, vx: (Math.random() - .5) * 40, vy: (Math.random() - .5) * 30, vz: 60 + Math.random() * 40, col: Math.random() < .5 ? '#ffd04a' : '#ff7a1a', s: 2, life: .6, ml: .6 });
+      // (a crack in the slope steams while it opens)
+      if (!F.gate.spill && Math.random() < dt * 10 && v > 0) addP({ t: 'smoke', x: F.gate.x + (Math.random() - .5) * 16, y: F.gate.y, vx: (Math.random() - .5) * 10, vy: -12 - Math.random() * 14, life: 1.1, ml: 1.1 });
       if (G.player && Math.hypot(F.gate.x - G.player.x, F.gate.y - G.player.y) < 420) ev.vlAlarm = true;
       if (t - f.t0 < LAVA.pre) return;
       f.ph = 'flow'; if (v > .05) SFX.glut(v);
@@ -175,6 +184,23 @@ function nearestNode(M, x, y, ok) {
   return b;
 }
 
+// the way down from where the car is (Rev 6): the gully it is in (the nearest edge), then on from whichever end of it is better; never across the rock
+// to a node that only looks near (with long diagonal gullies the nearest node can lie behind a bank)
+function routeHere(T, x, y, jit) {
+  const M = T.volcano.maze, G2 = M.G, bl = blockedNodes(T);
+  let be = null, bk = 0, bd = 1e9;
+  for (const e of G2.edges) e.pts.forEach((p, k) => { const d = (p.x - x) ** 2 + (p.y - y) ** 2; if (d < bd) { bd = d; be = e; bk = k; } });
+  if (!be) return null;
+  let best = null;
+  for (const end of [be.a, be.b]) {
+    if (bl.has(end) && end !== 'Z') continue;
+    const R = end === 'Z' ? { nodes: ['Z'], pts: [] } : mazeRoute(T, end, jit); if (!R) continue;
+    const part = end === be.b ? be.pts.slice(bk) : be.pts.slice(0, bk + 1).reverse(), cost = part.length + R.pts.length;
+    if (!best || cost < best.cost) best = { cost, at: end === be.b ? be.a : be.b, R: { nodes: ['', ...R.nodes], pts: part.concat(R.pts) } };
+  }
+  return best;
+}
+
 // the computer cars in the maze: plan a way down through free gullies and follow it; plan again at every node and when the lava changes
 function mazeTarget(c) {
   const T = G.T, M = T.volcano.maze, ev = T.ev, N = T.N, [ax, ay] = M.G.nodes.A, [zx, zy] = M.G.nodes.Z;
@@ -186,16 +212,18 @@ function mazeTarget(c) {
   }
   const W = c.vMz;
   if (W.at === 'Z' || Math.hypot(c.x - zx, c.y - zy) < 24 || (!inside && Math.hypot(c.x - zx, c.y - zy) < 80 && c.x > zx)) { c.vMz = null; return null; }
+  // (outside the maze and not at its way in: back to the road first, the centre line leads to A; never across the slope to a gully behind its bank)
+  if (!inside && Math.hypot(c.x - ax, c.y - ay) > 40) { W.R = null; return null; }
   const seed = (c.seed * 1000) | 0, jit = q => hash(seed, q, 150);
-  if (!W.R || W.ver !== (ev ? ev.vlMzVer : 0)) { W.R = mazeRoute(T, W.at, jit); W.k = 0; W.ver = ev ? ev.vlMzVer : 0; }
-  if (!W.R) { const [nx, ny] = M.G.nodes[W.at]; return [nx, ny]; } // (no way down: wait at the node)
+  if (!W.R || W.ver !== (ev ? ev.vlMzVer : 0)) { const B = routeHere(T, c.x, c.y, jit); W.R = B && B.R; if (B && B.at !== 'Z') W.at = B.at; W.k = 0; W.ver = ev ? ev.vlMzVer : 0; }
+  if (!W.R) return [c.x + Math.cos(c.ang) * 4, c.y + Math.sin(c.ang) * 4]; // (no way down: wait where it is)
   // reached the next node: plan from there
   const nx = W.R.nodes[1];
   if (nx && Math.hypot(M.G.nodes[nx][0] - c.x, M.G.nodes[nx][1] - c.y) < M.nr - 6) { W.at = nx; W.R = mazeRoute(T, W.at, jit); W.k = 0; if (!W.R) return M.G.nodes[W.at].slice(); }
   const P = W.R.pts;
   let k = W.k, bd = 1e9;
   for (let q = W.k; q < Math.min(P.length, W.k + 40); q++) { const dd = (P[q].x - c.x) ** 2 + (P[q].y - c.y) ** 2; if (dd < bd) { bd = dd; k = q; } }
-  if (bd > 46 * 46) { W.at = nearestNode(M, c.x, c.y); W.R = null; return M.G.nodes[W.at].slice(); }
+  if (bd > 46 * 46) { W.R = null; return [c.x + Math.cos(c.ang) * 4, c.y + Math.sin(c.ang) * 4]; } // (off its way: plan again from here next step)
   W.k = k;
   const p = P[Math.min(P.length - 1, k + 10)];
   return [p.x, p.y];
@@ -610,11 +638,12 @@ function drawVolcanoAbove() {
   }
   ctx.globalAlpha = 1;
   // the volcano smokes; in the eruption a big dark column rises out of the crater
-  if (inView(cx, cy, 200)) {
-    const big = !!ev.vlErupt;
-    for (let q = 0; q < (big ? 16 : 6); q++) {
-      const ph = (G.time * (big ? .35 : .2) + q / (big ? 16 : 6)) % 1, x = cx + Math.sin(q * 2.1 + G.time * .3) * (10 + ph * 30) + ph * 40, y = cy - 40 - ph * (big ? 200 : 110);
-      ctx.globalAlpha = (1 - ph) * (big ? .55 : .3); disc(Math.round(x), Math.round(y), Math.round((big ? 12 : 7) + ph * (big ? 26 : 14)), big ? '#3a3432' : '#8a8682');
+  // (Rev 6: always a tall plume, seen from far down the mountain, the wind takes it east)
+  if (inView(cx, cy, 320)) {
+    const big = !!ev.vlErupt, n = big ? 16 : 10;
+    for (let q = 0; q < n; q++) {
+      const ph = (G.time * (big ? .35 : .16) + q / n) % 1, x = cx + Math.sin(q * 2.1 + G.time * .3) * (10 + ph * 30) + ph * (big ? 40 : 90), y = cy - 40 - ph * (big ? 200 : 170);
+      ctx.globalAlpha = (1 - ph) * (big ? .55 : .32); disc(Math.round(x), Math.round(y), Math.round((big ? 12 : 9) + ph * (big ? 26 : 22)), big ? '#3a3432' : '#9a9692');
     }
     ctx.globalAlpha = 1;
   }
@@ -694,9 +723,23 @@ function drawCrew(V) {
   if (Math.random() < .5) addP({ t: 'd', x: wx0 + Math.random() * (wx1 - wx0), y: wy0 + Math.random() * (wy1 - wy0), z: 2, vx: (Math.random() - .5) * 20, vy: (Math.random() - .5) * 20, vz: 30, col: '#9edcf0', s: 1, life: .4, ml: .4 });
 }
 
-// on the screen: the red sky and the ash rain of the eruption
+// on the screen: up high a thin haze and grains of ash the wind blows down the slope (how high you are: Rev 6, you feel the climb); the red sky and the ash
+// rain of the eruption
 function drawVolcanoSky(cx, cy) {
-  const ev = G.T.ev;
+  const ev = G.T.ev, P = G.player, V = G.T.volcano;
+  if (P && V.cone) {
+    const [kx, ky, R] = V.cone, up = clamp((1 - Math.hypot((P.x - kx) * .55, P.y - ky) / R - .45) / .35, 0, 1);
+    if (up > 0) {
+      ctx.fillStyle = 'rgba(196,200,210,' + (up * .1).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH);
+      ctx.globalAlpha = .35 + up * .3;
+      for (let i = 0; i < Math.round(up * 26); i++) {
+        const x = ((hash(i, 5, 108) * (VW + 40) - G.time * (30 + hash(i, 6, 108) * 40) - cx * .4) % (VW + 40) + VW + 40) % (VW + 40) - 20;
+        const y = ((hash(i, 7, 108) * (VH + 20) + G.time * (22 + hash(i, 8, 108) * 18) - cy * .4) % (VH + 20) + VH + 20) % (VH + 20) - 10;
+        R1(Math.round(x), Math.round(y), 2, 1, i % 2 ? '#d8d4ce' : '#9a9690');
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
   if (ev && ev.vlErupt) {
     ctx.fillStyle = 'rgba(110,24,0,' + Math.min(.16, ev.vlErupt.t * .1).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH);
     for (let i = 0; i < 80; i++) {

@@ -71,7 +71,7 @@ Werte `[Tempo, Seitenhaftung, Lenkung, Gas]` aus `surfOf` (`physics.js`), Wirkun
 | 30–32, 41–48, 50–52 | Spielzimmer, Regenbogen, Strand-Volleyball | Hook `surf` | eigene Blöcke |
 | 60–61 | Wüste Rev 3: Rallysand, Treibsand-Vorstufe | Hook `surf` | siehe Abschnitt 14 |
 | 70–71 | Eis Rev 2: 70 Lifttrasse (Straße unter den Seilen), 71 Pulverschnee im Wald | Hook `surf`: 71 `[.9, 6, .9]`, 70 wie Straße | 70: das Auto wird eingehängt (`c.iceLift`), 71: offenes Feld, macht nicht weiß; siehe Abschnitt 15 |
-| 80 | Vulkan Rev 5: Fels des Rinnen-Labyrinths | Hook `surf`: wie Code 0 | fest an allen Kanten (Kreise 6 px innen), Hook `noRespawn` |
+| 80 | Vulkan Rev 5/6: Felsufer der Rinnen und der eingeschlossene Hang dazwischen | Hook `surf`: wie Code 0 | fest an allen Kanten (Kreise 6 px innen), Hook `noRespawn` |
 | 81 | frei | – | – |
 
 Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil von `updateRace` (`c.surf`), also einen Schritt verzögert.
@@ -181,7 +181,26 @@ Im Dev-Server: `mudracer.G.T` (aktuelle Strecke), `mudracer.G.cars`, `mudracer.t
 - **Hook `progress`:** sucht ±200 Indizes um `c.idx` (Wald neben Bergauf, Serpentinen-Schenkel).
 - **Prüfung:** `mudracer.check('EIS', { diff, fx, cars })`; für Bilder im Rennen die Rennschleife anhalten (`window.requestAnimationFrame = () => 0`), Auto versetzen, `update` laufen lassen und `drawRace(1)` rufen (vorher `ctx.setTransform(1, 0, 0, 1, 0, 0)`, sonst summiert sich die Verschiebung und das Bild bleibt leer).
 
-## 16. Vulkan Rev 5 in Kürze (Karte 1700 × 1100, Südseite des Bergs: Gerade, Serpentinen, Stahlbrücke, Rinnen-Labyrinth)
+## 16. Vulkan Rev 6 in Kürze (Karte 1700 × 1100, Südseite des Bergs: Gerade, Serpentinen, Stahlbrücke, Rinnen-Labyrinth)
+
+**Rev 6 (plaene/VULKAN_REV6.md) ändert gegenüber dem Text darunter:**
+- **Ströme:** nur noch der Kraterabfluss und der Hauptstrom (`flows`, `pools` leer).
+- **Labyrinth ohne Fläche `area`:** Die Rinnen laufen den Hang hinunter, vier Stränge, wenige Querverbindungen, unten Sammelrinne Y–Z.
+  - Jede Rinne bekommt Felsufer (Code 80, 12–18 px, Abstandsfeld in `volcanoTerrain`).
+  - Der eingeschlossene Hang zwischen den Ufern ist ebenfalls Code 80 (`islandM`, Flutfüllung vom Rand der Box), wird aber als Hang gemalt.
+  - Die Mittellinie im Labyrinth wird nur dort Straße, wo eine Rinne ist.
+- **Tore `gates` `[x, y, Knoten, von?]`:**
+  - mit `von` der Überlauf des Fächers am Westende der Brücke (Rinne aus Fels `conM` vom Fächer zum Tor);
+  - ohne `von` eine Spalte im Hang, gezeichnet als glühender Riss, die vor ihrer Zunge dampft.
+- **KI:** `routeHere` plant von der Rinne, in der das Auto steht (nächste Kante, besseres Ende), nie quer durch den Fels zum nur scheinbar nächsten Knoten. Außerhalb des Labyrinths und weiter als 40 px von A übernimmt die Mittellinie.
+- **Fortschritt:** nach `rowIdx` nur oberhalb der Sammelrinne (`Y` − 18).
+- **Gefälle:** In den Rinnen `DOWNHILL` 34 px/s² längs des Autos, je nachdem, wie weit es hangabwärts zeigt (weg vom Kegel), nie seitlich. Die Serpentinen behalten den Schub −30.
+- **Am Hang erdig:** Code 0 (`EARTH`); Lava lässt den Dreck.
+- **Oben:**
+  - leichter Dunst und Asche im Wind je nach Höhe des Spielers (`drawSky`, `V.cone`);
+  - eine hohe Rauchfahne über dem Krater;
+  - längere Schatten unter den Stützmauern.
+- **Brückenlöcher:** eine Reihe offener Platten als ein Loch; am Rand ist der Träger aufgerissen (`drawHoleGaps`).
 
 - **Dateien:** `volcanomap.js` (`volcanoTerrain`: Kratersee `lakeM`, Lava unter der Brücke `fan` (`fanM`; Straße darüber = `bridgeM`), Ströme aus Kreisketten `flows` (`stampChain`; `bridge: true` = kurze Stahlbrücke auf der Geraden), Lavatümpel `pools`; Labyrinth `maze`: Fläche `area` (Polygon mit verrauschtem Rand außer im Osten und bei Z) wird Fels 80, Rinnen (`mazeGraph`: Knoten, Kanten mit leichtem Bogen, `gw` halbe Breite, Knoten `nr`) werden Straße und `alt`, die Hauptstraße vor und hinter dem Labyrinth bleibt Straße (`inMaze` über die Indizes A bis Z); Lavarinnen `conM` von den Toren `gates` zu den Knoten; Zungen `tongues` (Pixel der Rinnen nach Punkt der Kette sortiert: `J`, `K`, `U`, `old`); `rowIdx` = Index der Mittellinie je Zeile (Fortschritt im Labyrinth nach der Höhe); Brücken: `spans` über `bridgeM`, `decks` (Spannen ± 14 bzw. 8 Punkte, `deckM`), `deckBig`, Löcher `holes` (Platte 20 × 20 px, Spalte −1/0/1, Pixel `J`, Ecken `P`, Mitte `c`); Waschbucht `bay`; `paintVolcano`: Abstand zur Lava `ld` (Glutsaum), Tiefe in der Lava `lin` (Kruste am Ufer), Tiefe im Fels `rd` (Kanten, feste Kreise 6 px innen), Höhe und Licht `hillShade` (Farbe nach Höhe: Wiese, trockenes Gras, Schotter, Asche), alte Lavaströme `old`, Kratersee aus Zellen, Fächer als Kruste mit glühenden Fugen außer längs der Achse Krater–Hauptstrom, Asphalt der Geraden (`straight`), Stahldeck, Stützmauern `dryWall` ('d') und Felsrippen `rockRidge` ('r') aus `walls`, Hanganschnitt der Serpentinen, Leitplanke, Fachwerkträger, Warnschilder, Hornitos `spatter`, Bilder der Zungen (`lava`, `crust`), Feuerwehr, Basecamp `camp`, Kulisse), `volcano.js` (Laufzeit). Theme `goo2: 'foam'` (weißer Löschschaum, `cars.js` `FOAM`).
 - **Abkürzungen zu:** Kraterrand fest, Lava (Fächer bis an den Kraterrand, Ströme, Tümpel), Leitplanke an der Nordseite der Geraden, Stützmauern zwischen allen Serpentinen-Schenkeln bis zum Kartenrand, Felsrippen westlich der Kehren bis an den Fächer, Fels des Labyrinths (fest an jeder Kante, auch zur Straße hin), Fachwerkträger der Brücken.
