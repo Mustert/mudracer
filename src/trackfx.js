@@ -67,8 +67,8 @@ export function fallCar(c, kind, at) {
   c.fall = kind === 'sand' ? 1.1 : kind === 'space' ? 1.2 : 1.4; c.fallT0 = c.fall; c.fallKind = kind; c.fx0 = c.x; c.fy0 = c.y; c.dvx = c.vx; c.dvy = c.vy;
   c.vx = c.vy = 0; c.boost = 0; c.stun = 0; c.z = 0; c.sink = 0;
   c.respawnI = at === undefined ? null : at;
-  // quicksand leaves the car beige, lava sooty
-  if (kind === 'sand' || kind === 'lava') c.dirt = 1; // (in the jungle the deep swamp makes it green)
+  // quicksand leaves the car beige; lava leaves the dirt as it was (no double punishment, 1S10-28)
+  if (kind === 'sand') c.dirt = 1; // (in the jungle the deep swamp makes it green)
   if (kind === 'lava') { for (let i = 0; i < 16; i++) addP({ t: 'smoke', x: c.x + (Math.random() - .5) * 16, y: c.y + (Math.random() - .5) * 12, vx: (Math.random() - .5) * 20, vy: -15 - Math.random() * 20, life: 1.2, ml: 1.2 }); }
   const v = loud(c, c.x, c.y); if (v > .02) ({ abyss: SFX.fall, sand: SFX.sink, lava: SFX.burn, space: SFX.drift, cloud: SFX.fall }[kind] || SFX.sink)(v);
 }

@@ -65,7 +65,7 @@ Werte `[Tempo, Seitenhaftung, Lenkung, Gas]` aus `surfOf` (`physics.js`), Wirkun
 | 12 | Blankeis | 1, wenig Haftung, Gas ½ | KI nimmt Gas weg |
 | 13 | Mondboden | wie Gras | Weltall |
 | 14 | Hängebrücke | .6 | Knarzen |
-| 15 | Lava | – | Fall (`'lava'`), rußig, Rauch |
+| 15 | Lava | – | Fall (`'lava'`), Rauch; der Dreck bleibt, wie er war |
 | 16 | frei (früher Kruste von Vulkan Rev 1) | – | – |
 | 17 | Plattform Schwerelosigkeit | wenig Haftung | Weltall |
 | 30–32, 41–48, 50–52 | Spielzimmer, Regenbogen, Strand-Volleyball | Hook `surf` | eigene Blöcke |
@@ -91,7 +91,7 @@ Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil
 
 ## 5. Schmutz und Waschen
 
-- `c.dirt` 0..1. Steigt in Matsch/Zement (.55/s, langsam unter 8 px/s), Öl (1,36/s), Treibsand (.5/s); Fallen in Sand/Lava setzt 1, Versinken im Wasser 0.
+- `c.dirt` 0..1. Steigt in Matsch/Zement (.55/s, langsam unter 8 px/s), Öl (1,36/s), Treibsand (.5/s), am Vulkan neben der Straße (Code 0, Hook `ground`, `EARTH` .27/s: erdig, Satz `ash` in Erdbraun); Fallen in Sand setzt 1, Fallen in Lava lässt den Dreck (1S10-28), Versinken im Wasser 0.
 - Wirkung über `def.soil` (`cars.js`, aus `mud` berechnet, 0,04 bis 0,21): Höchsttempo × `(1 − soil·dirt)`, Lenkung schwächer, Stottern beim Gas, Schlingern ab `dirt > .15`. Geländewagen (hohes `mud`) leiden kaum.
 - Sauber werden: flaches Wasser (−.7/s), Waschanlage `washMask` (−.35 beim Einfahren, dann −3/s), Duschen `T.showers` (−.12, dann −1,8/s), Schlauch, Sonderstrecken über Hook `ground`. Grundsatz 13: genau eine Art je Strecke.
 - Box (Rennstrecke, `ring.js` `ringGround`): wer in der Gasse die Mitte der Box erreicht, steht 1 s (`c.boxT`) und wird dabei sauber; immer nur ein Auto zugleich. Boxenmauer (`def.pit.wall`) und Leitplanke vor den Garagen fassen die Gasse ein, es gibt keinen Weg an der Box vorbei. In der letzten Runde eines Autos (`boxShut`) ist die Einfahrt mit einer Schranke zu (`pit.gate`, Hook `collisions`, nur für dieses Auto fest; gezeichnet, wenn dein Auto in der letzten Runde ist). Computerautos fahren nur dreckig (`dirt ≥ .5`), einzeln und mit Gas ≤ .55 hinein (Hooks `target`, `throttle`).

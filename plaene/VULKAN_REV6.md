@@ -1,6 +1,6 @@
 # VULKAN Rev 6 – Umsetzungsliste nach der ersten Testfahrt
 
-Stand: 2026-11-19, Branch `map_pack`. Baut auf Rev 5 auf (`plaene/VULKAN_REV5.md`). **Noch nicht begonnen**, nur die Liste. In `ROADMAP.md` stehen die Punkte als 1S10-22 bis 1S10-30; hier die Umsetzung im Detail.
+Stand: 2026-11-19, Branch `map_pack`. Baut auf Rev 5 auf (`plaene/VULKAN_REV5.md`). **L1 und L2 erledigt** (2026-11-19), L3 bis L6 offen. In `ROADMAP.md` stehen die Punkte als 1S10-22 bis 1S10-30; hier die Umsetzung im Detail.
 
 ## Rückmeldung des Nutzers (2026-11-19)
 
@@ -27,6 +27,12 @@ Aus dem Spiel (F8, Rev 5, Build 7699955):
 | **L4 Labyrinth als Hang mit Rinnen** | Die graue Pflasterfläche (Code 80 als Polygon `maze.area`) entfällt als Bild. Stattdessen ein ausgewaschener Hang: die Rinnen folgen überwiegend der Falllinie (von oben nach unten, leicht verzweigt, mit Querverbindungen), zwischen ihnen Grate aus Lavagestein mit Licht- und Schattenseite (Licht von Nordwest), Geröll und Felsbrocken in den Rinnen, Schuttfächer an den Mündungen. Die Bodenfarben folgen der Höhe wie am übrigen Berg (oben grau/schwarz, unten trockenes Gras, ganz unten grün), damit man sieht, dass es bergab geht. Keine Polygonkante: der Fels endet am Hang, oben an der Straße, ohne Zipfel hinter der Strecke (Fläche oben rechts an `[590, 318]` weg). Fest bleibt der Fels (Code 80) zwischen den Rinnen, Grundsatz 10 (fahrbar sieht anders aus als fest) gilt. Netz der Rinnen bei Bedarf neu (mehr senkrechte Rinnen, weniger waagerechte); Mittellinie, `rowIdx`, KI-Wegsuche und `laps` nachziehen | `tracks.js` (`maze`), `volcanomap.js` (`volcanoTerrain`, `paintVolcano`) | 1S10-24, 1S10-29, 1S10-21 |
 | **L5 Hinauf und hinunter spüren** | Ganze Karte: (a) Relief stärker: Schattierung nach Hangrichtung (der Kegel `cone` hell an der Nordwestflanke, dunkel an der Südostflanke), radiale Grate und Rinnen vom Krater herab, Höhenstufen mit weichen Schattenkanten; die Vegetation endet nach oben (Wiese → Büsche → Gras → Schotter → Asche). (b) Serpentinen: höhere Stützmauern mit längeren Schatten, Hanganschnitt deutlicher, Geröll unter den Mauern; bergauf dreht der Motor hörbar höher, Staub. (c) Bergab im Labyrinth: das Gefälle (`slopes`, heute 22) spürbar machen (schneller, Geröll rutscht nach), Rollsplitt-Staub. (d) Oben: Rauchsäule und Dampf über dem Krater (über den Autos, `drawSky`), Wind treibt Asche bergab. Messen: Rundenzeiten und Bauzeit (1S10-14) | `volcanomap.js` (`hillShade`, Zonen), `volcano.js` (Zeichnen, Gefälle), `tracks.js` (`slopes`) | 1S10-29 |
 | **L6 Abschluss** | `rev: 6` (der Kurs im Labyrinth ändert sich), `check` auf LEICHT, MITTEL, SCHWER mit 4 und 10 Autos, `checkAll`, Bauzeit messen, Bilder ansehen (Start, Mauer, Brücke mit Loch, Labyrinth von oben, Unterkante, Bucht); Doku: `Strecken.md` Abschnitt 10 (Wünsche als umgesetzt markieren), `ROADMAP.md` (1S10-21 bis 1S10-30, Tabelle, „Zuletzt abgeglichen“), Skill `mechanik` (Abschnitt 16, Code 80, Schmutz am Vulkan) | alles | 1S10-12, 1S10-14 |
+
+## Stand der Pakete
+
+- **L1 erledigt:** Felsbrocken einer Felsrippe liegen nie auf einer Trockensteinmauer (`onDry` in `rockRidge`, `volcanomap.js`); Brückenlöcher ohne Träger, die offenen Platten einer Reihe als ein Loch ohne Fuge, am Brückenrand ist der Träger aufgerissen (`drawHoles`, `drawHoleGaps` in `volcano.js`, über der oberen Ebene); Gelände bis 9–14 px neben jeder Rinne wird Fels (Abstandsfeld in `volcanoTerrain`), das Labyrinth ist unten zu; Mauer der Bucht x 1032–1168, Weg der Bucht Asphalt.
+- **L2 erledigt:** Lava lässt den Dreck (`fallCar`), am Vulkan macht Code 0 erdig (`EARTH` .27/s im Hook `ground`), Satz `ash` erdbraun.
+- Prüfung: `check` SCHWER und LEICHT, 10 Autos: alle im Ziel, keine Hinweise, keine Abkürzung; SCHWER Bot 31,7 / 33,7 / 36,8 s; Bau 4,0 s am Stück (verborgenes Vorschaufenster).
 
 ## Reihenfolge
 

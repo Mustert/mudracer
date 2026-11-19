@@ -282,8 +282,8 @@ export const completeSet = S => stepSet(S, Infinity);
 const OIL = ['#17171b', '#26262c', '#0c0c0e'].map(hex);
 // the desert makes the cars sandy (beige), the ice track white with snow
 const SAND = ['#d9b878', '#c9a263', '#ead09a'].map(hex), SNOW = ['#f6f9fc', '#dde8f2', '#ffffff'].map(hex);
-// the volcano makes them sooty: grey and black ash
-const ASH = ['#55524e', '#77736d', '#34312e'].map(hex);
+// the volcano makes them earthy (beside the road on the mountain): brown volcanic earth with grey ash in it
+const ASH = ['#6e5a46', '#8a7560', '#4a3e34'].map(hex);
 // the fire brigade's extinguisher leaves them white with foam (volcano: a burning car is put out)
 const FOAM = ['#ffffff', '#e6ecf0', '#cdd6dc'].map(hex);
 // the jungle swamp makes them green

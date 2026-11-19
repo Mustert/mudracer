@@ -66,10 +66,13 @@ function volcanoUpdate(T, dt) {
   if (ev.vlErupt && G.player && G.player.lap >= LAPS && Math.random() < dt * 30) addP({ t: 'd', x: cam.x + Math.random() * VW, y: cam.y + Math.random() * VH, z: 60, vx: (Math.random() - .5) * 20, vy: 10, vz: -20, col: ['#ff7a1a', '#ffd04a', '#ff4a1a'][(Math.random() * 3) | 0], s: 1, life: 1.4, ml: 1.4 });
 }
 
-// the ground under a car: the fire brigade's water; foam and soot go when the car is clean
+// the ground under a car: the fire brigade's water; beside the road on the mountain the car gets earthy (half as fast as mud, 1S10-28: a fall into the
+// lava leaves the dirt as it was); foam goes when the car is clean
+const EARTH = .27;
 function volcanoGround(c, j, sp, dt) {
   const T = G.T;
   if (T.washMask[j]) { if (!c.vWash) { c.vWash = true; if (!c.ai || near(c.x, c.y) < 260) SFX.hose(c.ai ? .4 : 1); } } else c.vWash = false;
+  if (T.ter[j] === 0 && sp > 8) { c.dirt = Math.min(1, c.dirt + EARTH * dt); c.cem = false; }
   if (c.dirt < .03) c.cem = false;
 }
 
@@ -463,8 +466,13 @@ function drawTongues(T, V, ev) {
   });
 }
 
-// the holes in the bridge: the lava far below glows through, a girder crosses it; a plate that is about to fall shakes and glows red, then it drops
+// the holes in the bridge: the lava far below glows through; a plate that is about to fall shakes and glows red, then it drops
 function drawHoles(T, V, ev) {
+  ctx.fillStyle = '#141010';
+  V.bridge.holes.forEach((H, q) => {
+    if (ev.vlHoles[q].ph !== 'open' || !inView(H.c.x, H.c.y, 30)) return;
+    ctx.beginPath(); H.P.forEach((p, k) => { const x = H.c.x + (p.x - H.c.x) * 1.1, y = H.c.y + (p.y - H.c.y) * 1.1; if (k) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.closePath(); ctx.fill();
+  });
   V.bridge.holes.forEach((H, q) => {
     const h = ev.vlHoles[q]; if (h.ph === 'closed' || !inView(H.c.x, H.c.y, 30)) return;
     const P = H.P, poly = (pts, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (const p of pts.slice(1)) ctx.lineTo(p.x, p.y); ctx.closePath(); ctx.fill(); };
@@ -475,19 +483,21 @@ function drawHoles(T, V, ev) {
       ctx.strokeStyle = ((G.time * 8) | 0) % 2 ? '#ffd04a' : '#5a1810'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(P[0].x, P[0].y); for (const p of P.slice(1)) ctx.lineTo(p.x, p.y); ctx.closePath(); ctx.stroke();
       return;
     }
-    // open: the torn edge of the deck, a deep dark shaft (darker on its north-west side, in its own shadow), far below the lava glows dim and flickers,
-    // two girders of the bridge cross it below the deck; the plate falls for a moment
-    poly(shrink(1.05), '#141010');
-    poly(shrink(.9), '#3a1610');
-    ctx.globalAlpha = .75 + .15 * Math.sin(G.time * 5 + q); poly(shrink(.62, 1.5, 1.5), '#8a2a0e');
-    ctx.globalAlpha = .45 + .3 * Math.sin(G.time * 7 + q); poly(shrink(.36, 2, 2), '#e0601a');
-    ctx.globalAlpha = .25 + .3 * Math.sin(G.time * 11 + q * 2); poly(shrink(.16, 2, 2), '#ffb040'); ctx.globalAlpha = 1;
+    // open: the torn edge of the deck, then the shaft down to the lava, which glows and flickers far below; nothing crosses it (no girders, no seam
+    // between two plates of one row: it must look like a fall, 1S10-23); the plate falls for a moment. The torn edges of all open holes come first
+    // (above); the open plates of one row are drawn as one hole by the plate with the lowest column
+    const row = V.bridge.holes.filter(o => o.i === H.i && ev.vlHoles[o.q].ph === 'open').sort((a, b) => a.col - b.col);
+    if (row[0] === H) {
+      const L = row[row.length - 1], Q = [H.P[0], H.P[1], L.P[2], L.P[3]], cx = (Q[0].x + Q[2].x) / 2, cy = (Q[0].y + Q[2].y) / 2;
+      const sh = (f, d) => Q.map(p => ({ x: cx + (p.x - cx) * f + d, y: cy + (p.y - cy) * f + d }));
+      poly(Q, '#2a1410');
+      ctx.globalAlpha = .9; poly(sh(.82, 1.5), '#a83a12');
+      ctx.globalAlpha = .7 + .2 * Math.sin(G.time * 7 + q); poly(sh(.62, 2), '#f07020');
+      ctx.globalAlpha = .45 + .35 * Math.sin(G.time * 11 + q * 2); poly(sh(.36, 2), '#ffc04a'); ctx.globalAlpha = 1;
+    }
     const lerp = (a, b, f) => ({ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f });
-    ctx.strokeStyle = '#1c2422'; ctx.lineWidth = 2;
-    for (const f of [.3, .72]) { const a = lerp(P[0], P[1], f), b = lerp(P[3], P[2], f); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
-    ctx.lineWidth = 1;
     // (jagged bits of the torn plate along the edge)
-    for (let s = 0; s < 4; s++) { const a = lerp(P[s], P[(s + 1) % 4], .25 + hash(q, s, 172) * .5); R1(Math.round(a.x + (H.c.x - a.x) * .1), Math.round(a.y + (H.c.y - a.y) * .1), 2, 2, '#646e76'); }
+    for (let s = 0; s < 4; s++) { if ((s === 0 && row[0] !== H) || (s === 2 && row[row.length - 1] !== H)) continue; const a = lerp(P[s], P[(s + 1) % 4], .25 + hash(q, s, 172) * .5); R1(Math.round(a.x + (H.c.x - a.x) * .1), Math.round(a.y + (H.c.y - a.y) * .1), 2, 2, '#646e76'); }
     const u = (ev.t - h.t0) / HOLE.fall;
     if (u < 1) { ctx.globalAlpha = 1 - u; poly(shrink(1 - u * .7, Math.sin(u * 9) * 2, u * 8), '#8c969e'); ctx.globalAlpha = 1; }
   });
@@ -536,8 +546,24 @@ function drawBridgeFall(c, F, lv) {
 }
 
 // over the cars: lava fountains, fireballs, fires, burning cars and their extinguishers, the hornitos, the smoke, the helicopters, the base camp
+// where a hole reaches the edge of the bridge, the girder is torn away there too (its upper chord is on the top layer, so this is drawn above it):
+// the gap shows the shaft down to the lava, the ends of the girder stick out
+function drawHoleGaps(T, V, ev) {
+  V.bridge.holes.forEach((H, q) => {
+    if (!H.col || ev.vlHoles[q].ph !== 'open' || !inView(H.c.x, H.c.y, 40)) return;
+    const s = H.col, ia = (H.i - 5 + T.N) % T.N, ib = (H.i + 5) % T.N, pt = (i, c, dy) => ({ x: T.path[i].x + T.nrm[i].x * c, y: T.path[i].y + T.nrm[i].y * c + dy });
+    for (let dy = 0; dy >= -7; dy--) {
+      const Q = [pt(ia, s * (HALF - 1), dy), pt(ib, s * (HALF - 1), dy), pt(ib, s * (HALF + 5), dy), pt(ia, s * (HALF + 5), dy)];
+      ctx.fillStyle = dy === 0 ? '#2a1410' : '#1c0e0c'; ctx.beginPath(); ctx.moveTo(Q[0].x, Q[0].y); for (const p of Q.slice(1)) ctx.lineTo(p.x, p.y); ctx.closePath(); ctx.fill();
+    }
+    ctx.globalAlpha = .55 + .25 * Math.sin(G.time * 9 + q); const m = pt(H.i, s * (HALF + 2), 1); disc(Math.round(m.x), Math.round(m.y), 3, '#e0601a'); ctx.globalAlpha = 1;
+    for (const i of [ia, ib]) { const e = pt(i, s * (HALF + 2), -3); R1(Math.round(e.x) - 1, Math.round(e.y) - 3, 3, 6, '#3c5a4a'); }
+  });
+}
+
 function drawVolcanoAbove() {
   const T = G.T, V = T.volcano, ev = T.ev;
+  if (ev.vlHoles) drawHoleGaps(T, V, ev);
   V.fountains.forEach(([x, y], q) => {
     const f = fountain(q); if (!f.on || !inView(x, y, 60)) return;
     const hgt = f.big ? 46 : 30;

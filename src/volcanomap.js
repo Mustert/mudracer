@@ -209,6 +209,27 @@ export function* volcanoTerrain(S) {
     if (gullyM[j] && ter[j] !== 15) { ter[j] = 1; alt[j] = 1; continue; }
     if (areaM[j] && (ter[j] === 0 || (ter[j] === 1 && (dist[j] >= HALF || inMaze(near[j]))))) ter[j] = 80;
   }
+  // every gully has rock on both sides, also where the wobbly edge of the area comes close: open ground within 9 to 14 px of a gully becomes rock
+  // (otherwise a gully could open onto the meadow below the maze, 1S10-26); chamfer distance in the box of the maze
+  {
+    const bx0 = Math.max(0, ax0 - 30), by0 = Math.max(0, ay0 - 30), bx1 = Math.min(MW - 1, ax1 + 30), by1 = Math.min(MH - 1, ay1 + 30), BW = bx1 - bx0 + 1, BH = by1 - by0 + 1;
+    const dg = new Uint16Array(BW * BH).fill(9999);
+    for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) if (gullyM[(y + by0) * MW + x + bx0]) dg[y * BW + x] = 0;
+    for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) {
+      const k = y * BW + x; let v = dg[k];
+      if (x > 0) v = Math.min(v, dg[k - 1] + 3); if (y > 0) { v = Math.min(v, dg[k - BW] + 3); if (x > 0) v = Math.min(v, dg[k - BW - 1] + 4); if (x < BW - 1) v = Math.min(v, dg[k - BW + 1] + 4); }
+      dg[k] = v;
+    }
+    for (let y = BH - 1; y >= 0; y--) for (let x = BW - 1; x >= 0; x--) {
+      const k = y * BW + x; let v = dg[k];
+      if (x < BW - 1) v = Math.min(v, dg[k + 1] + 3); if (y < BH - 1) { v = Math.min(v, dg[k + BW] + 3); if (x < BW - 1) v = Math.min(v, dg[k + BW + 1] + 4); if (x > 0) v = Math.min(v, dg[k + BW - 1] + 4); }
+      dg[k] = v;
+    }
+    for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) {
+      const X = x + bx0, Y = y + by0, j = Y * MW + X;
+      if (ter[j] === 0 && dist[j] >= HALF + 6 && dg[y * BW + x] <= (9 + vnoise(X * .08, Y * .08, 163) * 5) * 3) { ter[j] = 80; areaM[j] = 1; }
+    }
+  }
   yield;
   // the lava tongues: from a gate down the gullies to their last node; their pixels sorted by how far down (j, k = point of the chain, old = terrain)
   const tongues = M.tongues.map((Tg, q) => {
@@ -375,8 +396,8 @@ export function* paintVolcano(S) {
       put(j, c); continue;
     }
     if (t === 1 && RT.laneM[j] && dist[j] >= HALF - 1) {
-      // the lane of the bay: concrete slabs
-      c = (x % 16 === 0 || y % 16 === 0) ? [150, 148, 142] : h < .1 ? [176, 174, 168] : [188, 186, 180];
+      // the lane of the bay: asphalt like the straight, without lines
+      c = v < .33 ? K.as1 : v > .7 ? K.as2 : K.as; if (h < .02) c = [36, 36, 40]; else if (h > .985) c = [104, 104, 108];
       put(j, c); continue;
     }
     if (t === 1) {
@@ -503,12 +524,18 @@ export function* paintVolcano(S) {
     }
   };
   // a ridge of rough boulders (the natural edge of the serpentine to the west, it closes the slope): lit on the north-west, a shadow to the south-east; solid
+  // (no boulder lies on a dry-stone wall: a ridge that ends at a wall stops short of it, 1S10-22)
+  const DRY = def.walls.filter(W => W[5] !== 'r');
+  const onDry = (x, y, r) => DRY.some(([ax, ay, bx, by, ww]) => {
+    const vx = bx - ax, vy = by - ay, f = clamp(((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy), 0, 1);
+    return Math.hypot(x - ax - vx * f, y - ay - vy * f) < r + ww + 6;
+  });
   const rockRidge = (x0, y0, x1, y1, w) => {
     const len = Math.hypot(x1 - x0, y1 - y0), ux = (x1 - x0) / len, uy = (y1 - y0) / len;
     for (let a = 0; a <= len; a += 4) { const x = x0 + ux * a, y = y0 + uy * a; if (ok(x, y, w)) { walls.push({ x, y, r: w }); solid(x, y, w); } }
     for (let a = 0, q = 0; a <= len; q++) {
       const br = 5 + hash(q, 1, sd + 57) * 5, x = Math.round(x0 + ux * a + (hash(q, 2, sd + 57) - .5) * 5), y = Math.round(y0 + uy * a + (hash(q, 3, sd + 57) - .5) * 5); a += br * 1.1;
-      if (!ok(x, y, w)) continue;
+      if (!ok(x, y, w) || onDry(x, y, br)) continue;
       for (let dy = 0; dy <= br + 5; dy++) for (let dx = 0; dx <= br + 6; dx++) if (Math.hypot(dx - 3, dy - 3) < br) dk(x + dx, y + dy, .7);
       for (let dy = -Math.ceil(br); dy <= br; dy++) for (let dx = -Math.ceil(br); dx <= br; dx++) {
         const dd = Math.hypot(dx, dy * 1.1) + (vnoise((x + dx) * .3, (y + dy) * .3, sd + 58 + q) - .5) * 2.4; if (dd > br) continue;
