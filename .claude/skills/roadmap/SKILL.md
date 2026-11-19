@@ -9,7 +9,7 @@ description: Eingang (F8-Meldungen in feedback/) in ROADMAP.md einordnen und die
 
 ## Eingang sichten (nur auf Ansage des Nutzers)
 
-Das F8-Fenster im Dev-Server legt `bug_<datum>_<zeit>_<STRECKE>.md` und `feature_…md` mit gleichnamigem `.jpg` in `feedback/` ab. Claude sichtet sie nur, wenn der Nutzer es sagt, nie von sich aus.
+Das F8-Fenster im Dev-Server legt `bug_<datum>_<zeit>_<STRECKE>.md`, `feature_…md` und `test_…md` mit gleichnamigem `.jpg` in `feedback/` ab. `test_…` ist eine **Testmeldung**: Rückmeldung des Nutzers zu etwas, das Claude gerade umgesetzt hat (Build-Commit in der Tabelle). Sie gehört zum Punkt, der getestet wurde (meist die Abnahme der Strecke oder der zuletzt erledigte Punkt): dort als Befund ergänzen; was noch nicht passt, wird ein neuer Punkt im selben Block mit Herkunft `Test <Datum> <STRECKE>`; was passt, wird in der Abnahme vermerkt. Claude sichtet sie nur, wenn der Nutzer es sagt, nie von sich aus.
 
 1. Alle `*.md` in `feedback/` lesen (außer `README.md`). Der erste Absatz ist der Text des Nutzers, die Tabelle darunter der Stand (Strecke mit `rev`, Modus, Stufe, Runde, Platz, Autos). Bei Meldungen ohne Text das Bild ansehen und in Zusammenhang mit der Meldung davor oder danach lesen.
 2. Jede Meldung einer **Phase** und einem **Block** zuordnen:

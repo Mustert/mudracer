@@ -6,7 +6,7 @@ import { placeOf } from './rank.js';
 // bugMeta() takes a snapshot of the game (screen, mode, track, lap, place, every car); bugText() turns a report into Markdown,
 // the text the dev server writes to feedback/ (bugreport.js). No DOM here, so it can be tested.
 
-const KIND_NAMES = { bug: 'Bug', feature: 'Idee' };
+const KIND_NAMES = { bug: 'Bug', feature: 'Idee', test: 'Testmeldung' };
 
 const MODE_NAMES = { gp: 'GRAND PRIX', single: 'EINZELSTRECKE', tt: 'ZEITFAHREN', run: 'MATSCHFAHRT' };
 const DIFF_NAMES = ['LEICHT', 'MITTEL', 'SCHWER'];
@@ -48,7 +48,7 @@ export function bugMeta(extra = {}) {
   return m;
 }
 
-/** a report { id, kind: 'bug' | 'feature', text, meta, img } as Markdown: the text, the snapshot as a table, the cars as a table */
+/** a report { id, kind: 'bug' | 'feature' | 'test', text, meta, img } as Markdown: the text, the snapshot as a table, the cars as a table */
 export function bugText(r) {
   const m = { ...r.meta }, cars = m.autos; delete m.autos;
   const out = ['# ' + (KIND_NAMES[r.kind] || 'Bug') + ' ' + r.id, '', r.text.trim() || '(ohne Text)', '', '## Stand', '', '| Feld | Wert |', '|---|---|'];

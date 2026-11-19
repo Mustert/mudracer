@@ -30,7 +30,7 @@ Jede Änderung am Spiel wird vor dem Commit mit `ROADMAP.md` und der Obsidian-Do
 4. Jede Phase hat einen Block `…T` mit technischen Aufgaben (Skills, `CLAUDE.md`, Prüfskripte, Tests). Ändert sich eine Arbeitsweise, wird dieser Block und diese Datei im selben Schritt angepasst.
 5. Große Umbauten mit eigenem Umsetzungsplan (z. B. `plaene/WUESTE_REV3.md`) werden dort im Detail geführt, nicht in `ROADMAP.md`; die Roadmap behält nur ihren Block und wird beim Abschluss nachgezogen.
 
-**Eingang (F8):** Meldungen aus dem Dev-Server landen wie bisher in `feedback/` (`bug_…`, `feature_…`, mit Bild). Sie bleiben dort liegen. Nur wenn der Nutzer es sagt („sichte den Eingang“), ordnet Claude sie nach dem Skill `roadmap` in `ROADMAP.md` ein und löscht die verarbeiteten Dateien. Nichts wird von sich aus eingeordnet oder gelöscht.
+**Eingang (F8):** Meldungen aus dem Dev-Server landen wie bisher in `feedback/` (`bug_…`, `feature_…`, `test_…` = Testmeldung zu etwas gerade Umgesetztem, mit Bild). Sie bleiben dort liegen. Nur wenn der Nutzer es sagt („sichte den Eingang“), ordnet Claude sie nach dem Skill `roadmap` in `ROADMAP.md` ein und löscht die verarbeiteten Dateien. Nichts wird von sich aus eingeordnet oder gelöscht.
 
 **Obsidian-Doku** unter `Obsidian/Mudracer/` (Obsidian-Vault des Nutzers, im Git; nur das Fensterlayout `.obsidian/workspace*.json` ist ignoriert):
 - `Strecken.md`: Plan aller Strecken und Cups (Cup 1 bis 5, Strecken 1 bis 15) mit Thema, Ereignis und Ideen; Grundlage für neue Strecken, zusammen mit den Streckendesign-Grundsätzen unten.

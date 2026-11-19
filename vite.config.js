@@ -7,7 +7,7 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 let commit = '?';
 try { commit = execSync('git rev-parse --short HEAD').toString().trim() + (execSync('git status --porcelain').toString().trim() ? '+' : ''); } catch (e) {}
 
-// dev server only: the F8 window (bugreport.js) posts a bug or an idea here, it lands in feedback/<id>.md and feedback/<id>.jpg
+// dev server only: the F8 window (bugreport.js) posts a bug, an idea or a test report here, it lands in feedback/<id>.md and feedback/<id>.jpg
 function bugInbox() {
   return {
     name: 'mudracer-bugs',

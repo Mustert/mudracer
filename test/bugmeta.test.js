@@ -45,4 +45,11 @@ describe('bug report', () => {
     expect(md).toContain('| 2 | MONSTER |');
     expect(md).toContain('![Bildschirm](' + r.id + '.jpg)');
   });
+
+  it('names a test report (feedback on something just built) as such', () => {
+    race();
+    const meta = bugMeta(), r = { id: bugId(meta, 'test'), kind: 'test', text: 'Brücke passt', meta, img: null };
+    expect(r.id).toMatch(/^test_\d{4}-\d\d-\d\d_\d\d-\d\d-\d\d_WUESTE$/);
+    expect(bugText(r)).toContain('# Testmeldung ' + r.id);
+  });
 });

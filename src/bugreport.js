@@ -7,11 +7,13 @@ import { releaseKeys } from './input.js';
 import { openPause } from './menus.js';
 
 // ---------- bugs and ideas (F8, dev server only) ----------
-// F8 freezes the game, takes a picture of the screen and a snapshot (bugmeta.js) and opens a window: BUG or IDEE, a text,
+// F8 freezes the game, takes a picture of the screen and a snapshot (bugmeta.js) and opens a window: BUG, IDEE or TEST, a text,
 // SPEICHERN. The dev server writes it to feedback/<art>_<id>.md and .jpg in the project (vite.config.js). main.js loads this
 // module only on the dev server, so the published game knows nothing of it.
 
-const RACE = new Set(['countdown', 'race']), KINDS = [['bug', 'BUG'], ['feature', 'IDEE / FEATURE']];
+// TEST: feedback on something Claude has just built and the user is trying out (it goes to the acceptance of that item)
+const RACE = new Set(['countdown', 'race']), KINDS = [['bug', 'BUG'], ['feature', 'IDEE / FEATURE'], ['test', 'TEST / ABNAHME']];
+const HINTS = { bug: 'Was ist passiert? Was hast du erwartet?', feature: 'Was soll es geben? Wie soll es sich anfühlen?', test: 'Was hast du getestet? Was passt, was noch nicht?' };
 let box = null, cur = null;
 
 /** the window is open: the game stands still (main.js) and the keys belong to the window (input.js) */
@@ -28,10 +30,10 @@ function build() {
   const text = el('textarea', { id: 'bugtext', rows: 6, maxLength: 4000 });
   const info = el('div', { className: 'bugmeta' }), msg = el('div', { className: 'bugmsg' });
   const btn = (label, fn, title) => { const b = el('button', { type: 'button', textContent: label, title }); b.onclick = fn; return b; };
-  // the kind: two boxes, one of them always ticked
+  // the kind: three boxes, always exactly one ticked (unticking the ticked one keeps it)
   const kinds = KINDS.map(([v, label]) => {
     const inp = el('input', { type: 'checkbox', value: v });
-    inp.onchange = () => setKind(inp.checked ? v : KINDS.find(k => k[0] !== v)[0]);
+    inp.onchange = () => setKind(v);
     return el('label', { className: 'bugkind' }, inp, ' ' + label);
   });
   box = el('div', { id: 'bug', hidden: true, role: 'dialog', ariaModal: 'true', ariaLabel: 'Bug oder Idee melden' },
@@ -49,7 +51,7 @@ function build() {
 function setKind(v) {
   cur.kind = v;
   for (const inp of box.kinds) inp.checked = inp.value === v;
-  box.text.placeholder = v === 'bug' ? 'Was ist passiert? Was hast du erwartet?' : 'Was soll es geben? Wie soll es sich anfühlen?';
+  box.text.placeholder = HINTS[v];
 }
 
 export function openBug() {
