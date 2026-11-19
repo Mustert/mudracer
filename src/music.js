@@ -260,7 +260,7 @@ const SONGS = {
     } },
   // volcano: C minor, metal and orchestra, 150 BPM. Taiko drums carry it, brass stabs on 1 and 3+, a distorted guitar plays palm-muted eighths
   // (power chords in part B), the bass under it. From lap 2 a double bass drum and a low choir, in the last lap the brass plays the tune as well
-  // (bound to the laps, not to the event, and no change of tempo: nothing jolts at the line, 1S10-10). A taiko roll while a glowing cloud builds up.
+  // (bound to the laps, not to the event, and no change of tempo: nothing jolts at the line, 1S10-10). A taiko roll while a lava tongue near you is about to run or a plate of the bridge shakes.
   volcano: { bpm: 150, swing: 0,
     chords: { Cm: { r: 36, n: [60, 63, 67] }, Ab: { r: 44, n: [60, 63, 68] }, Bb: { r: 46, n: [62, 65, 70] }, G: { r: 43, n: [59, 62, 67] }, Fm: { r: 41, n: [60, 65, 68] } },
     A: { ch: ['Cm', 'Ab', 'Bb', 'G', 'Cm', 'Ab', 'Fm', 'G'], mel: mel([
@@ -280,7 +280,7 @@ const SONGS = {
       if (erupt) { M.kick(t, s % 4 === 0 ? 1 : .6); if (s === 0) M.choir(ch.n.map(m => m - 12), t, 16 * M.sd); }
       else if (s % 4 === 0) M.kick(t);
       if (s % 2 === 1) M.hat(t, false, .5);
-      if (ev && ev.vlFords && G.player && G.T.volcano.fords.some((F, q) => ev.vlFords[q].ph === 'pre' && Math.hypot(F.mid.x - G.player.x, F.mid.y - G.player.y) < 420)) M.taiko(s % 2 ? 70 : 58, t, .55); // (a roll while a lava ford near you is about to run)
+      if (ev && ev.vlAlarm) M.taiko(s % 2 ? 70 : 58, t, .55); // (a roll while a lava tongue near you is about to run or a plate of the bridge is about to fall)
       if (s === 0 && bi === 0) M.crash(t);
     } },
   // jungle: E minor, 126 BPM, tribal. Bongos and congas take turns, a shaker in sixteenths, a wood block; a pan flute plays the tune, a marimba

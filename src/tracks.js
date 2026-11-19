@@ -47,12 +47,13 @@ export const THEMES = {
     water: ['#2c98a6', '#3eb2ba', '#5ac8c8', '#a4ece8'], shore: ['#9aa8b6', '#8b99a8'], grass: ['#eef4fa', '#e3ebf4', '#f9fbfe'], grassEdge: '#cfdbe8', tuft: '#d6e0ec',
     track: ['#dfe6ef', '#d3dbe6', '#e9eef5'], trackEdge: '#aebdcd', trail: '#c4d0dc', roadTrail: '#8f9eb0', trailA: .14, decor: 'eis', tree: 'pine', treeCol: ['#2b5a45', '#e6f0f6', '#ffffff', '#163428'], trees: 0,
     landCol: ['#ffffff', '#e6eef6', '#cfdcea'] },
-  // volcano (Rev 3): a road of red scoria on black basalt (it stands out), ash instead of mud (goo 'ash': sooty cars), lava (terrain 15) burns, the fire brigade washes;
-  // a burning car is put out with an extinguisher and is white with foam afterwards (goo2 'foam', the second set)
+  // volcano (Rev 5): the south face of the mountain from green meadows at its foot over dry grass and grey scree to black ash at the crater; light gravel roads
+  // and an asphalt start straight (they stand out), lava (terrain 15) burns, the fire brigade washes; soot after the lava (goo 'ash'), and a burning car is put
+  // out with an extinguisher and is half white with foam afterwards (goo2 'foam', the second set)
   vulkan: { ...MUDDY, mud: ['#aaa49c', '#9a948c', '#bcb6ae'], mudEdge: '#7c766e', mudHi: '#d2ccc4', mudP: ['#bcb6ae', '#9a948c', '#7c766e', '#d2ccc4'], mudTrail: ['#7c766e', '#9a948c'], goo: 'ash', goo2: 'foam',
-    water: ['#2a7fa8', '#3a98c2', '#58b4d8', '#9edcf0'], shore: ['#3a3634', '#2e2a28'], grass: ['#2b2523', '#241f1e', '#352d2a'], grassEdge: '#1e1a19', tuft: '#3f3531',
-    track: ['#7c4634', '#6f3e2e', '#88503c'], trackEdge: '#bcab98', trail: '#4a2a20', roadTrail: '#4a2a20', trailA: .14, decor: 'vulkan', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#140c0a'], trees: 0,
-    landCol: ['#5c3428', '#3a2622', '#9a948c'] },
+    water: ['#2a7fa8', '#3a98c2', '#58b4d8', '#9edcf0'], shore: ['#3a3634', '#2e2a28'], grass: ['#6a7e4a', '#5e7242', '#768a54'], grassEdge: '#4e5e38', tuft: '#56683e',
+    track: ['#c2a47c', '#b69870', '#ccb088'], trackEdge: '#8a7254', trail: '#5a4632', roadTrail: '#6a543c', trailA: .16, decor: 'vulkan', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#140c0a'], trees: 0,
+    landCol: ['#6a7e4a', '#8a7a5a', '#c2a47c'] },
   // jungle: a wet earth road, swamp instead of mud (goo 'swamp': green cars), a river (deep: you fall in), dense trees everywhere
   dschungel: { ...MUDDY, mud: ['#4e5a2a', '#424e22', '#5a6a32'], mudEdge: '#33401a', mudHi: '#8aa83a', mudP: ['#4e5a2a', '#5a6a32', '#6a8a3a', '#3a4a1e'], mudTrail: ['#33401a', '#465626'], goo: 'swamp',
     water: ['#2a6a6a', '#2f8080', '#3c9490', '#7cc4b4'], shore: ['#4a3a22', '#3e301c'], grass: ['#2f6a2a', '#286024', '#367a30'], grassEdge: '#22501e', tuft: '#1e4a1a',
@@ -298,41 +299,51 @@ const TRACK_DEFS = [
     // lake = [x, y, rx, ry south of the middle, r north of it (wider and flatter: up to the rock wall), the y of the foot of the wall]
     lake: [600, 1390, 270, 105, 146, 1246],
     village: [140, 1290] },
-  // The volcano (Rev 4, plaene/VULKAN_REV4.md on plaene/VULKAN_REV2.md): from the foot of the cone through the lava field (a jump over the south stream, a basalt
-  // bridge over the south-east stream, hornitos), up the east flank in a serpentine (fireballs fall there, event ausbruch), on a causeway of basalt pavers right
-  // through the crater lake, and down over the north-west flank and the west edge (the fire brigade's washing bay) through three lava fords: gullies that a vent
-  // fills with lava in pulses, more often from lap to lap (event lavastrom; see volcanomap.js, volcano.js).
-  // cone = the main cone [x, y, radius of its foot] (light on the slopes); crater = the lava lake [x, y, rx, ry], rim = how far out the solid crater rim stands;
-  // flows = lava streams as chains of circles [x, y, half width] (bridge: a basalt bridge where the road crosses, else the road is lava there: the jump);
-  // jump = speed upwards and the least speed forwards over the south stream; sub = the cinder cone [x, y, rx, ry];
-  // fords = the lava fords: the gully as a chain of circles from its vent (the first point) across the road, pond = the lava pond it runs into [x, y, rx, ry]
-  // (without one it runs off the edge of the map);
-  // levees = basalt columns [x0, y0, x1, y1, r] (they stop at the road by themselves); hornitos = spatter cones on the road [x, y, r];
-  // bay = the fire brigade (lane, half width, wash = tiled floor [x0, y0, x1, y1], wall = low wall [x, y0, y1], engine, hydrant, sign, crew = the hoses [x, y]);
-  // station = research station [x, y]; serp = the serpentine (from, to); slopes = pushes [x0, y0, x1, y1, f]; fountains = lava fountains in the lake [x, y]
-  { name: 'VULKAN', rev: 4, seed: 10, W: 1600, H: 1100, theme: 'vulkan', song: 'volcano', events: ['ausbruch', 'lavastrom'], wall: [], wash: null, volcano: true,
-    poly: [[560, 990, 0], [1480, 990, 70], [1480, 850, 70], [1110, 850, 70], [1110, 710, 70], [1480, 710, 70], [1480, 570, 70], [1120, 570, 50], [1040, 440, 50],
-      [580, 440, 60], [430, 160, 70], [150, 160, 80], [150, 990, 80]],
+  // The volcano (Rev 5, plaene/VULKAN_REV5.md, the user's sketch Obsidian/Mudracer/Mockups/VUlkan_rev_selber.png): we drive only the south face of the mountain.
+  // The start straight at its foot (asphalt; the base camp of the press and the police below it, the fire brigade's washing bay beside it), the serpentine up the
+  // east of the face (terraces with dry-stone walls; fireballs, event ausbruch), a steel bridge along the face below the crater over the lava that pours out of it
+  // (from lap 2 plates fall out of the deck: slalom, event brueckenloch; who falls through is brought back by a helicopter), and down the west of the face through
+  // a maze of gullies, some of which a side stream of the lava fills, other ones from lap to lap (event lavastrom; see volcanomap.js, volcano.js).
+  // cone = [x, y, radius] (the height for the light on the slopes and the colours); crater = the lava lake [x, y, rx, ry], rim = the solid crater rim;
+  // fan = the lava under the steel bridge [x, y, rx, ry]; flows = lava streams as chains of circles [x, y, half width] (bridge: a steel bridge where the road
+  // crosses); pools = lava pools [x, y, rx, ry]; maze = the gullies: nodes {name: [x, y]}, edges 'A-B' (with a bend: [a, b, [x, y]]), area = the rock they
+  // are cut into (polygon), gw = half width of a gully, nr = radius of a node, route = the nodes the centre line takes, gates = where a feeder of lava
+  // meets the maze [x, y, node], tongues = the lava tongues {gate, nodes}, laps = which tongues run in lap 1, 2, 3 (every set leaves a way down,
+  // volcano.js mazeOpen); holes = plates of the bridge that fall [along 0..1, column -1/0/1, from lap] (two of three in a row: one column stays whole, it changes sides: a slalom); walls = [x0, y0, x1, y1, r, style] ('d' a dry-stone retaining wall between the serpentine legs, 'r' a ridge of boulders)
+  // (they stop at the road by themselves); bay = the fire brigade on the start straight; camp = the base camp [x, y]; serp = the serpentine (from, to);
+  // slopes = pushes [x0, y0, x1, y1, f]; fountains = lava fountains in the lake [x, y]; old = cold old lava flows on the face (chains); hornitos = [x, y, r]
+  { name: 'VULKAN', rev: 5, seed: 10, W: 1700, H: 1100, theme: 'vulkan', song: 'volcano', events: ['ausbruch', 'lavastrom', 'brueckenloch'], wall: [], wash: null, volcano: true,
+    poly: [[790, 880, 0], [1630, 880, 50], [1630, 790, 47], [1440, 790, 47], [1440, 695, 47], [1640, 695, 47], [1640, 595, 47], [1300, 595, 50], [1300, 495, 50],
+      [1600, 495, 50], [1600, 390, 55], [1180, 380, 150], [880, 430, 300], [600, 372, 90], [470, 282, 60], [320, 262, 60],
+      [305, 350, 30], [315, 470, 30], [380, 590, 40], [310, 700, 40], [395, 808, 40], [470, 868, 40], [565, 880, 25]],
     mud: [], water: [], ponds: [],
-    cone: [820, 470, 720], crater: [800, 440, 165, 112], rim: 26,
+    cone: [880, 150, 1150], crater: [880, 150, 150, 85], rim: 24, fan: [880, 372, 245, 106],
     flows: [
-      { c: [[700, 535, 10], [712, 640, 16], [732, 800, 21], [744, 1000, 24], [746, 1110, 26]] },
-      { c: [[915, 532, 10], [962, 640, 15], [985, 780, 19], [995, 940, 22], [998, 1110, 24]], bridge: true },
-      { c: [[790, 335, 10], [772, 220, 15], [788, 90, 19], [780, -10, 22]] },
-      { c: [[935, 385, 9], [1080, 330, 14], [1300, 285, 17], [1460, 250, 19], [1610, 232, 21]] }],
-    jump: { vz: 135, push: 115 },
-    sub: [330, 680, 140, 220],
-    fords: [
-      { c: [[652, 288, 7], [600, 294, 11], [545, 300, 13], [490, 306, 14], [440, 318, 14], [412, 326, 12]], pond: [398, 332, 48, 34] },
-      { c: [[292, 345, 7], [255, 348, 11], [205, 352, 13], [150, 355, 14], [95, 358, 15], [30, 361, 16], [-12, 362, 17]] },
-      { c: [[258, 860, 7], [218, 863, 11], [175, 866, 13], [120, 870, 14], [60, 874, 15], [-12, 876, 16]] }],
-    levees: [[985, 920, 1480, 920, 8], [1110, 780, 1605, 780, 8], [955, 640, 1480, 640, 8], [466, 640, 690, 553, 8], [330, 180, 330, 474, 8]],
-    hornitos: [[1112, 970, 11], [1192, 1011, 11]],
-    bay: { lane: [[144, 480, 0], [85, 535, 26], [85, 705, 26], [144, 762, 0]], half: 15, wash: [70, 580, 101, 670], wall: [111, 545, 695], engine: [38, 630],
-      hydrant: [52, 566], sign: [96, 468], crew: [[57, 592], [57, 656]] },
-    station: [470, 1062], serp: [[1480, 950], [1120, 570]],
-    slopes: [[1480, 950, 1120, 570, -26], [520, 370, 150, 940, 28]],
-    fountains: [[720, 372], [880, 366], [790, 512], [690, 496], [905, 500]] },
+      { c: [[880, 200, 30], [880, 262, 36], [880, 330, 60]] },
+      { c: [[905, 455, 40], [928, 540, 32], [946, 630, 28], [916, 730, 27], [876, 810, 26], [864, 880, 26], [870, 1000, 28], [880, 1110, 30]], bridge: true },
+      { c: [[772, 112, 10], [700, 104, 13], [560, 126, 15], [400, 158, 16], [230, 178, 16], [100, 208, 16], [54, 300, 16], [48, 450, 16], [48, 620, 16], [52, 780, 17], [75, 900, 19], [110, 960, 22]] },
+      { c: [[690, 432, 13], [638, 452, 14], [600, 486, 15], [584, 570, 15], [580, 690, 16], [588, 770, 18]] }],
+    pools: [[120, 985, 75, 50], [602, 798, 36, 28]],
+    maze: {
+      nodes: { A: [305, 350], B1: [180, 455], B2: [315, 470], B3: [460, 450], C1: [125, 580], C2: [245, 570], C3: [380, 590], C4: [495, 565],
+        D1: [175, 695], D2: [310, 700], D3: [450, 690], E1: [140, 805], E2: [265, 795], E3: [395, 808], Y: [330, 868], Z: [470, 868] },
+      edges: ['A-B1', 'A-B2', 'A-B3', 'B1-B2', 'B1-C1', 'B1-C2', 'B2-C2', 'B2-C3', 'B3-C3', 'B3-C4', 'C1-C2', 'C2-C3', 'C3-C4', 'C1-D1', 'C2-D1', 'C2-D2',
+        'C3-D2', 'C3-D3', 'C4-D3', 'D1-D2', 'D2-D3', 'D1-E1', 'D1-E2', 'D2-E2', 'D2-E3', 'D3-E3', 'E1-E2', 'E2-E3', ['E1', 'Y', [230, 850]], 'E2-Y', 'Y-Z', 'E3-Z'],
+      area: [[40, 318], [590, 318], [590, 800], [470, 830], [470, 905], [40, 905]], gw: 16, nr: 25, route: ['A', 'B2', 'C3', 'D2', 'E3', 'Z'],
+      gates: { gB3: [588, 452, 'B3'], gC4: [580, 566, 'C4'], wB1: [50, 455, 'B1'], wD1: [50, 695, 'D1'] },
+      tongues: [{ gate: 'gB3', nodes: ['B3', 'C3'] }, { gate: 'wD1', nodes: ['D1', 'E1'] }, { gate: 'gC4', nodes: ['C4', 'D3', 'E3'] }, { gate: 'wB1', nodes: ['B1', 'C2'] },
+        { gate: 'gB3', nodes: ['B3', 'C3', 'D2'] }, { gate: 'wB1', nodes: ['B1', 'C1'] }],
+      laps: [[0, 1], [2, 3], [2, 4, 5]] },
+    holes: [[.1, 1, 2], [.1, 0, 2], [.64, 0, 2], [.64, -1, 2], [.37, 0, 3], [.37, -1, 3], [.91, 1, 3], [.91, 0, 3]],
+    walls: [[1360, 835, 1700, 835, 7, 'd'], [1440, 742, 1700, 742, 7, 'd'], [1300, 645, 1700, 645, 7, 'd'], [1300, 545, 1700, 545, 7, 'd'], [1255, 446, 1700, 446, 7, 'd'],
+      [960, 446, 1255, 446, 7, 'r'], [1255, 446, 1255, 650, 7, 'r'], [1255, 650, 1300, 648, 7, 'r'], [1395, 650, 1395, 835, 7, 'r']],
+    bay: { lane: [[950, 880, 0], [1010, 945, 30], [1190, 945, 30], [1250, 880, 0]], half: 15, wash: [1050, 930, 1150, 961], wall: [1000, 1200, 918], engine: [1100, 1000],
+      hydrant: [1030, 985], sign: [1245, 965], crew: [[1060, 985], [1140, 985]] },
+    camp: [640, 1000], serp: [[1400, 880], [1560, 385]],
+    slopes: [[1400, 880, 1560, 385, -26], [305, 350, 470, 868, 22]],
+    fountains: [[800, 120], [950, 130], [880, 185], [820, 175], [960, 175]],
+    old: [[[1000, 470, 30], [1060, 600, 40], [1080, 760, 34], [1110, 840, 20]], [[700, 480, 22], [690, 620, 30], [720, 780, 26]], [[1250, 260, 26], [1420, 300, 34], [1650, 330, 30]]],
+    hornitos: [[1000, 650, 11], [745, 700, 10], [1170, 560, 12]] },
   // The jungle: from the expedition camp under a canopy of leaves (you only see round your own car; under it the road forks into a fast swampy way
   // and a dry detour), over the gorge (swing across on the liana when it is on your side, or the narrow log bridge), through the dark temple ruin
   // (a waterfall falls into its hall), across the ford (the current pushes you towards the deep water), through the swamp on a boardwalk (see

@@ -175,6 +175,8 @@ export const SFX = {
   glut: v => { noise({ type: 'lowpass', f: 320, to: 110, a: .5, hold: 1.4, d: 1.4, vol: .45 * v, q: .7 }); noise({ t: .2, type: 'bandpass', f: 900, to: 260, q: .8, a: .4, hold: .8, d: 1.2, vol: .14 * v }); },
   // the volcano: a fireball sets a car alight (a whoosh), the lava breaks through the plug of the channel (a deep rush)
   ignite: v => { noise({ type: 'bandpass', f: 300, to: 1400, q: .9, a: .02, hold: .15, d: .5, vol: .3 * v }); noise({ t: .05, type: 'highpass', f: 2600, a: .02, hold: .2, d: .4, vol: .08 * v }); },
+  // the rescue helicopter (the volcano): the rotor chops, getting louder
+  heli: v => { for (let i = 0; i < 16; i++) { noise({ t: i * .11, type: 'lowpass', f: 260, d: .07, vol: (.08 + i * .012) * v, q: 1 }); voice({ t: i * .11, f: 70, to: 52, d: .06, vol: (.04 + i * .006) * v }); } },
   hose: v => noise({ type: 'highpass', f: 1800, to: 3200, a: .08, hold: .5, d: .5, vol: .11 * v }),
   cough: () => { for (const t of [0, .14, .3]) { noise({ t, type: 'lowpass', f: 500, d: .08, vol: .2 }); voice({ t, type: 'square', f: 70, to: 50, d: .07, vol: .06, lp: 400 }); } },
   bang: () => { noise({ type: 'lowpass', f: 900, to: 60, a: .01, hold: .3, d: 2.4, vol: .8, q: .7 }); voice({ f: 60, to: 26, d: 1.8, vol: .5 }); noise({ t: .05, type: 'bandpass', f: 1500, to: 300, d: 1.2, vol: .25 }); },
