@@ -241,7 +241,7 @@ G.VIGNETTE = null;
 
 function drawMood() {
   if (!G.T.th.beams && !G.T.th.dark) return;
-  if (G.T.th.beams) {
+  if (G.T.th.beams && !trackHooks(G.T).noBeams?.()) { // (hook noBeams: not here, e.g. inside the temple of the jungle)
     ctx.save(); ctx.globalAlpha = .07; ctx.fillStyle = '#fff3b0';
     for (let k = 0; k < 4; k++) {
       const span = VW + 260, bx = (((k * 170 + G.time * 6 - cam.x * .3) % span) + span) % span - 100;

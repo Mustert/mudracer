@@ -2,6 +2,8 @@
 
 Stand: 2026-10-31, Branch `map_pack`. Eigener Plan für den Komplettumbau der Dschungelstrecke (Strecke 11, Cup 4). Er steht bewusst nicht in `ROADMAP.md` (`Obsidian/Mudracer/ROADMAP.md`); dort bleibt nur der Block `1S11` mit einem Verweis hierher. Grundlage: Prototyp in `src/jungle.js` und `src/junglemap.js`, `Strecken.md` Abschnitt 11, ROADMAP 1S11-1 bis 1S11-8, Skills `strecke` und `mechanik`, Streckendesign-Grundsätze in `CLAUDE.md`. Gemeinsamer Rahmen (Lehren, Reihenfolge, Codes): `plaene/REWORKS_CUP4_CUP5.md`. Vorbild für Aufbau und Ablauf: `plaene/EIS_REV2.md`, `plaene/WUESTE_REV3.md`, `plaene/VULKAN_REV2.md` (Branch `vulkan_rev2`).
 
+**Stand 2026-11-20: umgesetzt** (alle Pakete J0 bis J8 auf `map_pack`, nach den Vorschlägen dieses Plans; Abweichungen im Abschnitt „Umsetzung“ am Ende). Abnahme durch den Nutzer offen (ROADMAP 1S11-10).
+
 **Status je Paket** wird hier gepflegt (Abschnitt „Arbeitspakete“). Erst beim Abschluss (J8) wird `ROADMAP.md` nachgezogen: 1S11 auf den neuen Stand, Tabelle „Strecken im Überblick“, 1A-4, 1A-7, 1P-1, 1P-2.
 
 Grobes Mockup von Claude (2026-10-31, ersetzt kein Mockup des Nutzers): [mockups/DSCHUNGEL_REV2.svg](mockups/DSCHUNGEL_REV2.svg)
@@ -157,15 +159,15 @@ Jedes Paket ist ein Commit (lint, test, typecheck sauber, `check('DSCHUNGEL')` o
 
 | Paket | Inhalt | Prüfen | Status |
 |---|---|---|---|
-| J0 Vorbereitung | Vulkan Rev 2 abgenommen und gemergt (1S10-12); gemeinsame Bausteine herausgelöst (1T-13): Abstandsfunktion für Wände, Poisson mit Gasse, Seitenbucht, Lichtkarte, Warndreieck | `check` WUESTE, EIS, VULKAN unverändert | offen |
-| J1 Grundriss | Kartengröße, Mittellinie, Startgerade, Fluss vom Wasserfall bis zum Südrand, Tempel-Fußabdruck, Unterholz als Feld (Code 90), Gabelungen als Zweige (noch schlicht), Checkpoints, Hook `progress`, `T.ev`-Namen mit `jg` | `check`: Start gerade, keine ungewollten Abkürzungen (Fluss sperrt die Mitte), 10/10 im Ziel; Bauzeit | offen |
-| J2 Sumpf und Furt | Mangroven, Sumpf vom Rand her, tiefer Sumpf abseits, Bohlenweg (Code 92), Furt mit Kiesbänken, Code 91, Strömung, tiefes Wasser unterhalb | `check` LEICHT/SCHWER (Stürze in der Furt?), Screenshot | offen |
-| J3 Laubdach und Unterholz | Würgefeigen-Wände aus einem Guss, Gassen, Laubdach mit Loch, Lichtflecken, Glühwürmchen, Gabelung 1 mit Wegweisern, KI-Wahl | `check` alle Stufen, `checkPic`, Frame-Zeit unter dem Dach | offen |
-| J4 Schlucht und Wasserfall | Wasserfall mit Gischt, Schluchtufer am Fluss, Liane mit Schatten, Baumstamm, Fall hinter die Schlucht, KI-Wahl | `check`, Stürze am Stamm, Screenshot | offen |
-| J5 Tempel | Stufenpyramide, Lichtkarte, Fackeln, Steinplatten, Halle, Gabelung 2, Wasserfallgrotte (Waschen), Treppe mit Gefälle, Becken | `check` alle Stufen, Screenshot innen, Frame-Zeit | offen |
-| J6 Ereignisse | `baeume` (Treppe, Pfad, steigend je Runde), `kroko` (schärfer), `steinkugel` (eigener Schalter, Becken, zwei Kugeln in der letzten Runde), Warndreiecke | `check` mit und ohne `fx`, Grundsatz 9 von Hand | offen |
-| J7 Kulisse und Lied | Lager mit Forscher, Affen, Papageien, Schmetterlinge, Nebel, Steinköpfe, Tukan; Lied in Schichten, Tempel-Filter, Paukenwirbel; neue Töne | Screenshot, Lied im Spiel anhören (Nutzer) | offen |
-| J8 Abschluss | Performance messen, `check` LEICHT/MITTEL/SCHWER mit 3, 5, 10 Autos, Grundsätze 1–14; Doku: `ROADMAP.md` (1S11, Tabelle, 1A-4, 1A-7, 1P-1, 1P-2, „Zuletzt abgeglichen“), `Strecken.md` Abschnitt 11 (Rev 2 oben, Wünsche als umgesetzt markieren), Skills `mechanik` (Codes 90–92, Abschnitt „Dschungel Rev 2 in Kürze“) und `strecke` | alles | offen |
+| J0 Vorbereitung | Vulkan Rev 2 abgenommen und gemergt (1S10-12); gemeinsame Bausteine herausgelöst (1T-13): Abstandsfunktion für Wände, Poisson mit Gasse, Seitenbucht, Lichtkarte, Warndreieck | `check` WUESTE, EIS, VULKAN unverändert | teilweise: `src/kit.js` (Warndreieck, Lampen-Sprites, Lichtkarte, `smin`, `edgeCircles`); Eis und Wüste nutzen sie; `check` WUESTE, EIS, VULKAN ohne Hinweise. Offen (1T-13): `paintMountains`, Poisson, Seitenbucht, Feld-Hilfen |
+| J1 Grundriss | Kartengröße, Mittellinie, Startgerade, Fluss vom Wasserfall bis zum Südrand, Tempel-Fußabdruck, Unterholz als Feld (Code 90), Gabelungen als Zweige (noch schlicht), Checkpoints, Hook `progress`, `T.ev`-Namen mit `jg` | `check`: Start gerade, keine ungewollten Abkürzungen (Fluss sperrt die Mitte), 10/10 im Ziel; Bauzeit | erledigt |
+| J2 Sumpf und Furt | Mangroven, Sumpf vom Rand her, tiefer Sumpf abseits, Bohlenweg (Code 92), Furt mit Kiesbänken, Code 91, Strömung, tiefes Wasser unterhalb | `check` LEICHT/SCHWER (Stürze in der Furt?), Screenshot | erledigt |
+| J3 Laubdach und Unterholz | Würgefeigen-Wände aus einem Guss, Gassen, Laubdach mit Loch, Lichtflecken, Glühwürmchen, Gabelung 1 mit Wegweisern, KI-Wahl | `check` alle Stufen, `checkPic`, Frame-Zeit unter dem Dach | erledigt |
+| J4 Schlucht und Wasserfall | Wasserfall mit Gischt, Schluchtufer am Fluss, Liane mit Schatten, Baumstamm, Fall hinter die Schlucht, KI-Wahl | `check`, Stürze am Stamm, Screenshot | erledigt |
+| J5 Tempel | Stufenpyramide, Lichtkarte, Fackeln, Steinplatten, Halle, Gabelung 2, Wasserfallgrotte (Waschen), Treppe mit Gefälle, Becken | `check` alle Stufen, Screenshot innen, Frame-Zeit | erledigt |
+| J6 Ereignisse | `baeume` (Treppe, Pfad, steigend je Runde), `kroko` (schärfer), `steinkugel` (eigener Schalter, Becken, zwei Kugeln in der letzten Runde), Warndreiecke | `check` mit und ohne `fx`, Grundsatz 9 von Hand | erledigt |
+| J7 Kulisse und Lied | Lager mit Forscher, Affen, Papageien, Schmetterlinge, Nebel, Steinköpfe, Tukan; Lied in Schichten, Tempel-Filter, Paukenwirbel; neue Töne | Screenshot, Lied im Spiel anhören (Nutzer) | erledigt (Lied im Spiel anhören: Nutzer, 1S11-10) |
+| J8 Abschluss | Performance messen, `check` LEICHT/MITTEL/SCHWER mit 3, 5, 10 Autos, Grundsätze 1–14; Doku: `ROADMAP.md` (1S11, Tabelle, 1A-4, 1A-7, 1P-1, 1P-2, „Zuletzt abgeglichen“), `Strecken.md` Abschnitt 11 (Rev 2 oben, Wünsche als umgesetzt markieren), Skills `mechanik` (Codes 90–92, Abschnitt „Dschungel Rev 2 in Kürze“) und `strecke` | alles | erledigt |
 
 ## Grundsätze-Check (für J8)
 
@@ -183,3 +185,16 @@ Jedes Paket ist ein Commit (lint, test, typecheck sauber, `check('DSCHUNGEL')` o
 12. Sumpfrinne gegen Pfad, Sumpf auf der Ideallinie gegen Bohlenweg.
 13. Waschen: nur die Wasserfallgrotte.
 14. Kein Nebel, kein Laub über Ziellinie und Aufstellung.
+
+## Umsetzung (2026-11-20)
+
+Die offenen Fragen sind nach den Vorschlägen beantwortet (kein Mockup des Nutzers; quer; Liane behalten, ihr Schatten zeigt sie von weitem; eigener Schalter `steinkugel`; kein Monsun). Abweichungen vom Plan:
+
+- **Karte 1700 × 1150** statt 1500 × 1000: mit 1500 × 1000 war die Mittellinie nur 2,9 km lang (Runde 20–25 s, kürzer als der Vulkan). Größer und gewundener sind es 4064 px, Runde 30–34 s mit dem Bot (LEICHT bis SCHWER), die langsamsten Autos auf LEICHT etwa 60 s. Die geplanten 40–45 s sind nicht erreicht (ROADMAP 1S11-11).
+- **Grundriss**: Start unten links bei (550, 960), Furt bei y 960, Fluss bei x ≈ 880, Sumpfrinne als S mit sechs Schenkeln zwischen x 1110 und 1310 (Wurzelwände `field.ridges` in jeder Kehre, sonst könnte man das S gerade durchfahren), Trampelpfad außen bis x 1600, Schlucht bei y 187, Tempel 200–760 × 92–420.
+- **Tempel als U**: der Gang führt oben nach Westen, dann unten zurück nach Osten; die Halle mit der Gabel liegt im unteren Gang, die Säulenreihe trennt Kugelgang und Grotte, die Treppe verlässt die Pyramide nach Süden. Danach ein **Haken durch den Westen** (Lager links davon); eine überwachsene **Ruinenmauer** (`ruins`, fest, mit Schatten) sperrt die Abkürzung von der Treppe zur Startgeraden.
+- **Laubdach nur über dem Unterholz**, nicht über dem Trampelpfad: dort fallen die Bäume, man soll sie sehen (Grundsatz 9; ROADMAP 1S11-12).
+- **Bäume**: sechs statt vier (Treppe, Westweg, Westdiagonale; drei am Trampelpfad), jeder fällt einmal; Abstand nach der Runde des Führenden.
+- **Krokodile**: Treffer = Dreher 1,2 s (`stun`) und Tempo 60 px/s, kein Wegschieben mehr.
+- **Bauzeit 1,5 s** am Stück (Wüste im selben Lauf 1,1 s, Eis 1,2 s, Vulkan 2,7 s): langsamer als die Wüste, schneller als der Vulkan (ROADMAP 1P-1). Gemessen erst 2,2 s; schneller durch den Fluss Zeile für Zeile, Wege mit Abstandspuffer (`stampWay`) statt Map, Abstand im Unterholz quadratisch und nur jeder dritte Punkt, Feigen und Wurzelwände nur innen, den Dschungelboden malt der Kern in den Farben des Themes. Frame-Zeit 1,2–1,6 ms mit 10 Autos.
+- **Neu im Kern**: Hook `noBeams` (keine Sonnenstrahlen im Tempel); `checkSpots` prüft Bäume am Pfad und Krokodile im Wasser.

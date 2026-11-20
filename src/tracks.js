@@ -57,7 +57,7 @@ export const THEMES = {
   // jungle: a wet earth road, swamp instead of mud (goo 'swamp': green cars), a river (deep: you fall in), dense trees everywhere
   dschungel: { ...MUDDY, mud: ['#4e5a2a', '#424e22', '#5a6a32'], mudEdge: '#33401a', mudHi: '#8aa83a', mudP: ['#4e5a2a', '#5a6a32', '#6a8a3a', '#3a4a1e'], mudTrail: ['#33401a', '#465626'], goo: 'swamp',
     water: ['#2a6a6a', '#2f8080', '#3c9490', '#7cc4b4'], shore: ['#4a3a22', '#3e301c'], grass: ['#2f6a2a', '#286024', '#367a30'], grassEdge: '#22501e', tuft: '#1e4a1a',
-    track: ['#7a5a36', '#6e5030', '#86643e'], trackEdge: '#4e3a22', trail: '#1e4a1a', roadTrail: '#4a3420', decor: 'dschungel', tree: 'round', treeCol: ['#1e5a24', '#2f7a2e', '#5aa83e', '#0e2e12'], trees: 46, treeGap: 22, ambient: 'butterfly', beams: true },
+    track: ['#7a5a36', '#6e5030', '#86643e'], trackEdge: '#4e3a22', trail: '#1e4a1a', roadTrail: '#4a3420', decor: 'dschungel', tree: 'round', treeCol: ['#1e5a24', '#2f7a2e', '#5aa83e', '#0e2e12'], trees: 200, treeGap: 24, ambient: 'butterfly', beams: true },
   // space: metal platforms in zero gravity (terrain 17, little grip), the station and the glass tube with gravity (terrain 1), the moon (its road 1,
   // its ground 13), moon dust instead of mud (goo 'dust': silver cars), next to the platforms is nothing (terrain 0: you drift off, a tractor beam
   // brings you back). flat: the top speeds are closer together, here the acceleration counts
@@ -345,25 +345,39 @@ const TRACK_DEFS = [
     fountains: [[800, 120], [950, 130], [880, 185], [820, 175], [960, 175]],
     old: [[[1000, 470, 30], [1060, 600, 40], [1080, 760, 34], [1110, 840, 20]], [[700, 480, 22], [690, 620, 30], [720, 780, 26]], [[1250, 260, 26], [1420, 300, 34], [1650, 330, 30]]],
     hornitos: [[1000, 650, 11], [745, 700, 10], [1170, 560, 12]] },
-  // The jungle: from the expedition camp under a canopy of leaves (you only see round your own car; under it the road forks into a fast swampy way
-  // and a dry detour), over the gorge (swing across on the liana when it is on your side, or the narrow log bridge), through the dark temple ruin
-  // (a waterfall falls into its hall), across the ford (the current pushes you towards the deep water), through the swamp on a boardwalk (see
-  // junglemap.js, jungle.js). canopy = [x0, y0, x1, y1]; detour = the dry way (points, half width); gorge = river x, half width, liana lane (y from, to),
-  // log bridge (y, half width); river = deep water as circles; temple = road from [x, y] to [x, y], hall = waterfall [x, y, r]; ford = shallow box,
-  // current, stones; boardwalk = [x from, x to, offset, half width]; quick = deep swamp [x, y, r]; trees = [x, y on the road, side, seconds, first]
-  // (event baeume); crocs = [x, y] (event kroko); camp = [x, y]; heads = stone heads [x, y]
-  { name: 'DSCHUNGEL', seed: 11, theme: 'dschungel', song: 'jungle', events: ['baeume', 'kroko'], wall: [], wash: null, jungle: true,
-    poly: [[60, 340, 0], [60, 70, 45], [720, 70, 50], [720, 400, 50], [60, 400, 45]],
+  // The jungle (Rev 2, plaene/DSCHUNGEL_REV2.md): an expedition through a river valley. The river falls off the table mountain at the top, runs through a gorge
+  // under the road, wide and deep through the middle and out at the bottom edge. From the start straight (bottom left, east) through the mangrove swamp (the
+  // boardwalk bows round it to the south), across the ford (the current pushes you towards the deep water; crocodiles), fork 1 before the canopy (the swamp
+  // gully north through the undergrowth, or the dry trail round the east), over the gorge under the waterfall (the liana when it hangs on your side, or the log),
+  // through the dark temple pyramid (fork 2 in its hall: the ball corridor, or the waterfall grotto, the only place that washes), down the temple stairs past
+  // the camp to the line (see junglemap.js, jungle.js).
+  // river = chain of circles [x, y, r] from the waterfall to the bottom edge; cliff = the edge of the table mountain (y); falls = foot of the waterfall [x, y];
+  // gorge = where the road crosses it: y, the liana lane (y from, to), the log (y, half width); liana = its branch [x, y]; swamp = hollows [x, y, rx, ry];
+  // quick = deep swamp [x, y, r]; boards = the boardwalk (points, half width); ford = y, half height, current, gravel banks [x, y, r], stones [x, y, r];
+  // trail = the dry trail of fork 1 (points, half width); field = the undergrowth round the gully (from, to on the centre line, half width, fig blobs, root walls
+  // across the bends [x0, y0, x1, y1, half width]);
+  // canopy = [x0, y0, x1, y1]; temple = footprint, door (y), hall [x, y, r], grotto (points, half width), waterfall in it [x, y], the row of pillars (x from, to)
+  // and its y; stairs = from, to, push; basin = where the stone ball sinks [x, y, r]; ruins = overgrown walls [x0, y0, x1, y1, half width]; trees = rotten trees [x, y, side, 'c' road / 'p' trail] (event baeume);
+  // crocs = [x, y] (event kroko); camp, heads, signs, monkeys = [x, y]
+  { name: 'DSCHUNGEL', rev: 2, seed: 11, W: 1700, H: 1150, theme: 'dschungel', song: 'jungle', events: ['baeume', 'kroko', 'steinkugel'], wall: [], wash: null, jungle: true,
+    poly: [[550, 960, 0], [1180, 960, 70], [1310, 820, 80], [1110, 690, 90], [1310, 560, 90], [1110, 430, 90], [1290, 310, 80], [1200, 190, 60],
+      [300, 185, 50], [300, 300, 45], [620, 305, 50], [615, 600, 60], [330, 640, 60], [240, 960, 55]],
     mud: [], water: [], ponds: [],
-    mudAt: [[250, 70, 36, 30], [336, 70, 28, 30], [60, 240, 16, 20], [500, 400, 24, 30], [420, 400, 22, 30], [330, 400, 26, 30], [240, 400, 22, 30]],
-    canopy: [95, 0, 482, 200], detour: { pts: [[176, 70, 0], [206, 152, 24], [394, 152, 24], [424, 70, 0]], half: 17 },
-    gorge: { x: 562, hw: 20, lane: [40, 76], log: 89, lh: 8 },
-    river: [[[562, -12, 20], [562, 70, 20], [570, 130, 15], [582, 220, 15], [598, 300, 16], [614, 372, 20]], [[618, 436, 22], [622, 470, 24]]],
-    temple: [[720, 118], [720, 336]], hall: [720, 228, 14],
-    ford: { rect: [586, 366, 656, 434], push: 58, stones: [[602, 410, 5], [640, 424, 5]] },
-    boardwalk: [548, 168, -10, 7], quick: [[372, 424, 12], [286, 377, 11]],
-    trees: [[60, 196, -1, 17, 6], [300, 400, 1, 19, 11], [468, 400, 1, 16, 3], [720, 368, -1, 18, 14]],
-    crocs: [[612, 404], [400, 426], [250, 376]], camp: [150, 320], heads: [[776, 34], [778, 440], [22, 442]] },
+    river: [[880, -10, 14], [880, 60, 18], [882, 108, 30], [878, 155, 22], [874, 205, 22], [868, 290, 30], [858, 360, 54], [876, 500, 84], [892, 670, 78], [880, 830, 60], [888, 960, 48], [894, 1040, 44], [890, 1162, 40]],
+    cliff: 75, falls: [880, 75], gorge: { y: 187, lane: [158, 182], log: 202, lh: 7 }, liana: [880, 120],
+    swamp: [[600, 928, 34, 16], [672, 992, 38, 16], [740, 930, 30, 15], [630, 1040, 60, 30], [750, 1050, 50, 30], [660, 888, 60, 24], [580, 1090, 50, 30]],
+    quick: [[665, 882, 11], [710, 1080, 12]],
+    boards: { pts: [[565, 976, 0], [610, 1028, 30], [775, 1032, 30], [810, 984, 0]], half: 12 },
+    ford: { y: 960, half: 50, push: 55, banks: [[862, 978, 12], [918, 944, 11]], stones: [[856, 924, 5], [930, 996, 5], [896, 1008, 4]] },
+    trail: { pts: [[1120, 960, 0], [1360, 962, 70], [1580, 860, 110], [1600, 560, 120], [1560, 300, 90], [1420, 165, 60], [1170, 178, 0]], half: 17 },
+    field: { from: [1192, 900], to: [1240, 240], r: 80, blobs: 6, ridges: [[1020, 815, 1200, 815, 9], [1400, 690, 1215, 690, 9], [1020, 560, 1205, 560, 9], [1400, 430, 1215, 430, 9], [1020, 315, 1190, 315, 9]] },
+    canopy: [1030, 240, 1440, 920],
+    temple: { rect: [200, 92, 760, 420], door: 186, hall: [420, 300, 36], grotto: { pts: [[440, 305, 0], [470, 380, 30], [580, 382, 30], [617, 345, 0]], half: 20 }, fall: [520, 382], pillars: [440, 590], pillarY: 330 },
+    stairs: [[617, 340], [615, 560], 26], basin: [700, 600, 20],
+    ruins: [[362, 706, 830, 712, 9]],
+    trees: [[618, 470, -1, 'c'], [470, 632, 1, 'c'], [292, 800, -1, 'c'], [1590, 720, -1, 'p'], [1598, 480, 1, 'p'], [1500, 230, -1, 'p']],
+    crocs: [[862, 1012], [932, 916], [676, 994], [745, 926]], camp: [120, 760], heads: [[40, 140], [1662, 1112], [36, 1112], [1662, 170]], signs: [1120, 1000],
+    monkeys: [[1010, 340], [1480, 700], [720, 470], [1660, 620]] },
   // Space (a bigger map): from the station (gravity, the start) through the glass tube out onto the platforms (zero gravity: little grip), round a
   // satellite, in a wide curve round the ringed planet (its gravity pulls; the short way on the planet's ring gives a swing-by), down through the
   // asteroid belt (a hairpin round a big asteroid, or the wormhole over it), over the moon past a dusty crater and through the airlock (it washes)

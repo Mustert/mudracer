@@ -193,6 +193,11 @@ export const SFX = {
   thud: () => { noise({ type: 'lowpass', f: 600, to: 80, a: .01, hold: .1, d: .9, vol: .6 }); voice({ f: 70, to: 32, d: .7, vol: .45 }); },
   snap: () => { noise({ type: 'bandpass', f: 1800, q: 2, d: .05, vol: .3 }); voice({ type: 'square', f: 300, to: 120, d: .08, vol: .1, lp: 1500 }); },
   parrot: () => { for (let i = 0; i < 3; i++) voice({ t: i * .12 + Math.random() * .05, type: 'sawtooth', f: 1400 + Math.random() * 600, to: 900, a: .01, d: .1, vol: .04, bp: 2200, q: 3 }); },
+  // Dschungel Rev 2: planks clattering under the wheels, the waterfall rushing, a fountain as the stone ball sinks, monkeys calling
+  clack: () => { voice({ type: 'square', f: 260 + Math.random() * 60, to: 180, d: .03, vol: .05, lp: 1400 }); noise({ type: 'bandpass', f: 900, q: 3, d: .03, vol: .06 }); },
+  rush: () => noise({ type: 'lowpass', f: 900, to: 700, a: .3, hold: .8, d: .6, vol: .07 }),
+  fountain: () => { noise({ type: 'highpass', f: 1500, to: 4000, a: .02, hold: .3, d: .7, vol: .14 }); voice({ f: 180, to: 60, d: .4, vol: .2 }); },
+  monkey: () => { for (let i = 0; i < 4; i++) voice({ t: i * .11, type: 'sawtooth', f: 700 + i * 120, to: 1200 + i * 80, a: .01, d: .08, vol: .035, bp: 1300, q: 4 }); },
   plopp: () => { voice({ f: 300, to: 900, a: .005, d: .12, vol: .25 }); voice({ t: .08, f: 600, to: 1200, d: .08, vol: .12 }); },
   // space: drifting off (a falling whoosh), the tractor beam (a rising hum), the wormhole (a whoosh with an echo), the swing-by (a rising
   // chime), the radar beep before an asteroid, a rock breaking, a thruster puff, the airlock hissing, the black hole opening and its hum

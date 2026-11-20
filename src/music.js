@@ -285,7 +285,8 @@ const SONGS = {
     } },
   // jungle: E minor, 126 BPM, tribal. Bongos and congas take turns, a shaker in sixteenths, a wood block; a pan flute plays the tune, a marimba
   // the arpeggios, a soft round bass. The jungle is part of the beat: a frog as the rimshot, birds answer the flute, crickets in the back.
-  // In the temple everything goes quiet and far away; in the last lap deep temple drums and a gong on every one.
+  // Layers by the lap (Rev 2, 1M-1): the marimba and the jungle beat from lap 2, temple drums and a gong in the last lap. In the temple everything goes
+  // quiet and far away; a roll of the drums while the stone ball rolls near you.
   jungle: { bpm: 126, swing: .06,
     chords: { Em: { r: 40, n: [59, 64, 67] }, C: { r: 36, n: [60, 64, 67] }, D: { r: 38, n: [62, 66, 69] }, B7: { r: 35, n: [59, 63, 66, 69] }, Am: { r: 33, n: [57, 60, 64] } },
     A: { ch: ['Em', 'C', 'D', 'Em', 'Em', 'C', 'D', 'B7'], mel: mel([
@@ -296,20 +297,26 @@ const SONGS = {
       'E6:0:3 D6:3:1 C6:4:2 A5:6:2 C6:8:4 E6:12:4', 'G6:0:4 E6:4:4 B5:8:8', 'F#6:0:2 D#6:2:2 B5:4:4 A5:8:2 F#5:10:2 D#5:12:4', 'E6:0:12 B5:12:4']) },
     lead(M, m, t, d) { const J = G.T && G.T.jungle, deep = J && J.inTemple; M.panflute(hz(m - 12), t, d, deep ? .45 : 1); },
     band(M, s, t, bi, ch) {
-      const J = G.T && G.T.jungle, deep = !!(J && J.inTemple), P = G.player, last = P && !G.T.run && P.lap >= LAPS && (G.state === 'race' || G.state === 'finish');
+      // layers by the lap (no change of song): lap 1 drums, shaker, flute and bass; from lap 2 the marimba and the jungle as a beat (frog, birds,
+      // crickets); the last lap temple drums and a gong on every one. In the temple only the bass and a far drum; a roll while the stone ball rolls
+      const J = G.T && G.T.jungle, deep = !!(J && J.inTemple), lap = raceLap(), ev = G.T && G.T.ev, last = lap >= LAPS;
       if (s === 0 || s === 10) M.bassWarm(hz(ch.r - 12), t, 5 * M.sd);
-      if (deep) { if (s % 4 === 0) M.tom(70, t); return; } // in the temple: only the bass and a far drum
+      if (ev && ev.jgAlarm) M.taiko(s % 2 ? 70 : 58, t, .55);
+      if (deep) { if (s % 4 === 0) M.tom(70, t); return; }
       if ([0, 3, 6, 8, 11, 14].includes(s)) M.conga(s % 6 === 0 ? 180 : 260, t, s === 0 ? 1 : .7);
       if ([2, 5, 10, 13].includes(s)) M.conga(s % 2 ? 420 : 360, t, .55);
       M.shaker(t, s % 4 === 0 ? .6 : .3);
       if (s === 7 || s === 15) M.rim(t);
-      if (s % 2 === 0) M.marimba(hz(ch.n[(s >> 1) % ch.n.length] + 12), t);
-      if (s === 12 && bi % 2) M.frog(t);
-      if (s === 14 && bi % 4 === 1) M.bird(t, hz(ch.n[2] + 24));
-      if (s === 0) M.crickets(t, 16 * M.sd);
+      if (lap >= 2) {
+        if (s % 2 === 0) M.marimba(hz(ch.n[(s >> 1) % ch.n.length] + 12), t);
+        if (s === 12 && bi % 2) M.frog(t);
+        if (s === 14 && bi % 4 === 1) M.bird(t, hz(ch.n[2] + 24));
+        if (s === 0) M.crickets(t, 16 * M.sd);
+      }
       if (last) { if (s === 0) { M.taiko(55, t, 1); M.gong(t); } if (s === 8) M.taiko(70, t, .8); }
       else if (s === 0 && bi === 0) M.crash(t);
     } },
+
   // ice: B minor, it builds up with the race. Lap 1: celesta, a glockenspiel echo, soft strings, sleigh bells, hardly any bass (it feels like 84 BPM).
   // From lap 2: a fast breakbeat, a deep sub bass and quick arpeggios ("ice crystals"). Last lap: a choir, strings in sixteenths, timpani.
   // Before every snowball a low timpani roll.

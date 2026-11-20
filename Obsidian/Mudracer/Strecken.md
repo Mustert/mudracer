@@ -269,6 +269,7 @@ Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `WUESTE`, The
 Grafik (aus der echten Strecke erzeugt):
 ![[Mockups/WUESTE.svg]]
 
+### Prototyp (Rev 1, ersetzt durch Rev 2)
 Abweichungen vom Vorschlag (erster Wurf): Die Strecke ist ein Rechteck mit runden Ecken. ✅ umgesetzt (Rev 1: S-Kurve rechts, Felsketten schließen die Mitte, noch kein Wadi mit Kämmen an beiden Rändern). An der Oase gibt es keinen Matsch, nur flaches Wasser, das wäscht. ✅ umgesetzt (Rev 1: Matschufer um die Oase). Kein Hitzeflimmern. ✅ umgesetzt (Rev 1: die Luft flimmert über den langen Geraden oben und unten).
 
 Idee: Die erste Rennstrecke mit **Sprüngen** und mit echtem Risiko: Wer zu langsam auf die Schanze kommt, fällt in die Schlucht. Dazu gibt es zum ersten Mal **zwei Wege**: den gefährlichen Sprung oder die langsame, sichere Hängebrücke. ✅ umgesetzt, in Rev 3 verändert: der Sprung bleibt (in den beiden Gabelungen der Pyramide über Schächte), die Hängebrücke entfällt, der sichere Weg ist der andere Zweig.
@@ -583,7 +584,22 @@ Streckenereignis: (Vorschlag) Ausbruch ab Runde 2: Lavabomben schlagen auf der S
 Änderung: Mud ist Lava (hohe Verlangsamung), Hitzeflimmern. **Angepasst:** Matsch ist Asche (bremst), Lava ist ein Absturz wie das Wasser im Garten, weil „Lava, die nur bremst“ sich falsch anfühlt.
 
 ## 11. Dschungel
-Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `DSCHUNGEL`, Theme `dschungel`, Musik `jungle`, Streckenereignisse Bäume `baeume` und Krokodile `kroko`; Code in `src/junglemap.js` und `src/jungle.js`). Im Cup PLATIN eingetragen.
+Status: **Rev 2 umgesetzt** auf Branch `map_pack` (2026-11-20, Plan `plaene/DSCHUNGEL_REV2.md`; Streckenname `DSCHUNGEL`, `rev: 2`, Theme `dschungel`, Musik `jungle` in Schichten nach Runden, Streckenereignisse Bäume `baeume`, Krokodile `kroko` und Steinkugel `steinkugel` (neu, eigener Schalter); Code in `src/junglemap.js` und `src/jungle.js`; Karte 1700×1150, Runde 30–34 s mit dem Bot). Im Cup PLATIN eingetragen. Abnahme durch den Nutzer offen (ROADMAP 1S11-10).
+
+### Rev 2: das Flusstal (gilt, `rev: 2`; ersetzt den Prototyp darunter)
+Ein Fluss kommt als Wasserfall vom Tafelberg am Nordrand, läuft durch eine Schlucht, breit und tief durch die Mitte (niemand kürzt ab) und am Südrand hinaus. Rundenverlauf gegen den Uhrzeigersinn:
+1. **Startgerade** unten links nach Osten, Expeditionslager links davon (Zelte, Jeep, Kisten, Funkmast, Hängematte, Lagerfeuer, ein Forscher, der vor der Steinkugel wegrennt).
+2. **Mangrovensumpf**: Sumpf in Senken zwischen Mangroven vom Rand her, die kurze Linie geht durch den Sumpf, der **Bohlenweg** (klappert, volle Haftung) ist ein längerer Bogen nach Süden; zwei Stellen tiefer Sumpf abseits, Nebel darüber.
+3. **Furt** mit zwei Kiesbänken: trübes Wasser (wäscht nicht, macht leicht grün), die Strömung drückt nach Süden ins tiefe Wasser; Krokodile.
+4. **Gabelung vor dem Laubdach** mit zwei großen Wegweisern (Totenkopf: Sumpfrinne, Zelt: Trampelpfad, ein Tukan darauf).
+5. **Sumpfrinne** als S durchs **Unterholz** unter dem Laubdach (man sieht nur um das eigene Auto, Glühwürmchen): Matsch in der Rinne, daneben trockener Waldboden, Wurzeln quer, Würgefeigen als Wand und Inseln, Wurzelwände in jeder Kehre. Oder der **Trampelpfad** außen herum im Licht (länger, trocken, morsche Bäume).
+6. **Lianenschlucht** unter dem Wasserfall (Gischt, Regenbogen, Rauschen): die Liane, wenn sie auf deiner Seite hängt (ihr Schatten zeigt es von weitem), sonst der Baumstamm; wer daneben fährt, fällt, treibt ein Stück im Fluss und kommt hinter der Schlucht zurück.
+7. **Tempelpyramide**: von außen Stufenpyramide mit Schrein, innen dunkel (Fackeln, Lampen an allen Autos, helle Steinplatten). Der Gang führt als U durch die Pyramide; in der Halle die zweite Gabelung hinter einer Säulenreihe: **Kugelgang** (kurz, ab Runde 2 die Steinkugel) oder **Wasserfallgrotte** (Licht und Wasser durch ein Loch im Dach, wäscht, das einzige Waschen).
+8. **Tempeltreppe** hinunter (Gefälle schiebt), Becken am Fuß der Treppe, dann ein Haken durch den Westen an einer überwachsenen Ruinenmauer vorbei zurück zur Startgeraden.
+
+Ereignisse: `baeume` (sechs morsche Bäume an Treppe, Westweg und Trampelpfad, Runde 1 alle 18–24 s, Runde 2 alle 12–16 s, Runde 3 alle 8–12 s; Knarren, Blätter, Schatten, Warndreieck; der Stamm bleibt als kleine Schanze), `kroko` (in Furt und Sumpf: Augen und Blasen, das Maul geht langsam auf, dann Schnapp mit Dreher; ab Runde 2 schwimmt eins quer durch die Furt), `steinkugel` (ab Runde 2 im Kugelgang, Klicken und Staub, rollt die Treppe hinab ins Becken, nach 15 s wieder oben am Seil; in der letzten Runde zwei nacheinander; Paukenwirbel und Warndreieck).
+
+Lied `jungle` in Schichten: Runde 1 Trommeln, Shaker, Flöte, Bass; ab Runde 2 Marimba und der Dschungel als Rhythmus (Frosch, Vögel, Grillen); letzte Runde Taiko und Gong. Im Tempel nur Bass und ferne Trommel. Neue Töne: Bohlen, Wasserfall, Fontäne im Becken, Affen.
 
 Abweichungen vom Vorschlag (erster Wurf): Die Strecke ist ein Rechteck mit runden Ecken. Die Tempelhalle hat keine zwei Ausgänge, die Steinkugel rollt am Ende nicht in den Fluss, sondern verschwindet. Wer von der Baumstammbrücke fällt, wird nicht vom Fluss mitgetragen, sondern vor der Schlucht abgesetzt. Keine Affen, keine Nebelschwaden, keine Glühwürmchen unter dem Laubdach. Die Computerautos fliehen nicht extra vor der Steinkugel.
 
@@ -634,11 +650,11 @@ Neue Töne: Tarzan-Schrei (Liane), Knarren und Rumms (Baum), Klicken und Rollen 
 Warum schwerer als der Vulkan: Man sieht nicht alles. Es gibt die meisten Entscheidungen im ganzen Spiel (Gabelung, Liane oder Brücke, Strömung), die Strecke füllt sich mit Baumstämmen, und die Steinkugel jagt einen.
 
 Ursprüngliche Vorgabe:
-Dschungel mit Tempelruinen, Lianen und Flussüberquerungen. (Vorher "???", Ideen: Dschungel/Tempel.)
+Dschungel mit Tempelruinen, Lianen und Flussüberquerungen. (Vorher "???", Ideen: Dschungel/Tempel.) ✅ umgesetzt (Rev 2: Flusstal mit Schlucht und Furt, Tempelpyramide)
 Cup: Platin (Cup 4)
 Musik: (Vorschlag) Treibende Tribal-Percussion in e-Moll. Bongos, Holzflöte, Marimba, Dschungelgeräusche als Rhythmus.
-Streckenereignis: (Vorschlag) Umstürzende Baumstämme und schwingende Lianen; Flussabschnitte mit Krokodilen, die zuschnappen.
-Änderung: Mud ist Sumpf, dichtes Laub verdeckt Teile der Strecke.
+Streckenereignis: (Vorschlag) Umstürzende Baumstämme und schwingende Lianen; Flussabschnitte mit Krokodilen, die zuschnappen. ✅ umgesetzt (Rev 2: `baeume`, Liane immer, `kroko`, dazu `steinkugel`)
+Änderung: Mud ist Sumpf, dichtes Laub verdeckt Teile der Strecke. ✅ umgesetzt (Rev 2: Sumpf statt Matsch, Laubdach über dem Unterholz)
 
 ## 12. Weltall
 Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `WELTALL`, Theme `weltall`, Musik `space`, Streckenereignisse Asteroiden `asteroiden` und Schwarzes Loch `schwarzesloch`; Code in `src/spacemap.js` und `src/space.js`). Im Cup PLATIN eingetragen. Größere Karte (1360×765), eine Runde dauert etwa 25 bis 30 s.

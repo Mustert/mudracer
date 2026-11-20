@@ -30,6 +30,7 @@
  * @property {() => void} [drawGround] draw.js drawRace: under the cars (in world coordinates)
  * @property {(cx: number, cy: number) => void} [drawAbove] draw.js drawRace: over the cars and the top layer (world coordinates; cx, cy = camera)
  * @property {(cx: number, cy: number) => void} [drawSky] draw.js drawRace: on the screen, after night and rain (weather, darkness, messages)
+ * @property {() => boolean} [noBeams] draw.js drawMood: true = no sunbeams of the theme right now (inside the temple of the jungle)
  */
 
 /** @type {TrackHooks} */
@@ -55,4 +56,5 @@ export const TEMPLATE_HOOKS = {
   drawGround() {},
   drawAbove(cx, cy) {},
   drawSky(cx, cy) {},
+  noBeams() { return false; },
 };

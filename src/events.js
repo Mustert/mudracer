@@ -646,7 +646,9 @@ function checkSpots(T) {
   }
   if ((T.def.events || []).includes('kois') && T.def.koiSpit && T.ter[at(SPIT.x, SPIT.y)] !== 5) bad.push('Spuck-Koi nicht im Wasser');
   for (const [x, y] of T.def.rollers || []) road(x, y, 0, 'Reifen');
-  for (const [x, y] of T.def.trees || []) road(x, y, 5, 'Baum');
+  // the rotten trees of the jungle stand by the road, or (lane 'p') by the trail of fork 1; its crocodiles lie in water or swamp
+  for (const [x, y, , lane] of T.def.trees || []) if (lane !== 'p') road(x, y, 5, 'Baum'); else if (!(T.alt && T.alt[at(x, y)])) bad.push('Baum ' + x + ',' + y + ' nicht auf dem Pfad');
+  for (const [x, y] of T.def.crocs || []) if (![2, 3, 5, 10, 91].includes(T.ter[at(x, y)])) bad.push('Krokodil ' + x + ',' + y + ' nicht im Wasser oder Sumpf');
   for (const [x, y] of T.def.kipper || []) if (T.dist[at(x, y)] > HALF + 40) bad.push('Kipper ' + x + ',' + y + ' weit weg von der Strasse');
   if (bad.length) reportError(new Error(T.name + ': ' + bad.join('; ')), 'Ereignis-Orte');
 }

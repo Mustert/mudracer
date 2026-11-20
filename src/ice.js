@@ -7,6 +7,7 @@ import { addP, splash } from './particles.js';
 import { cam } from './state.js';
 import { inView, near } from './trackfx.js';
 import { snap } from './undo.js';
+import { warnSign } from './kit.js';
 import { LIFT, POWDER, RIM } from './icemap.js';
 
 // ---------- Eis Rev 2 while racing (plaene/EIS_REV2.md): the chair lift (every car that reaches the line is hooked on at once, no waiting: its own chair the moment it
@@ -520,13 +521,6 @@ function drawIceAbove() {
     ell(X + w, Y, 16, 12, '#9fb2c6'); ell(X + w, Y - 1, 15, 11, '#eef4fa'); ell(X - 4 + w, Y - 4, 8, 5, '#ffffff');
   }
   if (G.player && G.player.lap >= LAPS && I.lake) drawAurora(T.ev, I.lake);
-}
-
-// a warning triangle (yellow, black rim and exclamation mark), its tip at x, y
-function warnSign(x, y) {
-  x = Math.round(x);
-  for (let r = 0; r < 16; r++) { const w = Math.floor(r * .62); R1(x - w - 1, y + r, w * 2 + 3, 1, '#1b120c'); if (r > 1 && r < 15) R1(x - w + 1, y + r, w * 2 - 1, 1, '#ffd23f'); }
-  R1(x - 1, y + 5, 2, 5, '#1b120c'); R1(x - 1, y + 11, 2, 2, '#1b120c');
 }
 
 // the polar light of the last lap: three curtains hang in the sky over the lake (violet at the top, green at the lower edge, vertical rays that flicker and

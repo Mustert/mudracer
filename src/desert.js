@@ -8,6 +8,7 @@ import { cam } from './state.js';
 import { fallCar, inView, near, sinkInSand } from './trackfx.js';
 import { tctx } from './tracks.js';
 import { bctx, snap } from './undo.js';
+import { lampSprites } from './kit.js';
 import { RALLY } from './desertmap.js';
 
 // ---------- Wueste Rev 3 while racing (plaene/WUESTE_REV3.md): rally sand in the open field, the pyramid with its forks, and the event "sandsturm"
@@ -241,15 +242,8 @@ function drawDesertAbove(cx, cy) {
 
 // the darkness inside the pyramid: one light map the size of the screen, put together every frame: dark over the whole pyramid, the glow of the floor cut
 // out (you always see where the road goes), a few torches and the lamps of every car cut out (a soft round glow and a cone, made once)
-let SP = null, LM = null;
-function sprites() {
-  if (SP) return SP;
-  const rad = (r, a) => { const c = mk(r * 2, r * 2), g = c.getContext('2d'), gr = g.createRadialGradient(r, r, 0, r, r, r); gr.addColorStop(0, 'rgba(0,0,0,' + a + ')'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, r * 2, r * 2); return c; };
-  const cone = mk(96, 64), g = cone.getContext('2d'), gr = g.createLinearGradient(0, 0, 96, 0);
-  gr.addColorStop(0, 'rgba(0,0,0,.6)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr;
-  g.beginPath(); g.moveTo(0, 27); g.lineTo(96, 0); g.lineTo(96, 64); g.lineTo(0, 37); g.closePath(); g.fill();
-  SP = { torch: rad(34, .6), car: rad(24, .45), glow: rad(36, .8), cone }; return SP;
-}
+let LM = null;
+const sprites = lampSprites;
 function drawDark(cx, cy, py) {
   const S = sprites(); if (!LM) LM = mk(VW, VH);
   const g = LM.getContext('2d');
