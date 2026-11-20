@@ -408,9 +408,10 @@ SONGS.toysFast = { ...SONGS.toys, bpm: 124, swap: null, fast: true };
 SONGS.toysNight = { ...SONGS.toys, bpm: 112, swap: null, night: true };
 
 // space: the space disco that the rainbow track had before its rework (D major, 150 BPM, four on the floor, octave bass, glittering arpeggios),
-// grown up for space: a vocoder sings "space race" in syllables, sci-fi blips fill the gaps, the pads pump with the kick (sidechain). When the
-// black hole is open everything is a whole tone lower and darker (a dive pulls it down when it opens); in the last lap the arpeggio runs twice
-// as fast and the vocoder sings in the chorus too.
+// grown up for space: a vocoder sings "space race" in syllables, sci-fi blips fill the gaps, the pads pump with the kick (sidechain). Layers on the
+// laps (Weltall Rev 2, no change of song and no retuning at the lap line, 1S12-2): from lap 2 the pads are darker (the filter half closed, a
+// an octave below as a shadow on the pads only), the glockenspiel quieter, the sidechain deeper; in the last lap a second arpeggio twice as dense
+// and the vocoder in the verse too. A sub drop when the black hole announces itself.
 const SPACE_DISCO = { bpm: 150, swing: 0,
   chords: { D: { r: 38, n: [62, 66, 69, 73] }, Bm: { r: 35, n: [59, 62, 66, 69] }, G: { r: 43, n: [59, 62, 66, 67] }, A: { r: 45, n: [57, 61, 64, 69] }, Em: { r: 40, n: [59, 62, 64, 67] }, Fm: { r: 42, n: [61, 64, 66, 69] }, A7: { r: 45, n: [57, 61, 64, 67] } },
   A: { ch: ['D', 'Bm', 'G', 'A', 'Em', 'Fm', 'G', 'A7'], mel: mel([
@@ -420,19 +421,18 @@ const SPACE_DISCO = { bpm: 150, swing: 0,
     'D6:0:1 D6:2:1 B5:3:3 D6:6:2 G6:8:4 F#6:12:4', 'E6:0:1 E6:2:1 C#6:3:3 E6:6:2 A6:8:4 G6:12:2 E6:14:2', 'F#6:0:4 E6:4:2 C#6:6:2 A5:8:4 C#6:12:4', 'D6:0:4 C#6:4:2 B5:6:2 F#5:8:8',
     'E6:0:2 G6:2:2 B6:4:4 A6:8:2 G6:10:2 E6:12:4', 'C#6:0:2 E6:2:2 G6:4:4 F#6:8:2 E6:10:2 C#6:12:4', 'D6:0:3 F#6:3:3 A6:6:6 F#6:12:4', 'E6:0:2 C#6:2:2 A5:4:2 G5:6:2 E5:8:2 C#5:10:2 A4:12:4']) } };
 let dived = null;
-const holeOpen = () => !!(G.T && G.T.space && G.T.ev && G.T.ev.hole);
-const spaceLast = () => !!G.player && !G.T.run && G.player.lap >= LAPS && (G.state === 'race' || G.state === 'finish');
+const spWarn = () => G.T && G.T.space && G.T.ev && G.T.ev.spHolePre;
 SONGS.space = { ...SPACE_DISCO,
-  up: () => holeOpen() ? -2 : 0,
   lead(M, m, t, d, sec) {
-    M.lead(hz(m - 12), t, d); M.glock(hz(m), t, holeOpen() ? .5 : 1);
-    if (sec === 'A' || spaceLast()) M.vocoder(hz(m - 24), t, d, ['a', 'e', 'a', 'e'][(m + Math.round(t * 4)) % 4]);
+    const lap = raceLap();
+    M.lead(hz(m - 12), t, d); M.glock(hz(m), t, lap >= 2 ? .5 : 1);
+    if (sec === 'A' || lap >= LAPS) M.vocoder(hz(m - 24), t, d, ['a', 'e', 'a', 'e'][(m + Math.round(t * 4)) % 4]);
   },
   band(M, s, t, bi, ch, sec) {
-    const dark = holeOpen(), last = spaceLast(), tones = [...ch.n, ...ch.n.map(m => m + 12)];
-    if (dark && dived !== G.T.ev.hole) { dived = G.T.ev.hole; M.dive(t); }
+    const lap = raceLap(), dark = lap >= 2, last = lap >= LAPS, tones = [...ch.n, ...ch.n.map(m => m + 12)], w = spWarn();
+    if (w && dived !== w) { dived = w; M.dive(t); }
     M.arp(hz(tones[s % 8] + 12), t); if (last) M.arp(hz(tones[(s + 4) % 8] + 24), t + M.sd / 2);
-    if (s % 4 === 0) M.pumpPad(ch.n, t, dark ? 600 : 1300);
+    if (s % 4 === 0) { M.pumpPad(ch.n, t, dark ? 600 : 1300); if (dark && s === 0) M.pumpPad(ch.n.map(m => m - 12), t, 380); }
     if (s % 2 === 0) M.bassDisco(hz(ch.r + ((s >> 1) % 2 ? 12 : 0)), t, M.sd * 1.8);
     if (s % 4 === 0) M.kick(t);
     if (s === 4 || s === 12) M.clap(t);

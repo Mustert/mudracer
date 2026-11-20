@@ -25,7 +25,8 @@ import { near } from './trackfx.js';
 // Vulkan: fireballs on the serpentine that set cars alight, holes in the steel bridge from lap 2, lava tongues in the maze of gullies that change every lap (see volcano.js).
 // Dschungel: rotten trees fall across the road and stay there as little ramps, from lap 2 a stone ball rolls through the temple;
 // crocodiles snap in the ford and the swamp (see jungle.js).
-// Weltall: asteroids fly across the map (a dashed line and a red arrow first); from lap 2 a black hole opens in the middle and pulls (see space.js).
+// Weltall: asteroids fly across the platforms and the moon (a dashed line, a red arrow, a beep first; more from lap to lap); from lap 2 of the leader a
+// black hole opens in the void in the middle and pulls within its reach (see space.js).
 // Suess: from lap 2 chocolate streams run over the road, sprinkles rain in the last lap; candyfloss clouds hide the road (see suess.js).
 // Spielzimmer: the wooden train, a wind-up car, marbles and the domino tower (spielzeug); from lap 2 the robot vacuum, in the last lap the light
 // goes out (saugroboter; see toys.js).

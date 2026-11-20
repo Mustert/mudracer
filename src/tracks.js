@@ -378,28 +378,35 @@ const TRACK_DEFS = [
     trees: [[618, 470, -1, 'c'], [470, 632, 1, 'c'], [292, 800, -1, 'c'], [1590, 720, -1, 'p'], [1598, 480, 1, 'p'], [1500, 230, -1, 'p']],
     crocs: [[862, 1012], [932, 916], [676, 994], [745, 926]], camp: [120, 760], heads: [[40, 140], [1662, 1112], [36, 1112], [1662, 170]], signs: [1120, 1000],
     monkeys: [[1010, 340], [1480, 700], [720, 470], [1660, 620]] },
-  // Space (a bigger map): from the station (gravity, the start) through the glass tube out onto the platforms (zero gravity: little grip), round a
-  // satellite, in a wide curve round the ringed planet (its gravity pulls; the short way on the planet's ring gives a swing-by), down through the
-  // asteroid belt (a hairpin round a big asteroid, or the wormhole over it), over the moon past a dusty crater and through the airlock (it washes)
-  // back into the station (see spacemap.js, space.js). Next to the platforms is nothing: you drift off, a tractor beam brings you back.
-  // station = the deck [x0, y0, x1, y1]; tube = the glass tube from [x, y] to [x, y]; moon = [x, y, r]; craters = [x, y, r, dusty]; planet = [x, y,
-  // radius of the planet, inner and outer edge of its ring]; orbit = where the ways onto the ring and back leave the road (degrees round the planet) and
-  // where they meet the ring; narrow = narrow bridges between the platforms [x, y, half length, half width]; pads = round platforms that widen a bend [x, y, r]; portals = the wormhole: its little
-  // platform beside the road [x, y, radius] (the mouth in the middle) and where you come out [x, y]; fields = force fields outside the sharp bends
-  // [x, y, half length in steps of the centre line]; rocks = the big asteroids (solid) [x, y, r]; hole = the black hole [x, y] (event schwarzesloch);
-  // airlock = [x, y] on the road; sat = satellite [x, y]; wheel = the turning ring of the station [x, y, r]; earth = [x, y, r]
-  { name: 'WELTALL', seed: 12, W: 1360, H: 765, theme: 'weltall', song: 'space', events: ['asteroiden', 'schwarzesloch'], wall: [], wash: null, space: true,
-    poly: [[135, 410, 0], [135, 110, 75], [560, 110, 70], [640, 185, 70], [770, 185, 70], [850, 110, 70], ...ARC(1070, 310, 200, -90, 90),
-      [920, 510, 75], [920, 680, 55], [810, 680, 45], [810, 590, 45], [650, 590, 45], [650, 680, 45], [520, 680, 50], [440, 625, 55], [330, 625, 55], [255, 680, 50], [135, 680, 60]],
+  // Weltall Rev 2 (plaene/WELTALL_REV2.md): the orbit. Out of the hangar of the station (the start, gravity) north, through the glass tube onto the
+  // platforms in zero gravity (a hairpin loop round the satellite with force fields at its bends; two forks: a narrow grating bridge or a wide platform round a bow), in a wide curve round the ringed planet (its ring
+  // is an open field of ice dust: the further in, the shorter, the harder the pull and the bigger the swing-by), west through the asteroid field (or
+  // into the wormhole at its mouth, out on the moon), over the moon with the long jump over the big crater (little gravity) or round its rim, and
+  // north into the hangar past the decontamination bay (it washes). The black hole opens in the void in the middle (see spacemap.js, space.js).
+  // station = the deck [x0, y0, x1, y1]; modules, tower = boxes on it [x, y, w, h]; shuttle = docked [x, y]; tube = the glass tube from [x, y] to
+  // [x, y]; wheel = the turning ring of the station [x, y, r]; bay = the decontamination bay (points, half width, sign [x, y]); forks = narrow
+  // bridge on the road from [x, y] to [x, y] (half width) or the wide way (points, half width); planet = middle, radius, the ring (inner, outer
+  // radius), the angle where its inner edge turns into a tangent, ice chunks; belt = the asteroid field round the road from [x, y] to [x, y] (half
+  // width), its asteroids [x, y, r], moon dust in hollows [x, y, rx, ry]; portals = the wormhole: its little platform [x, y, r] and where you come
+  // out on the road [x, y]; hole = the black hole [x, y] and its reach [lap 2, last lap] (event schwarzesloch); moon = [x, y, r]; crater = the big
+  // crater with the jump (lip x, speed upwards, gravity) and the way round its rim; craters = small ones [x, y, r, dusty]; fields = force fields
+  // outside sharp bends [x, y, half length in steps]; sat, flag, lander, buggy = [x, y]; earth = [x, y, r]
+  { name: 'WELTALL', rev: 2, seed: 12, W: 1700, H: 1000, theme: 'weltall', song: 'space', events: ['asteroiden', 'schwarzesloch'], wall: [], wash: null, space: true,
+    poly: [[150, 480, 0], [150, 70, 70], [460, 70, 60], [460, 380, 60], [720, 380, 60], [720, 70, 60], [1000, 70, 70], [1110, 225, 60], ...ARC(1390, 470, 245, -90, 90, 6), [1250, 800, 80], [740, 800, 70], [640, 880, 60], [150, 880, 80]],
     mud: [], water: [], ponds: [],
-    mudAt: [[902, 604, 20, 10], [671, 652, 18, 9]],
-    boostAt: [[300, 110], [560, 680]],
-    station: [52, 205, 222, 592], tube: [[135, 215], [440, 110]], moon: [300, 940, 390], craters: [[385, 720, 50, 1], [205, 700, 15, 1], [480, 660, 12, 1], [90, 690, 22, 0], [300, 745, 16, 0], [560, 735, 12, 0]],
-    planet: [1070, 310, 100, 118, 156], orbit: { out: [-88, 86], on: [-46, 42], lane: [120, 154], half: 20 },
-    narrow: [[518, 110, 24, 18]], pads: [[966, 552, 34]],
-    portals: { a: [730, 548, 22], b: [588, 680] }, fields: [[810, 680, 22], [810, 590, 22], [650, 590, 22], [650, 680, 22], [1035, 509, 34], [920, 510, 30], [920, 680, 26]],
-    rocks: [[730, 700, 34], [865, 600, 18], [1005, 640, 26], [590, 540, 20], [860, 742, 18]],
-    hole: [560, 400], airlock: [135, 575], sat: [705, 60], wheel: [312, 300, 46], earth: [1290, 772, 125] },
+    boostAt: [[280, 70]],
+    station: [40, 140, 270, 820], tube: [[150, 150], [400, 70]], wheel: [345, 300, 50],
+    modules: [[50, 160, 40, 90], [50, 280, 40, 130], [50, 440, 40, 160], [196, 180, 58, 70], [196, 560, 58, 100], [196, 690, 58, 105]], tower: [196, 280, 58, 110], shuttle: [228, 470],
+    bay: { pts: [[150, 800, 0], [92, 770, 30], [92, 690, 30], [150, 650, 0]], half: 17, sign: [54, 788] },
+    forks: [{ from: [535, 380], to: [645, 380], half: 12, pts: [[505, 380, 0], [545, 490, 40], [635, 490, 40], [675, 380, 0]], wide: 24 },
+      { from: [1185, 225], to: [1320, 225], half: 12, pts: [[1140, 225, 0], [1190, 125, 40], [1300, 125, 40], [1360, 225, 0]], wide: 24 }],
+    planet: { x: 1390, y: 470, r: 95, ring: [120, 212], tangent: 55, chunks: 11 },
+    belt: { from: [1300, 775], to: [745, 800], half: 88, rocks: [[1150, 858, 21], [1040, 745, 22], [960, 858, 25], [880, 742, 19], [790, 852, 18]], dust: [[1080, 798, 26, 13], [925, 806, 26, 13]] },
+    portals: { a: [1200, 718, 26], b: [590, 880] }, hole: [960, 560], holeR: [300, 360],
+    moon: [330, 1180, 440], crater: { x: 430, y: 880, r: 66, lip: 506, vz: 110, g: 150, pts: [[565, 880, 0], [540, 975, 40], [330, 975, 40], [300, 880, 0]], half: 15 },
+    craters: [[255, 955, 24, 1], [620, 965, 18, 0], [85, 975, 16, 0]],
+    fields: [[460, 70, 34], [460, 380, 30], [720, 380, 30], [720, 70, 30], [1000, 70, 24], [1110, 225, 16], [740, 800, 18]],
+    sat: [590, 215], flag: [205, 945], lander: [80, 930], buggy: [660, 945], earth: [1620, 960, 130] },
   // Süßigkeitenland (a bigger map): from the gingerbread house up through the lollipop forest (two gummy-bear trampolines throw you over
   // caramel), right through the caramel moor on a cookie road, down through the candyfloss clouds (soft walls), round the U over the waffle
   // bridge across the chocolate river (or straight on over the marshmallow stepping stones), left over the fizz field (fizz pads, bubblegum
@@ -736,7 +743,9 @@ function* buildTrack(def, ti) {
   const PLANK = [hex('#8d8373'), hex('#7a7163')], BAL = ['#8a8580', '#77726c', '#9c968f'].map(hex), SLEEPER = [hex('#6b4a2e'), hex('#56391f')], RAIL = [hex('#d5dae2'), hex('#6f757d')];
   const mudPix = [], watPix = [], starPix = [];
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
-    const j = y * MW + x, t = ter[j], nv = vnoise(x / 9, y / 9, sd), h = hash(x, y, sd);
+    const j = y * MW + x, t = ter[j];
+    if (th.space && t !== 4) { if (x === MW - 1 && y % 12 === 11) yield .4 + .3 * y / MH; continue; } // (space paints all its ground itself, spacemap.js)
+    const nv = vnoise(x / 9, y / 9, sd), h = hash(x, y, sd);
     let col;
     if (bridgeMask[j]) {
       // wooden bridge: planks across the road, rails along both edges (they are solid, see below)
@@ -766,11 +775,6 @@ function* buildTrack(def, ti) {
     } else if (t === 1 || t === 4) {
       const v = nv * .6 + h * .4; col = v < .35 ? TRK[1] : v > .68 ? TRK[2] : TRK[0];
       if (dist[j] > HALF - 3) col = TE; else if (h > .988) col = PEB[0]; else if (h < .01) col = PEB[1];
-    } else if (th.space) {
-      const neb = vnoise(x / 45, y / 45, sd + 3);
-      col = neb > .62 ? GRS[2] : neb > .45 ? GRS[1] : GRS[0];
-      if (h < .0015) { col = [255, 255, 255]; starPix.push(j); } else if (h < .004) col = [255, 233, 168]; else if (h < .0055) col = [159, 214, 255];
-      if (dist[j] < HALF + 3) col = GE;
     } else if (th.sea && y > shoreY[x] - 14 && dist[j] >= HALF + 2.5) {
       const dd = shoreY[x] - y + (nv - .5) * 4; // wet sand darkens towards the waterline
       col = dd < 5 ? WET[0] : dd < 10 ? WET[1] : WET[2];

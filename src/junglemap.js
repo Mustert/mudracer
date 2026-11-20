@@ -1,7 +1,6 @@
 import { HALF, TAU, clamp, hash, hex, mk, vnoise } from './core.js';
 import { nearestIdx, paintTools, startLine } from './bau.js';
-import { edgeCircles, smin } from './kit.js';
-import { polyPts } from './volcanomap.js';
+import { edgeCircles, smin, stampWay } from './kit.js';
 
 // ---------- Dschungel Rev 2 (plaene/DSCHUNGEL_REV2.md): a river valley ----------
 // The river comes as a waterfall off the table mountain at the top, runs through a gorge under the road (liana or log bridge), wide and deep through
@@ -39,18 +38,6 @@ function river(C, MW, MH, seed, fn) {
     const a = C[k - 1], b = C[k], f = clamp((y - a[1]) / ((b[1] - a[1]) || 1), 0, 1), cx = a[0] + (b[0] - a[0]) * f, r = a[2] + (b[2] - a[2]) * f;
     for (let x = Math.max(0, Math.floor(cx - r - 4)); x <= Math.min(MW - 1, cx + r + 4); x++) if (Math.abs(x + .5 - cx) < r + (vnoise(x * .1, y * .1, seed) - .5) * 6) fn(y * MW + x);
   }
-}
-
-// a narrow way of its own (a polyline with rounded corners, every 2 px): every pixel nearer than half to it, fn(j, distance); returns the points.
-// Like stampLine (volcanomap.js), but with a distance buffer over its box instead of a Map (fast)
-function stampWay(P, half, fn, MW, MH) {
-  const pts = polyPts(P), R = Math.ceil(half + 1);
-  let x0 = MW, y0 = MH, x1 = 0, y1 = 0; for (const p of pts) { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
-  x0 = Math.max(0, Math.floor(x0 - R)); y0 = Math.max(0, Math.floor(y0 - R)); x1 = Math.min(MW - 1, Math.ceil(x1 + R)); y1 = Math.min(MH - 1, Math.ceil(y1 + R));
-  const BW = x1 - x0 + 1, D = new Float32Array(BW * (y1 - y0 + 1)).fill(1e9), h2 = half * half;
-  for (const p of pts) for (let y = Math.max(y0, Math.floor(p.y - R)); y <= Math.min(y1, p.y + R); y++) { const dy = y + .5 - p.y, row = (y - y0) * BW; for (let x = Math.max(x0, Math.floor(p.x - R)); x <= Math.min(x1, p.x + R); x++) { const dx = x + .5 - p.x, dd = dx * dx + dy * dy; if (dd < h2 && dd < D[row + x - x0]) D[row + x - x0] = dd; } }
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const dd = D[(y - y0) * BW + x - x0]; if (dd < h2) fn(y * MW + x, Math.sqrt(dd)); }
-  return pts;
 }
 
 // the distance of (x, y) from the segment a-b

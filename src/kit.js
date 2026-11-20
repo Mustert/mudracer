@@ -1,6 +1,7 @@
 import { G } from './g.js';
 import { VH, VW, ctx, mk } from './core.js';
 import { R1 } from './gfx.js';
+import { polyPts } from './volcanomap.js';
 
 // ---------- shared building blocks of the reworked tracks (ROADMAP 1T-13, plaene/REWORKS_CUP4_CUP5.md) ----------
 // - warnSign: the warning triangle at the edge of the screen over a danger that is coming (no text, 1S9-12): ice (snowballs), jungle (trees, stone ball)
@@ -8,6 +9,7 @@ import { R1 } from './gfx.js';
 // - darkRect: a light map over one rectangle of the world (dark, torches and car lamps cut holes into it), drawn in world coordinates
 // - smin: a smooth minimum (walls and massifs that melt into one shape, 1S9-9)
 // - edgeCircles: solid circles along the outline of a free area (they follow the drawn edge, so the picture and the collision agree)
+// - stampWay: a narrow way of its own (a polyline with rounded corners), stamped over a distance buffer: jungle (boardwalk, trail, grotto), space (forks, bay, detour)
 
 // a warning triangle (yellow, black rim and exclamation mark), its tip at x, y
 export function warnSign(x, y) {
@@ -72,4 +74,16 @@ export function edgeCircles(free, x0, y0, x1, y1, r = 4, out = 4, step = 5) {
     res.push({ x: x - fx / l * out, y: y - fy / l * out, r });
   }
   return res;
+}
+
+// a narrow way of its own (a polyline with rounded corners, every 2 px): every pixel nearer than half to it, fn(j, distance); returns the points.
+// Like stampLine (volcanomap.js), but with a distance buffer over its box instead of a Map (fast)
+export function stampWay(P, half, fn, MW, MH) {
+  const pts = polyPts(P), R = Math.ceil(half + 1);
+  let x0 = MW, y0 = MH, x1 = 0, y1 = 0; for (const p of pts) { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
+  x0 = Math.max(0, Math.floor(x0 - R)); y0 = Math.max(0, Math.floor(y0 - R)); x1 = Math.min(MW - 1, Math.ceil(x1 + R)); y1 = Math.min(MH - 1, Math.ceil(y1 + R));
+  const BW = x1 - x0 + 1, D = new Float32Array(BW * (y1 - y0 + 1)).fill(1e9), h2 = half * half;
+  for (const p of pts) for (let y = Math.max(y0, Math.floor(p.y - R)); y <= Math.min(y1, p.y + R); y++) { const dy = y + .5 - p.y, row = (y - y0) * BW; for (let x = Math.max(x0, Math.floor(p.x - R)); x <= Math.min(x1, p.x + R); x++) { const dx = x + .5 - p.x, dd = dx * dx + dy * dy; if (dd < h2 && dd < D[row + x - x0]) D[row + x - x0] = dd; } }
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const dd = D[(y - y0) * BW + x - x0]; if (dd < h2) fn(y * MW + x, Math.sqrt(dd)); }
+  return pts;
 }

@@ -83,7 +83,7 @@ function updateRace(dt) {
         // on sheet ice they lift off before a bend
         if (c.surf === 12 && tgt !== null && Math.abs(angDiff(tgt, c.ang)) > .35) thr *= .55;
         // on the platforms in space a little less
-        else if (c.surf === 17 && !c.ringWay && tgt !== null && Math.abs(angDiff(tgt, c.ang)) > .35) thr *= .65;
+        else if (c.surf === 17 && !c.spWay && tgt !== null && Math.abs(angDiff(tgt, c.ang)) > .35) thr *= .65;
         // up the rainbow arch at full throttle (the jump over its gap needs speed)
         if (H.throttle) thr = H.throttle(c, thr);
         // opponents far ahead lift off a little, ones far behind push harder; never above full throttle (on SCHWER less of both)

@@ -210,6 +210,9 @@ export const SFX = {
   thruster: () => noise({ type: 'highpass', f: 3000, a: .005, d: .08, vol: .05 }),
   airlock: v => { noise({ type: 'highpass', f: 2200, to: 5000, a: .02, hold: .35, d: .5, vol: .18 * v }); voice({ type: 'square', f: 220, a: .003, hold: .05, d: .05, vol: .04 * v, lp: 900 }); },
   holeOpen: () => { voice({ type: 'sawtooth', f: 400, to: 40, a: .05, hold: .6, d: 1.4, vol: .12, lp: 900 }); noise({ type: 'lowpass', f: 1200, to: 80, a: .2, hold: .6, d: 1.5, vol: .3 }); voice({ f: 50, to: 30, a: .3, hold: .8, d: 1, vol: .3 }); },
+  // the black hole about to open (a deep rumble that rises), the long slow jump over the crater of the moon (a soft whoosh that floats)
+  holeWarn: () => { voice({ type: 'sawtooth', f: 36, to: 70, a: 1.2, hold: .8, d: .8, vol: .1, lp: 300 }); noise({ type: 'lowpass', f: 120, to: 600, a: 1.5, hold: .5, d: .6, vol: .16 }); },
+  moonJump: v => { noise({ type: 'bandpass', f: 500, to: 1400, a: .1, hold: .5, d: .9, vol: .12 * v, q: 2 }); voice({ type: 'sine', f: 220, to: 440, a: .1, hold: .6, d: .8, vol: .05 * v }); },
   holeHum: v => voice({ type: 'sawtooth', f: 46, to: 40, a: .6, hold: 1, d: 1.2, vol: .07 * v, lp: 260 }),
   // rainbow: a unicorn neighing (it warbles down), glitter (little bells going up), a lightning strike (a crack, then the boom), a car buzzing
   // with electricity, the sun breaking through (a choir chord swelling up with bells), a firework rocket (whistle, bang, crackle)

@@ -5,7 +5,7 @@ Stand 2026-10-14, Branch `map_pack`. Die Strecken 1 bis 6 sind umgesetzt, 7 bis 
 
 **Keine Schrift-Ansagen (seit 2026-11-19):** Im Rennen erscheinen keine Wörter mehr über Autos, Tieren oder Ereignisorten und keine Bildschirmmeldungen. Wo unten bei den Strecken ein Text wie „MUH!“, „AUA, HEISS!“, „ZUG KOMMT“, „BOX BOX“, „SWING-BY!“, „SCHOKOLADE!“ oder „SCHLAFENSZEIT!“ beschrieben ist, gibt es heute nur noch Ton, Blinken, Schatten oder Warnzeichen.
 
-**Kartengröße:** Die Strecken sind 800×450 px groß (Standard), größer sind das Weltall (1360×765), das Süßigkeitenland (1200×675), das Spielzimmer (1280×720) und der Regenbogen (1440×810). Seit 2026-10-12 kann eine Strecke eine eigene Größe bekommen (`W` und `H` in ihrer Definition in `TRACK_DEFS`, `src/tracks.js`). Die Strecken werden erst gebaut, wenn sie gebraucht werden (im Hintergrund oder auf einem kurzen Ladebildschirm), also verlängern größere Karten den Spielstart nicht.
+**Kartengröße:** Die Strecken sind 800×450 px groß (Standard), größer sind das Weltall (1700×1000 seit Rev 2), das Süßigkeitenland (1200×675), das Spielzimmer (1280×720) und der Regenbogen (1440×810). Seit 2026-10-12 kann eine Strecke eine eigene Größe bekommen (`W` und `H` in ihrer Definition in `TRACK_DEFS`, `src/tracks.js`). Die Strecken werden erst gebaut, wenn sie gebraucht werden (im Hintergrund oder auf einem kurzen Ladebildschirm), also verlängern größere Karten den Spielstart nicht.
 
 **Zeitfahren-Rekorde:** Wiese (jetzt `rev: 2`), Wald, Strand und Regenbogen haben durch die Änderungen eine neue Revision (`rev: 1`). Ihre Rekorde starten neu (Schlüssel mit Zusatz `-r1`), die alten Zeiten bleiben unangetastet im Speicher.
 
@@ -657,7 +657,27 @@ Streckenereignis: (Vorschlag) Umstürzende Baumstämme und schwingende Lianen; F
 Änderung: Mud ist Sumpf, dichtes Laub verdeckt Teile der Strecke. ✅ umgesetzt (Rev 2: Sumpf statt Matsch, Laubdach über dem Unterholz)
 
 ## 12. Weltall
-Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `WELTALL`, Theme `weltall`, Musik `space`, Streckenereignisse Asteroiden `asteroiden` und Schwarzes Loch `schwarzesloch`; Code in `src/spacemap.js` und `src/space.js`). Im Cup PLATIN eingetragen. Größere Karte (1360×765), eine Runde dauert etwa 25 bis 30 s.
+Status: **Rev 2 umgesetzt** auf Branch `map_pack` (2026-11-20, Plan `plaene/WELTALL_REV2.md`; Streckenname `WELTALL`, `rev: 2`, Theme `weltall`, Musik `space` in Schichten nach Runden, Streckenereignisse Asteroiden `asteroiden` und Schwarzes Loch `schwarzesloch`; Code in `src/spacemap.js` und `src/space.js`; Karte 1700×1000, Runde 27–37 s mit dem Bot). Im Cup PLATIN eingetragen. Abnahme durch den Nutzer offen (ROADMAP 1S12-5). Der Prototyp darunter (1360×765, Runde 25–30 s) ist ersetzt.
+
+### Rev 2: der Orbit (gilt, `rev: 2`; ersetzt den Prototyp darunter)
+Die Bahnen der Himmelskörper bestimmen die Strecke. Rundenverlauf im Uhrzeigersinn:
+1. **Hangar** der Raumstation: Startgerade nach Norden auf dem Deck (künstliche Schwerkraft), Module, Kontrollturm, Roboterarm, ein angedocktes Shuttle, Pfeiler mit Lampen neben der Ziellinie (nichts überspannt sie). Daneben dreht sich das Rad der Station; ab und zu dockt ein Shuttle an.
+2. **Glasröhre** aus dem Hangar nach Osten (Sterne durch das Glas, Boost-Feld in der Mitte).
+3. **Plattformen** in Schwerelosigkeit (wenig Haftung, Steuerdüsen, leuchtende Reifenspuren): eine **Haarnadel-Schleife** um einen Satelliten mit Kraftfeldern an allen vier Kehren. Zwei **Gabelungen**: eine **schmale Gitterbrücke** (kurz, gelb-schwarzer Rand, wer danebenfährt, treibt ins All) oder eine **breite Plattform** im Bogen (länger, sicher).
+4. **Ringplanet**: die Straße läuft im weiten Bogen außen um ihn. Sein **Ring** ist ein offenes Feld aus glitzerndem Eisstaub mit festen Eisbrocken: je weiter innen, desto kürzer der Weg und desto stärker der Zug. Wer das Ringfeld zu seinem Ende hin verlässt, bekommt einen **Swing-by** (Schub mit Glitzerspur, je weiter innen, desto mehr; kein Text). Der Ring endet in einem Trichter (seine Innenkante ist eine Tangente), wer geradeaus hinausfliegt, landet wieder auf der Straße. Wer zu langsam und zu weit innen ist, glüht in der Atmosphäre und wird an den Planeten gezogen (Traktorstrahl).
+5. **Asteroidenfeld**: ein offenes Plattformgitter rund um die Straße, große feste Asteroiden mit Kratern und Schatten, **Mondstaub in Senken** auf der Ideallinie (durch den Staub oder außen herum), **Bojen** am Rand (rot auf der einen, grün auf der anderen Seite).
+6. **Wurmloch**: der lila Wirbel liegt auf einer kleinen Plattform am Nordrand der Einfahrt ins Feld (bewusst anfahren); der türkise Ausgang liegt auf dem Mond kurz vor der Sprungrampe (gleiches Tempo, gleiche Richtung). Spart den Weg durchs Feld.
+7. **Mond**: graue Kraterlandschaft mit Fahrspuren, Lämpchen, Landefähre, Rennflagge, Mondbuggy mit Spuren. Über den **großen Krater** springt man von einer Rampe: geringe Schwerkraft, der Flug ist lang und langsam, schief landen gibt keinen Dreher. Zu langsam: hinunter in den Staub des Kraters (kein Sturz) und wieder hinaus; die Computerautos nehmen dann den **Umweg am Kraterrand**.
+8. **Dekontaminations-Bucht** auf dem Deck neben der Straße, vor der Startaufstellung: Düsen, weißer Nebel (schon von weitem zu sehen), Zischen, Schild mit Tropfen. Das einzige Waschen; die Hauptlinie daneben wäscht nicht.
+
+Ereignisse: `asteroiden` (über Plattformen, Feldrand und Mond, nie in Hangar, Röhre, Wurmloch oder in den Umkreis des Lochs; Runde 1 des Führenden alle 6–9 s einer, Runde 2 alle 4–6 s, mittlere zerbrechen, letzte Runde Schwärme von drei; gestrichelte Bahn, roter Radar-Pfeil, Piepen), `schwarzesloch` (sobald der Führende Runde 2 beginnt: Sterne verbiegen sich, Brummen, Sub-Drop im Lied, Warndreieck am Bildrand; 2,5 s später öffnet es sich im leeren All zwischen Station, Asteroidenfeld und Wurmloch; zieht nur im Umkreis von 300 px, letzte Runde 360 px, die Plattformen an diesem Rand blinken rot; schluckt Asteroiden; wer dort abdriftet, fliegt eine Spirale in den Traktorstrahl).
+
+Lied `space` in Schichten: Runde 1 Space-Disco wie bisher; ab Runde 2 dunklere Flächen (Filter halb zu, ein Schatten eine Oktave tiefer), leiseres Glockenspiel; letzte Runde zweites Arpeggio doppelt so dicht, Vocoder auch in der Strophe. Kein Umstimmen und kein Liedwechsel mehr. Neue Töne: Ankündigung des Lochs (aufsteigendes Grollen), Mondsprung (schwebendes Rauschen).
+
+Warum schwerer als der Dschungel: fast überall wenig Haftung, Kräfte von Planet und Loch, Abgründe an jedem Plattformrand, Hindernisse aus allen Richtungen; wer die Kräfte nutzt (Ringlinie, Swing-by, Wurmloch), ist sehr schnell.
+
+### Prototyp (bis 2026-11-20, ersetzt durch Rev 2)
+Größere Karte (1360×765), eine Runde dauerte etwa 25 bis 30 s.
 
 Abweichungen vom Vorschlag (erster Wurf):
 - Das **Wurmloch** pendelt nicht auf der Straße, sondern sitzt auf einer kleinen runden Plattform neben ihr (gelb-schwarzer Rand): Man muss bewusst hinfahren, zufällig trifft man es nicht. Es überspringt eine Kehre im Asteroidengürtel, um einen großen Asteroiden herum; der türkise Ausgang liegt kurz vor dem Mond.
@@ -669,18 +689,18 @@ Abweichungen vom Vorschlag (erster Wurf):
 - Die **Luftschleuse** ist ein Tor über der Straße am Übergang vom Mond in die Station; Düsen im Boden blasen den Staub ab (weißer Nebel, Zischen).
 - Die **Asteroiden** fliegen nur über die offenen Plattformen und den Mond, nicht in die Glasröhre oder die Station. Mittlere zerbrechen bei einem Treffer in zwei kleine.
 - Ab dem **schwarzen Loch** wird die Musik einen Ganzton tiefer (mit einem Absturz-Effekt beim Öffnen); in der letzten Runde läuft das Arpeggio doppelt so schnell, der Vocoder singt auch im Refrain.
-- Noch nicht: Stationsmodule und Staubflecken sind schlicht, das Lied ist noch nicht angehört. Das alte Regenbogen-Lied (Space-Disco) steckt jetzt allein im Weltall-Lied `space` (`SPACE_DISCO` in `src/music.js`); seit dem Regenbogen-Rework (2026-10-14) hat der Regenbogen sein eigenes neues Lied `rainbow`. ✅ umgesetzt
+- Noch nicht: Stationsmodule und Staubflecken sind schlicht (✅ umgesetzt mit Rev 2), das Lied ist noch nicht angehört. Das alte Regenbogen-Lied (Space-Disco) steckt jetzt allein im Weltall-Lied `space` (`SPACE_DISCO` in `src/music.js`); seit dem Regenbogen-Rework (2026-10-14) hat der Regenbogen sein eigenes neues Lied `rainbow`. ✅ umgesetzt
 
 Idee: Die bisherige Weltall-Optik der Regenbogen-Strecke (Sterne, Asteroidengürtel, `decor: 'space'`) zieht hierher, und das bisherige Lied `rainbow` (Space-Disco) wird zum Lied dieser Strecke. Die Strecke ist eine Bahn aus Metallplattformen und Röhren zwischen Raumstation, Mond und einem Ringplaneten. Es geht um **Schwung**: Im All hat man wenig Grip, aber die Schwerkraft eines Planeten kann einen schleudern.
 
 Rundenverlauf (Uhrzeigersinn, Start links, es geht zuerst nach oben):
 - 0–12 %: Start links in der **Raumstation**: ein Hangar mit Startrampe, Lichter an den Wänden, Roboterarm. Hier ist künstliche Schwerkraft, das Auto fährt normal.
 - 12–25 %: oben eine **Glasröhre** (man sieht durch das Glas auf die Sterne), dann hinaus auf freie Plattformen. Ab hier ist **Schwerelosigkeit**: weniger Grip (etwa wie Glatteis, aber nicht ganz so schlimm), dafür Steuerdüsen: Das Auto lenkt mit kleinen Düsenstößen (Optik), Gas wirkt voll. Hier zählt Beschleunigung mehr als Höchsttempo.
-- 25–45 %: oben rechts der **Ringplanet**: Die Strecke führt in einem großen Bogen um den Planeten herum. Seine **Schwerkraft** zieht alle Autos zur Mitte (Schubzone zum Planeten hin). Innen auf der Ringbahn (dem Planetenring, glitzernd) ist der Weg kurz, aber man wird stark angezogen und muss gegenlenken. **Swing-by:** Wer die Kurve auf der inneren Linie sauber durchfährt, bekommt am Ende einen Schub (wie ein Boost-Pad, Text „SWING-BY!“).
+- 25–45 %: oben rechts der **Ringplanet**: Die Strecke führt in einem großen Bogen um den Planeten herum. Seine **Schwerkraft** zieht alle Autos zur Mitte (Schubzone zum Planeten hin). Innen auf der Ringbahn (dem Planetenring, glitzernd) ist der Weg kurz, aber man wird stark angezogen und muss gegenlenken. **Swing-by:** Wer die Kurve auf der inneren Linie sauber durchfährt, bekommt am Ende einen Schub (wie ein Boost-Pad, Text „SWING-BY!“). ✅ umgesetzt (Rev 2: abgestuft nach der Linie, Glitzerspur statt Text)
 - 45–55 %: rechts ein **Wurmloch**: zwei wirbelnde Portale (lila und türkis). Wer in das erste fährt, kommt mit gleichem Tempo und gleicher Richtung aus dem zweiten heraus, ein gutes Stück weiter unten (Abkürzung um den Asteroidengürtel). Das Portal ist schmal, wer es verfehlt, nimmt den langen Weg.
 - 55–75 %: unten der **Asteroidengürtel**: Die Strecke schlängelt sich zwischen großen Asteroiden durch (fest). Hier liegt Mondstaub.
 - 75–90 %: links unten über den **Mond**: eine graue Kraterlandschaft, die Strecke führt über den Rand eines Kraters. Mondstaub neben der Strecke.
-- 90–100 %: zurück in den Hangar durch die **Luftschleuse** (Waschen) und ins Ziel.
+- 90–100 %: zurück in den Hangar durch die **Luftschleuse** (Waschen) und ins Ziel. ✅ umgesetzt (Rev 2: als Dekontaminations-Bucht neben der Linie, Grundsatz 13)
 
 Oberflächen:
 - **Metallplattform** (Strecke): dunkelblau-grau mit Leuchtstreifen am Rand und Nieten. Reifenspuren leuchten kurz nach (Cyan) und verblassen.

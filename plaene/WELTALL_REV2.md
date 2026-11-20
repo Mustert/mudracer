@@ -1,6 +1,6 @@
 # WELTALL Rev 2 – Umsetzungsplan
 
-Stand: 2026-10-31, Branch `map_pack`. Eigener Plan für den Komplettumbau der Weltall-Strecke (Strecke 12, Cup 4, Schlussprüfung des Platin-Cups). Er steht bewusst nicht in `ROADMAP.md`; dort bleibt nur der Block `1S12` mit einem Verweis hierher. Grundlage: Prototyp in `src/space.js` und `src/spacemap.js`, `Strecken.md` Abschnitt 12, ROADMAP 1S12-1 bis 1S12-3 und 1M-1, Skills `strecke` und `mechanik`, Streckendesign-Grundsätze in `CLAUDE.md`. Gemeinsamer Rahmen: `plaene/REWORKS_CUP4_CUP5.md`. Vorbild: `plaene/EIS_REV2.md`, `plaene/WUESTE_REV3.md`, `plaene/VULKAN_REV2.md` (Branch `vulkan_rev2`).
+Stand: 2026-10-31, Branch `map_pack`. **Umgesetzt 2026-11-20** (alle Pakete, offene Fragen nach den Vorschlägen; Abweichungen unter „Umsetzung“ am Ende). Eigener Plan für den Komplettumbau der Weltall-Strecke (Strecke 12, Cup 4, Schlussprüfung des Platin-Cups). Er steht bewusst nicht in `ROADMAP.md`; dort bleibt nur der Block `1S12` mit einem Verweis hierher. Grundlage: Prototyp in `src/space.js` und `src/spacemap.js`, `Strecken.md` Abschnitt 12, ROADMAP 1S12-1 bis 1S12-3 und 1M-1, Skills `strecke` und `mechanik`, Streckendesign-Grundsätze in `CLAUDE.md`. Gemeinsamer Rahmen: `plaene/REWORKS_CUP4_CUP5.md`. Vorbild: `plaene/EIS_REV2.md`, `plaene/WUESTE_REV3.md`, `plaene/VULKAN_REV2.md` (Branch `vulkan_rev2`).
 
 **Status je Paket** wird hier gepflegt. Erst beim Abschluss (W8) wird `ROADMAP.md` nachgezogen: 1S12, Tabelle „Strecken im Überblick“, 1M-1, 1M-2, 1P-1, 1P-2.
 
@@ -148,14 +148,14 @@ Laufzeit:
 
 | Paket | Inhalt | Prüfen | Status |
 |---|---|---|---|
-| W1 Grundriss | Kartengröße, Mittellinie, Hangar-Startgerade, Röhre, Plattformkette, Straße um den Planeten, Gürtel als Feld, Mond, Hook `progress`, `sp`-Namen | `check`: Start gerade, keine Abkürzung übers All, 10/10; Bauzeit | offen |
-| W2 Plattformen | Gitterbrücken mit Wahl, Kraftfeld an den Kehren, Kontrast der Ränder, Satellit, Astronaut | `check`, Stürze an den Brücken, Screenshot | offen |
-| W3 Ringplanet | Ringstaub-Feld (Code 100), Eisbrocken, Zug nach Abstand, Swing-by abgestuft mit Glitzerspur, KI-Linien | `check` alle Stufen, Rundenzeit innen gegen außen | offen |
-| W4 Asteroidenfeld und Wurmloch | Formen-Asteroiden, Mondstaub-Senken, Bojen, Wurmloch an der Einfahrt, KI-Wahl | `check`, `checkPic` | offen |
-| W5 Mond | Krater, Lander, Kratersprung mit geringer Schwerkraft (`g`), Umweg am Kraterrand, Staubwolken | `check`, Sprung bei 60/100/135 px/s, Screenshot im Flug | offen |
-| W6 Bucht und Hangar | Dekontaminations-Bucht (Waschen), Hangar-Deko, Station mit Rad, Tor | `check`, KI nur dreckig | offen |
-| W7 Ereignisse und Lied | Asteroiden steigend je Runde, Loch lokal mit Ankündigung, letzte Runde größer; Lied in Schichten ohne `swap`, Sub-Drop; neue Töne | `check` mit und ohne `fx`, Musik ohne Stocken an der Rundengrenze | offen |
-| W8 Abschluss | Kulisse (Ufo, Sternschnuppen, Schiffe), Performance, `check` LEICHT/MITTEL/SCHWER mit 3, 5, 10 Autos, Grundsätze 1–14; Doku: ROADMAP (1S12, Tabelle, 1M-1, 1P-1, 1P-2, „Zuletzt abgeglichen“), `Strecken.md` 12, Skills `mechanik` (Code 100, Sprung-`g`, „Weltall Rev 2 in Kürze“) und `strecke` | alles | offen |
+| W1 Grundriss | Kartengröße, Mittellinie, Hangar-Startgerade, Röhre, Plattformkette, Straße um den Planeten, Gürtel als Feld, Mond, Hook `progress`, `sp`-Namen | `check`: Start gerade, keine Abkürzung übers All, 10/10; Bauzeit | umgesetzt (Start 0°, keine Abkürzungen, 10/10; Hook `progress` nicht nötig) |
+| W2 Plattformen | Gitterbrücken mit Wahl, Kraftfeld an den Kehren, Kontrast der Ränder, Satellit, Astronaut | `check`, Stürze an den Brücken, Screenshot | umgesetzt (mit Haarnadel-Schleife) |
+| W3 Ringplanet | Ringstaub-Feld (Code 100), Eisbrocken, Zug nach Abstand, Swing-by abgestuft mit Glitzerspur, KI-Linien | `check` alle Stufen, Rundenzeit innen gegen außen | umgesetzt |
+| W4 Asteroidenfeld und Wurmloch | Formen-Asteroiden, Mondstaub-Senken, Bojen, Wurmloch an der Einfahrt, KI-Wahl | `check`, `checkPic` | umgesetzt |
+| W5 Mond | Krater, Lander, Kratersprung mit geringer Schwerkraft (`g`), Umweg am Kraterrand, Staubwolken | `check`, Sprung bei 60/100/135 px/s, Screenshot im Flug | umgesetzt (Flug 1,47 s; ab etwa 110 px/s über den Krater) |
+| W6 Bucht und Hangar | Dekontaminations-Bucht (Waschen), Hangar-Deko, Station mit Rad, Tor | `check`, KI nur dreckig | umgesetzt (Pfeiler statt Tor über der Linie) |
+| W7 Ereignisse und Lied | Asteroiden steigend je Runde, Loch lokal mit Ankündigung, letzte Runde größer; Lied in Schichten ohne `swap`, Sub-Drop; neue Töne | `check` mit und ohne `fx`, Musik ohne Stocken an der Rundengrenze | umgesetzt (Lied noch nicht angehört, 1M-2) |
+| W8 Abschluss | Kulisse (Ufo, Sternschnuppen, Schiffe), Performance, `check` LEICHT/MITTEL/SCHWER mit 3, 5, 10 Autos, Grundsätze 1–14; Doku: ROADMAP (1S12, Tabelle, 1M-1, 1P-1, 1P-2, „Zuletzt abgeglichen“), `Strecken.md` 12, Skills `mechanik` (Code 100, Sprung-`g`, „Weltall Rev 2 in Kürze“) und `strecke` | umgesetzt (Abnahme durch den Nutzer offen, ROADMAP 1S12-5) |
 
 ## Grundsätze-Check (für W8)
 
@@ -173,3 +173,17 @@ Laufzeit:
 12. Mondstaub als Entscheidung (Senken auf der Ideallinie im Gürtel), Ring innen gegen außen.
 13. Waschen: nur die Dekontaminations-Bucht.
 14. Hangartor, Nebel und Loch nie über Ziellinie und Aufstellung.
+
+## Umsetzung (2026-11-20)
+
+Offene Fragen nach den Vorschlägen beantwortet: kein Mockup (Grundriss nach diesem Plan); Ring als offenes Feld; Mondsprung mit geringer Schwerkraft; Loch nur lokal; das Rad der Station dreht sich sichtbar, der Hangar bleibt hell (keine Lichtkarte über Ziellinie und Aufstellung, Grundsatz 14).
+
+Abweichungen vom Plan:
+- **Haarnadel-Schleife** auf den Plattformen (zwischen Röhre und Planet, um den Satelliten, Kraftfelder an allen vier Kehren), weil die Runde sonst nur 24–26 s dauerte. Die erste Gabelung liegt auf dem unteren Schenkel der Schleife, die zweite auf der Geraden vor dem Planeten.
+- Lage: Station x 40–270, y 140–820, Linie bei (150, 480), Fahrt nach Norden; Planet (1390, 470), r 95, Straße auf r 245; Ringfeld r 120–212, an beiden Enden ab 55° eine Tangente als Innenkante (Trichter zur Straße); Asteroidenfeld x 745–1300 um die Straße bei y 800 (halbe Breite 88, an den Enden schmaler); Wurmloch (1200, 718), Ausgang (590, 880); Loch (960, 560), Reichweite 300 / 360; Mond (330, 1180), r 440; Krater (430, 880), r 66, Rampe bei x 506, `vz` 110, `g` 150; Bucht auf dem Deck westlich der Straße zwischen y 650 und 800.
+- Das Loch öffnet 2,5 s nach dem Beginn von Runde 2 des Führenden (Ankündigung: Sterne verbiegen sich, Grollen, Sub-Drop, Warndreieck). Die Asteroiden steigen mit der Runde des Führenden.
+- Lied: der „Ganzton tiefer“ als Effekt auf den Flächen klang gegen die Akkorde schief; stattdessen ab Runde 2 ein dunkler Schatten der Flächen eine Oktave tiefer.
+- Kein Hook `progress` nötig (das Ringfeld und das Asteroidenfeld liegen nie näher an einem anderen Teil der Mittellinie).
+- Gemeinsam: `stampWay` aus `junglemap.js` nach `kit.js`; Sprünge mit `g` und `soft` in `trackfx.js`; der Kern malt den Boden des Weltalls nicht mehr (`paintSpace` malt alles).
+
+Gemessen (Desktop, Vorschaufenster): `check` LEICHT/MITTEL/SCHWER mit 3, 5 und 10 Autos und ohne Ereignisse: alle im Ziel, keine Abkürzungen, keine Hinweise. Runde 27–37 s mit dem Bot (geplant 45–50 s, ROADMAP 1S12-6), Rennen 130–185 s. Stürze ins All auf SCHWER etwa 40 bei 10 Autos (vor allem an den Gitterbrücken und am Anfang der Haarnadel). Bau 1,25–1,75 s am Stück (ROADMAP 1S12-7), Frame-Zeit 0,8–1,4 ms mit 10 Autos. Mobilgröße nicht gemessen.

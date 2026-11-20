@@ -8,7 +8,8 @@ import { cam } from './state.js';
 // sinking in quicksand, burning in lava (volcano). Terrain codes: 10 quicksand, 11 gorge (no ground), 12 sheet ice, 14 swinging rope bridge,
 // 15 lava.
 // A jump: { x, y (the lip), tx, ty (the way you jump), lo, hi (how far to the side of the lip, along the normal -ty, tx), vz (speed upwards),
-// push (optional: at least this speed forwards, the geyser), cap (optional: at most this speed forwards), off (true: it does not throw you right now) }.
+// push (optional: at least this speed forwards, the geyser), cap (optional: at most this speed forwards), off (true: it does not throw you right now),
+// g (optional: its own gravity in the air, default 380; the moon of space: 150, a long slow flight), soft (true: a crooked landing never spins the car) }.
 // A push: { i0, i1 (stretch of the centre line, in driving order), f (push along the road, px/s²) }, or a current in a box
 // { rect: [x0, y0, x1, y1], fx, fy } (the ford in the jungle). ----------
 
@@ -25,7 +26,7 @@ export function airborne(c, dt) {
   const T = G.T;
   if (c.fall > 0) return;
   if (c.z > 0) {
-    c.vz -= GRAV * dt; c.z += c.vz * dt; c.air += dt;
+    c.vz -= (c.jg || GRAV) * dt; c.z += c.vz * dt; c.air += dt;
     if (c.z <= 0) land(c);
     return;
   }
@@ -36,7 +37,7 @@ export function airborne(c, dt) {
     c.ja[k] = a;
     if (J.off || pa === undefined || pa >= 0 || a < 0 || a > 20 || l < J.lo || l > J.hi) return;
     const fwd = c.vx * J.tx + c.vy * J.ty; if (fwd < (J.push ? 5 : 30)) return;
-    c.z = .01; c.vz = J.vz; c.air = 0; c.jumpLand = J.land; // (land: where it is set down if it falls short, the rainbow)
+    c.z = .01; c.vz = J.vz; c.air = 0; c.jumpLand = J.land; c.jg = J.g || 0; c.jSoft = !!J.soft; // (land: where it is set down if it falls short, the rainbow)
     if (J.push && fwd < J.push) { c.vx += J.tx * (J.push - fwd); c.vy += J.ty * (J.push - fwd); }
     if (J.cap && fwd > J.cap) { c.vx *= J.cap / fwd; c.vy *= J.cap / fwd; } // (cap: at most this fast, so it lands where it should, the railway)
     const v = loud(c, c.x, c.y); if (v > .02) (J.snd || (J.sfx ? SFX[J.sfx] : J.vz > 120 ? SFX.bigJump : SFX.jump))(v); // (snd: a sound of its own, the trampolines)
@@ -46,7 +47,7 @@ export function airborne(c, dt) {
 // touching down: into the gorge, a splash, a cloud of sand or powder snow; a crooked landing on a big jump makes the car spin
 function land(c) {
   const T = G.T, j = clamp(c.y | 0, 0, T.H - 1) * T.W + clamp(c.x | 0, 0, T.W - 1), t = T.ter[j], v = loud(c, c.x, c.y), big = c.air > .7;
-  c.z = 0; c.vz = 0;
+  c.z = 0; c.vz = 0; const soft = c.jSoft; c.jg = 0; c.jSoft = false;
   if (t === 11) { fallCar(c, 'abyss', c.jumpLand); return; } // (the gorge of the desert: set down behind it, where the jump says)
   if (t === 15) { fallCar(c, 'lava'); return; }
   if (t === 48 && T.rainbow) { fallCar(c, 'cloud', c.jumpLand); return; } // short of the far side: through the clouds
@@ -55,7 +56,7 @@ function land(c) {
   for (let i = 0; i < (big ? 22 : 10); i++) drop(c.x + (Math.random() - .5) * 20, c.y + (Math.random() - .5) * 14, Math.random() * 6.3, 20 + Math.random() * 50, 30 + Math.random() * 50, col[(Math.random() * col.length) | 0], .8, false);
   if (v > .02) SFX.land(v * (big ? 1 : .6));
   if (big && !c.ai) G.jumpShake = .35;
-  if (big) {
+  if (big && !soft) {
     const sp = Math.hypot(c.vx, c.vy), mv = Math.atan2(c.vy, c.vx), d = Math.atan2(Math.sin(c.ang - mv), Math.cos(c.ang - mv));
     if (sp > 40 && Math.abs(d) > .55 && !c.stun) { c.stun = .5; c.spin = Math.sign(d) * 7; }
   }
