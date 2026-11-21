@@ -315,8 +315,8 @@ export function drawRace() {
     const F = carSet(G.player.def, G.T.th.goo);
     ctx.globalAlpha = .45; ctx.drawImage(F.frames[Math.round(gh.dirt * 5)][rotIndex(gh.ang)], Math.round(gh.x) - SS / 2, Math.round(gh.y) - SS / 2); ctx.globalAlpha = 1;
   };
-  // the bridge of the race circuit: first the cars on the road below, then the bridge, then the cars up on it
-  const deck = G.T.ring && G.T.ring.deck, ghUp = gh && deck && ghostUp(gh);
+  // the bridge of the race circuit (the bed of the kids' room): first the cars on the road below, then the bridge, then the cars up on it
+  const deck = (G.T.ring && G.T.ring.deck) || H.deck?.(), ghUp = gh && deck && ghostUp(gh); // (hook deck: the bed of the kids' room)
   if (gh && !ghUp) drawGhost();
   // cars in the air (a ramp, a jump) come after the trains, so whoever jumps over a train is seen above it (1S4-9)
   const order = [...G.cars].sort((a, b) => a.y - b.y), air = c => (c.z || 0) > 0;

@@ -13,8 +13,8 @@ UI.selAnim = -1;
 UI.selMode = 0;
 PREFS.selCount = 3;
 PREFS.selCup = 0;
-// track events (cows, rain, flood, koi, dump trucks, train, tyres, sandstorm, frost, penguins, eruption, trees, crocodiles, asteroids, black hole, chocolate, candyfloss, toys, robot vacuum, unicorns, thunderstorm), one switch each; G.fx turns all of them on or off for a race (diff.js)
-PREFS.events = { kuehe: true, regen: true, flut: true, kois: true, kipper: true, zug: true, reifen: true, sandsturm: true, schneeball: true, eisbruch: true, ausbruch: true, lavastrom: true, brueckenloch: true, baeume: true, kroko: true, steinkugel: true, asteroiden: true, schwarzesloch: true, schoko: true, zuckerwatte: true, spielzeug: true, saugroboter: true, einhorn: true, gewitter: true };
+// track events (cows, rain, flood, koi, dump trucks, train, tyres, sandstorm, frost, penguins, eruption, trees, crocodiles, asteroids, black hole, chocolate, candyfloss, toys, robot vacuum, bedtime, unicorns, thunderstorm), one switch each; G.fx turns all of them on or off for a race (diff.js)
+PREFS.events = { kuehe: true, regen: true, flut: true, kois: true, kipper: true, zug: true, reifen: true, sandsturm: true, schneeball: true, eisbruch: true, ausbruch: true, lavastrom: true, brueckenloch: true, baeume: true, kroko: true, steinkugel: true, asteroiden: true, schwarzesloch: true, schoko: true, zuckerwatte: true, spielzeug: true, saugroboter: true, schlafenszeit: true, einhorn: true, gewitter: true };
 G.fx = true;
 PREFS.cup = null;
 G.mode = 'single';

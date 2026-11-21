@@ -75,7 +75,7 @@ export const THEMES = {
   // colours (goo 'knete': colourful cars), the robot vacuum spits cars out grey (the cement set, see toys.js)
   spielzimmer: { ...MUDDY, mud: ['#e04848', '#3c6ee0', '#f2cc30'], mudEdge: '#7a2a2a', mudHi: '#ffffff', mudP: ['#e04848', '#3c6ee0', '#f2cc30', '#40b850'], mudTrail: ['#c84a6a', '#8a6ab0'], goo: 'knete',
     grass: ['#c8915a', '#bd8650', '#d29c64'], grassEdge: '#7e5230', tuft: '#ad7844', track: ['#6e747c', '#666c74', '#787e86'], trackEdge: '#f4f4ee', trail: '#4a7a3e', roadTrail: '#5a4a3a', trailA: .06,
-    decor: 'spielzimmer', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#2a1a10'], trees: 0 },
+    decor: 'spielzimmer', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#2a1a10'], trees: 0, ownGround: true },
   // the rainbow (the finale): a rainbow road of six colour lanes over a sea of clouds (terrain 41..46, see rainbowmap.js), soft clouds beside it (slow, the
   // car stays clean), cloud holes further out (48: you fall through), storm clouds instead of mud (goo 'storm': grey cars; the brown mud puddle of the
   // bronze coin uses the second set of sprites, def.goo2). rainbow: no tyre tracks on the rainbow road
@@ -447,34 +447,49 @@ const TRACK_DEFS = [
     donuts: [[40, 40], [1462, 40], [1462, 962], [60, 120]], lamps: [[640, 962], [840, 962], [1060, 962], [1230, 880], [176, 520], [520, 760]],
     bears: [[760, 300], [600, 270], [1100, 560], [1080, 820], [460, 640], [330, 780], [1460, 300], [1460, 600]],
     monster: [600, 50], candyBow: [1350, 240, 80], signs: [[430, 160, 'moor'], [1256, 410, 'factory'], [900, 340, 'stones']] },
-  // The kids' room (a bigger map): start on the printed road of the play mat, over the parquet and the wooden toy train, up a ramp of books onto
-  // the bed, round the teddy, the pillow throws you over the gap onto the desk (between crayons, past an eraser and the paint box, over the
-  // ruler between the two tables), down the marble run to the floor, through the building-block quarter and the toy car wash (see toymap.js,
-  // toys.js). Levels: floor, bed, desk; whoever leaves the bed or the desk falls to the floor.
-  // rug, bed, pillow, desk (two tables) = [x0, y0, x1, y1]; ramp = the books from [x, y] to [x, y]; lip = the end of the pillow (the jump), land =
-  // the edge of the desk, runup = where you start again after a fall from the pillow; ruler = [x, half width] over the gap between the tables;
-  // tower = the marble run [x, y, r]; fork = the clean way round the paint box (points, half width); paints = watercolour [x, y, r, colour];
-  // knete = the colour of each plasticine patch (mudAt); train = the loop [x, y, rx, ry] (event spielzeug), station = [x, y]; wind = the wind-up
-  // car (start, box it drives in); marble = where the marbles come out and where they roll; domino = the tower [x, y], n stones, step; robot =
-  // its dock and the box it cleans (event saugroboter); the rest is furniture and toys
-  { name: 'SPIELZIMMER', seed: 14, W: 1280, H: 720, theme: 'spielzimmer', song: 'toys', events: ['spielzeug', 'saugroboter'], wall: [], wash: null, toys: true, cement: [],
-    poly: [[110, 470, 0], [110, 95, 62], [980, 95, 70], [980, 445, 50], [1170, 445, 50], [1170, 640, 50], [600, 640, 35], [540, 570, 35], [400, 570, 35], [340, 640, 35], [110, 640, 55]],
+  // Spielzimmer Rev 2 (plaene/SPIELZIMMER_REV2.md): the kids' room as a room (walls all round, the toy car is small, the furniture huge). Start on
+  // the printed road of the play mat (north), the parquet corner, east over the wooden train, then the fork: up the ramp of books onto the bed
+  // (over the duvet with its folds, round to the pillows, the pillow throws you over the gap onto the desk) or under the bed (dark, dust, boxes,
+  // lost toys, the monster plush, the staircase of blocks up onto the desk). On the desk past the eraser, the watercolour (or the clean way round
+  // the paint box), over the ruler to the second table, down the marble run to the floor, through the building-block town on its baseplate,
+  // past the wash bay to the line (see toymap.js, toys.js). Levels: floor, bed, desk; whoever falls off the bed is under it and drives on there.
+  // rug, bed, desk tables = [x0, y0, x1, y1]; pillows (on the bed); sheet = x where the duvet ends at the head; teddy = [x, y]; folds = x of the
+  // fold hills on the way over the duvet; ramp = the books from [x, y] to [x, y]; lip = the end of the pillow (the jump); under = the way under the
+  // bed (points, half width; stairs = [x, y top, y bottom] of the staircase onto the desk; dust = [x, y, r] in the bends; boxes, toys, monster,
+  // lights = where light falls in, slats = x of the slats seen from below); ruler = [x, half width] over the gap between the tables; tower = the
+  // marble run [x, y, r]; paintFork = the clean way round the paint box (points, half width); paints = watercolour [x, y, r, colour]; knete =
+  // plasticine [x, y, r, colour]; city = the building-block town (box of the baseplate, houses [x, y, w, h, colour], the castle); blockWall = the
+  // wall of blocks from x to x at y; bay = the wash bay (points, half width); train = the loop [x, y, rx, ry] (event spielzeug), station; wind =
+  // the wind-up car (start, box); marble = where the marbles come out and where they roll; domino = the tower [x, y], n stones, step; robot = its
+  // dock and the box it may go (event saugroboter); the rest is furniture and toys
+  { name: 'SPIELZIMMER', rev: 2, seed: 14, W: 1600, H: 1000, theme: 'spielzimmer', song: 'toys', events: ['spielzeug', 'saugroboter', 'schlafenszeit'], wall: [], wash: null, toys: true, cement: [],
+    poly: [[150, 580, 0], [150, 130, 80], [1465, 130, 75], [1465, 600, 55], [1050, 600, 45], [1050, 795, 40], [1480, 795, 40], [1480, 875, 40], [780, 875, 45], [780, 770, 45], [600, 770, 50], [600, 925, 45], [400, 925, 50], [330, 870, 40], [150, 870, 70]],
     mud: [], water: [], ponds: [],
-    mudAt: [[110, 330, 16, 18], [568, 604, 16, 15], [668, 646, 18, 13], [290, 636, 16, 14]], knete: [0, 1, 2, 3],
-    tubs: [[52, 330, 0], [618, 586, 1], [700, 694, 2], [300, 694, 3]],
-    rug: [40, 150, 760, 704], bed: [640, 28, 1070, 300], pillow: [930, 160, 1048, 296], pillow2: [1012, 36, 50, 92], teddy: [820, 200],
-    desk: [[860, 356, 1245, 512], [860, 548, 1245, 700]], ramp: [[550, 95], [640, 95]], lip: [980, 290], land: [980, 356], runup: [980, 180],
-    ruler: [1170, 15], tower: [800, 640, 50], fork: { pts: [[1130, 640, 0], [1092, 575, 22], [962, 575, 22], [922, 640, 0]], half: 15 },
-    paints: [[1012, 624, 9, 1], [1040, 636, 10, 0], [1068, 627, 7, 2], [1000, 650, 6, 3]],
-    crayons: [[1032, 408, 42, 0], [1078, 408, 42, 1], [1032, 482, 42, 2], [1078, 482, 42, 3]], eraser: [1062, 418, 20, 12], paintbox: [993, 592, 64, 16],
-    hefte: [[880, 380, 44, 30, 1], [886, 420, 40, 28, 3]], notes: [[1060, 372, 2], [1080, 380, 0], [1140, 370, 3]], cup: [900, 482], lamp: [1200, 386],
-    train: [360, 95, 120, 62], station: [360, 16], wind: { start: [200, 230], box: [40, 165, 600, 362] },
-    marble: { out: [775, 702], dir: [-1, -.62] }, domino: { x: 470, y: 527, n: 12, step: 7 }, robot: { dock: [26, 520], box: [40, 395, 850, 705] },
-    blockWall: [140, 860, 382], castle: [420, 612, 520, 700], dollhouse: [250, 200, 100, 66], toybox: [440, 250, 64, 46], shelf: [480, 630], window: [40, 200],
-    stand: [1104, 44, 74, 96], projector: [1141, 92], nightlight: [1266, 600], ball: [700, 470, 11], duck: [180, 692],
-    socks: [[1110, 330, 0], [1150, 318, 1]], puzzle: [[640, 345, 2], [760, 540, 1], [60, 610, 3], [690, 330, 0]], sheet: [170, 290],
-    streets: [[150, 446, 740, 454], [556, 160, 564, 370]], houses: [[180, 400, 22, 18], [250, 470, 24, 18], [380, 410, 20, 16], [620, 470, 22, 18]],
-    ptrees: [[220, 410, 7], [330, 480, 8], [450, 420, 7], [690, 420, 6]], ppond: [400, 485, 28, 14], zebra: [110, 240], washAt: [230, 640] },
+    rug: [70, 200, 800, 800],
+    bed: [960, 26, 1548, 420], pillows: [[1400, 40, 1534, 226], [1400, 238, 1534, 404]], sheet: 1392, teddy: [1240, 290], folds: [1075, 1175, 1275],
+    ramp: [[790, 130], [960, 130]], lip: [1465, 400],
+    under: { pts: [[690, 130, 0], [770, 140, 35], [880, 320, 55], [1010, 320, 45], [1090, 228, 45], [1200, 228, 45], [1262, 320, 45], [1340, 320, 45], [1340, 598, 38], [1280, 600, 0]], half: 26,
+      stairs: [1340, 420, 505], dust: [[905, 292, 18], [1040, 290, 14], [1150, 252, 16], [1228, 296, 14], [1312, 350, 16], [990, 350, 12]],
+      boxes: [[1030, 352, 70, 44], [1110, 290, 70, 50], [1200, 120, 80, 60], [1080, 120, 70, 70], [1380, 250, 60, 60], [960 + 40, 160, 50, 40]],
+      toys: [[1150, 214, 'marble', 1], [1300, 336, 'die', 0], [960, 302, 'sock', 3], [1218, 240, 'stub', 2]], monster: [1420, 345],
+      lights: [[962, 320], [1340, 420], [1110, 418], [1250, 418]], slats: [1000, 1060, 1120, 1180, 1240, 1300, 1360, 1420, 1480] },
+    desk: [[1000, 505, 1560, 700], [1000, 745, 1560, 925]], ruler: [1050, 18], tower: [945, 875, 55],
+    paintFork: { pts: [[1250, 600, 0], [1225, 664, 24], [1140, 664, 24], [1115, 600, 0]], half: 14 }, paintbox: [1150, 634, 70, 14],
+    paints: [[1165, 606, 9, 1], [1196, 594, 10, 0], [1228, 612, 8, 2], [1150, 622, 6, 3], [1210, 624, 6, 1]],
+    crayons: [[1120, 562, 58, 0], [1185, 562, 58, 1], [1236, 835, 64, 1], [1305, 835, 64, 2], [1374, 835, 56, 3]], eraser: [1352, 576, 24, 13], divider: [1003, 826, 228, 18], chair: [905, 714, 990, 812],
+    hefte: [[1020, 512, 60, 40, 1], [1088, 516, 52, 36, 3]], notes: [[1390, 518, 2], [1412, 528, 0], [1300, 520, 3]], cup: [1530, 528],
+    openBook: [1158, 508, 96, 50], mug: [1540, 890], projector: [1530, 590], lamp: [1534, 672], lampHead: [1500, 628],
+    knete: [[845, 898, 16, 0], [578, 850, 15, 1], [470, 948, 16, 2], [690, 750, 15, 3]],
+    city: { box: [360, 712, 890, 970], houses: [[640, 830, 110, 52, 1], [650, 906, 100, 44, 2], [370, 740, 70, 40, 3], [810, 935, 70, 26, 5]], castle: [455, 790, 545, 850] },
+    blockWall: [195, 1000, 703],
+    bay: { pts: [[322, 870, 0], [292, 936, 24], [235, 936, 24], [218, 872, 0]], half: 17 },
+    train: [440, 160, 170, 100], station: [440, 46], wind: { start: [420, 470], box: [90, 215, 790, 690] },
+    marble: { out: [890, 897], dir: [-1, .3] }, domino: { x: 520, y: 872, n: 12, step: 7 }, robot: { dock: [38, 380], box: [30, 30, 950, 970] },
+    dollhouse: [250, 360, 120, 70], toybox: [560, 260, 76, 50], shelf: [780, 940], window: [150, 330], door: [520, 680],
+    drawings: [[560, 30, 16, 0], [600, 28, 14, 1], [1600 - 600, 26, 12, 2]], nightlight: [30, 540], sign: [700, 196],
+    ball: [640, 560, 13], duck: [96, 950], socks: [[820, 420, 0], [1560 - 40, 470, 1]], puzzle: [[660, 360, 2], [300, 600, 1], [880, 600, 3], [540, 640, 0]],
+    streets: [[200, 520, 780, 528], [460, 220, 468, 690]], prints: [[230, 470, 26, 22], [520, 470, 28, 22], [600, 300, 24, 20], [520, 560, 26, 20], [680, 620, 30, 22]],
+    ptrees: [[300, 560, 9], [420, 560, 10], [560, 420, 9], [720, 400, 8], [380, 270, 9]], ppond: [640, 440, 34, 18], zebra: [150, 300] },
   // The rainbow (the finale, a bigger map): a rainbow road over a sea of clouds between floating coins, one for every cup (see rainbowmap.js,
   // rainbow.js). From the Fantasy coin (the start, under a gate of clouds) up to the bronze coin (a meadow: earth road, a mud puddle, two cows),
   // over the rainbow arch (it climbs over a cloud gorge, the biggest jump of the game over the gap at its top), across the silver coin (a garden:
@@ -759,7 +774,7 @@ function* buildTrack(def, ti) {
   const mudPix = [], watPix = [], starPix = [];
   for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
     const j = y * MW + x, t = ter[j];
-    if (th.space && t !== 4) { if (x === MW - 1 && y % 12 === 11) yield .4 + .3 * y / MH; continue; } // (space paints all its ground itself, spacemap.js)
+    if ((th.space && t !== 4) || th.ownGround) { if (x === MW - 1 && y % 12 === 11) yield .4 + .3 * y / MH; continue; } // (space and the kids' room paint all their ground themselves, spacemap.js, toymap.js)
     const nv = vnoise(x / 9, y / 9, sd), h = hash(x, y, sd);
     let col;
     if (bridgeMask[j]) {

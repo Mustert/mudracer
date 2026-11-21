@@ -9,7 +9,8 @@ import { cam } from './state.js';
 // 15 lava.
 // A jump: { x, y (the lip), tx, ty (the way you jump), lo, hi (how far to the side of the lip, along the normal -ty, tx), vz (speed upwards),
 // push (optional: at least this speed forwards, the geyser), cap (optional: at most this speed forwards), off (true: it does not throw you right now),
-// g (optional: its own gravity in the air, default 380; the moon of space: 150, a long slow flight), soft (true: a crooked landing never spins the car) }.
+// g (optional: its own gravity in the air, default 380; the moon of space: 150, a long slow flight), soft (true: a crooked landing never spins the car),
+// lvl (optional: only for cars on this level, c.lvl; the kids' room: the folds and the pillow up on the bed) }.
 // A push: { i0, i1 (stretch of the centre line, in driving order), f (push along the road, px/s²) }, or a current in a box
 // { rect: [x0, y0, x1, y1], fx, fy } (the ford in the jungle). ----------
 
@@ -35,7 +36,7 @@ export function airborne(c, dt) {
   T.jumps.forEach((J, k) => {
     const dx = c.x - J.x, dy = c.y - J.y, a = dx * J.tx + dy * J.ty, l = -dx * J.ty + dy * J.tx, pa = c.ja[k];
     c.ja[k] = a;
-    if (J.off || pa === undefined || pa >= 0 || a < 0 || a > 20 || l < J.lo || l > J.hi) return;
+    if (J.off || (J.lvl && c.lvl !== J.lvl) || pa === undefined || pa >= 0 || a < 0 || a > 20 || l < J.lo || l > J.hi) return;
     const fwd = c.vx * J.tx + c.vy * J.ty; if (fwd < (J.push ? 5 : 30)) return;
     c.z = .01; c.vz = J.vz; c.air = 0; c.jumpLand = J.land; c.jg = J.g || 0; c.jSoft = !!J.soft; // (land: where it is set down if it falls short, the rainbow)
     if (J.push && fwd < J.push) { c.vx += J.tx * (J.push - fwd); c.vy += J.ty * (J.push - fwd); }

@@ -30,6 +30,7 @@
  * @property {() => void} [drawGround] draw.js drawRace: under the cars (in world coordinates)
  * @property {(cx: number, cy: number) => void} [drawAbove] draw.js drawRace: over the cars and the top layer (world coordinates; cx, cy = camera)
  * @property {(cx: number, cy: number) => void} [drawSky] draw.js drawRace: on the screen, after night and rain (weather, darkness, messages)
+ * @property {() => ({ c: any, x: number, y: number } | null)} [deck] draw.js drawRace: a picture (c) at x, y drawn between the cars below (c.lvl !== 1) and the cars up on it (c.lvl 1), like the bridge of the race circuit (the bed of the kids' room)
  * @property {() => boolean} [noBeams] draw.js drawMood: true = no sunbeams of the theme right now (inside the temple of the jungle)
  */
 
@@ -56,5 +57,6 @@ export const TEMPLATE_HOOKS = {
   drawGround() {},
   drawAbove(cx, cy) {},
   drawSky(cx, cy) {},
+  deck() { return null; },
   noBeams() { return false; },
 };

@@ -28,8 +28,8 @@ import { near } from './trackfx.js';
 // Weltall: asteroids fly across the platforms and the moon (a dashed line, a red arrow, a beep first; more from lap to lap); from lap 2 of the leader a
 // black hole opens in the void in the middle and pulls within its reach (see space.js).
 // Suess: from lap 2 chocolate streams run over the road, sprinkles rain in the last lap; candyfloss clouds hide the road (see suess.js).
-// Spielzimmer: the wooden train, a wind-up car, marbles and the domino tower (spielzeug); from lap 2 the robot vacuum, in the last lap the light
-// goes out (saugroboter; see toys.js).
+// Spielzimmer: the wooden train, a wind-up car, marbles and the domino tower (spielzeug); from lap 2 the robot vacuum hunts the cars on the floor
+// (saugroboter); in the last lap the light goes out (schlafenszeit; see toys.js).
 // Regenbogen: unicorns fly across the road and leave a rainbow trail (a boost); the storm of lap 2 (rain, storm clouds, lightning) and the sun
 // with the double rainbow in the last lap (see rainbow.js).
 // Every event can be switched off with PREFS.events (see state.js); G.fx switches all of them for the current race (difficulty,

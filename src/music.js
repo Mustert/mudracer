@@ -357,8 +357,9 @@ const SONGS = {
 
 // kids' room: a toy orchestra in G major, 112 BPM. A slightly out-of-tune toy piano plays the tune, a xylophone answers, glockenspiel and a
 // music box in part B; wooden blocks are the kick, clicks the hi-hat, a rubber duck squeaks on the 4 of every second bar, a ratchet before the
-// turn; a soft tuba-like bass. With the robot vacuum (lap 2) a humming drone lies under it and it speeds up to 124 BPM; when the light goes out
-// (last lap) it is a music-box lullaby, only quiet wooden clicks keep the race going.
+// turn; a soft tuba-like bass. Layers by the lap (Rev 2, 1M-1, no change of song and no change of tempo): from lap 2 (the robot vacuum) a
+// humming drone and twice as many wooden clicks; when the light goes out (last lap) the music box plays the tune as a lullaby, the drums are only
+// quiet clicks. Under the bed everything is muffled: only the bass, a far click and the music box, quietly.
 const TOY = {
   piano(M, f, t, d) {
     synth({ at: t, f: f * 1.006, parts: [['sine', 1, 1], ['sine', 2.01, .25], ['triangle', 4.2, .08]], a: .002, d: Math.min(.5, .18 + d * .3), vol: .085, dest: M.leadBus });
@@ -372,9 +373,9 @@ const TOY = {
   duck(M, t) { for (const k of [0, .09]) voice({ at: t + k, type: 'sawtooth', f: 1300, to: 900, a: .005, hold: .03, d: .05, vol: .03, bp: 1700, q: 5, dest: M.out }); },
   ratchet(M, t) { for (let i = 0; i < 6; i++) noise({ at: t + i * .025, type: 'bandpass', f: 2600, q: 5, d: .012, vol: .05, dest: M.out }); },
 };
-const toyRobot = () => !!(G.T && G.T.toys && G.T.ev && G.T.ev.robot && G.T.ev.robot.out);
-const toyNight = () => !!(G.T && G.T.toys && G.T.ev && G.T.ev.darkOn);
-SONGS.toys = { bpm: 112, swing: .08, swap: () => toyNight() ? 'toysNight' : toyRobot() ? 'toysFast' : null,
+const toyNight = () => !!(G.T && G.T.toys && G.T.ev && G.T.ev.toyDarkOn);
+const toyUnder = () => !!(G.T && G.T.toys && G.T.toys.under);
+SONGS.toys = { bpm: 112, swing: .08,
   chords: { G: { r: 43, n: [55, 59, 62, 67] }, Em: { r: 40, n: [55, 59, 64, 67] }, C: { r: 36, n: [55, 60, 64, 67] }, D: { r: 38, n: [57, 62, 66, 69] },
     Am: { r: 45, n: [57, 60, 64, 69] }, H: { r: 47, n: [59, 63, 66, 71] } },
   A: { ch: ['G', 'Em', 'C', 'D', 'G', 'Em', 'Am', 'D'], mel: mel([
@@ -384,28 +385,33 @@ SONGS.toys = { bpm: 112, swing: .08, swap: () => toyNight() ? 'toysNight' : toyR
     'E6:0:2 E6:2:1 G6:3:3 E6:6:2 C6:8:4 G5:12:4', 'F#6:0:2 F#6:2:1 A6:3:3 F#6:6:2 D6:8:4 A5:12:4', 'D#6:0:2 F#6:2:2 B6:4:4 A6:8:2 F#6:10:2 D#6:12:4', 'E6:0:6 B5:6:2 G5:8:4 E5:12:4',
     'G6:0:2 E6:2:2 C6:4:2 E6:6:2 G6:8:2 A6:10:2 G6:12:4', 'F#6:0:2 A6:2:2 D7:4:4 C7:8:2 A6:10:2 F#6:12:4', 'G6:0:2 D6:2:2 B5:4:2 D6:6:2 G6:8:4 B6:12:4', 'G6:0:8 D6:8:2 B5:10:2 G5:12:4']) },
   lead(M, m, t, d, sec) {
-    if (M.song.night) { TOY.box(M, hz(m), t, 1.2); return; }
+    if (toyUnder()) { TOY.box(M, hz(m), t, .45); return; }
+    if (toyNight()) { TOY.box(M, hz(m), t, 1.2); return; }
     if (sec === 'A') TOY.piano(M, hz(m), t, d); else { M.glock(hz(m), t, 1.3); TOY.box(M, hz(m + 12), t, .5); }
   },
   band(M, s, t, bi, ch, sec) {
-    const S = M.song;
-    if (S.night) {
+    const lap = raceLap();
+    if (toyUnder()) {
+      if (s === 0) TOY.tuba(M, hz(ch.r), t, 6 * M.sd, .6);
+      if (s % 8 === 4) TOY.click(M, t, .35);
+      return;
+    }
+    if (toyNight()) {
       if (s === 0) M.pad(ch.n, t, 16 * M.sd, .016);
       if (s % 4 === 0) TOY.click(M, t, .7);
       if (s === 8) TOY.tuba(M, hz(ch.r), t, 6 * M.sd, .5);
+      if (s === 0) M.drone(hz(ch.r - 12), t, 16 * M.sd, .5);
       return;
     }
     if (s === 0) TOY.tuba(M, hz(ch.r), t, 3 * M.sd); else if (s === 8) TOY.tuba(M, hz(ch.r + 7), t, 3 * M.sd);
     if (s === 4 || s === 12) for (const m of ch.n.slice(1)) TOY.piano(M, hz(m), t, M.sd * .5);
     if (sec === 'A' && s % 4 === 3) TOY.xylo(M, hz(ch.n[(s >> 2) % ch.n.length] + 12), t);
     if (s === 0 || s === 8 || (s === 10 && bi % 2)) TOY.wood(M, t);
-    if (s % 2 === 0) TOY.click(M, t, s % 4 ? .6 : 1);
+    if (s % 2 === 0 || (lap >= 2 && s % 4 === 3)) TOY.click(M, t, s % 4 ? .6 : 1);
     if (s === 12 && bi % 2) TOY.duck(M, t);
     if (bi === 7 && s === 12) TOY.ratchet(M, t);
-    if (S.fast && s === 0) M.drone(hz(ch.r - 12), t, 16 * M.sd, .9);
+    if (lap >= 2) { if (s === 0) M.drone(hz(ch.r - 12), t, 16 * M.sd, .9); if (s === 6 || s === 14) TOY.wood(M, t, .6); }
   } };
-SONGS.toysFast = { ...SONGS.toys, bpm: 124, swap: null, fast: true };
-SONGS.toysNight = { ...SONGS.toys, bpm: 112, swap: null, night: true };
 
 // space: the space disco that the rainbow track had before its rework (D major, 150 BPM, four on the floor, octave bass, glittering arpeggios),
 // grown up for space: a vocoder sings "space race" in syllables, sci-fi blips fill the gaps, the pads pump with the kick (sidechain). Layers on the
