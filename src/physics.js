@@ -16,7 +16,7 @@ import { reportError } from './errors.js';
 // deep swamp, 11 gorge (no ground), 12 sheet ice, 13 ground of the moon, 14 swinging rope bridge, 15 lava, (16 free: the crust of Vulkan Rev 1),
 // 17 platform in zero gravity. Own blocks of ten: 30-32 kids' room (parquet, blanket road, watercolour; toymap.js), 41-48 rainbow (colour
 // lanes 41-46, asphalt 47, cloud hole 48; rainbowmap.js LANE, ASPH, HOLE), 50-52 beach volleyball (lane, net, court; strandmap.js).
-// 60-61 desert rally sand and the quicksand that is about to open (desertmap.js RALLY, desert.js WARN). 70-71 ice (70 the lift line, 71 powder snow in the wood; icemap.js POWDER). 80 the rock of the volcano's maze of gullies (Vulkan Rev 5: solid along its edges, slow, no place to set a car back down; 81 free). 90-92 jungle (undergrowth floor, ford water, boardwalk; junglemap.js), 100 space (the ring dust of the planet; spacemap.js RING). A new track takes the next free block (110-119) and answers
+// 60-61 desert rally sand and the quicksand that is about to open (desertmap.js RALLY, desert.js WARN). 70-71 ice (70 the lift line, 71 powder snow in the wood; icemap.js POWDER). 80 the rock of the volcano's maze of gullies (Vulkan Rev 5: solid along its edges, slow, no place to set a car back down; 81 free). 90-92 jungle (undergrowth floor, ford water, boardwalk; junglemap.js), 100 space (the ring dust of the planet; spacemap.js RING), 110-114 sweets (icing of the forest, caramel, bubblegum, conveyor belt, marshmallow; suessmap.js). A new track takes the next free block (120-129) and answers
 // for its codes in its hook surf (_template.js); mudracer.checkAll() lists codes from 18 up that several tracks use.
 function surfOf(c) {
   const m = c.def.mud;

@@ -5,7 +5,8 @@ import { LAPS } from './core.js';
 // A kazoo plays the bouncy tune (a saw through a nasal formant, a little buzz), a music-box celesta answers on the offbeats, pizzicato strings
 // pluck the eighths. A soft four on the floor, hand claps on 2 and 4, fizzy blips instead of hi-hats, a hopping synth bass (root, octave,
 // fifth). From lap 2 (the chocolate) a deep "melting" bass slides down at the end of every bar; in the last lap the song moves up to G major
-// and a choir sings "ooh".
+// and a choir sings "ooh". While you are in the sweet factory a machine beat joins (a heavy stamp on the one, a hiss before it, a rattle on the
+// offbeats); while a chocolate stream near you is about to come down (event schoko) the timpani roll.
 // The tones come from audio.js through music.js (`A` = { synth, voice, noise }), so this module does not import the sound (no import circle).
 
 const lap = () => G.player && G.T && !G.T.run && (G.state === 'race' || G.state === 'finish') ? G.player.lap : 1;
@@ -48,5 +49,13 @@ export function candySong(A, hz, mel) {
       if (L >= 2 && s === 12) melt(M, hz(ch.r), t);
       if (L >= LAPS && s === 0) M.choir(ch.n.map(m => m + 12), t, 16 * M.sd);
       if (s === 0 && bi === 0) M.crash(t);
+      // the factory: stamp, hiss, rattle (only while you are inside); the timpani roll before the chocolate comes
+      const S = G.T && G.T.suess, ev = G.T && G.T.ev;
+      if (S && S.inFactory) {
+        if (s === 0 || s === 8) { voice({ at: t, f: 70, to: 38, a: .002, d: .22, vol: .32, dest: M.out }); noise({ at: t, type: 'lowpass', f: 500, d: .12, vol: .14, dest: M.out }); }
+        if (s === 6 || s === 14) noise({ at: t, type: 'highpass', f: 3200, a: .02, hold: M.sd, d: M.sd, vol: .045, dest: M.out });
+        if (s % 2 === 1) noise({ at: t, type: 'bandpass', f: 900, q: 5, a: .002, d: .03, vol: .03, dest: M.out });
+      }
+      if (ev && ev.swAlarm) M.timp(hz(ch.r - 12), t, .45);
     } };
 }

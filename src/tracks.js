@@ -66,7 +66,7 @@ export const THEMES = {
     decor: 'weltall', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#0a0a16'], trees: 0, space: true, glowTrail: true, flat: .6 },
   // Süßigkeitenland: a liquorice road, icing with sprinkles beside it, chocolate instead of mud (goo 'choco': brown cars), caramel that sticks
   // (goo2 'caramel': golden cars, see suess.js), the lake and the river are deep chocolate (water: its colours), a lemonade fountain washes
-  suess: { ...MUDDY, mud: ['#5a3020', '#4a2618', '#6a3a26'], mudEdge: '#3a1a0e', mudHi: '#9a5a3a', mudP: ['#5a3020', '#6a3a26', '#4a2618', '#9a5a3a'], mudTrail: ['#3a1a0e', '#5a3020'], goo: 'choco', goo2: 'caramel',
+  suess: { ...MUDDY, mud: ['#8a5030', '#7a4428', '#9a5c38'], mudEdge: '#f6e6cc', mudHi: '#d09a70', mudP: ['#8a5030', '#9a5c38', '#7a4428', '#c08060'], mudTrail: ['#6a3a20', '#8a5030'], goo: 'choco', goo2: 'caramel',
     water: ['#40200f', '#4a2615', '#56301c', '#70422a'], shore: ['#fff8ec', '#f6e6cc'], grass: ['#f7b6d0', '#f2a8c6', '#fbc6dc'], grassEdge: '#e48cb2', tuft: '#ffffff',
     track: ['#2a2028', '#241b22', '#30262e'], trackEdge: '#0e080c', trail: '#e48cb2', roadTrail: '#4a3a44', trailA: .1, decor: 'suess', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#3a1a24'], trees: 0,
     ambient: 'butterfly', landCol: ['#ff4d6d', '#ffd93d', '#6bcb77', '#4d96ff', '#ffffff'] },
@@ -407,31 +407,45 @@ const TRACK_DEFS = [
     craters: [[255, 955, 24, 1], [620, 965, 18, 0], [85, 975, 16, 0]],
     fields: [[460, 70, 34], [460, 380, 30], [720, 380, 30], [720, 70, 30], [1000, 70, 24], [1110, 225, 16], [740, 800, 18]],
     sat: [590, 215], flag: [205, 945], lander: [80, 930], buggy: [660, 945], earth: [1620, 960, 130] },
-  // Süßigkeitenland (a bigger map): from the gingerbread house up through the lollipop forest (two gummy-bear trampolines throw you over
-  // caramel), right through the caramel moor on a cookie road, down through the candyfloss clouds (soft walls), round the U over the waffle
-  // bridge across the chocolate river (or straight on over the marshmallow stepping stones), left over the fizz field (fizz pads, bubblegum
-  // bubbles) and through the lemonade fountain back to the line (see suessmap.js, suess.js). The chocolate fountain stands in the lake in the
-  // middle, its river runs out at the bottom edge.
-  // lake = the chocolate fountain [x, y]; rivers = the lake and the river (deep chocolate, circles); stones = marshmallows; shortcut = the liquorice
-  // path to them (points, half width); tramps = trampolines [x, y]; caramel = caramel fields [x, y, half length, half width]; chocoAt = chocolate
-  // puddles; moor = the caramel moor [x, y, rx, ry] (and a band along the cookie road: cookie = from [x, y] to [x, y]); forest = the lollipop forest (from [x, y] to [x, y] on the road); floss = the candyfloss walls
-  // (from, to); flossLand = more candyfloss between the bends [x0, y0, x1, y1]; gum = bubblegum spots [x, y]; lemon = the lemonade fountain
-  // [x, y, rx, ry]; streams = the chocolate streams of the event schoko [points, half width]; house = the gingerbread house [x0, y0, x1, y1];
-  // machine = the candyfloss machine [x, y]; donuts = donut stacks [x, y]; candyBow = the candy rainbow [x, y, radius] (not `rainbow`: that flag builds the rainbow track); men = gingerbread men;
-  // fizzField = fizz powder beside the road [x from, x to, y from]
-  { name: 'SUESS', seed: 13, W: 1200, H: 675, theme: 'suess', song: 'candy', events: ['schoko', 'zuckerwatte'], wall: [], wash: null, suess: true,
-    poly: [[150, 300, 0], [150, 90, 60], [600, 90, 45], [690, 185, 45], [810, 185, 45], [900, 90, 45], [1060, 90, 60], [1060, 225, 45], [965, 320, 45], [1060, 415, 45],
-      [1060, 565, 55], [880, 565, 35], [880, 640, 35], [720, 640, 35], [720, 565, 35], [150, 565, 60]],
+  // Süßigkeitenland Rev 2 (plaene/SUESS_REV2.md): the land round the chocolate mountain. From the gingerbread village (the start straight on the
+  // left, north) through the lollipop forest (an open field of icing, three caramel brooks run into ponds across it, gummy-bear trampolines throw
+  // you over them), east through the caramel moor on the cookie road (or round it on the brittle lane), up the candyfloss pass on the west flank
+  // of the mountain, over the chocolate river under its source (the waffle bridge down in the dip, or straight on over the springy marshmallows),
+  // down into the sweet factory (conveyor belts and the sweet press, or the maintenance walk beside them), west over the brittle bridge, through the
+  // fizz field (fizz pads behind bubblegum), round the gingerbread village past the lemonade bay (it washes) to the line. The chocolate comes out of the fountain on the summit,
+  // runs down to the lake in the middle (nobody cuts across) and out at the bottom edge (see suessmap.js, suess.js).
+  // mountain = [x, y, r] (the fountain on the summit); rivers = the river from the source, the lake, its way to the bottom edge (deep chocolate);
+  // stones = the marshmallows; stonePath = the liquorice path over them (points, half width); forest = the open field round the road from [x, y]
+  // to [x, y] (its half width r; ridges = hedges reaching in from the edge between the bends [x0, y0, x1, y1, half width]), brooks = caramel brooks (share of the field; each comes from the narrower side); moor = the caramel moor [x, y, rx, ry],
+  // spur = the brittle lane round it (points, half width); pass, descent = the slope [from, to, push]; factory = its footprint, the maintenance walk,
+  // belts [x0, y0, x1, y1, push x, push y], the press [x, y]; fizz = fizz pads [x, y, side] (bubblegum lies in front of each), gum = more
+  // bubblegum [x, y]; bay = the lemonade bay (points, half width, fountain [x, y]); streams = the chocolate streams of the event schoko (points,
+  // half width; they run down the rills and pool on one side of the road); clouds = where the candyfloss clouds drift [x0, y0, x1, y1] (event
+  // zuckerwatte), machine = the candyfloss machine [x, y]; houses = gingerbread houses [x, y, w, h]; men = gingerbread men walking [x, y, x, y];
+  // donuts, lamps, bears = [x, y]; fence = the candy-cane fences of the village, each from [x, y] to [x, y] (solid); monster = the cookie monster in the moor [x, y]; candyBow = the candy rainbow [x, y, radius] (a picture; not `rainbow`: that flag builds the rainbow track); signs = [x, y, kind]
+  { name: 'SUESS', rev: 2, seed: 13, W: 1500, H: 1000, theme: 'suess', song: 'candy', events: ['schoko', 'zuckerwatte'], wall: [], wash: null, suess: true,
+    poly: [[120, 600, 0], [120, 470, 60], [420, 410, 90], [210, 260, 90], [420, 110, 70], [720, 110, 80], [880, 290, 60], [935, 450, 40], [1065, 450, 40], [1120, 310, 60],
+      [1300, 360, 60], [1300, 920, 80], [480, 920, 60], [480, 690, 60], [260, 690, 60], [260, 920, 50], [120, 920, 50]],
     mud: [], water: [], ponds: [],
-    boostAt: [[625, 565], [370, 565]],
-    rivers: [[[470, 375, 48], [540, 368, 64], [620, 370, 68], [700, 378, 50]], [[690, 425, 14], [745, 478, 13], [788, 522, 13], [800, 565, 18], [802, 610, 13], [802, 650, 13], [803, 700, 14]]],
-    stones: [[784, 570, 7], [800, 560, 7], [816, 570, 7]], shortcut: { pts: [[852, 565], [748, 565]], half: 11 },
-    tramps: [[270, 90], [450, 90]], caramel: [[318, 90, 24, 58], [498, 90, 24, 58]], chocoAt: [[770, 566, 9, 13], [831, 566, 9, 13]],
-    moor: [750, 75, 215, 80], cookie: [[565, 90], [935, 90]], forest: [[150, 200], [565, 90]], floss: [[1060, 170], [1060, 480]], flossLand: [1000, 130, 1185, 500],
-    gum: [[555, 553], [425, 578]], lemon: [300, 598, 48, 30], lake: [585, 368], machine: [1165, 330],
-    streams: [[[[700, 330], [735, 260], [748, 190], [752, 138]], 13], [[[730, 375], [820, 360], [930, 330], [1012, 318]], 13], [[[520, 420], [500, 500], [486, 565], [480, 612]], 13]],
-    house: [24, 236, 102, 334], donuts: [[52, 40], [1150, 36], [1150, 640], [52, 636]], candyBow: [290, 512, 72], men: [[205, 470], [880, 250], [40, 420]],
-    fizzField: [190, 700, 600] },
+    mountain: [1010, 128, 150],
+    rivers: [[[1010, 140, 7], [1020, 180, 9], [998, 222, 11], [1014, 266, 14], [1004, 322, 20], [1002, 385, 18], [1000, 445, 19], [962, 505, 24], [905, 565, 34]],
+      [[880, 600, 60], [790, 650, 96], [670, 662, 86], [600, 640, 48]], [[740, 720, 44], [820, 790, 32], [872, 858, 30], [893, 920, 30], [898, 1012, 30]]],
+    stones: [[989, 322, 6, 1.9, 1.5708], [1004, 322, 6, 1.9, 1.5708], [1019, 322, 6, 1.9, 1.5708]], stonePath: { pts: [[903, 322, 0], [1104, 322, 0]], half: 12 },
+    forest: { from: [120, 540], to: [392, 122], r: 92, ridges: [[30, 388, 345, 374, 8], [510, 262, 300, 256, 8]] }, brooks: [.24, .52, .8],
+    moor: [565, 108, 195, 86], spur: { pts: [[440, 110, 0], [492, 186, 30], [628, 186, 30], [688, 110, 0]], half: 15 },
+    pass: [[724, 114], [876, 286], -38], descent: [[1124, 312], [1292, 372], 30],
+    factory: { rect: [1160, 440, 1440, 850], way: { pts: [[1300, 468, 0], [1212, 508, 26], [1212, 786, 26], [1300, 826, 0]], half: 15 },
+      belts: [[1270, 470, 1330, 578, 0, 50], [1270, 596, 1330, 640, -48, 0], [1270, 660, 1330, 812, 0, 50], [1197, 600, 1227, 700, 0, -42]], press: [1300, 736] },
+    fizz: [[780, 920, 1], [610, 920, -1]], gum: [[1040, 906], [700, 934], [1300, 882], [480, 800]],
+    bay: { pts: [[452, 690, 0], [418, 648, 26], [318, 648, 26], [288, 690, 0]], half: 15, fount: [368, 648] },
+    streams: [[[[996, 142], [950, 152], [900, 166], [850, 180], [812, 192], [836, 222], [864, 254]], 15], [[[1024, 142], [1070, 182], [1120, 236], [1165, 285], [1196, 318], [1232, 326], [1264, 334]], 15],
+      [[[598, 626], [548, 576], [500, 520], [452, 470], [404, 430]], 16]],
+    clouds: [[40, 140, 520, 500], [400, 24, 740, 196]], machine: [688, 246],
+    fence: [[[160, 628], [560, 618]], [[188, 640], [188, 884]], [[292, 886], [448, 886]], [[150, 981], [600, 981]]], houses: [[166, 660, 44, 40], [166, 735, 44, 40], [166, 810, 44, 40], [312, 742, 52, 42], [376, 812, 50, 40]],
+    men: [[221, 655, 221, 875], [300, 728, 440, 728]],
+    donuts: [[40, 40], [1462, 40], [1462, 962], [60, 120]], lamps: [[640, 962], [840, 962], [1060, 962], [1230, 880], [176, 520], [520, 760]],
+    bears: [[760, 300], [600, 270], [1100, 560], [1080, 820], [460, 640], [330, 780], [1460, 300], [1460, 600]],
+    monster: [600, 50], candyBow: [1350, 240, 80], signs: [[430, 160, 'moor'], [1256, 410, 'factory'], [900, 340, 'stones']] },
   // The kids' room (a bigger map): start on the printed road of the play mat, over the parquet and the wooden toy train, up a ramp of books onto
   // the bed, round the teddy, the pillow throws you over the gap onto the desk (between crayons, past an eraser and the paint box, over the
   // ruler between the two tables), down the marble run to the floor, through the building-block quarter and the toy car wash (see toymap.js,

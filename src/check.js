@@ -52,6 +52,9 @@ function speedOn(T, t) {
   if (t === 60 || t === 61) return .7; // (desert: rally sand)
   if (t === 71) return .9; // (ice: powder snow)
   if (t === 100) return .94; // (space: the ice dust of the planet's ring)
+  if (t === 110) return .86; // (sweets: the icing of the forest)
+  if (t === 111) return .54; // (sweets: caramel, a car with mud 1)
+  if (t === 112) return .32; // (sweets: bubblegum)
   if (t === 14) return .6;
   return 1;
 }
