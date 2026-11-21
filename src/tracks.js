@@ -82,7 +82,7 @@ export const THEMES = {
   regenbogen: { ...MUDDY, mud: ['#6c7280', '#5d6270', '#7e8492'], mudEdge: '#454a56', mudHi: '#c8ccd6', mudP: ['#6c7280', '#7e8492', '#9aa0ad', '#545a66'], mudTrail: ['#4a4f5c', '#5d6270'], goo: 'storm',
     water: ['#5a9ac0', '#7fc4e8', '#95d2f0', '#e8f6ff'], grass: ['#e3e6f7', '#f2f3fc', '#ffffff'], grassEdge: '#cfd4ef', tuft: '#e3e6f7', track: ['#ff4d6d', '#ffd93d', '#4d96ff'], trackEdge: '#ffffff',
     trail: '#cfd4ef', roadTrail: '#8a7a6a', trailA: .07, decor: 'regenbogen', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#1b120c'], trees: 0, rainbow: true,
-    landCol: ['#ffffff', '#e6eef6', '#cfdcea'] },
+    landCol: ['#ffffff', '#e6eef6', '#cfdcea'], ownGround: true },
   bahn:   { ...MUDDY, grass: ['#8fbf4a', '#7fae3f', '#9fcc5a'], grassEdge: '#6f9a33', tuft: '#5f8a2a', track: ['#c99e69', '#bb905b', '#d5ad79'], trackEdge: '#9b7349', trail: '#4f7a22', decor: 'farm', tree: 'round', treeCol: ['#2d7a34', '#3f9a3f', '#66c25a', '#17401c'], trees: 18 },
 };
 
@@ -490,33 +490,38 @@ const TRACK_DEFS = [
     ball: [640, 560, 13], duck: [96, 950], socks: [[820, 420, 0], [1560 - 40, 470, 1]], puzzle: [[660, 360, 2], [300, 600, 1], [880, 600, 3], [540, 640, 0]],
     streets: [[200, 520, 780, 528], [460, 220, 468, 690]], prints: [[230, 470, 26, 22], [520, 470, 28, 22], [600, 300, 24, 20], [520, 560, 26, 20], [680, 620, 30, 22]],
     ptrees: [[300, 560, 9], [420, 560, 10], [560, 420, 9], [720, 400, 8], [380, 270, 9]], ppond: [640, 440, 34, 18], zebra: [150, 300] },
-  // The rainbow (the finale, a bigger map): a rainbow road over a sea of clouds between floating coins, one for every cup (see rainbowmap.js,
-  // rainbow.js). From the Fantasy coin (the start, under a gate of clouds) up to the bronze coin (a meadow: earth road, a mud puddle, two cows),
-  // over the rainbow arch (it climbs over a cloud gorge, the biggest jump of the game over the gap at its top), across the silver coin (a garden:
-  // a red bridge over a cloud pond, koi), down the gold coin (an asphalt chicane with kerbs and gravel, an ice ramp back onto the rainbow), round
-  // the platinum coin (a little volcano, a wormhole over the next bend), through the spiral (a big left and a right curve, boost arrows) and the
-  // rain shower (it washes) back. In the last lap of the storm (event gewitter) a double rainbow cuts the spiral short.
-  // coins = [x, y, r] of every coin; arch = where it starts and ends and its gap ([x, y] on the road); ramp = the ice ramp: ice from, lip, end of
-  // the gap; puddle = the mud puddle of the bronze coin [x, y, rx, ry]; cows = [x, y, how far it walks, phase]; pines, chair (beach chair),
-  // cherries, lantern, cacti = [x, y]; pond = the cloud pond [x, y, rx, ry] (the koi leap over the bridge); gravel = [x, y, r]; cone = the little volcano [x, y, r]
-  // and its lava rill (points); portals = the wormhole: its little platform [x, y, r] and where you come out [x, y]; storm = storm clouds on the
-  // road [t, offset, half length, half width], stormAt = the ones the storm brings (event gewitter); shower = the rain shower [x, y] on the
-  // road; podium = [x, y]; emblems = the cup symbols [x, y, size]; double = the double rainbow (a curve: start, two control points, end)
-  { name: 'REGENBOGEN', rev: 1, seed: 15, W: 1440, H: 810, theme: 'regenbogen', song: 'rainbow', events: ['einhorn', 'gewitter'], wall: [], wash: null, rainbow: true, goo2: 'mud',
-    poly: [[180, 440, 0], [180, 110, 95], [1300, 110, 60], [1300, 190, 45], [1258, 255, 55], [1300, 320, 45], [1300, 585, 95], [1060, 585, 80], [900, 425, 120], [700, 355, 150],
-      [560, 535, 150], [520, 742, 110], [180, 742, 95]],
-    mud: [], water: [], ponds: [], boost: [.72, .785],
-    coins: { bronze: [420, 125, 100], silver: [1010, 145, 105], gold: [1288, 262, 95], platinum: [1240, 590, 100], fantasy: [180, 430, 120] },
-    arch: [[521, 110], [906, 110], [658, 110], [768, 110]], ramp: [[1300, 350], [1300, 372], [1300, 402]],
-    puddle: [455, 118, 22, 13], cows: [[388, 102, 14, 0], [492, 121, 9, 2.4]], pines: [[350, 170], [492, 170], [446, 50]], chair: [382, 52],
-    pond: [1010, 112, 34, 56], cherries: [[940, 60], [1082, 175]], lantern: [940, 178],
-    gravel: [[1342, 200, 22], [1212, 255, 26], [1342, 322, 22]], cacti: [[1226, 190], [1224, 332], [1250, 214]],
-    cone: [1305, 652, 22], rill: [[1290, 640], [1266, 632], [1240, 642]], portals: { a: [1232, 520, 15], b: [960, 485] },
-    storm: [[.085, -16, 24, 12], [.39, 16, 22, 11], [.615, 15, 24, 12], [.70, -16, 26, 12], [.80, 15, 24, 12]],
-    stormAt: [[.045, 14, 22, 11], [.38, -15, 22, 11], [.655, -14, 24, 12], [.745, 15, 24, 12], [.835, 14, 22, 11]],
-    shower: [380, 742], podium: [105, 480],
-    emblems: { bronze: [420, 182, 26], silver: [1010, 208, 22], gold: [1345, 262, 16], platinum: [1185, 655, 14], fantasy: [252, 440, 24] },
-    double: [[1080, 585], [880, 585], [700, 742], [520, 742]] }
+  // The rainbow Rev 2 (the finale, plaene/REGENBOGEN_REV2.md): a lap of honour over the clouds between five floating coins, each with two
+  // landmarks of its cup (see rainbowmap.js, rainbow.js). From the Fantasy coin (start under a gate of clouds) north and east over the bronze coin
+  // (earth road, a puddle at the edge, two cows, a pier with a shower), over the rainbow arch (the biggest jump of the game over the gap at its
+  // top), then the fork: the rainbow road round the north or the cloud path across the gorge; the silver coin (a red bridge over a cloud pond with
+  // koi, the cloud train with a ramp on one half of the road), the gold coin (an asphalt S with kerbs and gravel, the sphinx gate, the chair lift
+  // over the crevasse), the platinum coin (lava tube, liana over a crack, wormhole), the spiral (boost arrows; in the last lap of the storm the
+  // double rainbow cuts it short) and the rain bay before the finish (the only place that washes).
+  // coins = [x, y, r]; arch = start, end, gap from, gap to ([x, y] on the road); crevasse = where the gap under the lift begins and ends on the road;
+  // cloudPath = the points of the cloud path; bay = the points of the rain bay; jetty = the pier of the bronze coin (points; not `pier`: that is the beach); puddle = [x, y, rx, ry];
+  // cows = [x, y, how far it walks, phase]; pines, cherries, lantern, sphinx (the gate), podium = [x, y]; pond = the cloud pond [x, y, rx, ry];
+  // gravel = [x, y, r]; train = the cloud train: rails from [x, y] to [x, y], the ramp on the road [x, y], the warning light [x, y];
+  // cone = the lava tube [x, y, r]; liana = the chord over the crack from a to b; portals = the wormhole: its platform [x, y, r], where you come out
+  // [x, y]; storm, stormAt = storm clouds on the road [t, offset, half length, half width] (always / brought by the storm); boostAt = boost arrows [x, y] (core);
+  // emblems = the cup symbols [x, y, size]; double = the double rainbow (start, two control points, end)
+  { name: 'REGENBOGEN', rev: 2, seed: 15, W: 1800, H: 1000, theme: 'regenbogen', song: 'rainbow', events: ['einhorn', 'gewitter'], wall: [], wash: null, rainbow: true, goo2: 'mud',
+    poly: [[200, 580, 0], [200, 130, 110], [1170, 130, 70], [1280, 60, 60], [1560, 60, 90], [1560, 400, 70], [1690, 500, 70], [1650, 640, 50], [1665, 925, 80],
+      [1250, 925, 90], [1120, 400, 130], [780, 360, 140], [700, 600, 90], [760, 870, 120], [460, 905, 110], [200, 905, 110]],
+    mud: [], water: [], ponds: [],
+    coins: { bronze: [440, 150, 110], silver: [1490, 200, 125], gold: [1610, 520, 130], platinum: [1580, 850, 140], fantasy: [200, 560, 130] },
+    arch: [[640, 130], [1080, 130], [810, 130], [910, 130]], crevasse: [[1653, 662], [1656, 722]],
+    cloudPath: [[1148, 132, 0], [1235, 250, 50], [1380, 280, 50], [1440, 380, 40], [1548, 372, 0]],
+    bay: [[520, 912, 0], [470, 960, 30], [330, 962, 30], [285, 912, 0]], jetty: [[400, 158, 0], [400, 232, 0]],
+    puddle: [478, 156, 26, 12], cows: [[392, 118, 14, 0], [500, 134, 9, 2.4]], pines: [[350, 214], [520, 214], [452, 62], [366, 74]],
+    pond: [1560, 210, 48, 22], cherries: [[1420, 120], [1450, 290]], lantern: [1500, 150],
+    train: { from: [1486, 290], to: [1800, 290], ramp: [1560, 256], light: [1604, 278] },
+    gravel: [[1515, 440, 20], [1730, 545, 18], [1600, 640, 16]], sphinx: [1625, 450],
+    cone: [1640, 895, 46], liana: { a: [1665, 762], b: [1500, 925] }, portals: { a: [1468, 882, 14], b: [1190, 790] },
+    storm: [[.135, -16, 24, 12], [.345, 16, 22, 11], [.745, 15, 24, 12], [.805, -16, 26, 12], [.875, 15, 24, 12]],
+    stormAt: [[.105, 14, 22, 11], [.325, -15, 22, 11], [.715, -14, 24, 12], [.775, 15, 24, 12], [.845, 14, 22, 11], [.95, -14, 22, 11]],
+    boostAt: [[950, 380], [740, 760]], podium: [110, 610],
+    emblems: { bronze: [500, 205, 18], silver: [1430, 200, 22], gold: [1545, 565, 18], platinum: [1505, 790, 16], fantasy: [275, 520, 24] },
+    double: [[1240, 925], [1060, 975], [860, 975], [680, 882]] }
 ];
 
 

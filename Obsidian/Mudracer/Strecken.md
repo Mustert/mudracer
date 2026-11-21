@@ -952,7 +952,28 @@ Streckenereignis: (Vorschlag) Ein Aufziehauto oder die Spielzeugeisenbahn kreuzt
 
 ## 15. Regenbogen
 ![[Pasted image 20261006220134.png]]
-Status: **Prototyp umgesetzt** (Rework, 2026-10-14, Branch vom `map_pack`): Streckenname `REGENBOGEN` (letzte Strecke in `TRACK_DEFS`), Theme `regenbogen`, Musik `rainbow` (neu, mit `rainbowStorm` und `rainbowFinal`), Streckenereignisse Einhörner `einhorn` und Gewitter `gewitter`; Code in `src/rainbowmap.js` (Karte) und `src/rainbow.js` (Rennen). Im Cup FANTASY eingetragen. Größere Karte (1440×810), eine Runde dauert etwa 26 s. Die alte Strecke (Plattformen im All mit Boost-Pads, siehe Bild) ist weg, ihre Optik (`decor: 'space'`, lila Glibber) ist entfernt, ihr Lied lebt nur noch im Weltall-Lied `space`. Die Zeitfahr-Rekorde starten neu (`rev: 1`) ✅ umgesetzt.
+Status: **Rev 2 umgesetzt** auf Branch `map_pack` (2026-11-21, Plan `plaene/REGENBOGEN_REV2.md`; Streckenname `REGENBOGEN`, `rev: 2`, Theme `regenbogen`, Musik `rainbow` in Schichten nach Runden (ohne `rainbowStorm` und `rainbowFinal`), Streckenereignisse Einhörner `einhorn` und Gewitter `gewitter`, dazu die Inselschalter `kuehe` und `kois`; Code in `src/rainbowmap.js` und `src/rainbow.js`; Karte 1800×1000, Runde 34–41 s mit dem Bot). Im Cup FANTASY eingetragen. Abnahme durch den Nutzer offen.
+
+### Rev 2: die Ehrenrunde über den Wolken (gilt, `rev: 2`; ersetzt den Prototyp darunter)
+Fünf Münzinseln schweben über einem Wolkenmeer, die Regenbogenstraße verbindet sie; in der Mitte der Runde liegt eine tiefe Wolkenschlucht. Rundenverlauf im Uhrzeigersinn:
+1. **Fantasy-Münze**: Start nach Norden unter dem Wolkentor mit Regenbogenbanner (hinter der Linie, verdeckt sie nicht), Siegerpodest am Rand, Regenbogenrand der Münze.
+2. **Bronze** (Cup 1): Erdweg mit einer Matschpfütze am Rand (braun), zwei Kühe auf der Straße, Tannen, Deko-Zaun, ein kurzer **Holzsteg mit Dusche** (nur Optik, er wäscht nicht).
+3. **Regenbogen-Bogen** über seiner Wolkenschlucht mit der **Lücke** oben (größter Sprung des Spiels); weiche Wolken-Banden.
+4. **Gabelung**: die Regenbogenstraße in einem Bogen nach Norden oder der **Wolkenpfad** (lila, weich, schmal, goldener Rand) quer über die Schlucht, kürzer, aber mit Löchern am Rand.
+5. **Silber** (Cup 2): rote Brücke über den Wolkenteich mit Kois, Kirschbäume, Laterne; dahinter der **Wolkenzug**: er kommt aus einer Wolkenbank, das Warnlicht mit Andreaskreuz blinkt, eine Pfeife; auf der linken Fahrbahnhälfte liegt eine **Schanze** über die Gleise, rechts wartet man.
+6. **Gold** (Cup 3): Asphalt-S mit Kerbs und Kies, das **Sphinx-Tor** (zwei Sphingen auf Steinsockeln, ein Balken mit Sonnenscheibe über der Straße), am Ende die Liftstation: der **Sessellift** trägt jedes Auto über die Spalte auf die Platinmünze.
+7. **Platin** (Cup 4): Basalt, die **Lavaröhre** durch einen kleinen Kegel um die Ecke (innen dunkel, Lavarinne), oder vorher die **Liane** über einen Riss in der Münze (nur, solange sie auf deiner Seite hängt; sonst fällt man hinein und kommt vor dem Riss zurück); das **Wurmloch** auf seiner Plattform am Ende.
+8. **Spirale**: ein hoher Bogen in die Schlucht hinein mit einer kleinen S-Kurve und zwei Boost-Pfeilen; in der letzten Runde kürzt der **doppelte Regenbogen** unten ab.
+9. **Regen-Bucht** südlich der unteren Geraden: Regenwolke mit Sonne und ein kleiner Regenbogen in der Gischt; das einzige Waschen, danach Glitzerspur. Dann über die Fantasy-Münze ins Ziel.
+
+Ereignisse: `einhorn` (Runde 1 ab und zu, im Gewitter keine, in der letzten Runde viele; Hufschlag und Glitzer am Bildrand, bevor eines kommt), `gewitter` (Runde 1 Sonnenaufgang, Runde 2 Wolkenfront, Regen macht grau statt zu waschen, mehr Gewitterwolken, Blitze mit Zielkreis nie auf Münzen und nie am Bogen; letzte Runde Sonne, Glitzer, doppelter Regenbogen, Feuerwerk). Kühe und Kois als Inselschalter.
+
+Lied `rainbow` in Schichten ohne Tonartwechsel: Runde 1 Synth-Bells und Arpeggios, im Gewitter dunkler Chor in a-Moll über demselben Bass, Pauke und Filter, in der letzten Runde Supersaw, zweites Arpeggio und voller Chor. Auf jeder Münze spielt das Glockenspiel ein kurzes Motiv ihres Cups.
+
+Warum die schwerste Strecke: alle Mechaniken des Spiels auf einer Runde (Matsch, Waschen, Sprünge, Kühe, Kois, Zug, Lift, Liane, Dunkelheit, Wurmloch), die Farbbahnen als eigene Ideallinie, der größte Sprung, das Gewitter in Runde 2.
+
+### Prototyp (bis 2026-11-21, ersetzt durch Rev 2)
+Prototyp umgesetzt (Rework, 2026-10-14, Branch vom `map_pack`): Streckenname `REGENBOGEN` (letzte Strecke in `TRACK_DEFS`), Theme `regenbogen`, Musik `rainbow` (neu, mit `rainbowStorm` und `rainbowFinal`), Streckenereignisse Einhörner `einhorn` und Gewitter `gewitter`; Code in `src/rainbowmap.js` (Karte) und `src/rainbow.js` (Rennen). Im Cup FANTASY eingetragen. Größere Karte (1440×810), eine Runde dauert etwa 26 s. Die alte Strecke (Plattformen im All mit Boost-Pads, siehe Bild) ist weg, ihre Optik (`decor: 'space'`, lila Glibber) ist entfernt, ihr Lied lebt nur noch im Weltall-Lied `space`. Die Zeitfahr-Rekorde starten neu (`rev: 1`) ✅ umgesetzt.
 
 Umgesetzt (Prototyp, Abweichungen vom Vorschlag in Klammern):
 - Rundenverlauf wie unten ✅ umgesetzt, nur anders verteilt: Bronze etwa 12–17 %, Bogen 18–29 %, Silber 31–37 %, Gold 41–48 %, Platin 51–56 %, Spirale 58–83 % (eine kleine Rechtskurve, dann die große Linkskurve durch die Mitte und die Rechtskurve hinunter), Regenschauer bei 87 %, dann über die Fantasy-Münze ins Ziel. Startaufstellung komplett auf der Geraden auf der Fantasy-Münze (Grundsatz 5).
@@ -969,7 +990,7 @@ Umgesetzt (Prototyp, Abweichungen vom Vorschlag in Klammern):
 - Computerautos: rote Seite, Vollgas den Bogen hinauf (ein paar nicht), weichen Blitzkreisen aus, nehmen manchmal das Wurmloch und ab MITTEL den doppelten Regenbogen ✅.
 - Musik `rainbow` (C-Dur, 128 BPM, Synth-Bells, Supersaw im Refrain, Arpeggios, Chor, pumpender Bass), im Gewitter a-Moll mit Pauke, letzte Runde D-Dur nur Refrain ✅; neue Töne Wiehern, Glitzer, Blitz, Summen, Sonnendurchbruch, Feuerwerk ✅.
 
-Noch nicht: Leitmotive der Cups auf den Inseln, Bahnübergang mit Wolkenzug (Silber), sich drehendes Siegerpodest, Konfetti-Regen ab dem Zieleinlauf (nur das normale Konfetti), mehrere Wolkenebenen (nur eine Parallaxe-Ebene in den Löchern), „elektrische“ Antenne; das Lied ist noch nicht angehört, die Werte der Farbbahnen und der Sprung sind noch nicht im Spiel mit Kindern geprüft.
+Noch nicht: Leitmotive der Cups auf den Inseln ✅ umgesetzt (Rev 2), Bahnübergang mit Wolkenzug (Silber) ✅ umgesetzt (Rev 2, Warnlicht und Schanze statt Schranke), sich drehendes Siegerpodest, Konfetti-Regen ab dem Zieleinlauf (nur das normale Konfetti), mehrere Wolkenebenen (nur eine Parallaxe-Ebene in den Löchern) ✅ umgesetzt (Rev 2, drei Ebenen), „elektrische“ Antenne; das Lied ist noch nicht angehört, die Werte der Farbbahnen und der Sprung sind noch nicht im Spiel mit Kindern geprüft.
 
 Idee: Die **letzte Strecke des Spiels** und das letzte Rennen des Superdupercups. Sie soll sich wie ein Finale anfühlen: eine **Ehrenrunde durch alle Welten** über den Wolken und gleichzeitig die schwerste Prüfung. Die Strecke erzählt eine kleine Geschichte über drei Runden: Sonnenaufgang, dann ein Gewitter, und erst danach, wenn die Sonne durch den Regen bricht, steht der **Regenbogen in voller Pracht** da (genau so entsteht ein echter Regenbogen: Sonne und Regen zugleich).
 

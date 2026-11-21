@@ -6,6 +6,23 @@ Stand: 2026-10-31, Branch `map_pack`. Eigener Plan für den Umbau des Regenbogen
 
 **Status je Paket** wird hier gepflegt. Erst beim Abschluss (R8) wird `ROADMAP.md` nachgezogen: 1S15, Tabelle, 1M-1, 1M-2, 1M-3, 1P-1, 1P-2, 1P-3.
 
+## Stand der Umsetzung (2026-11-21, Branch `map_pack`, `rev: 2`)
+
+R0 bis R8 in einem Zug umgesetzt, nach demselben Muster wie Süß und Spielzimmer Rev 2. Der Nutzer war nicht erreichbar; die offenen Fragen sind nach den Vorschlägen entschieden:
+1. Kein Mockup des Nutzers; gebaut nach dem Grundriss unten (mit den Abweichungen darunter).
+2. Wahrzeichen wie vorgeschlagen: Bronze Kühe, Pfütze und Steg mit Dusche (Strand) und Tannen; Silber Teich mit Brücke und Kois, Wolkenzug; Gold Kerbs, Sphinx-Tor, Sessellift; Platin Lavaröhre, Liane, Wurmloch.
+3. Kein Tonartwechsel mehr: Gewitter als Schicht (dunkler Chor eine kleine Terz tiefer, also a-Moll über dem C-Bass, Pauke, Filter zu), letzte Runde volle Schicht in C-Dur.
+4. Drehendes Siegerpodest nicht umgesetzt (gehört zur Siegerehrung nach dem Superdupercup, nicht ins Rennen; neu als 1S15-8).
+
+Abweichungen vom Plan:
+- **Grundriss:** Start auf der Fantasy-Münze (200, 560) nach Norden, Bronze (440, 150), Bogen x 640–1080 auf y 130 (Lücke 810–910), Wolkenpfad als Sehne von (1148, 132) über die Schlucht zur Goldmünze, Silber (1490, 200) mit der Straße an ihrer Ostseite, Gold (1610, 520) als S, Sessellift über die Spalte zwischen Gold und Platin, Platin (1580, 850) mit der Ecke unten rechts, Spirale als hoher Bogen in die Schlucht (bis y 360) mit einer kleinen S-Kurve, Bucht südlich der unteren Geraden. Die zweite Gabelung bleibt der doppelte Regenbogen der letzten Runde.
+- **Runde 34–41 s** mit dem Bot (SCHWER, im Gewitter länger), nicht 55–65 s: etwa wie das Spielzimmer (34 s). Neu als 1S15-5.
+- **Sessellift** ist eine eigene schlanke Fassung (`c.rbLift`, Hook `stuck`), nicht der Baustein aus `ice.js` (der ist auf eine senkrechte Trasse gebaut). **Liane** ist ein Sprung mit `off` wie im Dschungel, aber über einen Riss in der Platinmünze (eine Wahl gegen den Bogen um die Ecke). **Lavaröhre** ohne Lichtkarte über den ganzen Bildschirm: `darkRect` nur im runden Kegel.
+- **Wolkenzug** ohne Schranke: Warnlicht mit Andreaskreuz, Pfeife, Schanze nur auf der linken Fahrbahnhälfte (wie ZUG Rev 4).
+- **Bauzeit** 1,36 s allein (1,8 Mpx), im Lauf aller Strecken 1,8 s neben Wüste 1,4 s: schneller als der Prototyp je Pixel, aber nicht unter der Wüste (1P-3 teilweise, neu 1S15-6).
+
+Messwerte (R8): `check` LEICHT, MITTEL, SCHWER mit 3, 5 und 10 Autos und ohne Ereignisse: alle im Ziel, keine Abkürzungen, Start 0°; 12 weitere Rennen ohne Hänger; Stürze vor allem am Riss der Liane und an der Bogenlücke (gewollt). Bild mit Spiellogik 0,4 ms (Runde 1), 0,5 ms (Gewitter), 0,7 ms (Sonne mit Feuerwerk), 1,3 ms (in der Lavaröhre). Nicht von Hand gefahren, Lied nicht angehört.
+
 Grobes Mockup von Claude (2026-10-31, ersetzt kein Mockup des Nutzers): [mockups/REGENBOGEN_REV2.svg](mockups/REGENBOGEN_REV2.svg)
 
 ![Mockup REGENBOGEN Rev 2](mockups/REGENBOGEN_REV2.svg)
@@ -151,15 +168,15 @@ Laufzeit:
 
 | Paket | Inhalt | Prüfen | Status |
 |---|---|---|---|
-| R0 Bauzeit | 1P-3 zuerst: Überlagerungen nur für Straßen-Rechtecke, Wolkenmeer grob, `rainbowTerrain` schneller (noch auf der alten Karte, damit der Gewinn messbar ist) | Bauzeit vorher/nachher, `check` unverändert | offen |
-| R1 Grundriss | Kartengröße, Mittellinie, Fantasy-Start, Münzen neu, Bogen, Spirale, Wolkenschlucht, Checkpoints, `progress`, `rb`-Namen | `check`: Start gerade, 10/10; Bauzeit | offen |
-| R2 Bronze und Silber | Kühe, Pfütze, Steg mit Dusche (Optik), Kois, Wolkenzug-Übergang mit Schanze, Wolkenpfad als Gabelung | `check`, Screenshot | offen |
-| R3 Gold | Kerbs, Sphinx-Tor, Sessellift über die Spalte (Baustein aus EIS) | `check`, Lift mit 10 Autos | offen |
-| R4 Platin | Lavaröhre mit Licht, Liane über ein Wolkenloch, Wurmloch | `check` alle Stufen, Stürze an der Liane | offen |
-| R5 Regen-Bucht und Wolkenmeer | Bucht (Waschen), Regen wäscht nicht mehr, Wolkenebenen mit Parallaxe, Löcher als Formen, Gewitterwolken als Wolken | `check`, Screenshot, Frame-Zeit | offen |
-| R6 Ereignisse | Einhörner je Runde, Gewitter-Geschichte angepasst (Blitz nie an der Lücke), Ankündigung ohne Text, Podest | `check` mit und ohne `fx` | offen |
-| R7 Lied | Schichten statt `swap`, Leitmotive auf den Inseln, neue Töne | Lied anhören (Nutzer, 1S15-1, 1M-2) | offen |
-| R8 Abschluss | Performance, `check` LEICHT/MITTEL/SCHWER mit 3, 5, 10 Autos, Grundsätze 1–14; Doku: ROADMAP (1S15, Tabelle, 1M-1, 1M-2, 1M-3, 1P-1, 1P-2, 1P-3, „Zuletzt abgeglichen“), `Strecken.md` 15 (Rev 2 oben, „Noch nicht“ als umgesetzt markieren), Skills `mechanik` („Regenbogen Rev 2 in Kürze“) und `strecke` | alles | offen |
+| R0 Bauzeit | 1P-3 zuerst: Überlagerungen nur für Straßen-Rechtecke, Wolkenmeer grob, `rainbowTerrain` schneller (noch auf der alten Karte, damit der Gewinn messbar ist) | Bauzeit vorher/nachher, `check` unverändert | erledigt (Überlagerungen als 128-px-Kacheln nur, wo Farbbahnen sind; Wolkenmeer auf 4-px-Raster; Lochtiefe in zwei Durchläufen; Pixelschleifen in normalen Funktionen; gleich auf der neuen Karte gemessen: 1,36 s bei 1,8 Mpx statt 2 s bei 1,17 Mpx) |
+| R1 Grundriss | Kartengröße, Mittellinie, Fantasy-Start, Münzen neu, Bogen, Spirale, Wolkenschlucht, Checkpoints, `progress`, `rb`-Namen | `check`: Start gerade, 10/10; Bauzeit | erledigt (1800×1000, Start 0°, 10/10) |
+| R2 Bronze und Silber | Kühe, Pfütze, Steg mit Dusche (Optik), Kois, Wolkenzug-Übergang mit Schanze, Wolkenpfad als Gabelung | `check`, Screenshot | erledigt (der Steg heißt `jetty`: `pier` ist der Steg des Strandes im Kern) |
+| R3 Gold | Kerbs, Sphinx-Tor, Sessellift über die Spalte (Baustein aus EIS) | `check`, Lift mit 10 Autos | erledigt (eigener schlanker Lift `c.rbLift`) |
+| R4 Platin | Lavaröhre mit Licht, Liane über ein Wolkenloch, Wurmloch | `check` alle Stufen, Stürze an der Liane | erledigt (Liane über einen Riss in der Münze) |
+| R5 Regen-Bucht und Wolkenmeer | Bucht (Waschen), Regen wäscht nicht mehr, Wolkenebenen mit Parallaxe, Löcher als Formen, Gewitterwolken als Wolken | `check`, Screenshot, Frame-Zeit | erledigt |
+| R6 Ereignisse | Einhörner je Runde, Gewitter-Geschichte angepasst (Blitz nie an der Lücke), Ankündigung ohne Text, Podest | `check` mit und ohne `fx` | erledigt (ohne drehendes Podest, 1S15-8) |
+| R7 Lied | Schichten statt `swap`, Leitmotive auf den Inseln, neue Töne | Lied anhören (Nutzer, 1S15-1, 1M-2) | erledigt (umgebaut, nicht angehört: 1S15-1 bleibt offen) |
+| R8 Abschluss | Performance, `check` LEICHT/MITTEL/SCHWER mit 3, 5, 10 Autos, Grundsätze 1–14; Doku: ROADMAP (1S15, Tabelle, 1M-1, 1M-2, 1M-3, 1P-1, 1P-2, 1P-3, „Zuletzt abgeglichen“), `Strecken.md` 15 (Rev 2 oben, „Noch nicht“ als umgesetzt markieren), Skills `mechanik` („Regenbogen Rev 2 in Kürze“) und `strecke` | alles | erledigt (nicht von Hand gefahren; Abnahme 1S15-7) |
 
 ## Grundsätze-Check (für R8)
 

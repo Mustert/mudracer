@@ -453,14 +453,17 @@ SONGS.candy = candySong({ synth, voice, noise }, hz, mel);
 
 // the rainbow (the finale): radiant Euro-dance pop in C major, 128 BPM. Synth bells play the tune (with the delay), a supersaw joins in the
 // chorus; glittering arpeggios in sixteenths, a choir ("aah"), four on the floor with an open hi-hat on the off-beat and claps on 2 and 4, a
-// pumping eighth bass that ducks under the kick. In the storm (lap 2) the same tune in A minor (every note two steps of the scale down), the
-// filters close, a deep timpani thunders on the one of every fourth bar. In the last lap (the sun) only the chorus, in D major, a full choir,
-// bells and a crash at the start of every phrase: the big finale of the game.
+// pumping eighth bass that ducks under the kick. Rev 2: layers on the laps instead of handing over to other songs (1M-1, 1S15-1), the key stays:
+// in the storm (lap 2) the filters close, a dark choir in A minor lies over the same bass and a deep timpani thunders on the one of every fourth
+// bar; in the last lap (the sun) the full choir, the supersaw also in the verse, a second arpeggio, bells and a crash at the start of every phrase.
+// On every coin a short leitmotif of the cup it quotes plays on the glockenspiel (1M-3), only while the player is on it.
 const rbEv = () => G.T && G.T.rainbow && G.T.ev;
-const rbStorm = () => { const ev = rbEv(); return !!(ev && ev.storm && !ev.sun); };
-const rbFinal = () => { const ev = rbEv(); return !!(ev && (ev.sun || (G.player && !G.T.run && G.player.lap >= LAPS && (G.state === 'race' || G.state === 'finish')))); };
-const SCALE = [0, 2, 4, 5, 7, 9, 11];
-const toMinor = m => { const o = Math.floor(m / 12), dg = SCALE.indexOf(m % 12); if (dg < 0) return m - 3; return dg >= 2 ? o * 12 + SCALE[dg - 2] : (o - 1) * 12 + SCALE[dg + 5]; };
+const rbStorm = () => { const ev = rbEv(); return !!(ev && ev.rbStorm && !ev.rbSun) || (!(ev && ev.rbStormOn) && raceLap() === 2); };
+const rbFinal = () => { const ev = rbEv(); return !!(ev && ev.rbSun) || raceLap() >= LAPS; };
+// the leitmotifs (glockenspiel, two bars, in C major): bronze = the meadow (a skipping fourth), silver = the train (a whistle up and down),
+// gold = the desert (a snake-charmer turn), platinum = the volcano and the jungle (low and then high), Fantasy = the main hook of the song
+const RB_MOTIF = [[67, 72, 67, 72, 74, 72], [72, 76, 79, 76, 72, 67], [69, 70, 69, 68, 69, 64], [55, 60, 62, 67, 72, 74], [76, 79, 84, 83, 79, 76]];
+const rbIsle = () => { const R = G.T && G.T.rainbow; return R && (G.state === 'race' || G.state === 'finish') ? R.isle ?? -1 : -1; };
 SONGS.rainbow = { bpm: 128, swing: 0,
   chords: { C: { r: 36, n: [60, 64, 67, 72] }, G: { r: 31, n: [59, 62, 67, 71] }, Am: { r: 33, n: [57, 60, 64, 69] }, F: { r: 29, n: [57, 60, 65, 69] }, Em: { r: 40, n: [59, 64, 67, 71] } },
   A: { ch: ['C', 'G', 'Am', 'F', 'C', 'G', 'F', 'G'], mel: mel([
@@ -469,15 +472,18 @@ SONGS.rainbow = { bpm: 128, swing: 0,
   B: { ch: ['F', 'G', 'Em', 'Am', 'F', 'G', 'C', 'C'], mel: mel([
     'C6:0:3 A5:3:1 C6:4:4 D6:8:4 C6:12:4', 'B5:0:3 G5:3:1 B5:4:4 D6:8:4 B5:12:4', 'G5:0:2 B5:2:2 E6:4:6 D6:10:2 B5:12:4', 'C6:0:2 B5:2:2 A5:4:4 E5:8:4 A5:12:4',
     'A5:0:2 C6:2:2 F6:4:4 E6:8:2 D6:10:2 C6:12:4', 'D6:0:2 C6:2:2 B5:4:4 G5:8:2 A5:10:2 B5:12:4', 'C6:0:4 G5:4:2 E5:6:2 G5:8:2 C6:10:2 E6:12:4', 'C6:0:12']) },
-  swap: () => rbFinal() ? 'rainbowFinal' : rbStorm() ? 'rainbowStorm' : null,
   lead(M, m, t, d, sec) {
-    if (sec === 'B') { M.supersaw(hz(m - 12), t, d, .8); M.bellLead(hz(m), t, d, .7); }
+    const fin = rbFinal(), dark = !fin && rbStorm();
+    if (dark) { M.lead(hz(m - 12), t, d); M.bellLead(hz(m), t, d, .5); return; }
+    if (sec === 'B' || fin) { M.supersaw(hz(m - 12), t, d, fin ? 1 : .8); M.bellLead(hz(m), t, d, fin ? .8 : .7); if (fin) M.glock(hz(m + 12), t, .4); }
     else { M.bellLead(hz(m), t, d, 1); M.glock(hz(m + 12), t, .35); }
   },
   band(M, s, t, bi, ch, sec) {
-    const tones = [...ch.n, ...ch.n.map(m => m + 12)], dark = !!M.song.dark, fin = !!M.song.fin;
+    const fin = rbFinal(), dark = !fin && rbStorm(), tones = [...ch.n, ...ch.n.map(m => m + 12)];
     M.arp(hz(tones[s % 8] + 12), t); if (fin) M.arp(hz(tones[(s + 3) % 8] + 24), t + M.sd / 2);
     if (s === 0 && (sec === 'B' || fin)) M.choir(ch.n, t, 16 * M.sd);
+    // the storm: a dark choir a minor third below (A minor over C, E minor over G ...), the filters closed
+    if (dark && s === 0) M.choir(ch.n.map(m => m - 3), t, 16 * M.sd);
     if (s % 4 === 0) M.pumpPad(ch.n, t, dark ? 560 : 1500);
     if (s % 2 === 0) M.bassPump(hz(ch.r + ((s >> 1) % 2 ? 12 : 0)), t, M.sd * 1.7, s % 4 === 0 ? .55 : 1);
     if (s % 4 === 0) M.kick(t);
@@ -486,16 +492,9 @@ SONGS.rainbow = { bpm: 128, swing: 0,
     if (dark && s === 0 && bi % 4 === 0) M.timp(hz(ch.r - 12), t, 1.3);
     if (s === 0 && (fin ? bi % 4 === 0 : bi === 0)) M.crash(t);
     if (!fin && sec === 'A' && bi === 7 && s === 0) M.riser(t, 16 * M.sd);
+    // the leitmotif of the coin you are on: in the even bars, on the eighths of the first half
+    const k = rbIsle(); if (k >= 0 && bi % 2 === 0 && s % 2 === 0 && s < 12) M.glock(hz(RB_MOTIF[k][s >> 1] + 12), t, .9);
   } };
-// the storm: the same song in A minor, darker
-SONGS.rainbowStorm = { ...SONGS.rainbow, swap: null, dark: true,
-  chords: { C: { r: 33, n: [57, 60, 64, 69] }, G: { r: 40, n: [59, 64, 67, 71] }, Am: { r: 29, n: [57, 60, 65, 69] }, F: { r: 38, n: [57, 62, 65, 69] }, Em: { r: 36, n: [60, 64, 67, 72] } },
-  A: { ch: SONGS.rainbow.A.ch, mel: SONGS.rainbow.A.mel.map(bar => bar.map(([m, st, l]) => [toMinor(m), st, l])) },
-  B: { ch: SONGS.rainbow.B.ch, mel: SONGS.rainbow.B.mel.map(bar => bar.map(([m, st, l]) => [toMinor(m), st, l])) },
-  lead(M, m, t, d) { M.lead(hz(m - 12), t, d); M.bellLead(hz(m), t, d, .5); } };
-// the last lap: only the chorus, a whole tone up (D major), everything on
-SONGS.rainbowFinal = { ...SONGS.rainbow, swap: null, fin: true, order: ['B'], up: () => 2,
-  lead(M, m, t, d) { M.supersaw(hz(m - 12), t, d, 1); M.bellLead(hz(m), t, d, .8); M.glock(hz(m + 12), t, .4); } };
 
 // is there a song with this name (the track check, check.js)
 export const hasSong = name => !!SONGS[name];
