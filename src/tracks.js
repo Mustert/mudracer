@@ -65,7 +65,8 @@ export const THEMES = {
     grass: ['#05061a', '#0a0b26', '#14103c'], grassEdge: '#1c1e40', tuft: '#05061a', track: ['#3c465a', '#363f52', '#434e63'], trackEdge: '#5fe8ff', trail: '#2a2c48', roadTrail: '#4a4e5c', trailA: .07,
     decor: 'weltall', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#0a0a16'], trees: 0, space: true, glowTrail: true, flat: .6 },
   // Süßigkeitenland: a liquorice road, icing with sprinkles beside it, chocolate instead of mud (goo 'choco': brown cars), caramel that sticks
-  // (goo2 'caramel': golden cars, see suess.js), the lake and the river are deep chocolate (water: its colours), a lemonade fountain washes
+  // (goo2 'caramel': golden cars, see suess.js), the lake and the river are deep chocolate (water: its colours), the lemonade bay washes;
+  // the flat chocolate of the streams is milk brown with a cream rim (mud colours: it must stand out from the black liquorice)
   suess: { ...MUDDY, mud: ['#8a5030', '#7a4428', '#9a5c38'], mudEdge: '#f6e6cc', mudHi: '#d09a70', mudP: ['#8a5030', '#9a5c38', '#7a4428', '#c08060'], mudTrail: ['#6a3a20', '#8a5030'], goo: 'choco', goo2: 'caramel',
     water: ['#40200f', '#4a2615', '#56301c', '#70422a'], shore: ['#fff8ec', '#f6e6cc'], grass: ['#f7b6d0', '#f2a8c6', '#fbc6dc'], grassEdge: '#e48cb2', tuft: '#ffffff',
     track: ['#2a2028', '#241b22', '#30262e'], trackEdge: '#0e080c', trail: '#e48cb2', roadTrail: '#4a3a44', trailA: .1, decor: 'suess', tree: 'none', treeCol: ['#000000', '#000000', '#000000', '#3a1a24'], trees: 0,

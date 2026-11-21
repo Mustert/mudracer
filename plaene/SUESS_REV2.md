@@ -1,6 +1,6 @@
 # SUESS Rev 2 – Umsetzungsplan
 
-Stand: 2026-10-31, Branch `map_pack`. Eigener Plan für den Komplettumbau des Süßigkeitenlands (Strecke 13, Cup 5). Er steht bewusst nicht in `ROADMAP.md`; dort bleibt nur der Block `1S13` mit einem Verweis hierher. Grundlage: Prototyp in `src/suess.js`, `src/suessmap.js`, `src/suessmusic.js`, `Strecken.md` Abschnitt 13 und Cup-5-Tabelle, ROADMAP 1S13-1 bis 1S13-3, Skills `strecke` und `mechanik`, Streckendesign-Grundsätze in `CLAUDE.md`. Gemeinsamer Rahmen: `plaene/REWORKS_CUP4_CUP5.md`. Vorbild: `plaene/EIS_REV2.md`, `plaene/WUESTE_REV3.md`, `plaene/VULKAN_REV2.md` (Branch `vulkan_rev2`).
+Stand: 2026-10-31, Branch `map_pack`; **umgesetzt 2026-11-21** (alle Pakete S1 bis S8, Abweichungen und Messwerte unter „Umsetzung“ am Ende; Abnahme durch den Nutzer offen, ROADMAP 1S13-5). Eigener Plan für den Komplettumbau des Süßigkeitenlands (Strecke 13, Cup 5). Er steht bewusst nicht in `ROADMAP.md`; dort bleibt nur der Block `1S13` mit einem Verweis hierher. Grundlage: Prototyp in `src/suess.js`, `src/suessmap.js`, `src/suessmusic.js`, `Strecken.md` Abschnitt 13 und Cup-5-Tabelle, ROADMAP 1S13-1 bis 1S13-3, Skills `strecke` und `mechanik`, Streckendesign-Grundsätze in `CLAUDE.md`. Gemeinsamer Rahmen: `plaene/REWORKS_CUP4_CUP5.md`. Vorbild: `plaene/EIS_REV2.md`, `plaene/WUESTE_REV3.md`, `plaene/VULKAN_REV2.md` (Branch `vulkan_rev2`).
 
 **Status je Paket** wird hier gepflegt. Erst beim Abschluss (S8) wird `ROADMAP.md` nachgezogen: 1S13, Tabelle, 1A-2, 1P-1, 1P-2, 3B-4.
 
@@ -33,6 +33,8 @@ Das Süßigkeitenland wird zur Landschaft um den Schokoberg: vom Lebkuchendorf d
 | Name, Rekorde | Name `SUESS` bleibt, `rev: 2`. Lied `candy` bleibt, Schichten an den Runden |
 
 ### Offene Fragen an den Nutzer
+
+Entschieden am 2026-11-21 nach den Vorschlägen (Nutzer nicht erreichbar): kein Mockup, Bonbonfabrik, Presse ohne Schalter, Marshmallows federn (siehe „Umsetzung“).
 
 1. Mockup vorhanden?
 2. Bonbonfabrik als neuer Abschnitt gut (Vorschlag), oder lieber eine Torten-Etage (Ebenen wie im Spielzimmer; Vorschlag: nein, die Ebenen gehören dem Spielzimmer)?
@@ -147,14 +149,14 @@ Laufzeit:
 
 | Paket | Inhalt | Prüfen | Status |
 |---|---|---|---|
-| S1 Grundriss | Kartengröße, Mittellinie, Startgerade, Schokoberg mit Fluss bis zum Südrand und See, Wald als Feld (110), Fabrik-Fußabdruck, Checkpoints, `progress`, `T.ev`-Namen | `check`: Start gerade, keine Abkürzung (See sperrt), 10/10; Bauzeit | offen |
-| S2 Klebrige Böden | Codes 110–114 über `surfOf`, Dämpfung raus, Karamellbäche, Moor mit Keksweg und Krokant-Spur, Kaugummi | `check` LEICHT/SCHWER, Rundenzeit-Vergleich alt/neu je Boden | offen |
-| S3 Wald und Pass | Lollis mit Gasse, Trampoline vor den Bächen, Zuckerstangen-Rand, Pass mit Gefälle und Watte-Bande, Wattefetzen | `check`, Screenshot | offen |
-| S4 Querung | Quelle mit Kaskaden, Waffelbrücke, federnde Marshmallows, KI-Wahl | `check`, Stürze an den Steinen | offen |
-| S5 Bonbonfabrik | Halle, Fließbänder, Presse mit Ankündigung, Gabel, Deko | `check` alle Stufen (Platte Autos? Festhängen?), Frame-Zeit | offen |
-| S6 Unten und Waschen | Krokantbrücke, Brausefeld, Limonaden-Bucht, KI nur dreckig | `check`, Screenshot | offen |
-| S7 Ereignisse und Lied | Ströme mit Front entlang der Rinnen, Ankündigung, Streuselregen; Wolken nur über Wald/Moor, steigend; Fabrik-Schicht im Lied, Paukenwirbel; neue Töne | `check` mit und ohne `fx` | offen |
-| S8 Abschluss | Kulisse (Lebkuchenmänner laufen, Keks-Monster), Performance, `check` LEICHT/MITTEL/SCHWER mit 3, 5, 10 Autos, Grundsätze 1–14; Doku: ROADMAP (1S13, Tabelle, 1A-2, 1P-1, 1P-2, 3B-4, „Zuletzt abgeglichen“), `Strecken.md` 13 und Cup-5-Tabelle, Skills `mechanik` (Codes 110–114, „Süß Rev 2 in Kürze“) und `strecke` | alles | offen |
+| S1 Grundriss | Kartengröße, Mittellinie, Startgerade, Schokoberg mit Fluss bis zum Südrand und See, Wald als Feld (110), Fabrik-Fußabdruck, Checkpoints, `progress`, `T.ev`-Namen | `check`: Start gerade, keine Abkürzung (See sperrt), 10/10; Bauzeit | erledigt (2026-11-21) |
+| S2 Klebrige Böden | Codes 110–114 über `surfOf`, Dämpfung raus, Karamellbäche, Moor mit Keksweg und Krokant-Spur, Kaugummi | `check` LEICHT/SCHWER, Rundenzeit-Vergleich alt/neu je Boden | erledigt (2026-11-21) |
+| S3 Wald und Pass | Lollis mit Gasse, Trampoline vor den Bächen, Zuckerstangen-Rand, Pass mit Gefälle und Watte-Bande, Wattefetzen | `check`, Screenshot | erledigt (2026-11-21) |
+| S4 Querung | Quelle mit Kaskaden, Waffelbrücke, federnde Marshmallows, KI-Wahl | `check`, Stürze an den Steinen | erledigt (2026-11-21) |
+| S5 Bonbonfabrik | Halle, Fließbänder, Presse mit Ankündigung, Gabel, Deko | `check` alle Stufen (Platte Autos? Festhängen?), Frame-Zeit | erledigt (2026-11-21) |
+| S6 Unten und Waschen | Krokantbrücke, Brausefeld, Limonaden-Bucht, KI nur dreckig | `check`, Screenshot | erledigt (2026-11-21) |
+| S7 Ereignisse und Lied | Ströme mit Front entlang der Rinnen, Ankündigung, Streuselregen; Wolken nur über Wald/Moor, steigend; Fabrik-Schicht im Lied, Paukenwirbel; neue Töne | `check` mit und ohne `fx` | erledigt (2026-11-21) |
+| S8 Abschluss | Kulisse (Lebkuchenmänner laufen, Keks-Monster), Performance, `check` LEICHT/MITTEL/SCHWER mit 3, 5, 10 Autos, Grundsätze 1–14; Doku: ROADMAP (1S13, Tabelle, 1A-2, 1P-1, 1P-2, 3B-4, „Zuletzt abgeglichen“), `Strecken.md` 13 und Cup-5-Tabelle, Skills `mechanik` (Codes 110–114, „Süß Rev 2 in Kürze“) und `strecke` | alles | erledigt (2026-11-21) |
 
 ## Grundsätze-Check (für S8)
 
@@ -172,3 +174,27 @@ Laufzeit:
 12. Keksweg gegen Krokant-Spur, Trampolin gegen Karamellbach, Pads hinter Kaugummi.
 13. Waschen: nur die Limonaden-Bucht.
 14. Keine Wolke, keine Schokolade über Ziellinie und Aufstellung.
+
+## Umsetzung (2026-11-21, alle Pakete S1 bis S8)
+
+Umgesetzt ohne Rückfrage, die offenen Fragen nach den Vorschlägen entschieden (Nutzer nicht erreichbar, wie bei Dschungel und Weltall):
+
+1. **Mockup:** keins; Grundriss nach diesem Plan, mit den Abweichungen unten.
+2. **Bonbonfabrik** statt Torten-Etage (Ebenen bleiben dem Spielzimmer).
+3. **Presse ohne Schalter:** sie stampft immer im selben Takt (alle 2,4 s, Schatten wächst 0,8 s vorher, Zischen, gelbe Blinkleisten), kein Ereignis `fabrik`.
+4. **Marshmallows federn:** jeder Stein wirft einen kleinen Hüpfer (`soft`, kein Dreher); wer daneben landet, plumpst in die Schokolade.
+
+Abweichungen vom Grundriss:
+
+- **Lebkuchendorf als Schleife vor dem Ziel:** nach dem Brausefeld biegt die Straße nach Norden um das Dorf (Lakritz-Haarnadel), dann zurück auf die Startgerade. Die Limonaden-Bucht liegt an der Nordseite dieser Schleife (nicht am Südrand: dort war zu wenig Platz), weit weg von der Aufstellung. Zuckerstangen-Zäune trennen Dorf, Startgerade, Schleife und den Südrand (keine Abkürzung über die Wiese).
+- **Querung unter der Quelle:** die Straße taucht in einer Senke mit flachem Boden zur Waffelbrücke hinab (gerade über dem Fluss); die drei Marshmallows liegen 120 px oberhalb auf einem schmalen Lakritzweg quer über den Fluss (spart etwa 150 px).
+- **Ströme:** zwei laufen vom Brunnen die Rinnen des Berges hinab (über den Pass, über die Abfahrt zur Fabrik), der dritte läuft aus dem überlaufenden See in den Wald (nicht vom Gipfel: der Wald ist zu weit weg). Auf der Straße bleibt jeder Strom auf der Seite, von der er kommt, und liegt dort als Pfütze entlang der Fahrbahn; die andere Hälfte bleibt sauber.
+- **Karamellbäche:** jeder Bach kommt aus einem umgekippten Karamelltopf an der Hecke auf der schmaleren Seite des Feldes, quert die Linie und endet in einem Teich knapp dahinter; außen um den Teich bleibt eine saubere, längere Linie. Weil das Feld zwischen den Bögen des S schmal ist (Zuckerstangen-Riegel gegen das Abkürzen), passt nur **ein Trampolin je Bach** (auf der Linie), nicht zwei.
+- **Fließbänder:** zwei in Fahrtrichtung, eins quer (schiebt zur Wand), eins entgegen im Wartungsgang (rötlich gefärbt). Code 113 ist nur das Bild, der Schub kommt aus `pushes`.
+- **Kulisse:** Lebkuchenmänner gehen am Rand auf und ab, das Keks-Monster taucht im Moor auf und mampft, Gummibärchen hüpfen, Arbeiter-Gummibärchen an Hebeln in der Fabrik, Kamine mit Bonbonrauch auf dem Glasdach, Bonbon-Regenbogen als Bild in der Ecke oben rechts, Gummidrops und Lollis als feste Kulisse, Herzen und Streusel flach und blass. Rollende Bonbons in Kisten fehlen.
+
+**Kontrast** (Rückmeldung des Nutzers zum Prototyp: Honig auf Goldbraun war nicht zu unterscheiden): alles Saubere ist dunkel (Lakritze `#2a2028`, Keksweg `#3e2a22`, Krokantspur `#4a3220`, relative Helligkeit 0,02–0,04) oder sehr hell (Zuckerguss des Waldes `#fde0ec` 0,80, Fliesen der Fabrik `#f6eef2` 0,87); alles Klebrige ist mittel und kräftig: Karamell `#d88a1c` (0,33, Kontrast zur Lakritze 5,7 : 1, zum Keksweg 4,9 : 1, zum Zuckerguss 2,3 : 1 plus dunkler Rand `#4a2604` mit 10,9 : 1 und Glanzstreifen), Kaugummi `#ff5aa8` (5,5 : 1 zur Lakritze), flache Schokolade `#8a5030` (2,4 : 1) mit Sahnerand `#f6e6cc` (12,8 : 1). Krokantinseln im Moor sind hell mit dunklem Rand und Schatten (fest). Geprüft per Screenshot im Rennen (Sichtfeld 480 × 270, wie auf dem Handy).
+
+**Klebrig dosiert:** Karamell `[.38 + .16·mud]` (mindestens .45, höchstens .72) mal Höchsttempo, Haftung 3,5·mud, danach hält es 0,35 s / mud nach (Tempo bis −42 %, ausblendend, Fäden); Kaugummi .32, nach dem Platzen einer Blase 0,5 s .3; alles über den Hook `surf`, keine Dämpfung mehr.
+
+**Messwerte:** `check('SUESS')` auf LEICHT, MITTEL, SCHWER mit 3, 5 und 10 Autos jeweils alle im Ziel, nichts hängt fest, keine Abkürzung, Aufstellung 0°; ohne Ereignisse ebenso. Runde mit dem Bot 29–38 s (SCHWER 29–33 s, LEICHT 31–38 s; Mittellinie 4266 px), Rennen 110–190 s. Geplant waren 45–50 s (wie bei Dschungel und Weltall kürzer geworden). Die KI nutzt alle Wege: auf SCHWER mit 10 Autos etwa 10–12 Überquerungen der Marshmallows (ohne Sturz), 3–4 Krokantspur, 3–4 Wartungsgang, 3–7-mal platt unter der Presse; auf LEICHT 16–18 Krokantspur, 21–25 Wartungsgang, keine Marshmallows. Bau 1,3 s am Stück (warm; 1,9 s beim ersten Bau), im selben Lauf Weltall 1,4 s, Dschungel 1,4 s. Frame-Zeit Desktop 0,8–1,9 ms mit 10 Autos (am höchsten im Wald), Mobilgröße nicht gemessen.
