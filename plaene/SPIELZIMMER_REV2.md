@@ -2,7 +2,7 @@
 
 Stand: 2026-10-31, Branch `map_pack`. Eigener Plan für den Umbau des Spielzimmers (Strecke 14, Cup 5) in das neue Format. Er steht bewusst nicht in `ROADMAP.md`; dort bleibt nur der Block `1S14` mit einem Verweis hierher. Grundlage: Prototyp in `src/toys.js` und `src/toymap.js`, `Strecken.md` Abschnitt 14 (mit „Fehlt noch“), ROADMAP 1S14-1 bis 1S14-5, Skills `strecke` und `mechanik`, Streckendesign-Grundsätze in `CLAUDE.md`. Gemeinsamer Rahmen: `plaene/REWORKS_CUP4_CUP5.md`. Vorbild: `plaene/EIS_REV2.md`, `plaene/WUESTE_REV3.md`, `plaene/VULKAN_REV2.md` (Branch `vulkan_rev2`).
 
-**Status je Paket** wird hier gepflegt. Erst beim Abschluss (K8) wird `ROADMAP.md` nachgezogen: 1S14, Tabelle, 1A-4, 1M-2, 1P-1, 1P-2, 3E-6.
+**Stand 2026-11-21: alle Pakete K1 bis K8 umgesetzt** (Abschnitt „Umsetzung“ am Ende), Abnahme durch den Nutzer offen. **Status je Paket** wird hier gepflegt. Erst beim Abschluss (K8) wird `ROADMAP.md` nachgezogen: 1S14, Tabelle, 1A-4, 1M-2, 1P-1, 1P-2, 3E-6.
 
 Grobes Mockup von Claude (2026-10-31, ersetzt kein Mockup des Nutzers): [mockups/SPIELZIMMER_REV2.svg](mockups/SPIELZIMMER_REV2.svg)
 
@@ -153,14 +153,14 @@ Laufzeit:
 
 | Paket | Inhalt | Prüfen | Status |
 |---|---|---|---|
-| K1 Grundriss | Kartengröße, Zimmerwände, Mittellinie, lange Startgerade, Möbel an neuen Plätzen, Bett-Gabel als zwei Zweige (noch ohne Dunkelheit), Ebenen aus dem Zweig, Checkpoints, `progress` | `check`: Start gerade (1S14-1), 10/10; Bauzeit | offen |
-| K2 Über das Bett | Bettdecke mit Falten-Hügeln, Kissen-Sprung, Sturz landet unter dem Bett | `check`, Stürze vom Kissen bei verschiedenen Tempi | offen |
-| K3 Unter dem Bett | Lichtkarte, Staubflusen (Code 120), Spielsachen, Monster-Kuscheltier, Bauklotz-Treppe auf den Tisch | `check` alle Stufen, Screenshot, Frame-Zeit | offen |
-| K4 Schreibtisch und Murmelbahn | Möbel neu platziert, Lineal, Malkasten-Zweig, Tischkante, Spirale | `check`, Stürze an der Kante | offen |
-| K5 Klemmbaustein-Stadt und Waschbucht | Noppenplatte (121), Häuser als Formen, Pfeile, Knete vom Rand, Domino, Waschbucht | `check`, `checkPic` | offen |
-| K6 Ereignisse | `spielzeug` je Abschnitt, Roboter sucht und saugt Knete, `schlafenszeit` als eigener Schalter; Texte durch Ton und Symbol ersetzt; Knete-Spritzer verblassen | `check` mit und ohne `fx`; erwischt der Roboter Computerautos? | offen |
-| K7 Lied und Kulisse | Schichten ohne Tempowechsel, Filter unter dem Bett; Gardine, Lichtstrahlen, Tür, Zeichnungen; neue Töne | Lied anhören (Nutzer, 1S14-5) | offen |
-| K8 Abschluss | Performance, `check` LEICHT/MITTEL/SCHWER mit 3, 5, 10 Autos, Grundsätze 1–14; Doku: ROADMAP (1S14, Tabelle, 1A-4, 1M-2, 1P-1, 1P-2, 3E-6, „Zuletzt abgeglichen“), `Strecken.md` 14 („Fehlt noch“ als umgesetzt markieren), Skills `mechanik` (Codes 120/121, Ebenen aus dem Zweig, „Spielzimmer Rev 2 in Kürze“) und `strecke` | alles | offen |
+| K1 Grundriss | Kartengröße, Zimmerwände, Mittellinie, lange Startgerade, Möbel an neuen Plätzen, Bett-Gabel als zwei Zweige (noch ohne Dunkelheit), Ebenen aus dem Zweig, Checkpoints, `progress` | `check`: Start gerade (1S14-1), 10/10; Bauzeit | erledigt (2026-11-21) |
+| K2 Über das Bett | Bettdecke mit Falten-Hügeln, Kissen-Sprung, Sturz landet unter dem Bett | `check`, Stürze vom Kissen bei verschiedenen Tempi | erledigt (2026-11-21) |
+| K3 Unter dem Bett | Lichtkarte, Staubflusen (Code 120), Spielsachen, Monster-Kuscheltier, Bauklotz-Treppe auf den Tisch | `check` alle Stufen, Screenshot, Frame-Zeit | erledigt (2026-11-21) |
+| K4 Schreibtisch und Murmelbahn | Möbel neu platziert, Lineal, Malkasten-Zweig, Tischkante, Spirale | `check`, Stürze an der Kante | erledigt (2026-11-21) |
+| K5 Klemmbaustein-Stadt und Waschbucht | Noppenplatte (121), Häuser als Formen, Pfeile, Knete vom Rand, Domino, Waschbucht | `check`, `checkPic` | erledigt (2026-11-21) |
+| K6 Ereignisse | `spielzeug` je Abschnitt, Roboter sucht und saugt Knete, `schlafenszeit` als eigener Schalter; Texte durch Ton und Symbol ersetzt; Knete-Spritzer verblassen | `check` mit und ohne `fx`; erwischt der Roboter Computerautos? | erledigt (2026-11-21) |
+| K7 Lied und Kulisse | Schichten ohne Tempowechsel, Filter unter dem Bett; Gardine, Lichtstrahlen, Tür, Zeichnungen; neue Töne | Lied anhören (Nutzer, 1S14-5) | erledigt (2026-11-21) |
+| K8 Abschluss | Performance, `check` LEICHT/MITTEL/SCHWER mit 3, 5, 10 Autos, Grundsätze 1–14; Doku: ROADMAP (1S14, Tabelle, 1A-4, 1M-2, 1P-1, 1P-2, 3E-6, „Zuletzt abgeglichen“), `Strecken.md` 14 („Fehlt noch“ als umgesetzt markieren), Skills `mechanik` (Codes 120/121, Ebenen aus dem Zweig, „Spielzimmer Rev 2 in Kürze“) und `strecke` | alles | erledigt (2026-11-21) |
 
 ## Grundsätze-Check (für K8)
 
@@ -178,3 +178,27 @@ Laufzeit:
 12. Staubflusen gegen saubere Spur, Knete in Gassen gegen Umweg.
 13. Waschen: nur die Waschbucht.
 14. Ziellinie und Aufstellung auch bei Licht aus sichtbar (Nachtlicht).
+
+## Umsetzung (2026-11-21, alle Pakete K1 bis K8)
+
+Umgesetzt ohne Rückfrage, die offenen Fragen nach den Vorschlägen entschieden (Nutzer nicht erreichbar, wie bei Dschungel, Weltall und Süß):
+
+1. **Mockup:** keins; Grundriss nach diesem Plan, mit den Abweichungen unten.
+2. **Gabelung:** über oder unter dem Bett, kein Bücherregal als dritte Höhe (Grundsatz 9).
+3. **Sturz vom Schreibtisch:** zurück auf den Tisch hinter die Fallstelle (`c.safe`), kein Weg unten. Wer vom Bett, von den Kissen oder von der oberen Hälfte der Bücherrampe fällt, landet am nächsten Punkt des Wegs unter dem Bett und fährt dort weiter.
+4. **`schlafenszeit`** ist ein eigener Schalter (Licht aus in der letzten Runde), unabhängig vom Saugroboter.
+5. **Klemmbaustein-Stadt** als offenes Feld auf einer großen Noppenplatte (Code 121, `alt`); Häuserblöcke und Burg erzwingen eine Serpentine, weiße Pfeile zeigen den Weg.
+
+Abweichungen vom Grundriss:
+
+- **Bett** mit dem Kopfende an der Ostwand (x 960–1548, y 26–420): Rampe am Fußende im Westen, Weg über die Decke nach Osten (drei Falten als kleine Hügel), die zwei Kissen am Kopfende, über sie nach Süden, der Kissen-Sprung über die Lücke (85 px) auf den Schreibtisch. **Unter dem Bett** ist kein Weg am Westrand, sondern ein gewundener Gang zwischen Kartons quer unter dem Bett (Code 122, Staub 120 in den Innenkurven und überall daneben), am Südrand eine Bauklotz-Treppe (Code 123, langsam, Schub zurück) auf den Schreibtisch. Der Weg unter dem Bett ist kürzer, aber langsamer (Bot etwa 1 s).
+- **Schreibtisch** aus zwei Tischen an der Ostwand: auf dem ersten Malkasten-Zweig, Radiergummi und Buntstifte, das Lineal über die Lücke, auf dem zweiten eine **Haarnadel** um ein Federmäppchen mit Buntstiften (macht die Runde länger), dann die Murmelbahn am Westende. Ein Schreibtischstuhl steht davor (fest, versperrt den Boden zwischen Tisch und Murmelbahn).
+- **Mittellinie** über das Bett; der Weg unter dem Bett, die Waschbucht und der Malkasten-Zweig sind Nebenwege (`stampWay`, `wayM`), ihre Punkte zählen als Fortschritt auf der Mittellinie (Hook `progress`).
+- **Erkennbarkeit:** Das Bett ist ein eigenes Bild (Hook `deck`): Holzrahmen mit Pfosten, Kopfteil an der Wand, blaue Bettdecke mit Sternen, Monden und Steppnähten, am Kopfende umgeschlagen, weißes Laken, zwei bauschige Kissen mit rosa Rand, Teddy; die Seite des Betts hängt vorn herab, Schlagschatten auf dem Boden. Die Autos unter dem Bett liegen unter diesem Bild; wer selbst darunter ist, sieht das Bett nicht, sondern Dunkel, Lattenrost und Rahmen von unten, Licht nur an den offenen Seiten. Die Tische: Ahornplatte mit Fugen und Maserung, heller Rand, Vorderkante mit Beinen, Schatten dahinter und daneben, Boden zwischen den Möbeln abgedunkelt; liniertes Papier mit rotem Rand als Straße, Lampe mit Lichtkegel, Hefte, Klebezettel, Stiftebecher, Becher, Sternenprojektor. Oben werden Autos größer gezeichnet, ihr Schatten liegt weit versetzt. Parkett in breiten Dielen (40 px), Lineal mit Millimeterstrichen, die Bücherrampe mit der Seitenansicht des Stapels.
+- **Kulisse:** Bücherregal, Fenster mit wehender Gardine und Staub nur im Licht, Kinderzeichnungen, Tür mit Lichtspalt in der Nacht, Nachtlicht an der Wand neben der Startlinie, Wegweiser an der Gabelung (Kissen geradeaus, Mond nach unten), Monster-Kuscheltier unter dem Bett (Augen leuchten, Brummen).
+- **Ereignisse:** Domino in der Stadt (wackelt, wenn ein Auto naht), Murmeln aus der Murmelbahn quer über die Stadteinfahrt (ab Runde 2 des Führenden öfter und zu zweit), der Roboter jagt nach 7 s ohne Fang das nächste Auto auf dem Boden (Warndreieck, wenn er dich jagt) und frisst Knete-Fladen (der Boden darunter kommt zurück), Murmeln, Dominos und Reifenspuren. Licht aus: die Lampe flackert 1 s, Klick.
+- **Reifenspuren** verblassen auf dieser Strecke über etwa 20 s (1S14-4, 3E-6).
+
+**Messwerte:** `check('SPIELZIMMER')` auf LEICHT, MITTEL, SCHWER mit 3, 5 und 10 Autos jeweils alle im Ziel, nichts hängt fest, keine Abkürzung, Aufstellung 0°; ohne Ereignisse ebenso. Runde mit dem Bot 34–36 s (Ziel 50–55 s nicht erreicht, 1S14-7). Bau 1,3 s am Stück (kalt), 0,6 s warm. Frame mit 10 Autos 1,1–1,4 ms.
+
+**Offen:** Abnahme, Lied anhören (1S14-5), Rundenlänge (1S14-7), Spuren auf der Decke (1S14-8), Handfahrt unter dem Bett (1S14-9).

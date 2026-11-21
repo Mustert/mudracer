@@ -844,7 +844,29 @@ Streckenereignis: (Vorschlag) Schokoladenfluss ergießt sich ab Runde 2 über Te
 Änderung: Mud ist Schokolade oder Karamell (klebrig, bremst stark), Waschanlage als Zuckerwasser-Dusche.
 
 ## 14. Spielzimmer
-Status: **Prototyp umgesetzt** auf Branch `map_pack` (Streckenname `SPIELZIMMER`, Theme `spielzimmer`, Musik `toys`, Streckenereignisse Spielzeug `spielzeug` und Saugroboter `saugroboter`; Code in `src/toymap.js` und `src/toys.js`). Im Cup FANTASY eingetragen. Größere Karte (1280×720), eine Runde dauert etwa 26 bis 28 s, ein Rennen etwa 85 s.
+Status: **Rev 2 umgesetzt** auf Branch `map_pack` (2026-11-21, Plan `plaene/SPIELZIMMER_REV2.md`; Streckenname `SPIELZIMMER`, `rev: 2`, Theme `spielzimmer`, Musik `toys` in Schichten nach Runden, Streckenereignisse Spielzeug `spielzeug`, Saugroboter `saugroboter` und Schlafenszeit `schlafenszeit` (neu, eigener Schalter); Code in `src/toymap.js` und `src/toys.js`; Karte 1600×1000, Runde 34–36 s mit dem Bot). Im Cup FANTASY eingetragen. Abnahme durch den Nutzer offen.
+
+### Rev 2: das ganze Zimmer (gilt, `rev: 2`; ersetzt den Prototyp darunter)
+Ein Kinderzimmer mit Wänden ringsum; die Autos sind Spielzeugautos, die Möbel riesig (breite Parkettdielen, ein Lineal mit Millimeterstrichen). Rundenverlauf im Uhrzeigersinn:
+1. **Spielteppich**: Startgerade nach Norden auf der aufgedruckten Straße (Zebrastreifen, gedruckte Häuser, Bäume, Teich), lange Gerade bis zur Kurve; Puppenhaus und Spielzeugkiste auf dem Teppich. Das Nachtlicht an der Wand daneben.
+2. **Parkettkurve** (glatt wie mit Socken, Straße aus Malerkrepp), Fenster mit Gardine und Lichtstrahlen.
+3. **Holzeisenbahn** auf dem Parkett: die Straße kreuzt das Oval zweimal, Schranken, Bahnhof oben an der Wand.
+4. **Gabelung** mit Wegweiser (Kissen geradeaus, Mond nach unten), Bücherregal an der Wand:
+   - **über das Bett**: die Bücherrampe hinauf (man sieht den Stapel von der Seite), über die blaue Sternen-Bettdecke mit drei Falten als kleine Hügel, am Teddy vorbei, nach Süden über die zwei Kissen am Kopfende, und der **Kissen-Sprung** über die Lücke auf den Schreibtisch. Wer vom Bett oder den Kissen fällt (Pfeifen), landet **unter dem Bett** und fährt dort weiter.
+   - **unter dem Bett**: dunkel (nur an den offenen Seiten fällt Licht herein, man sieht den Lattenrost von unten), ein gewundener Gang zwischen Kartons, Staub in den Ecken und Innenkurven (bremst, macht grau), verlorene Murmel, Würfel, Buntstiftstummel, Socke, ein Monster-Kuscheltier mit leuchtenden Augen; am Ende eine **Bauklotz-Treppe** hinauf auf den Schreibtisch. Langsamer, aber sicher.
+5. **Schreibtisch** (zwei Tische an der Wand, Stuhl davor): liniertes Papier als Straße, Buntstifte, Radiergummi, Wasserfarbe vor dem offenen Malkasten oder der saubere Weg um ihn herum, Lampe mit Lichtkegel, Hefte, Klebezettel; das **Lineal** über die Lücke zum zweiten Tisch, dort eine **Haarnadel** um ein Federmäppchen. Wer von der Tischkante fällt, kommt hinter der Stelle wieder auf den Tisch.
+6. **Murmelbahn** hinunter auf den Boden.
+7. **Klemmbaustein-Stadt**: eine große Noppenplatte als offenes Feld (holprig, volle Haftung), Häuserblöcke und eine Burg erzwingen eine Serpentine, weiße Pfeile zeigen den Weg, Knete-Fladen am Rand der Gassen, Dominoturm.
+8. **Spielzeug-Waschbucht** neben der letzten Kurve (Bürsten, Seifenblasen), das einzige Waschen; die Computerautos fahren nur dreckig hinein. Dann auf die Startgerade (an der Wand die Ladestation des Saugroboters).
+
+Ereignisse: `spielzeug` (Zug auf dem Oval, Aufziehauto auf dem Teppich, Murmeln aus der Murmelbahn quer über die Stadteinfahrt, ab Runde 2 öfter, Dominoturm in der Stadt, der wackelt, wenn man naht), `saugroboter` (ab Runde 2 fährt er mit Piepen und blauem Blinken aus dem Dock; hat er eine Weile niemanden erwischt, jagt er das nächste Auto auf dem Boden, Warndreieck, wenn er dich jagt; er saugt Autos ein und spuckt sie grau aus, frisst Knete, Murmeln, Dominos und Reifenspuren; nie unter dem Bett und nie auf den Möbeln), `schlafenszeit` (neu: in der letzten Runde flackert die Lampe, Klick, Licht aus; Sternenprojektor, Lichtspalt unter der Tür, das Nachtlicht hält Ziellinie und Aufstellung hell).
+
+Lied `toys` in Schichten ohne Tempowechsel: Runde 1 Toy-Piano, Xylophon, Holzklötze, Tuba; ab Runde 2 Brumm-Drone und dichtere Holzklicks; bei Licht aus Spieluhr-Schlaflied mit leisen Klicks; unter dem Bett gedämpft (nur Spieluhr, Tuba, ferner Klick). Neue Töne: Staub, Treppenstufen, Monster-Brummen, Flackern, Pfeifen beim Sturz. Reifenspuren und Knete-Spritzer verblassen langsam.
+
+Warum schwerer als das Süßigkeitenland: echte Stürze von den Möbeln (Kissen-Sprung, schmales Lineal, Tischkanten, Haarnadel am Tischrand), ein Roboter, der jagt, Dunkelheit unter dem Bett und in der letzten Runde.
+
+### Prototyp (bis 2026-11-21, ersetzt durch Rev 2)
+Größere Karte (1280×720), eine Runde dauerte etwa 26 bis 28 s, ein Rennen etwa 85 s.
 
 Umgesetzt im Prototyp (erster Wurf):
 - **Ebenen** ✅ umgesetzt: Boden, Bett, Schreibtisch; die Ebene folgt `c.idx` (Höhe je Streckenpunkt). Oben werden die Autos größer gezeichnet, der Schatten liegt weiter weg. Zusammenstöße nur auf derselben Ebene (`c.lvl`: 2 Boden, 1 Bett, 3 Schreibtisch, 4 in der Murmelbahn); die Möbelkanten sind nur für Autos auf dem Boden fest. Wer oben die Fläche verlässt, fällt mit Pfeifen auf den Boden und wird wieder auf die Straße gesetzt.
@@ -866,10 +888,10 @@ Umgesetzt im Prototyp (erster Wurf):
 - **Optik** ✅ teilweise: Bett, Schreibtisch, Bücherregal, Fenster mit Gardinen und Lichtstrahlen mit Staub, Nachttisch, Puppenhaus, Bauklötze, Puzzleteile, Socken, Quietscheente, Ball, Kinderzeichnung. Beim Countdown haben alle Autos einen Aufziehschlüssel.
 
 Fehlt noch (für später):
-- Unter dem Bett (dunkel, Staubflusen, Socken) und die **lange Rampe zurück** nach einem Sturz vom Kissen; heute wird man an den Anfang der Kissen-Geraden zurückgesetzt.
-- Der Saugroboter saugt die **Knete** nicht weg; die Strecke wird dadurch nicht sauberer.
+- Unter dem Bett (dunkel, Staubflusen, Socken) und die **lange Rampe zurück** nach einem Sturz vom Kissen; heute wird man an den Anfang der Kissen-Geraden zurückgesetzt. ✅ umgesetzt (Rev 2: Sturz landet unter dem Bett, Bauklotz-Treppe zurück auf den Tisch)
+- Der Saugroboter saugt die **Knete** nicht weg; die Strecke wird dadurch nicht sauberer. ✅ umgesetzt (Rev 2)
 - Knete mit der Farbe des zuletzt befahrenen Fladens (bräuchte vier Sprite-Sätze je Auto).
-- Bettfalten als echte kleine Hügel (heute nur holprig), Staubkörner nur im Licht des Fensters, Kreidezeichnungen, Gardine am Fenster bewegt sich nicht.
+- Bettfalten als echte kleine Hügel (heute nur holprig), Staubkörner nur im Licht des Fensters, Kreidezeichnungen, Gardine am Fenster bewegt sich nicht. ✅ umgesetzt (Rev 2: Falten als Hügel, Staub nur im Licht, Gardine bewegt sich; Kreidezeichnungen als Kinderzeichnungen an der Wand)
 - Feinschliff: Abstimmung des Sprungs und der Kanten, Klang des Liedes.
 
 Idee: Die Autos sind **Spielzeugautos** im Kinderzimmer. Die Strecke beginnt auf dem **Straßen-Spielteppich** (den kennt jedes Kind) und klettert über Rampen aus Büchern und Bauklötzen aufs Bett und auf den Schreibtisch. Zum ersten Mal gibt es **Ebenen**: Wer oben von der Kante fällt, landet unten und hat einen Umweg. Ab Runde 2 fährt der Saugroboter los, und in der letzten Runde geht das Licht aus.

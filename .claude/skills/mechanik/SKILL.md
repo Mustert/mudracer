@@ -16,7 +16,7 @@ Kurzabriss, damit nicht jede Aufgabe mit Code-Lesen beginnt. Fundstellen sind Fu
 - **`updateRace(dt)` in dieser Reihenfolge:**
   1. `updateTrain`, `updateEvents` (Ereignisse, Hook `update`), `ringUpdate`, `pushCars` (Schübe, wenn `T.jumps` existiert)
   2. je Auto: `fall`-Zähler (versunken → `respawn`), Hook `stuck`, `stun` (dreht sich), sonst Eingabe (Spieler) oder `aiTarget` + Gas (KI) → `physics(c, dt, thr, tgt)` → `airborne` (Sprünge) bzw. `updateJumps` (Matschfahrt) → `guardCar` (NaN-Schutz)
-  3. Kollisionen: Hindernisse aus `T.grid` (`nearObstacles`, Radius `o.r + 9`), Kartenrand (10 px), `eventCollisions` (Kois, Kipper, Reifen, Hook `collisions`, Kühe), Auto gegen Auto (Abstand 18, nicht bei `ghost`/`fall`/anderem `lvl`)
+  3. Kollisionen: Hindernisse aus `T.grid` (`nearObstacles`, Radius `o.r + 9`), Kartenrand (10 px), `eventCollisions` (Kois, Kipper, Reifen, Hook `collisions`, Kühe), Auto gegen Auto (Abstand 18, nicht bei `ghost`/`fall`/anderem `lvl`; Hindernisse mit `down` nur für `lvl` 2, mit `up` nur für `lvl` 1)
   4. Boden je Auto (nur am Boden, `z == 0`, nicht `fall`): `c.surf = T.ter[j]`, Waschen, **tiefes Wasser**, Matsch/Zement, flaches Wasser, Boost, Öl → `groundFx` (Cup 3) → Hook `ground` → Reifenspuren auf `tctx` → `updateProgress` und `c.safe`
   5. `moveCamera`
 - Zustände (`G.state`) und Wechsel: `state.js` `setState`; Liste in `g.js`. Pause hält alles an.
@@ -68,7 +68,7 @@ Werte `[Tempo, Seitenhaftung, Lenkung, Gas]` aus `surfOf` (`physics.js`), Wirkun
 | 15 | Lava | – | Fall (`'lava'`), Rauch; der Dreck bleibt, wie er war |
 | 16 | frei (früher Kruste von Vulkan Rev 1) | – | – |
 | 17 | Plattform Schwerelosigkeit | wenig Haftung | Weltall |
-| 30–32, 41–48, 50–52 | Spielzimmer, Regenbogen, Strand-Volleyball | Hook `surf` | eigene Blöcke |
+| 30–32, 41–48, 50–52 | Spielzimmer (30 Parkett, 31 Weg über die Bettdecke, 32 Wasserfarbe), Regenbogen, Strand-Volleyball | Hook `surf` | eigene Blöcke |
 | 60–61 | Wüste Rev 3: Rallysand, Treibsand-Vorstufe | Hook `surf` | siehe Abschnitt 14 |
 | 70–71 | Eis Rev 2: 70 Lifttrasse (Straße unter den Seilen), 71 Pulverschnee im Wald | Hook `surf`: 71 `[.9, 6, .9]`, 70 wie Straße | 70: das Auto wird eingehängt (`c.iceLift`), 71: offenes Feld, macht nicht weiß; siehe Abschnitt 15 |
 | 80 | Vulkan Rev 5/6: Felsufer der Rinnen und der eingeschlossene Hang dazwischen | Hook `surf`: wie Code 0 | fest an allen Kanten (Kreise 6 px innen), Hook `noRespawn` |
@@ -76,6 +76,7 @@ Werte `[Tempo, Seitenhaftung, Lenkung, Gas]` aus `surfOf` (`physics.js`), Wirkun
 | 90–92 | Dschungel Rev 2: 90 Waldboden des Unterholzes, 91 Furtwasser, 92 Bohlen | Hook `surf`: 90 `[.86, 8, .95]`, 91 wie flaches Wasser `[.72, 1.6, .65]`, 92 wie Straße | 90: offenes Feld (`alt`, sauber); 91: Strömung nach Süden (`pushes` Rechteck), wäscht nicht, macht leicht grün; 92: klappert; siehe Abschnitt 17 |
 | 100 | Weltall Rev 2: Ringstaub (offenes Feld im Ring des Planeten) | Hook `surf`: `[.94, 2.4·turn², .8, 1]` (etwas langsamer und glatter als Code 17) | offenes Feld (`alt`); der Planet zieht, beim Verlassen zum Ende hin der Swing-by; siehe Abschnitt 18 |
 | 110–114 | Süß Rev 2: 110 Zuckerguss (Wald-Feld), 111 Karamell, 112 Kaugummi, 113 Fließband, 114 Marshmallow | Hook `surf`: 110 `[.86, 8, .95]`, 111 `[.38 + .16·mud (.45–.72), 3,5·mud, .75, .8]`, 112 `[.32, 7, .6, .7]`, 113/114 wie Straße | 110 offenes Feld (`alt`, sauber); 111 macht golden (`c.cem` = zweiter Satz), danach Nachkleben über `surf`; 112 hält; 113 Schub aus `pushes` (Rechtecke); 114 federt (Sprünge `soft`); 111, 112, 114 sind kein Rückkehrplatz (`noRespawn`); siehe Abschnitt 19 |
+| 120–123 | Spielzimmer Rev 2: 120 Staub unter dem Bett, 121 Noppenplatte der Stadt, 122 gefegter Boden unter dem Bett, 123 Bauklotz-Treppe | Hook `surf`: 120 `[.5, 3, .7]`, 121 `[.93, 9, .95]`, 122 `[.84, 9, .95]`, 123 `[.48, 10, .9]` | 120 macht grau (`c.cem`, Hook `ground`); 121 offenes Feld (`alt`), ruckelt; oben auf dem Bett liest das Auto statt `T.ter` das Bild der Bettdecke (`bedT`); siehe Abschnitt 20 |
 
 Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil von `updateRace` (`c.surf`), also einen Schritt verzögert.
 
@@ -141,7 +142,7 @@ Die Physik liest den Code am Auto-Mittelpunkt (ein Pixel), gesetzt im Boden-Teil
 
 ## 11. Zeichnen (`draw.js` `drawRace`)
 
-Reihenfolge: `base` → Reifenspuren `tctx` → Wasserglitzern → Strand → Tiere → `drawEventsGround` → Hook `drawGround` → Geist → Autos am Boden (nach `y` sortiert; Ring-Brücke dazwischen) → Zug → Autos in der Luft (`z > 0`, über dem Zug, 1S4-9; ein Hook `airTop(c)` kann sie hinter `top` verschieben, EIS: über die Baumkronen) → Partikel, Rauch → `top` (Baumkronen, Geländer) → Bahnübergänge (je ein Warnlicht, `cr.lx/ly` aus `buildTrack`) → Windmühle, Vögel → Zurück-Pfeil → `drawEventsAbove` → Hook `drawAbove` → Nacht → Regen → Hook `drawSky` → Stimmung (ohne Sonnenstrahlen, solange der Hook `noBeams` true gibt) → 1P-Schild → HUD → Countdown/Ziel. Auto: `drawCar` (Hook `drawCar`, `drawFall`), Schmutzstufe `round(dirt·5)`.
+Reihenfolge: `base` → Reifenspuren `tctx` → Wasserglitzern → Strand → Tiere → `drawEventsGround` → Hook `drawGround` → Geist → Autos am Boden (nach `y` sortiert; Ring-Brücke oder Hook `deck` (Bett des Spielzimmers) zwischen den Autos unten und denen mit `lvl` 1) → Zug → Autos in der Luft (`z > 0`, über dem Zug, 1S4-9; ein Hook `airTop(c)` kann sie hinter `top` verschieben, EIS: über die Baumkronen) → Partikel, Rauch → `top` (Baumkronen, Geländer) → Bahnübergänge (je ein Warnlicht, `cr.lx/ly` aus `buildTrack`) → Windmühle, Vögel → Zurück-Pfeil → `drawEventsAbove` → Hook `drawAbove` → Nacht → Regen → Hook `drawSky` → Stimmung (ohne Sonnenstrahlen, solange der Hook `noBeams` true gibt) → 1P-Schild → HUD → Countdown/Ziel. Auto: `drawCar` (Hook `drawCar`, `drawFall`), Schmutzstufe `round(dirt·5)`.
 
 ## 12. Zustand, Menüs, Speichern, Ton
 
@@ -249,3 +250,16 @@ Im Dev-Server: `mudracer.G.T` (aktuelle Strecke), `mudracer.G.cars`, `mudracer.t
 - **Ereignis `zuckerwatte`:** `T.ev.swWatte`, Wolken nur in den Kästen `def.clouds` (Wald, Moor), Zahl nach der Runde des Führenden 3 / 5 / 8; `c.inCloud` für den rosa Schleier.
 - **Lied `candy`:** Schichten über die Runde (schmelzender Bass ab Runde 2, G-Dur und Chor in der letzten), Fabrik-Takt solange `T.suess.inFactory`, Paukenwirbel bei `T.ev.swAlarm`.
 - **Prüfen:** `mudracer.check('SUESS', { diff, fx, cars })`; das Wald-Feld ist gewollt offen, die Riegel `ridges` müssen bis nah an die Mittellinie reichen, sonst fährt man das S gerade.
+
+## 20. Spielzimmer Rev 2 in Kürze (Karte 1600 × 1000, das ganze Kinderzimmer; Plan `plaene/SPIELZIMMER_REV2.md`)
+
+- **Dateien:** `toymap.js` (`toyTerrain`: Art je Pixel `kind` (`KD`: Boden, Teppich, Bett, Tisch, Rampe, Lineal, Murmelbahn, Treppe, Stadt), `upM` = oben (wer es oben verlässt, fällt), `hM` = Höhe auf Rampe und Treppe, Nebenwege `wayM`/`wayD` (`WAY`: unter dem Bett mit Treppe, Waschbucht, Malkasten-Zweig; je Weg Punkte mit dem Index der Mittellinie, für den sie zählen), `bedT` = Boden-Code der Bettoberfläche; der Boden unter Tischen ist Code 11 (niemand kommt hin, `check` sieht dort keine Abkürzung); `paintToys` malt den ganzen Boden selbst (Theme `ownGround`), die Pixel-Schleifen laufen in normalen Funktionen je Zeilenband (sonst bleibt der erste Bau langsam), das Bett ist ein eigenes Bild `bedImg`), `toys.js` (Laufzeit und Hooks).
+- **Ebenen:** `c.lvl` 2 Boden, 1 Bett, 3 Schreibtisch, 4 Murmelbahn. Sie folgt dem Weg (Hook `ground`): Rampe ab halber Höhe → Bett, Treppe oben oder Tisch → Tisch, Kissen-Sprung landet auf dem Tisch → Tisch; ein Auto auf dem Bett, das nicht mehr auf Bett oder Rampe steht, fällt (`fallCar 'abyss'`, `c.tyUnder`) und kommt im Hook `respawn` am nächsten Punkt des Wegs unter dem Bett zurück (Boden, KI folgt dem Weg); vom Tisch zurück auf den Tisch (`c.safe`). `c.h` = Höhe fürs Zeichnen (größer, Schatten weit weg).
+- **Bett über dem Weg darunter:** Mittellinie über das Bett, der Weg unter dem Bett liegt im selben Rechteck auf dem Boden (`T.ter` = Boden, das Auto oben liest `bedT`). Hook `deck` zeichnet `bedImg` zwischen den Autos unten und oben (wie die Brücke der Rennstrecke); ist der Spieler selbst unter dem Bett (`S.under`), kein Bild, sondern `darkRect` mit Licht an den offenen Seiten, Lattenrost und Rahmen; die Autos oben sind dann unsichtbar. Sprünge mit `lvl: 1` (Falten, Kissen) gelten nur oben.
+- **Fortschritt:** Hook `progress` gibt Autos auf einem Nebenweg den Index ihres Wegpunkts (nicht für Autos oben auf dem Bett).
+- **KI:** Hook `target` (`c.tyWay`): unter das Bett LEICHT .75, MITTEL .45, SCHWER .15 und jedes Auto, das für den Kissen-Sprung zu langsam ist (Höchsttempo unter 112); Malkasten-Zweig für Autos mit `mud < 1.15`; Waschbucht nur dreckig (.4 / .55 / .7); ein Auto auf dem Boden weitab der Linie (neben der Rampe, nach einem Sturz) übernimmt den Weg unter dem Bett. `throttle`: vor dem Kissen Vollgas, auf LEICHT bei einem Viertel der Anläufe .62 (fällt unter das Bett), MITTEL selten; Bucht .6, unter dem Bett .9. `lane`: Lineal und Kissen mittig, am Radiergummi vorbei, in der Stadt doppelt so breit, oben weniger Pendeln und Bremsen vor Kurven, vor geschlossenen Schranken warten.
+- **Ereignis `saugroboter`:** `T.ev.toyRobot` ab Runde 2 des Spielers; nach `ROBOT.bored` 7 s ohne Fang jagt er das nächste Auto auf dem Boden (`R.prey`, nie unter dem Bett, nie auf Möbeln), Sog und Einsaugen wie bisher, frisst Murmeln, Dominos, Knete (`eatKnete`: `snap`, Boden darunter aus `kneteUnder`, Code 121) und Reifenspuren (`tctx` `destination-out`). Ausweichen der KI nach Stufe (`AI.dodge`).
+- **Ereignis `schlafenszeit`:** `T.ev.toyNightOn`; letzte Runde des Spielers: `toyFlick` 1,1 s Flackern, dann `toyDarkOn` (Schleier mit weichen Lichtlöchern: Nachtlicht und Startlinie, Türspalt, Projektor, Scheinwerfer; Sterne des Projektors).
+- **Reifenspuren** verblassen hier alle 0,5 s um 3,5 % (`toyUpdate`, 1S14-4).
+- **Lied `toys`:** Schichten über `raceLap()` (ab Runde 2 Drone und dichtere Klicks), bei `toyDarkOn` Spieluhr, unter dem Bett (`G.T.toys.under`) gedämpft; kein `swap`, kein Tempowechsel.
+- **Prüfen:** `mudracer.check('SPIELZIMMER', { diff, fx, cars })`; Ebenen kennt die Prüfung nicht: der Boden unter den Tischen ist Code 11, damit sie über Tischkanten keine Abkürzungen meldet.
